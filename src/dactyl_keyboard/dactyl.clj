@@ -42,18 +42,14 @@
 (def rows-default 1)  ; Default number of rows for columns omitted above.
 
 ;; The tenting angle controls overall left-to-right tilt.
-(def tenting-angle (/ π 20/3))
+(def tenting-angle (/ π 7.5))
 
 ;; keyboard-z-offset controls the overall height of the finger cluster and with
 ;; it, the entire keyboard.
-(def keyboard-z-offset 20)
-
-;; Finger switch mounts may need more or less spacing depending on the size
-;; of your keycaps.
-(def finger-mount-separation-x 0.8)
-(def finger-mount-separation-y -0.5)
+(def keyboard-z-offset 17)
 
 ;; Finger key placement parameters:
+(def keycap-style :dsa)       ; :sa or :dsa.
 (def column-style :standard)  ; :standard, :orthographic, or :fixed.
 ;; α is the default progressive Tait-Bryan pitch of each finger row.
 ;; α therefore controls the front-to-back curvature of the keyboard.
@@ -72,15 +68,24 @@
 (defn finger-column-translation [column]
   (cond
     (= column 2) [0 4 -4.5]
-    (>= column 4) [0 3 5]
+    (>= column 4) [0 4 5]
     :else [0 0 0]))
 
 ;; Individual switches may be finely adjusted, including intrinsic rotation.
 ;; These are maps of column-row pairs to operator values.
-(def finger-intrinsic-pitch {[2 -3] (/ π -8)
+(def finger-tweak-early-translation {[1 -2] [0 -5 2]
+                                     [2 -3] [0 -9 1]
+                                     [3 -2] [0 -5 2]})
+(def finger-intrinsic-pitch {[1 -2] (/ π -10)
+                             [2 -3] (/ π -6)
+                             [3 -2] (/ π -10)
                              [5 1] (/ π -2.5)})
-(def finger-tweak-translation {[2 -3] [1 0 2]
-                               [5 1] [0 0 -10]})
+(def finger-tweak-late-translation {[5 1] [0 0 -10]})
+
+;; Finger switch mounts may need more or less spacing depending on the size
+;; of your keycaps, curvature etc.
+(def finger-mount-separation-x 0)
+(def finger-mount-separation-y -2.5)
 
 ;; Thumb key placement is similar to finger key placement:
 (def thumb-cluster-offset-from-fingers [2 -4 -11])
@@ -94,13 +99,13 @@
     [-1 -1] [0 (/ π 15) 0]
     [-1 -2] [0 (/ π 15) 0]})
 (def intrinsic-thumb-key-translation
-   {[-1 0] [0 0 3]
-    [-1 -1] [-3 0 0]
-    [-1 -2] [-3 0 0]
-    [0 0] [0 0 3]
-    [0 -1] [3 0 0]
-    [0 -2] [3 0 0]})
-(def thumb-mount-separation 1)
+   {[-1 0] [4 0 3]
+    [-1 -1] [-2 0 0]
+    [-1 -2] [-2 0 0]
+    [0 0] [3 0 3]
+    [0 -1] [2 0 0]
+    [0 -2] [2 0 0]})
+(def thumb-mount-separation 0)
 
 ;; Switch mount plates and the webbing between them have configurable thickness.
 (def plate-thickness 3)
@@ -242,8 +247,8 @@
 
 ;; ALPS-style switches:
 (def alps-width 15.5)
-(def alps-notch-height 1)
 (def alps-depth 13.4)
+(def alps-notch-height 1)
 (def alps-height-below-notch 4.5)
 
 ;; Hardcode ALPS as our switch type.
@@ -251,10 +256,16 @@
 (def keyswitch-width alps-width)
 (def keyswitch-cutout-height alps-height-below-notch)
 
+;; Mounts for neighbouring 1U keys are about 0.75” apart.
+(def mount-1u 19.05)
+
+;; Typical 1U keycap width and depth, approximate.
+(def key-width-1u 18.25)
+(def key-margin (/ (- mount-1u key-width-1u) 2))
+
 ;; Mount plates are a bit wider than typical keycaps.
 (def mount-width 18.4)
-(def mount-height 18.4)
-(def key-width-1u 18.25)
+(def mount-depth 18.4)
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Matrix Utilities ;;
@@ -377,7 +388,7 @@
   "
   (let [base (+ (max keyswitch-width keyswitch-depth) 2)
         end (* 1.2 key-width-1u)]
-  (color [0 0 1 1]
+   (color [0.75 0.75 1 1]
     (translate [0 0 plate-thickness]
       (union
         (extrude-linear
@@ -392,46 +403,32 @@
             {:height 20 :center false :scale 1}
             (square end end))))))))
 
-;; SA is a keycap form factor.
-(def sa-profile-key-height 12.7)
-(def sa-double-length 37.5)
-(def sa-cap
-   {1 (let [bl2 (/ key-width-1u 2)
-            m (/ 17 2)
-            key-cap (hull (->> (polygon [[bl2 bl2] [bl2 (- bl2)] [(- bl2) (- bl2)] [(- bl2) bl2]])
-                               (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                               (translate [0 0 0.05]))
-                          (->> (polygon [[m m] [m (- m)] [(- m) (- m)] [(- m) m]])
-                               (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                               (translate [0 0 6]))
-                          (->> (polygon [[6 6] [6 -6] [-6 -6] [-6 6]])
-                               (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                               (translate [0 0 12])))]
-           (->> key-cap
-            (translate [0 0 (+ 5 plate-thickness)])
-            (color [220/255 163/255 163/255 1])))
-    2 (let [bl2 (/ sa-double-length 2)
-            bw2 (/ 18.25 2)
-            key-cap (hull (->> (polygon [[bw2 bl2] [bw2 (- bl2)] [(- bw2) (- bl2)] [(- bw2) bl2]])
-                               (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                               (translate [0 0 0.05]))
-                          (->> (polygon [[6 16] [6 -16] [-6 -16] [-6 16]])
-                               (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                               (translate [0 0 12])))]
-        (->> key-cap
-             (translate [0 0 (+ 5 plate-thickness)])
-             (color [127/255 159/255 127/255 1])))
-    1.5 (let [bl2 (/ 18.25 2)
-              bw2 (/ 28 2)
-              key-cap (hull (->> (polygon [[bw2 bl2] [bw2 (- bl2)] [(- bw2) (- bl2)] [(- bw2) bl2]])
-                                 (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                                 (translate [0 0 0.05]))
-                            (->> (polygon [[11 6] [-11 6] [-11 -6] [11 -6]])
-                                 (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                                 (translate [0 0 12])))]
-          (->> key-cap
-               (translate [0 0 (+ 5 plate-thickness)])
-               (color [240/255 223/255 175/255 1])))})
+(defn key-length [units] (- (* units mount-1u) (* 2 key-margin)))
+
+;; Keycap form factor differences.
+(def sa-profile-key-height 12.7)  ; Signature Plastics says 11.6 (home row).
+(def dsa-profile-key-height 8.1)  ; Signature Plastics says 7.3.
+(def dsa-profile-key-to-mount 5.8)
+
+;; Implementation of keycap form choice.
+(def keycap-height
+  (case keycap-style
+    :sa sa-profile-key-height
+    :dsa dsa-profile-key-height))
+(def keycap-to-mount dsa-profile-key-to-mount)
+(def cap-bottom-height (+ plate-thickness keycap-to-mount))
+(def cap-top-height (+ cap-bottom-height keycap-height))
+
+(defn keycap [units]
+  "The shape of one keycap, rectangular base, ’units’ in width, at rest."
+  (let [base-width (key-length units)
+        base-depth (key-length 1)
+        vertical-scale 0.73  ; Approximately correct for DSA.
+        z-offset (+ cap-bottom-height (/ keycap-height 2))]
+   (->> (square base-width base-depth)
+        (extrude-linear {:height keycap-height :scale vertical-scale})
+        (translate [0 0 z-offset])
+        (color [220/255 163/255 163/255 1]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Key Placement Functions — General ;;
@@ -439,7 +436,7 @@
 
 (def single-plate
   (translate [0 0 (/ plate-thickness 2)]
-    (cube mount-width mount-height plate-thickness)))
+    (cube mount-width mount-depth plate-thickness)))
 
 (def single-switch-cutout
   "Negative space for the insertion of a key.
@@ -455,7 +452,7 @@
 (defn mount-corner-offset [directions]
   "Produce a translator for getting to one corner of a switch mount."
   (general-corner
-    mount-width mount-height web-thickness plate-thickness directions))
+    mount-width mount-depth web-thickness plate-thickness directions))
 
 (defn mount-corner-post [directions]
   "A post shape that comes offset for one corner of a key mount."
@@ -471,17 +468,15 @@
 ;; Key Placement Functions — Fingers ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def cap-top-height (+ plate-thickness sa-profile-key-height))
-
 (defn effective-α [column row] (get finger-column-tweak-α column α))
 
 (defn row-radius [column row]
-  (+ (/ (/ (+ mount-height finger-mount-separation-y) 2)
+  (+ (/ (/ (+ mount-1u finger-mount-separation-y) 2)
            (Math/sin (/ (effective-α column row) 2)))
      cap-top-height))
 
 (defn column-radius [column]
-  (+ (/ (/ (+ mount-width finger-mount-separation-x) 2)
+  (+ (/ (/ (+ mount-1u finger-mount-separation-x) 2)
            (Math/sin (/ β 2)))
      cap-top-height))
 
@@ -528,12 +523,13 @@
          :standard     apply-default-style)
        ]
     (->> shape
+         (translate-fn (get finger-tweak-early-translation [column row] [0 0 0]))
          (rotate-x-fn (get finger-intrinsic-pitch [column row] 0))
          applicator
          (rotate-x-fn pitch-centerrow)
          (rotate-y-fn tenting-angle)
          (translate-fn [0 0 keyboard-z-offset])
-         (translate-fn (get finger-tweak-translation [column row] [0 0 0])))))
+         (translate-fn (get finger-tweak-late-translation [column row] [0 0 0])))))
 
 (defn finger-key-position [coordinates position]
   "Produce coordinates for passed matrix position with offset 'position'."
@@ -559,7 +555,7 @@
   (apply union (map #(finger-key-place % negative-cap) finger-key-coordinates)))
 
 (def finger-keycaps
-  (apply union (map #(finger-key-place % (sa-cap 1)) finger-key-coordinates)))
+  (apply union (map #(finger-key-place % (keycap 1)) finger-key-coordinates)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Key Placement Functions — Thumbs ;;
@@ -568,15 +564,15 @@
 (def thumb-origin
   (map + (finger-key-position
            [thumb-connection-column (first (finger-row-indices thumb-connection-column))]
-           [(/ mount-width -2) (/ mount-height -2) 0])
+           [(/ mount-width -2) (/ mount-depth -2) 0])
          thumb-cluster-offset-from-fingers))
 
 (defn thumb-key-place [[column row] shape]
   (let [offset (if (= -1 column) thumb-cluster-column-offset [0 0 0])]
     (->> shape
          ((rotator-vector (intrinsic-thumb-key-rotation [column row] [0 0 0])))
-         (translate [(* column (+ mount-width thumb-mount-separation))
-                     (* row (+ mount-height thumb-mount-separation))
+         (translate [(* column (+ mount-1u thumb-mount-separation))
+                     (* row (+ mount-1u thumb-mount-separation))
                      0])
          (translate offset)
          (translate (get intrinsic-thumb-key-translation [column row] [0 0 0]))
@@ -595,7 +591,7 @@
 
 (def thumb-key-channels (for-thumbs negative-cap))
 
-(def thumb-keycaps (for-thumbs (sa-cap 1)))
+(def thumb-keycaps (for-thumbs (keycap 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Key Mount Connectors ;;
@@ -783,16 +779,24 @@
 
 (def case-wrist-hook
   (let [column last-finger-column
-        [x2 y1] (take 2
+        [x3 y2] (take 2
                  (finger-key-position
                    [column (first (finger-row-indices column))]
                    (wall-corner-offset :south mount-south-east)))
-        x1 (- x2 10)
-        x0 (- x1 5)
-        y0 (- y1 8)]
+        x2 (- x3 10)
+        x1 (- x2 4)
+        x0 (- x1 0.6)
+        y1 (- y2 5)
+        y0 (- y1 1)]
     (extrude-linear
       {:height wrist-connector-height}
-      (polygon [[x0 y0] [x1 y1] [x2 y1] [x2 y0]]))))
+      ;; Draw the outline of the hook moving counterclockwise.
+      (polygon [[x0 y1]  ; Left part of the point.
+                [x1 y0]  ; Right part of the point.
+                [x3 y0]  ; Rightmost contact with the connector.
+                [x3 y2]  ; Rightmost contact with the case.
+                [x2 y2]] ; Leftmost contact with the case.
+                ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Case Walls — Thumbs ;;
@@ -802,7 +806,7 @@
   (apply union
      (walk-and-wall
        [[0 -1] :south]
-       [[-1 -1] :north]
+       [[-1 -2] :north]
        thumb?
        (partial key-wall-brace thumb-key-place mount-corner-post))))
 
@@ -853,10 +857,17 @@
      (f2 (post [:south :west]))
      (f2 (wall 1 [:north :west]))
      (f2 (wall 1 [:south :west])))
-    ;; A big piece connecting the finger wall on the left to t1.
+    ;; A big piece connecting the finger wall on the left to t0 and t1.
     (hull
      (bottom-hull (f0 (wall 3 [:south :west])))
-     (t1 (wall 1 [:north :west])))
+     (hull
+      (t1 (post [:south :west]))
+      (t1 (post [:north :west]))))
+    (hull
+     (extrude-linear {:height 1} (project (f0 (wall 3 [:south :west]))))
+     (t0 (wall 2 [:south :west]))
+     (t0 (post [:south :west]))
+     (t0 (post [:north :west])))
     ;; A piece connecting the upper wall of f0 to both t1 and t2.
     (hull
      (f0 (post [:south :west]))
@@ -1052,7 +1063,7 @@
 ;; USB female holder:
 ;; This is not needed if the MCU has an integrated USB connector and that
 ;; connector is directly exposed through the case.
-(def usb-holder-position (finger-key-position [1 0] (map + (wall-segment-offset 2 :north) [0 (/ mount-height 2) 0])))
+(def usb-holder-position (finger-key-position [1 0] (map + (wall-segment-offset 2 :north) [0 (/ mount-depth 2) 0])))
 (def usb-holder-size [6.5 10.0 13.6])
 (def usb-holder-thickness 4)
 (def usb-holder
