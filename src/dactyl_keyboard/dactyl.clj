@@ -31,22 +31,34 @@
   "Convert a number of degrees to radians."
   (* (/ degrees 180) π))
 
+;; Each switch mount has four corners with offsets in two directions.
+;; Capitals in symbol names are reserved for these shorthand definitions
+;; of the four corners. In each case, the cardinal direction naming the side
+;; of the key comes first. The second item names one end of that side.
+(def NNE [:north :east])
+(def ENE [:east :north])
+(def SSE [:south :east])
+(def ESE [:east :south])
+(def SSW [:south :west])
+(def WSW [:west :south])
+(def NNW [:north :west])
+(def WNW [:west :north])
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Shape Parameters ;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
 ;; The shape of the finger key cluster is defined by the number of rows above
 ;; and below the home row in each column.
-(def rows-above-home {0 1, 1 2, 2 2, 3 2, 4 1, 5 1})
+(def rows-above-home {0 1, 1 2, 2 2, 3 2, 4 1, 5 0})
 (def rows-below-home {0 1, 1 2, 2 3, 3 2, 4 2, 5 2})
 (def rows-default 1)  ; Default number of rows for columns omitted above.
 
 ;; The tenting angle controls overall left-to-right tilt.
-(def tenting-angle (/ π 7.5))
+(def tenting-angle (/ π 8.5))
 
-;; keyboard-z-offset controls the overall height of the finger cluster and with
-;; it, the entire keyboard.
-(def keyboard-z-offset 17)
+;; keyboard-z-offset controls the overall height of the keyboard.
+(def keyboard-z-offset 13)
 
 ;; Finger key placement parameters:
 (def keycap-style :dsa)       ; :sa or :dsa.
@@ -59,10 +71,18 @@
 (def β (/ π 50))
 
 ;; Individual columns may have a non-standard curvature.
-(def finger-column-tweak-α {2 (/ π 8.2)})
+(def finger-column-tweak-α
+  {2 (/ π 8.2)
+   4 (/ π 6.6)
+   5 (/ π 6.6)})
 (def pitch-centerrow (/ π 12))
 (def curvature-centercol 3)   ; Column where the effect of β will be zero.
-(def curvature-centerrow 0)   ; Row where the effect of α will be zero.
+
+(defn finger-column-curvature-centerrow [column]
+  "Identify the row where the effect of α will be zero."
+  (cond
+    (>= column 4) -1
+    :else 0))
 
 ;; Individual columns may be translated (offset).
 (defn finger-column-translation [column]
@@ -73,38 +93,41 @@
 
 ;; Individual switches may be finely adjusted, including intrinsic rotation.
 ;; These are maps of column-row pairs to operator values.
-(def finger-tweak-early-translation {[1 -2] [0 -5 2]
-                                     [2 -3] [0 -9 1]
-                                     [3 -2] [0 -5 2]})
-(def finger-intrinsic-pitch {[1 -2] (/ π -10)
-                             [2 -3] (/ π -6)
-                             [3 -2] (/ π -10)
-                             [5 1] (/ π -2.5)})
-(def finger-tweak-late-translation {[5 1] [0 0 -10]})
+(def finger-tweak-early-translation
+  {[1 -2] [0 -5 2]
+   [2 -3] [0 -9 1]
+   [3 -2] [0 -5 2]})
+(def finger-intrinsic-pitch
+  {[1 -2] (/ π -10)
+   [2 -3] (/ π -6)
+   [3 -2] (/ π -10)
+   [4 1] (/ π -2.5)})
+(def finger-tweak-late-translation
+  {[4 1] [0 10 -5]})
 
 ;; Finger switch mounts may need more or less spacing depending on the size
 ;; of your keycaps, curvature etc.
-(def finger-mount-separation-x 0)
-(def finger-mount-separation-y -2.5)
+(def finger-mount-separation-x 0.3)
+(def finger-mount-separation-y -0.4)
 
 ;; Thumb key placement is similar to finger key placement:
-(def thumb-cluster-offset-from-fingers [2 -4 -11])
+(def thumb-cluster-offset-from-fingers [6 3 0])
 (def thumb-cluster-column-offset [0 0 2])
-(def thumb-cluster-rotation [(/ π 3) 0 (/ π -3)])
+(def thumb-cluster-rotation [(/ π 3) 0 (/ π -6)])
 (def intrinsic-thumb-key-rotation
-   {[0 0] [0 (/ π 15) 0]
-    [0 -1] [0 (/ π -15) 0]
-    [0 -2] [0 (/ π -15) 0]
-    [-1 0] [0 (/ π -15) 0]
-    [-1 -1] [0 (/ π 15) 0]
-    [-1 -2] [0 (/ π 15) 0]})
+   {[-1 0] [0 (/ π -5) 0]
+    [-1 -1] [0 (/ π -5) 0]
+    [-1 -2] [0 (/ π -5) 0]
+    [0 0] [0 (/ π -3) 0]
+    [0 -1] [0 (/ π -3) 0]
+    [0 -2] [0 (/ π -3) 0]})
 (def intrinsic-thumb-key-translation
-   {[-1 0] [4 0 3]
-    [-1 -1] [-2 0 0]
-    [-1 -2] [-2 0 0]
-    [0 0] [3 0 3]
-    [0 -1] [2 0 0]
-    [0 -2] [2 0 0]})
+   {[-1 0] [0 0 0]
+    [-1 -1] [0 0 0]
+    [-1 -2] [0 0 0]
+    [0 0] [0 0 17]
+    [0 -1] [0 0 17]
+    [0 -2] [0 0 17]})
 (def thumb-mount-separation 0)
 
 ;; Switch mount plates and the webbing between them have configurable thickness.
@@ -120,15 +143,46 @@
 ;; more posts displaced from it, going down the sides. These anchor the
 ;; different parts of a wall relative to the switch mount. Their placement
 ;; is affected by the way the mount is rotated for the curvature of the board.
-;; Both wall-z-offset and wall-xy-offset are in the mount’s frame of reference,
-;; not in the absolute coordinate system.
-(def wall-z-offset -10)
-(def wall-xy-offset 0)
+;; Offset are therefore in the mount’s frame of reference, not in the absolute
+;; coordinate system.
+(defn finger-key-wall-offsets [coordinates directions]
+  "Return horizontal and vertical offsets from a finger key mount.
+  These are needed for building a wall around the specific key mount."
+  (let [[column row] coordinates]
+   (if (>= row 2)
+     [0 -13]  ; Extra space for ease of soldering at the high far end.
+     (case coordinates
+       [1 -2] [2 8]
+       [2 -3] [0 -13]  ; Extra space for ease of soldering.
+       [0 -10]))))
+(defn thumb-key-wall-offsets [coordinates corner]
+  (let [[column row] coordinates]
+   (case column
+     -1 [0 -5]
+     [0 -10])))
+
 ;; Ultimately, from a set of posts placed by the offsets and the wall-thickness
 ;; parameter, the wall drops down to the floor. The actual thickness of the
 ;; wall at that point is a function of post size and the angle of the nearest
 ;; switch mount, as well as the thickness parameter itself.
 (def wall-thickness 1)
+
+;; It may be desirable to add rubber feet, cork etc. to the bottom of the
+;; keyboard, to increase friction and/or improve feel and sound.
+;; Plates can be added through ‘foot-plate-posts’: A vector of vectors,
+;; defining floor-level plates in relation to finger keys.
+;; A future version may support threaded holes through these feet for mounting
+;; printed parts on solid plates.
+(def include-feet true)
+(def foot-height 4)
+(def foot-plate-posts
+  [;; Close to user, fairly central, in two parts:
+   [[[2 -3] NNW] [[2 -3] NNE] [[3 -2] SSW] [[2 -2] SSE]]
+   [[[3 -2] SSW] [[3 -2] SSE] [[4 -2] WSW] [[2 -2] SSE]]
+   ;; On the left, using optional offsets:
+   [[[0 -1] WSW [0 0]] [[0 -1] WSW [4 -18 0]] [[0 -1] WSW [11 -16]] [[0 -1] WSW [12 -3]]]
+   ;; On the right:
+   [[[5 0] WNW] [[5 0] NNE] [[5 -1] ENE]]])
 
 ;; Settings for column-style :fixed.
 ;; The defaults roughly match Maltron settings
@@ -140,19 +194,41 @@
 (def fixed-tenting (deg2rad 0))
 
 ;; Wrist rest shape:
+(def wrist-plinth-width 35)
+(def wrist-plinth-length 62)
+(def wrist-plinth-height 50)
+(def wrist-connection-column 4)
+(def wrist-connection-offset [5 -30])
 (def wrist-rest-σ 2.5)       ; Softness of curvature.
 (def wrist-rest-θ 12)        ; Surface angle coefficient.
-(def wrist-z-coefficient 6)  ; Relationship of wrist-rest-θ to height.
-(def wrist-connector-height 13)
+(def wrist-z-coefficient 3)  ; Relationship of wrist-rest-θ to height.
+(def wrist-connector-height 15)
+
+;; Given that independent movement of each half of the keyboard is not useful,
+;; each half can include a mounting plate for a ‘beam’ (a straight piece of
+;; wood, aluminium, rigid plastic etc.) to connect the two halves mechanically.
+(def include-backplate true)
+;; The backplate will center along a finger column.
+(def backplate-column 2)
+(def backplate-offset [0 0 -18])
+;; The backplate will have two holes for threaded fasteners.
+(def backplate-fastener-distance 30)
+(def backplate-fastener-diameter 5)
+(def backplate-beam-height 20)
+;; The ‘installation-angle’ is the angle of each half of the keyboard relative
+;; to the lateral beam.
+(def installation-angle (deg2rad -6))
 
 ;; Minor features:
-(def mcu-finger-column 2)
+(def mcu-finger-column 4)
+(def mcu-connector-direction :east)
 (def rj9-translation [-3 -8 0])
 
 ;; LED holes along the inner wall. Defaults are for WS2818 at 17 mm intervals.
-(def led-housing-size 5)
+(def include-led-housings true)
+(def led-housing-size 5.3)  ; Exaggerated; really 5 mm.
 (def led-emitter-diameter 4)
-(def led-pitch 17)
+(def led-pitch 16.8)  ; Allowance for slight wall curvature.
 (def led-amount 3)
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -178,13 +254,18 @@
          (map (partial apply hull)
               (partition 3 1 shapes))))
 
-(defn bottom [height p]
+(defn bottom-extrusion [height p]
   (->> (project p)
        (extrude-linear {:height height :twist 0 :convexity 0})
        (translate [0 0 (- (/ height 2) 10)])))
 
 (defn bottom-hull [& p]
-  (hull p (bottom 0.001 p)))
+  (hull p (bottom-extrusion 0.001 p)))
+
+(defn pair-bottom-hulls [& shapes]
+  (apply union
+         (map (partial apply bottom-hull)
+              (partition 2 1 shapes))))
 
 (defn rotate-around-x [angle position]
   (mmul
@@ -202,11 +283,8 @@
 
 (defn rotator-vector [[x y z]]
   "Create an anonymous rotation function for passed vector of three angles.
-
   This emulates OpenSCAD’s rotate(a=[...]). scad-clj’s ‘rotatev’ was unable to
-  implement that form in version 0.4.0 of the module.
-
-  """
+  implement that form in version 0.4.0 of the module."""
   (fn [obj]
     (->> obj
       (rotate x [1 0 0])
@@ -214,15 +292,13 @@
       (rotate z [0 0 1]))))
 
 (defn swing-callables [translator radius rotator obj]
-  "Rotate passed object with passed radius, instead of around its own axes.
+  "Rotate passed object with passed radius, not around its own axes.
 
   The ‘translator’ function receives a vector based on the radius, in the z
   axis only, and an object to translate.
 
   If ‘rotator’ is a 3-vector of angles or a 2-vector of an angle and an axial
-  filter, a rotation function will be created based on that.
-
-  "
+  filter, a rotation function will be created based on that."
   (if (vector? rotator)
     (if (= (count rotator) 3)
       (swing-callables translator radius (rotator-vector rotator) obj)
@@ -245,17 +321,6 @@
 ;; Core Definitions — All Switches ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; ALPS-style switches:
-(def alps-width 15.5)
-(def alps-depth 13.4)
-(def alps-notch-height 1)
-(def alps-height-below-notch 4.5)
-
-;; Hardcode ALPS as our switch type.
-(def keyswitch-depth alps-depth)
-(def keyswitch-width alps-width)
-(def keyswitch-cutout-height alps-height-below-notch)
-
 ;; Mounts for neighbouring 1U keys are about 0.75” apart.
 (def mount-1u 19.05)
 
@@ -267,6 +332,17 @@
 (def mount-width 18.4)
 (def mount-depth 18.4)
 
+;; ALPS-style switches:
+(def alps-width 15.5)
+(def alps-depth 13.4)
+(def alps-notch-height 1)
+(def alps-height-below-notch 4.5)
+
+;; Hardcode ALPS as our switch type.
+(def keyswitch-depth alps-depth)
+(def keyswitch-width alps-width)
+(def keyswitch-cutout-height alps-height-below-notch)
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Matrix Utilities ;;
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -275,7 +351,7 @@
   ([columns rows] (for [column columns row rows] [column row]))
   ([columns rows selector] (filter selector (coordinate-pairs columns rows))))
 
-(def compass
+(def compass-to-grid
   "Translation particles for each cardinal direction."
   (array-map
    :north {:dx 0,  :dy 1},
@@ -283,9 +359,15 @@
    :south {:dx 0,  :dy -1},
    :west  {:dx -1, :dy 0}))
 
+(def compass-radians
+  {:north 0,
+   :east  (/ π 2),
+   :south π,
+   :west  (/ π -2)})
+
 (defn compass-delta [axis & directions]
   "Find a coordinate axis delta for movement in any of the stated directions."
-  (let [value (get-in compass [(first directions) axis])]
+  (let [value (get-in compass-to-grid [(first directions) axis])]
     (if (or (not (zero? value)) (= (count directions) 1))
       value
       (apply compass-delta axis (rest directions)))))
@@ -296,11 +378,11 @@
 (defn turning-left [direction]
   "Retrieve a direction keyword for turning left from ‘direction’."
   (ffirst (filter #(= direction (second %))
-                  (partition 2 1 '(:north) (keys compass)))))
+                  (partition 2 1 '(:north) (keys compass-to-grid)))))
 
 (defn turning-right [direction]
   (second (first (filter #(= direction (first %))
-                         (partition 2 1 '(:north) (keys compass))))))
+                         (partition 2 1 '(:north) (keys compass-to-grid))))))
 
 (defn next-column [column direction]
   "Each column runs along the y axis; changing columns changes x."
@@ -349,6 +431,12 @@
          (+ (get rows-above-home column rows-default) 1)))
                                  ; range is exclusive ^
 
+(defn first-in-column [column]
+  [column (first (finger-row-indices column))])
+
+(defn last-in-column [column]
+  [column (last (finger-row-indices column))])
+
 (defn finger-column-indices [row]
   "Return the range of column indices valid for passed row index."
   (filter #(finger? [% row]) all-finger-columns))
@@ -379,29 +467,34 @@
 ;; Keycap Models ;;
 ;;;;;;;;;;;;;;;;;;;
 
-(def negative-cap
+(defn negative-cap-shape [scale-top]
   "The shape of a channel for a keycap to move in.
-
   These are useful when keys are placed in such a way that the webbing between
-  neighbouring mounts, or nearby walls, might otherwise obstruct movement.
-
-  "
+  neighbouring mounts, or nearby walls, might otherwise obstruct movement."
   (let [base (+ (max keyswitch-width keyswitch-depth) 2)
-        end (* 1.2 key-width-1u)]
+        factor 1.05
+        end (* factor key-width-1u)]
    (color [0.75 0.75 1 1]
     (translate [0 0 plate-thickness]
       (union
+        ;; A base to accommodate the edges of a switch overhanging the hole:
         (extrude-linear
           {:height 1 :center false :scale (/ key-width-1u base)}
           (square base base))
+        ;; Space for the keycap’s edges in travel:
         (translate [0 0 1]
           (extrude-linear
-            {:height 5 :center false :scale 1.2}
+            {:height 5 :center false :scale factor}
             (square key-width-1u key-width-1u)))
+        ;; Space for the upper body of a keycap at rest:
         (translate [0 0 6]
           (extrude-linear
-            {:height 20 :center false :scale 1}
+            {:height 20 :center false :scale scale-top}
             (square end end))))))))
+
+(def negative-cap-maximal (negative-cap-shape 2))
+(def negative-cap-linear (negative-cap-shape 1))
+(def negative-cap-minimal (negative-cap-shape 0.2))
 
 (defn key-length [units] (- (* units mount-1u) (* 2 key-margin)))
 
@@ -425,29 +518,33 @@
         base-depth (key-length 1)
         vertical-scale 0.73  ; Approximately correct for DSA.
         z-offset (+ cap-bottom-height (/ keycap-height 2))]
-   (->> (square base-width base-depth)
-        (extrude-linear {:height keycap-height :scale vertical-scale})
-        (translate [0 0 z-offset])
-        (color [220/255 163/255 163/255 1]))))
+   (->>
+     (square base-width base-depth)
+     (extrude-linear {:height keycap-height :scale vertical-scale})
+     (translate [0 0 z-offset])
+     (color [220/255 163/255 163/255 1]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Key Placement Functions — General ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def single-plate
+(def single-switch-plate
   (translate [0 0 (/ plate-thickness 2)]
     (cube mount-width mount-depth plate-thickness)))
 
 (def single-switch-cutout
-  "Negative space for the insertion of a key.
-
-  A cube centered on a switch plate, with some overshoot for clean previews.
-
-  "
-  (translate [0 0 (/ plate-thickness 2)]
-    (cube keyswitch-width
-          keyswitch-depth
-          (- (* 2 keyswitch-cutout-height) plate-thickness))))
+  "Negative space for the insertion of a key switch.
+  A cube centered on a switch plate, with some overshoot for clean previews,
+  and a further, more narrow dip for the legs of the switch."
+  (let [h (- (* 2 keyswitch-cutout-height) plate-thickness)
+        dip-factor 2.5]
+   (translate [0 0 (/ plate-thickness 2)]
+     (union
+       (cube keyswitch-width keyswitch-depth h)
+       (translate [0 0 (- h)]
+         (extrude-linear
+           {:height keyswitch-cutout-height :center false :scale dip-factor}
+           (square (/ keyswitch-width dip-factor) (/ keyswitch-depth dip-factor))))))))
 
 (defn mount-corner-offset [directions]
   "Produce a translator for getting to one corner of a switch mount."
@@ -458,12 +555,6 @@
   "A post shape that comes offset for one corner of a key mount."
   (translate (mount-corner-offset directions) web-post))
 
-;; Convenient special cases of mount-corner-offset for hardcoded tweaks.
-(def mount-north-east (mount-corner-offset [:north :east]))
-(def mount-north-west (mount-corner-offset [:north :west]))
-(def mount-south-west (mount-corner-offset [:south :west]))
-(def mount-south-east (mount-corner-offset [:south :east]))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Key Placement Functions — Fingers ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -473,29 +564,21 @@
 (defn row-radius [column row]
   (+ (/ (/ (+ mount-1u finger-mount-separation-y) 2)
            (Math/sin (/ (effective-α column row) 2)))
-     cap-top-height))
+     cap-bottom-height))
 
 (defn column-radius [column]
   (+ (/ (/ (+ mount-1u finger-mount-separation-x) 2)
            (Math/sin (/ β 2)))
-     cap-top-height))
+     cap-bottom-height))
 
 (defn column-x-delta [column]
   (+ -1 (- (* (column-radius column) (Math/sin β)))))
 
 (defn finger-placement [translate-fn rotate-x-fn rotate-y-fn [column row] shape]
-  "Place and tilt passed ‘shape’ as if it were a key.
-
-  Excuse the nested macros. Basically, the order of operations is:
-
-  1. Intrinsic key-specific rotation.
-  2. Global style choice.
-  3. Global operations not subordinate to style.
-  4. Individual translation.
-
-  "
+  "Place and tilt passed ‘shape’ as if it were a key."
   (let [column-curvature-offset (- curvature-centercol column)
         roll-angle (* β column-curvature-offset)
+        curvature-centerrow (finger-column-curvature-centerrow column)
         pitch-angle (* (effective-α column row) (- row curvature-centerrow))
         pitch-radius (row-radius column row)
         column-z-delta (* (column-radius column) (- 1 (Math/cos roll-angle)))
@@ -528,7 +611,7 @@
          applicator
          (rotate-x-fn pitch-centerrow)
          (rotate-y-fn tenting-angle)
-         (translate-fn [0 0 keyboard-z-offset])
+         (translate-fn [0 (* mount-1u curvature-centerrow) keyboard-z-offset])
          (translate-fn (get finger-tweak-late-translation [column row] [0 0 0])))))
 
 (defn finger-key-position [coordinates position]
@@ -537,22 +620,19 @@
 
 (defn finger-key-place [coordinates shape]
   "Put passed shape in specified matrix position.
-
   This resembles (translate (finger-key-position column row [0 0 0]) shape)), but
-  performs the full transformation on the shape, not just the translation.
-
-  "
+  performs the full transformation on the shape, not just the translation."
   (finger-placement
     translate (fn [angle obj] (rotate angle [1 0 0] obj)) (fn [angle obj] (rotate angle [0 1 0] obj)) coordinates shape))
 
 (def finger-plates
-  (apply union (map #(finger-key-place % single-plate) finger-key-coordinates)))
+  (apply union (map #(finger-key-place % single-switch-plate) finger-key-coordinates)))
 
 (def finger-cutouts
   (apply union (map #(finger-key-place % single-switch-cutout) finger-key-coordinates)))
 
 (def finger-key-channels
-  (apply union (map #(finger-key-place % negative-cap) finger-key-coordinates)))
+  (apply union (map #(finger-key-place % negative-cap-minimal) finger-key-coordinates)))
 
 (def finger-keycaps
   (apply union (map #(finger-key-place % (keycap 1)) finger-key-coordinates)))
@@ -563,7 +643,7 @@
 
 (def thumb-origin
   (map + (finger-key-position
-           [thumb-connection-column (first (finger-row-indices thumb-connection-column))]
+           (first-in-column thumb-connection-column)
            [(/ mount-width -2) (/ mount-depth -2) 0])
          thumb-cluster-offset-from-fingers))
 
@@ -585,11 +665,11 @@
                      row all-thumb-rows]
                  (thumb-key-place [column row] shape))))
 
-(def thumb-plates (for-thumbs single-plate))
+(def thumb-plates (for-thumbs single-switch-plate))
 
 (def thumb-cutouts (for-thumbs single-switch-cutout))
 
-(def thumb-key-channels (for-thumbs negative-cap))
+(def thumb-key-channels (for-thumbs negative-cap-minimal))
 
 (def thumb-keycaps (for-thumbs (keycap 1)))
 
@@ -618,23 +698,23 @@
           ;; Connecting columns.
           (if (and fill-here fill-east)
             (hull
-             (placer coord-here (corner-finder [:north :east]))
-             (placer coord-here (corner-finder [:south :east]))
-             (placer coord-east (corner-finder [:north :west]))
-             (placer coord-east (corner-finder [:south :west]))))
+             (placer coord-here (corner-finder ENE))
+             (placer coord-here (corner-finder ESE))
+             (placer coord-east (corner-finder WNW))
+             (placer coord-east (corner-finder WSW))))
           ;; Connecting rows.
           (if (and fill-here fill-north)
             (hull
-             (placer coord-here (corner-finder [:north :west]))
-             (placer coord-here (corner-finder [:north :east]))
-             (placer coord-north (corner-finder [:south :west]))
-             (placer coord-north (corner-finder [:south :east]))))
+             (placer coord-here (corner-finder WNW))
+             (placer coord-here (corner-finder ENE))
+             (placer coord-north (corner-finder WSW))
+             (placer coord-north (corner-finder ESE))))
           ;; Selectively filling the area between all four possible mounts.
           (hull
-            (if fill-here (placer coord-here (corner-finder [:north :east])))
-            (if fill-north (placer coord-north (corner-finder [:south :east])))
-            (if fill-east (placer coord-east (corner-finder [:north :west])))
-            (if fill-northeast (placer coord-northeast (corner-finder [:south :west]))))))))))
+            (if fill-here (placer coord-here (corner-finder ENE)))
+            (if fill-north (placer coord-north (corner-finder ESE)))
+            (if fill-east (placer coord-east (corner-finder WNW)))
+            (if fill-northeast (placer coord-northeast (corner-finder WSW))))))))))
 
 (defn walk-and-web [columns rows spotter placer corner-finder]
   (remove nil?
@@ -652,48 +732,86 @@
 ;; Case Walls — General ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn wall-segment-offset [segment direction]
-  (let [{dx :dx dy :dy} (direction compass)]
+(defn wall-segment-offset [segment cardinal-direction [xy-offset z-offset]]
+  (let [{dx :dx dy :dy} (cardinal-direction compass-to-grid)]
    (case segment
+     0 [0 0 0]
      1 [(* dx wall-thickness)
         (* dy wall-thickness)
-        -1]
-     2 [(* dx wall-xy-offset)
-        (* dy wall-xy-offset)
-        wall-z-offset]
-     3 [(* dx (+ wall-xy-offset wall-thickness))
-        (* dy (+ wall-xy-offset wall-thickness))
-        wall-z-offset])))
+        (/ z-offset (abs z-offset))]
+     2 [(* dx xy-offset)
+        (* dy xy-offset)
+        z-offset]
+     3 [(* dx (+ xy-offset wall-thickness))
+        (* dy (+ xy-offset wall-thickness))
+        z-offset]
+     4 [(* dx (+ xy-offset))
+        (* dy (+ xy-offset))
+        (+ z-offset (/ z-offset (abs z-offset)))]
+        )))
 
-(defn wall-brace [[placer0 direction0 post0] [placer1 direction1 post1]]
+(defn wall-element [segment [placer direction post offsets]]
+  (placer (translate (wall-segment-offset segment direction offsets) post)))
+
+(defn wall-skirt [point0 point1]
+  "The portion of a wall that follows what it’s built around."
+  (hull
+    (wall-element 0 point0)
+    (wall-element 1 point0)
+    (wall-element 2 point0)
+    (wall-element 3 point0)
+    (wall-element 0 point1)
+    (wall-element 1 point1)
+    (wall-element 2 point1)
+    (wall-element 3 point1)))
+
+(defn wall-hem [point0 point1]
+  "The vertical portion of a wall."
+  (bottom-hull
+    (wall-element 2 point0)
+    (wall-element 3 point0)
+    (wall-element 2 point1)
+    (wall-element 3 point1)))
+
+(defn wall-to-ground [point0 point1]
   (union
-    (hull
-      (placer0 post0)
-      (placer0 (translate (wall-segment-offset 1 direction0) post0))
-      (placer0 (translate (wall-segment-offset 2 direction0) post0))
-      (placer0 (translate (wall-segment-offset 3 direction0) post0))
-      (placer1 post1)
-      (placer1 (translate (wall-segment-offset 1 direction1) post1))
-      (placer1 (translate (wall-segment-offset 2 direction1) post1))
-      (placer1 (translate (wall-segment-offset 3 direction1) post1)))
-    (bottom-hull
-      (placer0 (translate (wall-segment-offset 2 direction0) post0))
-      (placer0 (translate (wall-segment-offset 3 direction0) post0))
-      (placer1 (translate (wall-segment-offset 2 direction1) post1))
-      (placer1 (translate (wall-segment-offset 3 direction1) post1)))
-      ))
+    (wall-skirt point0 point1)
+    (wall-hem point0 point1)))
 
-(defn wall-corner-offset [direction corner]
-  "Combined [x y z] offset from the center of a switch mount to one corner of the hem of its skirt."
-  (vec (map + (wall-segment-offset 3 direction) corner)))
+(defn finger-wall-corner-offset [coordinates directions]
+  "Combined [x y z] offset from the center of a switch mount.
+  This goes to one corner of the hem of the mount’s skirt of walling
+  and is used mainly for finding the base of walls."
+  (vec
+    (map +
+      (wall-segment-offset
+        3 (first directions) (finger-key-wall-offsets coordinates directions))
+      (mount-corner-offset directions))))
 
-(defn key-wall-deref [placer post-finder [coordinates direction turn]]
-  [(partial placer coordinates)
-   direction
-   (post-finder [direction (turn direction)])])
+(defn finger-wall-corner-position [coordinates directions]
+  "Absolute position of the lower wall around a finger key."
+  (finger-key-position coordinates
+    (finger-wall-corner-offset coordinates directions)))
 
-(defn key-wall-brace [placer post-finder anchors]
-  (apply wall-brace (map (partial key-wall-deref placer post-finder) anchors)))
+(defn finger-wall-offset [coordinates direction]
+  "Combined [x y z] offset to the center of a wall.
+  Computed as the arithmetic average of its two corners."
+  (letfn [(c [turn]
+            (finger-wall-corner-offset coordinates [direction (turn direction)]))]
+    (vec (map / (vec (map + (c turning-left) (c turning-right))) [2 2 2]))))
+
+(defn key-wall-deref [placer offsetter post-finder [coordinates direction turn]]
+  (let [corner [direction (turn direction)]]
+   [(partial placer coordinates)
+     direction
+     (post-finder corner)
+     (offsetter coordinates corner)]))
+
+(defn key-wall-skirt-only [placer offsetter post-finder anchors]
+  (apply wall-skirt (map (partial key-wall-deref placer offsetter post-finder) anchors)))
+
+(defn key-wall-to-ground [placer offsetter post-finder anchors]
+  (apply wall-to-ground (map (partial key-wall-deref placer offsetter post-finder) anchors)))
 
 ;; Functions for specifying parts of a perimeter wall. These all take the
 ;; edge-walking algorithm’s position and direction upon seeing the need for
@@ -765,28 +883,99 @@
               :inner-corner
                 (bracer (wall-inner-corner place-and-direction)))))))))
 
+;; Some additional surfaces for rubber feet:
+
+(def foot-plates
+  "Model plates from polygons in ‘foot-plate-posts’.
+  Each vector specific a point in a polygon must have finger key coordinates
+  and a mount corner identified by a direction tuple. These cam be followed by
+  a two-dimensional offset for tweaking."
+  (letfn [(xy
+            ([coordinates directions]
+              (xy coordinates directions [0 0 0]))
+            ([coordinates directions offset]
+              (vec (map +
+                (take 2 (finger-wall-corner-position coordinates directions))
+                offset))))
+          (plate [positions]
+            (extrude-linear {:height foot-height :center false}
+              (polygon (map (fn [spec] (apply xy spec)) positions))))]
+   (apply union (map plate foot-plate-posts))))
+
+;; Tweaks:
+
+(def finger-case-tweaks
+  "A collection of ugly workarounds for aesthetics."
+  (letfn [(post [coordinates corner segment]
+            (finger-key-place coordinates
+              (translate
+                (wall-segment-offset segment
+                  (first corner) (finger-key-wall-offsets coordinates corner))
+                (mount-corner-post corner))))
+          (top [coordinates corner]
+            (hull (post coordinates corner 0) (post coordinates corner 1)))
+          (bottom [coordinates corner]
+            (hull (post coordinates corner 2) (post coordinates corner 3)))]
+   (union
+     ;; The corners of finger key [4, 1] look strange because of the
+     ;; irregular angle and placement of the key.
+     (hull
+       (top [4 1] ESE)
+       (top [4 1] SSE)
+       (bottom [4 1] ESE)
+       (bottom [4 1] SSE))
+     (bottom-hull
+       (bottom [4 1] ESE)
+       (bottom [4 1] SSE))
+     (hull
+       (top [4 1] SSE)
+       (top [4 1] SSW)
+       (top [4 1] WSW)
+       (top [4 1] WNW)
+       (top [4 1] NNW))
+     ;; A tidy connection to the neighbouring key.
+     (hull
+       (top [4 1] NNW)
+       (top [4 1] WNW)
+       (top [3 2] NNE)
+       (top [3 2] ENE)
+       (bottom [3 2] ENE)
+       (top [3 2] ESE)
+       (bottom [3 2] ESE)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Case Walls — Fingers ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def case-walls-for-the-fingers
   (apply union
-     (walk-and-wall
-       [[0 (first (finger-row-indices 0))] :north]
-       [[2 (first (finger-row-indices 2))] :north]
-       finger?
-       (partial key-wall-brace finger-key-place mount-corner-post))))
+    (walk-and-wall
+      [(first-in-column 0) :north]
+      [(first-in-column 2) :south]
+      finger?
+      (partial key-wall-to-ground
+        finger-key-place finger-key-wall-offsets mount-corner-post))
+    (walk-and-wall
+      [(first-in-column 2) :south]
+      [(first-in-column 2) :north]
+      finger?
+      (partial key-wall-skirt-only
+        finger-key-place finger-key-wall-offsets mount-corner-post))
+    (walk-and-wall
+      [(first-in-column 1) :west]
+      [(first-in-column 1) :north]
+      finger?
+      (partial key-wall-skirt-only
+        finger-key-place finger-key-wall-offsets mount-corner-post))))
 
 (def case-wrist-hook
-  (let [column last-finger-column
-        [x3 y2] (take 2
-                 (finger-key-position
-                   [column (first (finger-row-indices column))]
-                   (wall-corner-offset :south mount-south-east)))
-        x2 (- x3 10)
-        x1 (- x2 4)
+  (let [[column row] (first-in-column last-finger-column)
+        [x4 y2 _] (finger-key-position [column row] (mount-corner-offset ESE))
+        x3 (- x4 2)
+        x2 (- x3 6)
+        x1 (- x2 2)
         x0 (- x1 0.6)
-        y1 (- y2 5)
+        y1 (- y2 6)
         y0 (- y1 1)]
     (extrude-linear
       {:height wrist-connector-height}
@@ -794,7 +983,7 @@
       (polygon [[x0 y1]  ; Left part of the point.
                 [x1 y0]  ; Right part of the point.
                 [x3 y0]  ; Rightmost contact with the connector.
-                [x3 y2]  ; Rightmost contact with the case.
+                [x4 y2]  ; Rightmost contact with the case.
                 [x2 y2]] ; Leftmost contact with the case.
                 ))))
 
@@ -804,160 +993,192 @@
 
 (def case-walls-for-the-thumbs
   (apply union
-     (walk-and-wall
-       [[0 -1] :south]
-       [[-1 -2] :north]
-       thumb?
-       (partial key-wall-brace thumb-key-place mount-corner-post))))
+    (walk-and-wall
+      [[-1 0] :north]
+      [[-1 -2] :north]
+      thumb?
+      (partial key-wall-skirt-only
+        thumb-key-place thumb-key-wall-offsets mount-corner-post))))
 
 (def key-cluster-bridge
   "Walling and webbing between the thumb cluster and the finger cluster.
-
   This makes strict assumptions about the selected keyboard layout and is
-  difficult to parameterize.
-
-  "
-  (let [post mount-corner-post
-        wall (fn [segment directions]
+  difficult to parameterize."
+  (letfn [(post [key directions segment]
+            (let [[placer offsetter coordinates] key
+                  offsets (offsetter coordinates directions)]
+             (placer coordinates
                (translate
-                 (wall-segment-offset segment (second directions))
-                 (mount-corner-post directions)))
-        f0 (partial finger-key-place [0 (first (finger-row-indices 0))])
-        f1 (partial finger-key-place [1 (first (finger-row-indices 1))])
-        f2 (partial finger-key-place [2 (first (finger-row-indices 2))])
-        t0 (partial thumb-key-place [-1 -2])
-        t1 (partial thumb-key-place [-1 -1])
-        t2 (partial thumb-key-place [-1 0])
-        t3 (partial thumb-key-place [0 0])
-        t4 (partial thumb-key-place [0 -1])]
-   (union
-    ;; A triangular upper wall for t1.
-    (hull
-     (t1 (post [:south :west]))
-     (t1 (post [:north :west]))
-     (t1 (wall 1 [:south :west]))
-     (t1 (wall 1 [:north :west]))
-     (t1 (wall 2 [:south :west]))
-     (t1 (wall 3 [:south :west])))
-    ;; A very small piece connecting the partial walls of t1 and t2.
-    (hull
-     (t1 (post [:north :west]))
-     (t1 (wall 1 [:north :west]))
-     (t2 (wall 1 [:south :west]))
-     (t2 (post [:south :west])))
-    ;; A short partial wall for t2.
-    (hull
-     (t2 (post [:south :west]))
-     (t2 (post [:north :west]))
-     (t2 (wall 1 [:south :west]))
-     (t2 (wall 1 [:north :west])))
-    ;; A short partial wall for f2.
-    (hull
-     (f2 (post [:north :west]))
-     (f2 (post [:south :west]))
-     (f2 (wall 1 [:north :west]))
-     (f2 (wall 1 [:south :west])))
-    ;; A big piece connecting the finger wall on the left to t0 and t1.
-    (hull
-     (bottom-hull (f0 (wall 3 [:south :west])))
-     (hull
-      (t1 (post [:south :west]))
-      (t1 (post [:north :west]))))
-    (hull
-     (extrude-linear {:height 1} (project (f0 (wall 3 [:south :west]))))
-     (t0 (wall 2 [:south :west]))
-     (t0 (post [:south :west]))
-     (t0 (post [:north :west])))
-    ;; A piece connecting the upper wall of f0 to both t1 and t2.
-    (hull
-     (f0 (post [:south :west]))
-     (f0 (wall 1 [:south :west]))
-     (f0 (wall 3 [:south :west]))
-     (t1 (wall 1 [:north :west]))
-     (t2 (wall 1 [:south :west])))
-    ;; A deliberately somewhat oversized link between f0 and t2.
-    (hull
-     (f0 (post [:south :west]))
-     (f0 (post [:south :east]))
-     (t2 (wall 1 [:north :west]))
-     (t2 (wall 1 [:south :west])))
-    ;; A bunch of interlinking plates at the top level.
-    (triangle-hulls
-     (f0 (post [:south :west]))
-     (t2 (wall 1 [:north :west]))
-     (f0 (post [:south :east]))
-     (t2 (post [:north :west]))
-     (f1 (post [:north :west]))
-     (t2 (post [:north :east]))
-     (f1 (post [:south :west]))
-     (t3 (post [:north :west]))
-     (f1 (post [:south :west]))
-     (t3 (post [:north :east]))  ; Top right corner of thumb cluster.
-     (f1 (post [:south :east]))
-     (t3 (post [:north :east]))  ; Reprise.
-     (f2 (wall 1 [:north :west]))
-     (t3 (post [:north :east]))  ; Reprise.
-     (f2 (wall 1 [:south :west]))
-     (t3 (post [:north :east]))  ; Reprise.
-     (f2 (wall 3 [:south :west]))
-    ;; A shim transitioning from a corner of t3 into a partial wall of t3/t4.
-    (hull
-     (t3 (wall 1 [:north :east]))
-     (t4 (wall 2 [:north :east]))
-     (t4 (wall 1 [:north :east]))
-     (t3 (post [:south :east]))
-     (t4 (wall 2 [:north :east]))
-     (t4 (post [:north :east])))
-    ;; A medium piece connecting the walls of the two clusters on the right.
-    (hull
-     (f2 (wall 3 [:south :west]))
-     (t3 (wall 1 [:north :east]))
-     (t4 (wall 1 [:north :east]))
-     (t4 (wall 2 [:north :east]))
-     (t4 (wall 3 [:north :east])))
-    ;; A large piece also connecting the walls of the two clusters.
-    (bottom-hull
-     (f2 (wall 2 [:south :west]))
-     (f2 (wall 3 [:south :west]))
-     (t4 (wall 2 [:north :east]))
-     (t4 (wall 3 [:north :east])))))))
+                 (wall-segment-offset segment (first directions) offsets)
+                 (mount-corner-post directions)))))]
+   (let [f0 [finger-key-place finger-key-wall-offsets (first-in-column 0)]
+         f1 [finger-key-place finger-key-wall-offsets (first-in-column 1)]
+         f2 [finger-key-place finger-key-wall-offsets (first-in-column 2)]
+         t0 [thumb-key-place thumb-key-wall-offsets [-1 -2]]
+         t1 [thumb-key-place thumb-key-wall-offsets [-1 -1]]
+         t2 [thumb-key-place thumb-key-wall-offsets [-1 0]]
+         t3 [thumb-key-place thumb-key-wall-offsets [0 0]]
+         t4 [thumb-key-place thumb-key-wall-offsets [0 -1]]
+         t5 [thumb-key-place thumb-key-wall-offsets [0 -2]]]
+    (union
+      (hull
+        (post t0 WSW 3)
+        (post t0 WSW 1)
+        (post t0 WSW 0)
+        (post t0 WNW 0))
+      (triangle-hulls
+        (post t0 WSW 3)
+        (post f0 WSW 3)
+        (post t0 WNW 0)
+        (post f0 WSW 3)
+        (post t1 WNW 0)
+        (post f0 WSW 1)
+        (post t2 WSW 0)
+        (post f0 WSW 0))
+      ;; A big chunk where t2 looms over f0:
+      (hull
+        (post t2 WSW 0)
+        (post t2 WSW 2)
+        (post t2 WSW 3)
+        (post t2 WNW 0)
+        (post t2 WNW 1)
+        (post t2 WNW 2)
+        (post t2 NNW 3)
+        (post f0 WSW 0)
+        (post f0 ESE 0))
+      ;; Completion of the skirt around f1:
+      (hull
+        (post f1 WNW 0)
+        (post f1 WSW 0)
+        (post f1 WSW 1)
+        (post f1 WSW 2)
+        (post f1 WSW 3))
+      ;; Filling the gap between the f1 skirt and the upper edge thumb skirt:
+      (triangle-hulls
+        (post f0 ESE 0)
+        (post t2 NNW 3)
+        (post f1 WNW 0)
+        (post t2 NNE 3)
+        (post f1 WSW 3)
+        (post t3 NNW 3)
+        (post f1 SSW 2)
+        (post f1 SSW 3))
+      ;; Filling the gap between the raised f1 skirt and f2 mount:
+      (hull
+        (post f1 SSE 0)
+        (post f1 SSE 1)
+        (post f1 SSE 2)
+        (post f1 SSE 3)
+        (post f2 WNW 0)
+        (post f2 WSW 0)
+        (post f2 WSW 1))
+      ;; A tiny plate between the clusters:
+      (hull
+        (post f1 WSW 3)
+        (post t2 NNE 3)
+        (post t3 NNW 3))
+      ;; A big top plate reaching down to the vertical part of the wall:
+      (triangle-hulls
+        (post f1 WSW 2)
+        (post f1 ESE 2)
+        (post t3 NNW 3)
+        (hull
+          (post f2 WSW 0)
+          (post f2 WSW 1)
+          (post f2 SSW 1))
+        (post t3 NNE 3)
+        (post f2 SSW 3)
+        (hull
+          (post t3 NNE 3)
+          (post f2 WSW 4)
+          (post t3 ENE 3)
+          (post f2 SSW 4))
+        (post t3 ENE 3)
+        (post f2 NNW 4)
+        (hull
+          (post t5 NNE 2)
+          (post t5 NNE 3)
+          (post t5 ENE 2)
+          (post t5 ENE 3)))
+      ;; The back plate of the outermost corner of t5:
+      (hull
+        (post t5 ENE 3)
+        (post t5 ENE 4)
+        (post t5 ESE 3)
+        (post t5 ESE 4)
+        (post t5 SSE 3)
+        (post t5 SSE 4)
+        (post t5 SSW 3)
+        (post t5 SSW 4))
+      ;; The back plate of f2:
+      (apply hull
+        (for [segment [3 4]
+              north-south [:north :south]
+              east-west [:east :west]]
+          (union
+            (post f2 [north-south east-west] segment)
+            (post f2 [east-west north-south] segment))))
+      ;; Lower wall:
+      (pair-bottom-hulls
+        (hull
+          (post f2 ENE 2)
+          (post f2 ENE 3)
+          (post f2 ENE 4))
+        (hull
+          (post f2 NNW 4))
+        (hull
+          (post t5 NNE 2)
+          (post t5 NNE 3)
+          (post t5 ENE 2)
+          (post t5 ENE 3))
+        (hull
+          (post t5 WSW 2)
+          (post t5 WSW 3))
+        (hull
+          (post t0 ESE 2)
+          (post t0 ESE 3))
+        (hull
+          (post t0 WSW 2)
+          (post t0 WSW 3))
+        (hull
+          (post f0 WSW 2)
+          (post f0 WSW 3)))))))
+
+(def key-cluster-bridge-cutouts
+  (union
+    (finger-key-place (first-in-column 1) negative-cap-maximal)
+    (finger-key-place (first-in-column 2) negative-cap-maximal)))
 
 ;;;;;;;;;;;;;;;;
 ;; Wrist Rest ;;
 ;;;;;;;;;;;;;;;;
 
-(defn wrist-to-case [[column corner]]
-  "An [x y] coordinate pair at the south wall of the case."
-  (take 2
-    (finger-key-position
-      [column (first (finger-row-indices column))]
-      (wall-corner-offset :south corner))))
+(defn case-south-wall-xy [[column corner]]
+  "An [x y] coordinate pair at the south wall of the keyboard case."
+  (take 2 (finger-wall-corner-position (first-in-column column) corner)))
 
-(def wrist-connection-column 2)
-(def wrist-connector-xy-west (wrist-to-case [wrist-connection-column mount-south-east]))
-(def wrist-connector-xy-east (wrist-to-case [last-finger-column mount-south-east]))
-(def wrist-plinth-xy-west (vec (map + wrist-connector-xy-west [0 -20])))
-(def wrist-plinth-xy-east [(first wrist-connector-xy-east) (second wrist-plinth-xy-west)])
-(def wrist-plinth-width (- (first wrist-plinth-xy-east)
-                           (first wrist-plinth-xy-west)))
-(def wrist-plinth-length 70)
-(def wrist-plinth-height 50)
-(def wrist-grid-unit-x 6)
+(def wrist-connector-xy-west (case-south-wall-xy [wrist-connection-column SSE]))
+(def wrist-connector-xy-east (case-south-wall-xy [last-finger-column SSE]))
+(def wrist-plinth-xy-west (vec (map + wrist-connector-xy-west wrist-connection-offset)))
+(def wrist-plinth-xy-east [(+ (first wrist-plinth-xy-west) wrist-plinth-width)
+                           (second wrist-plinth-xy-west)])
+(def wrist-grid-unit-x 4)
 (def wrist-grid-unit-y wrist-plinth-length)
 (def wrist-node-size 2)
+(def wrist-wall-z-offset -1)
+(defn wrist-wall-offsetter [coordinates corner] [0 wrist-wall-z-offset])
 
 (def last-wrist-column (int (/ wrist-plinth-width wrist-grid-unit-x)))
 (def last-wrist-row (int (/ wrist-plinth-length wrist-grid-unit-y)))
 (def all-wrist-columns (range 0 (+ last-wrist-column 1)))
 (def all-wrist-rows (range 0 (+ last-wrist-row 1)))
-(def node-coordinates (coordinate-pairs all-wrist-columns all-wrist-rows))
 
 (defn wrist? [[column row]]
   "True if specified node in wrist rest surface has been requested."
   (and (<= 0 column last-wrist-column) (<= 0 row last-wrist-row)))
 
 (def wrist-node
-  (let [h (+ (abs wall-z-offset) plate-thickness)
+  (let [h (+ (abs wrist-wall-z-offset) plate-thickness)
         dz (- (- (/ h 2) plate-thickness))]
     (translate [0 0 dz] (cube wrist-node-size wrist-node-size h))))
 
@@ -971,16 +1192,22 @@
   (translate (node-corner-offset directions) web-post))
 
 (def wrist-connector
-  (extrude-linear
-    {:height wrist-connector-height}
-    (polygon
-      (concat
-        (rest
-          (map wrist-to-case
-            (for [column (filter (partial <= wrist-connection-column) all-finger-columns)
-                  corner [mount-south-west mount-south-east]]
-              [column corner])))
-        [wrist-plinth-xy-east wrist-plinth-xy-west]))))
+  (let [bevel 10
+        p0 (case-south-wall-xy [(- wrist-connection-column 1) SSE])]
+   (extrude-linear
+     {:height wrist-connector-height}
+     (polygon
+       (concat
+         [p0]
+         (map case-south-wall-xy
+           (for [column (filter (partial <= wrist-connection-column) all-finger-columns)
+                 corner [SSW SSE]]
+             [column corner]))
+         [[(first wrist-connector-xy-east) (second wrist-plinth-xy-west)]
+          wrist-plinth-xy-west
+          [(first wrist-plinth-xy-west) (- (second p0) bevel)]
+          [(- (first wrist-plinth-xy-west) bevel) (second p0)]]
+    )))))
 
 (defn wrist-node-place [[column row] shape]
   (let [μ 0
@@ -1000,7 +1227,8 @@
 
 (def wrist-nodes
   (apply union
-    (map #(bottom-hull (wrist-node-place % wrist-node)) node-coordinates)))
+    (map #(bottom-hull (wrist-node-place % wrist-node))
+      (coordinate-pairs all-wrist-columns all-wrist-rows))))
 
 (def wrist-surface
   (map bottom-hull
@@ -1013,9 +1241,9 @@
         [[0 0] :north]
         [[0 0] :north]
         (fn [[column row]] (and (<= 0 column last-wrist-column) (<= 0 row last-wrist-row)))
-        (partial key-wall-brace wrist-node-place node-corner-post)))))
+        (partial key-wall-to-ground wrist-node-place wrist-wall-offsetter node-corner-post)))))
 
-(def wrist-rest
+(def wrist-rest-model
   (union
     wrist-connector
     #_wrist-nodes  ; Visualization.
@@ -1026,17 +1254,58 @@
 ;; Minor Features ;;
 ;;;;;;;;;;;;;;;;;;;;
 
+;; Plate for a connecting beam, rod etc.:
+(defn backplate-place [shape]
+  (let [coordinates (last-in-column backplate-column)
+        position (finger-key-position coordinates (finger-wall-offset coordinates :north))]
+   (->>
+     shape
+     (rotate installation-angle [0 0 1])
+     (translate position)
+     (translate [0 0 (/ backplate-beam-height -2)])
+     (translate backplate-offset))))
+
+(def backplate-shape
+  "A mounting plate for a connecting beam."
+  (let [height backplate-beam-height
+        width (+ backplate-fastener-distance height)
+        depth 4
+        interior-protrusion 8
+        exterior-bevel 1
+        interior-bevel 7]
+   (hull
+     (translate [0 (- interior-protrusion) 0]
+       (cube (- width interior-bevel) depth (- height interior-bevel)))
+     (cube width depth height)
+     (translate [0 exterior-bevel 0]
+       (cube (dec width) depth (dec height))))))
+
+(def backplate-fastener-holes
+  "Two holes for screws through the back plate."
+  (letfn [(hole [x-offset]
+            (->>
+              (cylinder (/ backplate-fastener-diameter 2) 25)
+              (rotate (/ π 2) [1 0 0])
+              (translate [x-offset 0 0])
+              backplate-place))]
+   (union
+     (hole (/ backplate-fastener-distance 2))
+     (hole (/ backplate-fastener-distance -2)))))
+
+(def backplate-block
+  (bottom-hull (backplate-place backplate-shape)))
+
 ;; 4P4C connector holder:
 (def rj9-origin
   (let [c0 [0 (last (finger-row-indices 0))]
         c1 [1 (last (finger-row-indices 1))]
-        corner (fn [c] (finger-key-position c (wall-corner-offset :north mount-north-west)))
+        corner (fn [c] (finger-wall-corner-position c NNW))
         [x0 y0] (take 2 (map + (corner c0) (corner c1)))]
    (map + [0 0 0] [(/ x0 2) (/ y0 2) 0])))
 (defn rj9-position [shape]
   (->> shape
        (translate rj9-translation)
-       (rotate (/ π 6) [0 0 1])
+       (rotate (deg2rad 36) [0 0 1])
        (translate [(first rj9-origin) (second rj9-origin) 10.5])))
 (def rj9-metasocket
   (hull
@@ -1046,12 +1315,9 @@
                               (translate [0 0 5] (cube 10.78 13  5))))
 (def rj9-socket-616e
   "The shape of a 4P4C female connector for use as a negative.
-
   An actual 616E socket is not symmetric along the x axis. This model of it,
   being intended for mirroring, is deliberately imprecise. It includes a
-  channel for the 4 wires entering the case.
-
-  "
+  channel for the 4 wires entering the case and excludes the vertical bar."
   (translate [0 1 0]
     (union
      (cube 10 11 17.7)
@@ -1063,7 +1329,12 @@
 ;; USB female holder:
 ;; This is not needed if the MCU has an integrated USB connector and that
 ;; connector is directly exposed through the case.
-(def usb-holder-position (finger-key-position [1 0] (map + (wall-segment-offset 2 :north) [0 (/ mount-depth 2) 0])))
+(def usb-holder-position
+  (let [coordinates [0 0]]
+   (finger-key-position coordinates
+     (map +
+       (wall-segment-offset 2 :north (finger-key-wall-offsets coordinates WNW))
+       [0 (/ mount-depth 2) 0]))))
 (def usb-holder-size [6.5 10.0 13.6])
 (def usb-holder-thickness 4)
 (def usb-holder
@@ -1074,13 +1345,11 @@
          (translate [(first usb-holder-position) (second usb-holder-position) (/ (+ (last usb-holder-size) usb-holder-thickness) 2)])))
 
 ;; LED strip:
-(def led-height (+ (/ led-housing-size 2) 2))
+(def led-height (+ (/ led-housing-size 2) 5))
 (def west-wall-west-points
   (for [row (finger-row-indices 0)
-        corner [mount-south-west mount-north-west]]
-   (let [[x y] (take 2 (finger-key-position
-                        [0 row]
-                        (wall-corner-offset :west corner)))]
+        corner [WSW WNW]]
+   (let [[x y _] (finger-wall-corner-position [0 row] corner)]
     [(+ x wall-thickness) y])))
 (def west-wall-east-points
   (map (fn [[x y]] [(+ x 10) y]) west-wall-west-points))
@@ -1088,9 +1357,8 @@
   (extrude-linear {:height 50}
     (polygon (concat west-wall-west-points (reverse west-wall-east-points)))))
 (defn led-hole-position [ordinal]
-  (let [[x0 y0] (take 2 (finger-key-position
-                         [0 (first (finger-row-indices 0))]
-                         (wall-corner-offset :west mount-north-west)))]
+  (let [row (first (finger-row-indices 0))
+        [x0 y0 _] (finger-wall-corner-position [0 row] WNW)]
    [x0 (+ y0 (* led-pitch ordinal)) led-height]))
 (defn led-emitter-channel [ordinal]
   (->> (cylinder (/ led-emitter-diameter 2) 50)
@@ -1115,13 +1383,14 @@
 (def micro-usb-width 7.5)
 (def micro-usb-length 5.3)
 (def micro-usb-height 2.8)
+
 (def micro-usb-receptacle
+  "A USB female."
   (color [0.5 0.5 0.5 1]
     (cube micro-usb-width micro-usb-length micro-usb-height)))
 (def micro-usb-channel (cube 7.8 10 2.8))
 
-;; Teensy MCUs:
-;; Not fully supported at the moment since Pro Micro is hardcoded below.
+;; Teensy MCU: Not fully supported at the moment. Pro Micro is hardcoded below.
 (def teensy-width 20)
 (def teensy-height 12)
 (def teensy-length 33)
@@ -1130,49 +1399,70 @@
 ;; Arduino Pro Micro MCU:
 (def promicro-width 18)
 (def promicro-length 33)
-(def promicro-pcb-thickness 1.3)
-(def promicro-usb-offset
-   [0
-    (+ (/ promicro-length 2) 1 (/ micro-usb-length -2))
-    (+ (/ promicro-pcb-thickness 2) (/ micro-usb-height 2))])
-(def promicro-usb (cube promicro-width promicro-length promicro-pcb-thickness))
+(def promicro-thickness 1.5)  ; Slightly exaggerated.
 
-(def promicro-model
+(def mcu-microusb-offset
+  "A millimetre offset between an MCU PCB and a micro-USB female."
+  [0
+   (+ (/ promicro-length 2) 1 (/ micro-usb-length -2))
+   (+ (/ promicro-thickness 2) (/ micro-usb-height 2))])
+
+(def promicro-pcb (cube promicro-width promicro-length promicro-thickness))
+(def mcu-height-above-ground 2)
+(def mcu-model
   (union
-    (translate promicro-usb-offset micro-usb-receptacle)
-    (color [26/255, 90/255, 160/255 1] promicro-usb)))
+    (translate mcu-microusb-offset micro-usb-receptacle)
+    (color [26/255, 90/255, 160/255 1] promicro-pcb)))
 
-(def promicro-space-model
-  (union
-    (translate promicro-usb-offset micro-usb-channel)
-    (hull
-      (translate (vec (map + promicro-usb-offset [0 4 0])) (cube 15 1 10))
-      (translate (vec (map + promicro-usb-offset [0 9 0])) (cube 30 1 25)))
-    promicro-usb))
+(def mcu-space-requirements
+  "Negative space for an MCU in use, including USB connectors."
+  (let [alcove 10]
+    (union
+      (translate mcu-microusb-offset
+        (union
+          ;; Female USB connector:
+          micro-usb-channel
+          ;; Male USB connector:
+          (hull
+            (translate [0 4 0] (cube 15 1 10))
+            (translate [0 9 0] (cube 20 1 15)))))
+      ;; An alcove in the inner wall, because a blind notch is hard to clean:
+      (translate [0 (/ (- promicro-length alcove) 2) 0]
+        (cube (+ promicro-width 5) alcove (+ promicro-thickness (* 2 micro-usb-height))))
+      ;; The negative of the PCB, just to put a notch in the spine:
+      promicro-pcb)))
 
+(def mcu-finger-coordinates (last-in-column mcu-finger-column))
 (defn mcu-position [shape]
   "Transform passed shape into the reference frame for an MCU holder."
   (let [[x y] (take 2
                 (finger-key-position
-                  [mcu-finger-column
-                   (last (finger-row-indices mcu-finger-column))]
-                  (wall-corner-offset :north mount-north-west)))]
-   (->> shape
-        (rotate (/ π -2) [0 1 0])
-        (translate [x
-                    (- y (/ promicro-length 2))
-                    (+ (/ promicro-width 2) 4)]))))
+                  mcu-finger-coordinates
+                  (finger-wall-offset mcu-finger-coordinates mcu-connector-direction)))]
+   (->>
+     shape
+     ;; Put the USB end of the PCB at [0, 0].
+     (translate [0 (/ promicro-length -2) 0])
+     ;; Flip it to stand on the long edge for soldering access.
+     (rotate (/ π -2) [0 1 0])
+     ;; Lift it to ground level.
+     (translate [0 0 (/ promicro-width 2)])
+     ;; Lift it a little further, to clear a support structure.
+     (translate [0 0 mcu-height-above-ground])
+     ;; Turn it around the z axis to point USB in the ordered direction.
+     (rotate (- (compass-radians mcu-connector-direction)) [0 0 1])
+     ;; Move it to the ordered case wall.
+     (translate [x y 0]))))
 
-(def promicro-visualization (mcu-position promicro-model))
-(def promicro-negative (mcu-position promicro-space-model))
+(def mcu-visualization (mcu-position mcu-model))
+(def mcu-negative (mcu-position mcu-space-requirements))
 
-;; Holder for Pro Micro:
-(def promicro-support
+;; Holder for MCU:
+(def mcu-support
   (let [plinth-width 4
-        plinth-height 4
-        cervix-column mcu-finger-column
-        cervix-coordinates [cervix-column
-                            (first (take-last 3 (finger-row-indices cervix-column)))]]
+        plinth-height mcu-height-above-ground
+        rev-dir (turning-left (turning-left mcu-connector-direction))
+        cervix-coordinates (walk-matrix mcu-finger-coordinates rev-dir rev-dir)]
     (union
       (mcu-position
         (union
@@ -1180,21 +1470,23 @@
           (translate
             [(- (/ promicro-width -2) (/ plinth-height 2)) (/ promicro-length -2) 0]
             (cube plinth-height 3 plinth-width))
-          ;; A little gripper to hold onto the PCB and stabilize it horizontally.
-          ;; This is intended to be just shallow enough that the spine holding it
-          ;; will bend back far enough for the installation, and is placed to
+          ;; A little gripper stabilize the PCB horizontally.
+          ;; This is intended to be just shallow enough that the outer wall
+          ;; will bend back far enough for the installation and is placed to
           ;; avoid covering any of the through-holes.
           (translate
             [0 (/ promicro-length -2) 0]
             (cube (/ promicro-width 2) 2 plinth-width))))
-        ;; The spine connects a sacrum, which is the main body of the plinth
-        ;; at ground level, with a cervix that helps support the finger web.
-        (triangle-hulls
-          (mcu-position
-            (translate [(+ (/ promicro-width -3) 1) (+ (/ promicro-width -2) -12) 0]
-              (cube 16 9 plinth-width)))
-          (finger-key-place cervix-coordinates (mount-corner-post [:north :east]))
-          (finger-key-place cervix-coordinates (mount-corner-post [:south :east]))))))
+      ;; The spine connects a sacrum, which is the main body of the plinth
+      ;; at ground level, with a cervix that helps support the finger web.
+      (hull
+        (mcu-position
+          (translate [(+ (/ promicro-width -3) 3) (- (/ promicro-width -2) 12) 0]
+            (cube 16 9 plinth-width)))
+        (finger-key-place cervix-coordinates
+          (mount-corner-post [mcu-connector-direction (turning-left rev-dir)]))
+        (finger-key-place cervix-coordinates
+          (mount-corner-post [mcu-connector-direction (turning-right rev-dir)]))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Final Composition and Output ;;
@@ -1207,52 +1499,56 @@
     (do (if (finger? [column row]) (print "□") (print "·"))
         (if (= column last-finger-column) (println)))))
 
-(def model-right
-  (union
-    (difference
-      (union
-        (difference
-          (union case-walls-for-the-fingers
-                 case-wrist-hook
-                 case-walls-for-the-thumbs
-                 key-cluster-bridge
-                 promicro-support)
-          promicro-negative
-          led-holes
-          rj9-space)
-        finger-plates
-        finger-connectors
-        thumb-plates
-        thumb-connectors
-        rj9-holder)
-      finger-cutouts
-      finger-key-channels
-      thumb-cutouts
-      thumb-key-channels
-      (translate [0 0 -20] (cube 500 500 40)))
-    ;; The remaining elements are visualizations for use in development.
-    ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
-    #_promicro-visualization
-    #_finger-keycaps
-    #_thumb-keycaps))
-
 (def wrist-rest-right
   (intersection
     (difference
-      wrist-rest
+      wrist-rest-model
       (union
         case-walls-for-the-fingers
         case-wrist-hook))
      (translate [0 0 50] (cube 500 500 100))))
 
+(def keyboard-right
+  (union
+    (difference
+      (union
+        (difference case-walls-for-the-fingers rj9-space)
+        case-wrist-hook
+        case-walls-for-the-thumbs
+        key-cluster-bridge
+        finger-case-tweaks
+        mcu-support
+        finger-plates
+        finger-connectors
+        thumb-plates
+        thumb-connectors
+        rj9-holder
+        (if include-feet foot-plates)
+        (if include-backplate backplate-block))
+      key-cluster-bridge-cutouts
+      mcu-negative
+      finger-cutouts
+      finger-key-channels
+      thumb-cutouts
+      thumb-key-channels
+      (if include-led-housings led-holes)
+      (if include-backplate backplate-fastener-holes)
+      (translate [0 0 -20] (cube 500 500 40)))
+    ;; The remaining elements are visualizations for use in development.
+    ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
+    #_wrist-rest-right
+    #_mcu-visualization
+    #_finger-keycaps
+    #_thumb-keycaps))
+
 (spit "things/right-hand.scad"
-      (write-scad model-right))
+      (write-scad keyboard-right))
 
 (spit "things/right-wrist.scad"
       (write-scad wrist-rest-right))
 
 (spit "things/left-hand.scad"
-      (write-scad (mirror [-1 0 0] model-right)))
+      (write-scad (mirror [-1 0 0] keyboard-right)))
 
 (spit "things/left-wrist.scad"
       (write-scad (mirror [-1 0 0] wrist-rest-right)))
