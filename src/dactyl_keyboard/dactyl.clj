@@ -111,9 +111,9 @@
 (def finger-mount-separation-y -0.4)
 
 ;; Thumb key placement is similar to finger key placement:
-(def thumb-cluster-offset-from-fingers [6 3 0])
+(def thumb-cluster-offset-from-fingers [9 0 0])
 (def thumb-cluster-column-offset [0 0 2])
-(def thumb-cluster-rotation [(/ π 3) 0 (/ π -6)])
+(def thumb-cluster-rotation [(/ π 3) 0 (/ π -12)])
 (def intrinsic-thumb-key-rotation
    {[-1 0] [0 (/ π -5) 0]
     [-1 -1] [0 (/ π -5) 0]
@@ -125,9 +125,9 @@
    {[-1 0] [0 0 0]
     [-1 -1] [0 0 0]
     [-1 -2] [0 0 0]
-    [0 0] [0 0 17]
-    [0 -1] [0 0 17]
-    [0 -2] [0 0 17]})
+    [0 0] [0 0 15]
+    [0 -1] [0 0 15]
+    [0 -2] [0 0 15]})
 (def thumb-mount-separation 0)
 
 ;; Switch mount plates and the webbing between them have configurable thickness.
@@ -152,7 +152,7 @@
    (if (>= row 2)
      [0 -13]  ; Extra space for ease of soldering at the high far end.
      (case coordinates
-       [1 -2] [2 8]
+       [1 -2] [2 4]
        [2 -3] [0 -13]  ; Extra space for ease of soldering.
        [0 -10]))))
 (defn thumb-key-wall-offsets [coordinates corner]
@@ -170,7 +170,8 @@
 ;; It may be desirable to add rubber feet, cork etc. to the bottom of the
 ;; keyboard, to increase friction and/or improve feel and sound.
 ;; Plates can be added through ‘foot-plate-posts’: A vector of vectors,
-;; defining floor-level plates in relation to finger keys.
+;; defining floor-level plates in relation to finger keys, optionally with
+;; two-dimensional offsets.
 ;; A future version may support threaded holes through these feet for mounting
 ;; printed parts on solid plates.
 (def include-feet true)
@@ -179,8 +180,6 @@
   [;; Close to user, fairly central, in two parts:
    [[[2 -3] NNW] [[2 -3] NNE] [[3 -2] SSW] [[2 -2] SSE]]
    [[[3 -2] SSW] [[3 -2] SSE] [[4 -2] WSW] [[2 -2] SSE]]
-   ;; On the left, using optional offsets:
-   [[[0 -1] WSW [0 0]] [[0 -1] WSW [4 -18 0]] [[0 -1] WSW [11 -16]] [[0 -1] WSW [12 -3]]]
    ;; On the right:
    [[[5 0] WNW] [[5 0] NNE] [[5 -1] ENE]]])
 
@@ -198,7 +197,7 @@
 (def wrist-plinth-length 62)
 (def wrist-plinth-height 50)
 (def wrist-connection-column 4)
-(def wrist-connection-offset [5 -30])
+(def wrist-connection-offset [0 -40])
 (def wrist-rest-σ 2.5)       ; Softness of curvature.
 (def wrist-rest-θ 12)        ; Surface angle coefficient.
 (def wrist-z-coefficient 3)  ; Relationship of wrist-rest-θ to height.
@@ -210,7 +209,7 @@
 (def include-backplate true)
 ;; The backplate will center along a finger column.
 (def backplate-column 2)
-(def backplate-offset [0 0 -18])
+(def backplate-offset [0 0 -15])
 ;; The backplate will have two holes for threaded fasteners.
 (def backplate-fastener-distance 30)
 (def backplate-fastener-diameter 5)
@@ -221,6 +220,7 @@
 
 ;; Minor features:
 (def mcu-finger-column 4)
+(def mcu-offset [0 4 0])
 (def mcu-connector-direction :east)
 (def rj9-translation [-3 -8 0])
 
@@ -248,6 +248,11 @@
 (defn 𝒩′ [x ￼￼μ σ]
   "The first derivative of 𝒩."
   (* (/ (- x) (ⁿ σ 2)) (𝒩 x ￼￼μ σ)))
+
+(defn pairwise-hulls [& shapes]
+  (apply union
+         (map (partial apply hull)
+              (partition 2 1 shapes))))
 
 (defn triangle-hulls [& shapes]
   (apply union
@@ -960,12 +965,6 @@
       [(first-in-column 2) :north]
       finger?
       (partial key-wall-skirt-only
-        finger-key-place finger-key-wall-offsets mount-corner-post))
-    (walk-and-wall
-      [(first-in-column 1) :west]
-      [(first-in-column 1) :north]
-      finger?
-      (partial key-wall-skirt-only
         finger-key-place finger-key-wall-offsets mount-corner-post))))
 
 (def case-wrist-hook
@@ -994,7 +993,7 @@
 (def case-walls-for-the-thumbs
   (apply union
     (walk-and-wall
-      [[-1 0] :north]
+      [[-1 0] :east]
       [[-1 -2] :north]
       thumb?
       (partial key-wall-skirt-only
@@ -1021,31 +1020,40 @@
          t4 [thumb-key-place thumb-key-wall-offsets [0 -1]]
          t5 [thumb-key-place thumb-key-wall-offsets [0 -2]]]
     (union
+      ;; An extension of the wall of t0.
       (hull
-        (post t0 WSW 3)
-        (post t0 WSW 1)
         (post t0 WSW 0)
-        (post t0 WNW 0))
-      (triangle-hulls
+        (post t0 WSW 1)
         (post t0 WSW 3)
-        (post f0 WSW 3)
         (post t0 WNW 0)
+        (post t0 WNW 1))
+      ;; The upper left-hand-side wall.
+      (triangle-hulls
+        (post f0 WSW 3)
         (post f0 WSW 3)
         (post t1 WNW 0)
         (post f0 WSW 1)
         (post t2 WSW 0)
         (post f0 WSW 0))
       ;; A big chunk where t2 looms over f0:
-      (hull
+      ;; This doubles as a pad for a silicone foot.
+      (bottom-hull
         (post t2 WSW 0)
-        (post t2 WSW 2)
-        (post t2 WSW 3)
-        (post t2 WNW 0)
-        (post t2 WNW 1)
-        (post t2 WNW 2)
-        (post t2 NNW 3)
-        (post f0 WSW 0)
-        (post f0 ESE 0))
+        (hull
+          (post t2 WNW 0)
+          (post t2 WNW 1)
+          (post t2 WNW 2)
+          (post t2 WNW 3)
+          (post t2 WNW 4)
+          (post t2 NNW 0)
+          (post t2 NNW 1)
+          (post t2 NNW 2)
+          (post t2 NNW 3)
+          (post t2 NNW 4))
+        (hull
+          (post f0 SSW 0)
+          (post f0 SSW 2)
+          (post f0 SSE 0)))
       ;; Completion of the skirt around f1:
       (hull
         (post f1 WNW 0)
@@ -1053,40 +1061,57 @@
         (post f1 WSW 1)
         (post f1 WSW 2)
         (post f1 WSW 3))
-      ;; Filling the gap between the f1 skirt and the upper edge thumb skirt:
+      ;; Forward joinery:
       (triangle-hulls
-        (post f0 ESE 0)
-        (post t2 NNW 3)
-        (post f1 WNW 0)
-        (post t2 NNE 3)
-        (post f1 WSW 3)
-        (post t3 NNW 3)
-        (post f1 SSW 2)
-        (post f1 SSW 3))
-      ;; Filling the gap between the raised f1 skirt and f2 mount:
-      (hull
-        (post f1 SSE 0)
-        (post f1 SSE 1)
-        (post f1 SSE 2)
-        (post f1 SSE 3)
-        (post f2 WNW 0)
-        (post f2 WSW 0)
-        (post f2 WSW 1))
-      ;; A tiny plate between the clusters:
-      (hull
-        (post f1 WSW 3)
-        (post t2 NNE 3)
-        (post t3 NNW 3))
-      ;; A big top plate reaching down to the vertical part of the wall:
+        (post f0 SSE 0)
+        (hull
+          (post f1 WNW 0)
+          (hull
+            (post f1 WSW 0)
+            (post f1 WSW 1)
+            (post f1 WSW 2)
+            (post f1 WSW 3)))
+        (hull
+          (post t2 NNW 3)
+          (post t2 NNW 4))
+        (hull
+          (post f1 WSW 0)
+          (post f1 WSW 2))
+        (hull
+          (post t2 NNE 3)
+          (post t2 NNE 4))
+        (hull
+          (post f1 SSW 0)
+          (post f1 SSW 2)))
+      ;; Rearward top plating:
       (triangle-hulls
-        (post f1 WSW 2)
-        (post f1 ESE 2)
-        (post t3 NNW 3)
+        (hull
+          (post f1 SSW 0)
+          (post f1 SSW 2))
+        (hull
+          (post f1 SSE 0)
+          (post f2 NNW 0))
+        (hull
+          (post t2 NNE 3)
+          (post t2 NNE 4))
+        (hull
+          (post t3 NNW 3)
+          (post t3 NNW 4))
+        (hull
+          (post f1 SSE 0)
+          (post f2 NNW 0))
         (hull
           (post f2 WSW 0)
-          (post f2 WSW 1)
+          (post f2 WSW 1))
+        (hull
+          (post t3 NNW 3)
+          (post t3 NNW 4))
+        (hull
+          (post t3 NNE 3)
+          (post t3 NNE 4))
+        (hull
+          (post f2 SSW 0)
           (post f2 SSW 1))
-        (post t3 NNE 3)
         (post f2 SSW 3)
         (hull
           (post t3 NNE 3)
@@ -1100,6 +1125,12 @@
           (post t5 NNE 3)
           (post t5 ENE 2)
           (post t5 ENE 3)))
+      ;; A bevel running down the right-hand side, just for aesthetics.
+      (hull
+        (post t3 ENE 3)
+        (post t3 ENE 4)
+        (post t5 ENE 3)
+        (post t5 ENE 4))
       ;; The back plate of the outermost corner of t5:
       (hull
         (post t5 ENE 3)
@@ -1140,6 +1171,12 @@
         (hull
           (post t0 WSW 2)
           (post t0 WSW 3))
+        (hull
+          (post t0 WNW 0)
+          (post t0 WNW 1))
+        (hull
+          (post t1 WNW 0)
+          (post t1 WNW 1))
         (hull
           (post f0 WSW 2)
           (post f0 WSW 3)))))))
@@ -1399,7 +1436,7 @@
 ;; Arduino Pro Micro MCU:
 (def promicro-width 18)
 (def promicro-length 33)
-(def promicro-thickness 1.5)  ; Slightly exaggerated.
+(def promicro-thickness 1.6)  ; Slightly exaggerated.
 
 (def mcu-microusb-offset
   "A millimetre offset between an MCU PCB and a micro-USB female."
@@ -1444,7 +1481,8 @@
      ;; Put the USB end of the PCB at [0, 0].
      (translate [0 (/ promicro-length -2) 0])
      ;; Flip it to stand on the long edge for soldering access.
-     (rotate (/ π -2) [0 1 0])
+     ;; Have the components and silk face the interior of the housing.
+     (rotate (/ π 2) [0 1 0])
      ;; Lift it to ground level.
      (translate [0 0 (/ promicro-width 2)])
      ;; Lift it a little further, to clear a support structure.
@@ -1452,7 +1490,9 @@
      ;; Turn it around the z axis to point USB in the ordered direction.
      (rotate (- (compass-radians mcu-connector-direction)) [0 0 1])
      ;; Move it to the ordered case wall.
-     (translate [x y 0]))))
+     (translate [x y 0])
+     ;; Tweak as ordered.
+     (translate mcu-offset))))
 
 (def mcu-visualization (mcu-position mcu-model))
 (def mcu-negative (mcu-position mcu-space-requirements))
