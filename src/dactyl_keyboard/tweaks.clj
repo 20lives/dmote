@@ -37,40 +37,47 @@
          t4 [thumb-key-place thumb-key-wall-offsets [0 -1]]
          t5 [thumb-key-place thumb-key-wall-offsets [0 -2]]]
     (union
-      ;; An extension of the wall of t0.
+      ;; An extension of the wall of t0:
       (hull
         (post t0 WSW 0)
         (post t0 WSW 1)
         (post t0 WSW 3)
         (post t0 WNW 0)
         (post t0 WNW 1))
-      ;; The upper left-hand-side wall.
-      (triangle-hulls
-        (post f0 WSW 3)
+      ;; The upper left-hand-side wall:
+      (hull
+        (post f0 WSW 0)
+        (post f0 WSW 1)
         (post f0 WSW 3)
         (post t1 WNW 0)
-        (post f0 WSW 1)
+        (post t2 WSW 0))
+      ;; Bevel on t2:
+      (hull
+        (post t2 NNW 0)
+        (post t2 WNW 0)
         (post t2 WSW 0)
-        (post f0 WSW 0))
+        (post t2 NNW 1)
+        (post t2 WNW 1)
+        (post t2 WSW 1))
       ;; A big chunk where t2 looms over f0:
-      ;; This doubles as a pad for a silicone foot.
+      (hull
+        (post t2 WSW 1)
+        (post t2 WNW 1)
+        (post t2 WNW 2)
+        (post t2 WNW 3)
+        (post t2 WNW 4)
+        (post t2 NNW 1)
+        (post t2 NNW 2)
+        (post t2 NNW 3)
+        (post t2 NNW 4)
+        (post f0 SSW 0)
+        (post f0 SSE 0))
+      ;; Pillar for a silicone foot:
       (bottom-hull
-        (post t2 WSW 0)
-        (hull
-          (post t2 WNW 0)
-          (post t2 WNW 1)
-          (post t2 WNW 2)
-          (post t2 WNW 3)
-          (post t2 WNW 4)
-          (post t2 NNW 0)
-          (post t2 NNW 1)
-          (post t2 NNW 2)
-          (post t2 NNW 3)
-          (post t2 NNW 4))
-        (hull
-          (post f0 SSW 0)
-          (post f0 SSW 2)
-          (post f0 SSE 0)))
+        (post t1 WNW 2)
+        (post t1 WNW 1)
+        (post f0 WSW 0)
+        (post f0 WSW 2))
       ;; Completion of the skirt around f1:
       (hull
         (post f1 WNW 0)
@@ -124,6 +131,8 @@
           (post t3 NNW 3)
           (post t3 NNW 4))
         (hull
+          (post t3 ENE 3)
+          (post t3 ENE 4)
           (post t3 NNE 3)
           (post t3 NNE 4))
         (hull
@@ -173,6 +182,7 @@
           (post f2 ENE 3)
           (post f2 ENE 4))
         (hull
+          (post f2 NNW 3)
           (post f2 NNW 4))
         (hull
           (post t5 NNE 2)
@@ -200,8 +210,8 @@
 
 (def key-cluster-bridge-cutouts
   (union
-    (finger-key-place (first-in-column 1) negative-cap-maximal)
-    (finger-key-place (first-in-column 2) negative-cap-maximal)))
+    (finger-key-place (first-in-column 1) negative-cap-linear)
+    (finger-key-place (first-in-column 2) negative-cap-linear)))
 
 (def finger-case-tweaks
   "A collection of ugly workarounds for aesthetics."

@@ -8,7 +8,8 @@
 ;;; things without having to adjust more complex code.
 
 (ns dactyl-keyboard.params
-  (:require [unicode-math.core :refer :all]
+  (:require [scad-clj.model :exclude [use import] :refer :all]
+            [unicode-math.core :refer :all]
             [dactyl-keyboard.generics :refer :all]))
 
 ;;; If you get creative and the bridge between the thumb and finger clusters
@@ -33,6 +34,17 @@
 ;;; home row, but the matrix in this program has no necessary relationship with
 ;;; the matrix in your MCU firmware (TMK/QMK etc.).
 
+;;; All measurements of distance are in millimetres.
+;;; This includes the size of threaded fasteners, which should be ISO metric.
+
+;;; All angles must be specified in radians, and that is the default unit in
+;;; scad-clj. The ‘deg->rad’ function can be called to convert from degrees.
+
+
+;;;;;;;;;;;;;;;;
+;; Key Layout ;;
+;;;;;;;;;;;;;;;;
+
 ;; The shape of the finger key cluster is defined by the number of rows above
 ;; and below the home row in each column.
 (def rows-above-home {0 1, 1 2, 2 2, 3 2, 4 1, 5 0})
@@ -40,34 +52,43 @@
 (def rows-default 1)  ; Default number of rows for columns omitted above.
 
 ;; The tenting angle controls overall left-to-right tilt.
-(def tenting-angle (/ π 8.5))
+(def tenting-angle (/ π 11.5))
 
-;; keyboard-z-offset controls the overall height of the keyboard.
-(def keyboard-z-offset 13)
+;; The offset controls the overall height of the keyboard.
+(def keyboard-z-offset 7)
 
 ;; Finger key placement parameters:
 (def keycap-style :dsa)       ; :sa or :dsa.
 (def column-style :standard)  ; :standard, :orthographic, or :fixed.
-;; α is the default progressive Tait-Bryan pitch of each finger row.
-;; α therefore controls the front-to-back curvature of the keyboard.
-(def α (/ π 9.2))
+
+;; Cutouts for switches optionally include a trench beneath the switch, which
+;; is useful when other choices here produce obstacles to soldering.
+(def keyswitch-trench-depth 0)
+
+(defn finger-column-curvature-centerrow [column]
+  "Identify the row where Tait-Bryan pitch will have no progressive element."
+  ;; This is a function (‘defn’) acting on a column (‘[column]’) of keys.
+  (cond  ; The result here is conditional.
+    (>= column 4) -1
+    :else 0))
+
+(def pitch-centerrow
+  "The pitch of the center row controls the general front-to-back incline."
+  (/ π 12))
+
+(defn progressive-pitch [[column row]]
+  "Define the progressive Tait-Bryan pitch of each finger key, acting in
+  addition to the pitch of the center row.
+  This controls the front-to-back curvature of the keyboard."
+  (cond
+    (= column 2) (if (pos? row) (deg->rad 22) (deg->rad 25))
+    (and (= column 3) (pos? row)) (deg->rad 20)
+    :else (deg->rad 26)))
+
 ;; β is the default progressive Tait-Bryan roll of each finger column.
 ;; β therefore controls the side-to-side curvature of the keyboard.
 (def β (/ π 50))
-
-;; Individual columns may have a non-standard curvature.
-(def finger-column-tweak-α
-  {2 (/ π 8.2)
-   4 (/ π 6.6)
-   5 (/ π 6.6)})
-(def pitch-centerrow (/ π 12))
 (def curvature-centercol 3)   ; Column where the effect of β will be zero.
-
-(defn finger-column-curvature-centerrow [column]
-  "Identify the row where the effect of α will be zero."
-  (cond
-    (>= column 4) -1
-    :else 0))
 
 ;; Individual columns may be translated (offset).
 (defn finger-column-translation [column]
@@ -79,13 +100,9 @@
 ;; Individual switches may be finely adjusted, including intrinsic rotation.
 ;; These are maps of column-row pairs to operator values.
 (def finger-tweak-early-translation
-  {[1 -2] [0 -5 2]
-   [2 -3] [0 -9 1]
-   [3 -2] [0 -5 2]})
+  {[2 -3] [0 -7 2]})
 (def finger-intrinsic-pitch
-  {[1 -2] (/ π -10)
-   [2 -3] (/ π -6)
-   [3 -2] (/ π -10)
+  {[2 -3] (/ π -8)
    [4 1] (/ π -2.5)})
 (def finger-tweak-late-translation
   {[4 1] [0 10 -5]})
@@ -96,7 +113,7 @@
 (def finger-mount-separation-y -0.4)
 
 ;; Thumb key placement is similar to finger key placement:
-(def thumb-cluster-offset-from-fingers [9 0 0])
+(def thumb-cluster-offset-from-fingers [10 1 6])
 (def thumb-cluster-column-offset [0 0 2])
 (def thumb-cluster-rotation [(/ π 3) 0 (/ π -12)])
 (def intrinsic-thumb-key-rotation
@@ -107,13 +124,27 @@
     [0 -1] [0 (/ π -3) 0]
     [0 -2] [0 (/ π -3) 0]})
 (def intrinsic-thumb-key-translation
-   {[-1 0] [0 0 0]
-    [-1 -1] [0 0 0]
-    [-1 -2] [0 0 0]
-    [0 0] [0 0 15]
+   {[0 0] [0 0 15]
     [0 -1] [0 0 15]
     [0 -2] [0 0 15]})
 (def thumb-mount-separation 0)
+
+;; Settings for column-style :fixed.
+;; The defaults roughly match Maltron settings:
+;;   http://patentimages.storage.googleapis.com/EP0219944A2/imgf0002.png
+;; Fixed-z overrides the z portion of the column offsets above.
+(def fixed-angles [(deg->rad 10) (deg->rad 10) 0 0 0 (deg->rad -15) (deg->rad -15)])
+(def fixed-x [-41.5 -22.5 0 20.3 41.4 65.5 89.6])  ; Relative to middle finger.
+(def fixed-z [12.1    8.3 0  5   10.7 14.5 17.5])
+(def fixed-tenting (deg->rad 0))
+
+
+;;;;;;;;;;;;;;;;;;;;;
+;; Case Dimensions ;;
+;;;;;;;;;;;;;;;;;;;;;
+
+;; The size of the keyboard case is determined primarily by the key layout,
+;; but there are other parameters for the thickness of the shell etc.
 
 ;; Switch mount plates and the webbing between them have configurable thickness.
 (def plate-thickness 3)
@@ -143,7 +174,7 @@
 (defn thumb-key-wall-offsets [coordinates corner]
   (let [[column row] coordinates]
    (case column
-     -1 [0 -5]
+     -1 [0 -8]
      [0 -10])))
 
 ;; Ultimately, from a set of posts placed by the offsets and the wall-thickness
@@ -152,66 +183,124 @@
 ;; switch mount, as well as the thickness parameter itself.
 (def wall-thickness 1)
 
-;; It may be desirable to add rubber feet, cork etc. to the bottom of the
-;; keyboard, to increase friction and/or improve feel and sound.
-;; Plates can be added through ‘foot-plate-posts’: A vector of vectors,
-;; defining floor-level plates in relation to finger keys, optionally with
-;; two-dimensional offsets.
-;; A future version may support threaded holes through these feet for mounting
-;; printed parts on solid plates.
-(def include-feet true)
-(def foot-height 4)
-(def foot-plate-posts
-  [;; Close to user, fairly central, in two parts:
-   [[[2 -3] NNW] [[2 -3] NNE] [[3 -2] SSW] [[2 -2] SSE]]
-   [[[3 -2] SSW] [[3 -2] SSE] [[4 -2] WSW] [[2 -2] SSE]]
-   ;; On the right:
-   [[[5 0] WNW] [[5 0] NNE] [[5 -1] ENE]]])
+;;;;;;;;;;;;;;;;
+;; Wrist Rest ;;
+;;;;;;;;;;;;;;;;
 
-;; Settings for column-style :fixed.
-;; The defaults roughly match Maltron settings:
-;;   http://patentimages.storage.googleapis.com/EP0219944A2/imgf0002.png
-;; Fixed-z overrides the z portion of the column offsets above.
-(def fixed-angles [(deg2rad 10) (deg2rad 10) 0 0 0 (deg2rad -15) (deg2rad -15)])
-(def fixed-x [-41.5 -22.5 0 20.3 41.4 65.5 89.6])  ; Relative to middle finger.
-(def fixed-z [12.1    8.3 0  5   10.7 14.5 17.5])
-(def fixed-tenting (deg2rad 0))
+;; A plinth to support the user’s wrist in an appropriate position.
+(def include-wrist-rest true)
 
-;; Wrist rest shape:
+(def wrist-rest-style
+  "If set to :threaded, have a threaded fastener connect to the wrist rest.
+  If set to :solid, print a bridge along the ground."
+  :threaded)
+
+;; Size of the wrist rest.
 (def wrist-plinth-width 35)
 (def wrist-plinth-length 62)
-(def wrist-plinth-height 50)
-(def wrist-connection-column 4)
-(def wrist-connection-offset [0 -40])
+(def wrist-plinth-height 54)
+(def wrist-plinth-base-height (- wrist-plinth-height 10))
+(def wrist-silicone-starting-height (+ wrist-plinth-base-height 2))
+(def wrist-silicone-trench-depth 6)
+
+;; Shape of the top.
 (def wrist-rest-σ 2.5)       ; Softness of curvature.
 (def wrist-rest-θ 12)        ; Surface angle coefficient.
 (def wrist-z-coefficient 3)  ; Relationship of wrist-rest-θ to height.
-(def wrist-connector-height 15)
+
+;; Placement of the wrist rest relative to the keyboard.
+;; With a threaded fastener you will have one degree of freedom beyond this.
+(def wrist-placement-column 4)
+(def wrist-placement-offset [0 -40])
+
+;; Details relevant only with the :threaded style.
+(def wrist-threaded-column 3)  ; Finger column of keyboard-side mount position.
+(def wrist-threaded-offset-keyboard [-12 0])  ; For keyboard-side mount position.
+(def wrist-threaded-offset-plinth [6 -6])  ; Plinth-side mount position.
+(def wrist-threaded-height 10)  ; Height of center of threaded rod.
+(def wrist-threaded-fastener-diameter 6)
+(def wrist-threaded-fastener-length 110)
+(def wrist-threaded-anchor-girth (* 2 wrist-threaded-fastener-diameter))
+(def wrist-threaded-anchor-depth 13)
+
+;; Details relevant only with the :solid style.
+(def wrist-solid-connector-height 14)
+
+
+;;;;;;;;;;;;;;;;
+;; Back Plate ;;
+;;;;;;;;;;;;;;;;
 
 ;; Given that independent movement of each half of the keyboard is not useful,
 ;; each half can include a mounting plate for a ‘beam’ (a straight piece of
 ;; wood, aluminium, rigid plastic etc.) to connect the two halves mechanically.
-(def include-backplate true)
-;; The backplate will center along a finger column.
+(def include-backplate-block true)
+
+;; The plate will center along a finger column.
 (def backplate-column 2)
-(def backplate-offset [0 0 -15])
+(def backplate-offset [2 0 -11])
+
+(def backplate-beam-height
+  "The nominal height (vertical extent) of the plate itself.
+  Because the plate is bottom-hulled to the floor and its vertical position
+  is determined by the backplate-column and backplate-offset settings, this
+  setting’s only real effect is on the area of the plate above its holes."
+  20)
+
 ;; The backplate will have two holes for threaded fasteners.
-(def backplate-fastener-distance 30)
-(def backplate-fastener-diameter 5)
-(def backplate-beam-height 20)
+(def backplate-fastener-distance 30)  ; Distance between fastener centers.
+(def backplate-fastener-diameter 6)
+
+;; The back plate block can optionally contain nut bosses for the fasteners.
+(def include-backplate-boss true)
+
 ;; The ‘installation-angle’ is the angle of each half of the keyboard relative
 ;; to the lateral beam.
-(def installation-angle (deg2rad -6))
+(def installation-angle (deg->rad -6))
 
-;; Minor features:
+
+;;;;;;;;;;
+;; Feet ;;
+;;;;;;;;;;
+
+;; It may be desirable to add silicone rubber feet, cork etc. to the bottom of
+;; the keyboard to increase friction and/or improve feel and sound.
+;; The program therefore includes the option of flat surfaces at ground level.
+(def include-feet true)
+(def foot-height 4)
+
+;; Plates can be added through ‘foot-plate-posts’: A vector of vectors,
+;; defining floor-level plates in relation to finger keys, optionally with
+;; two-dimensional offsets.
+(def foot-plate-posts
+  [(if (or (not include-wrist-rest) (not (= wrist-rest-style :solid)))
+       ;; If there will be no case-to-wrist hook, add a foot in its place.
+       [[[5 -2] SSW [7 1]] [[5 -2] NNE [1 -7]] [[5 -2] ESE]])
+   (if (not (and include-wrist-rest (= wrist-rest-style :threaded)))
+       ;; If there will be no threaded rod housing, add a foot in its place.
+       [[[2 -3] NNW] [[2 -3] NNE] [[3 -2] SSW [0 2]] [[2 -2] SSE [-3 -5]]])
+   ;; On the far right:
+   [[[5 0] WNW [7 0]] [[5 0] NNE] [[5 -1] ENE]]])
+
+;; A future version may support threaded holes through these feet for mounting
+;; printed parts on solid plates.
+
+
+;;;;;;;;;;;;;;;;;;;;
+;; Minor Features ;;
+;;;;;;;;;;;;;;;;;;;;
+
+;; Placement of the microcontroller unit.
 (def mcu-finger-column 4)
 (def mcu-offset [0 4 0])
 (def mcu-connector-direction :east)
-(def rj9-translation [-3 -8 0])
+
+;; Placement of the RJ9 port for interfacing the two halves.
+(def rj9-translation [-1.2 -7 0])
 
 ;; LED holes along the inner wall. Defaults are for WS2818 at 17 mm intervals.
 (def include-led-housings true)
-(def led-housing-size 5.3)  ; Exaggerated; really 5 mm.
+(def led-housing-size 5.5)  ; Exaggerated for printing inaccuracy; really 5 mm.
 (def led-emitter-diameter 4)
 (def led-pitch 16.8)  ; Allowance for slight wall curvature.
 (def led-amount 3)

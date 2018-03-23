@@ -104,6 +104,14 @@
 (defn wall-element [segment [placer direction post offsets]]
   (placer (translate (wall-segment-offset segment direction offsets) post)))
 
+(defn dropping-bevel [point0 point1]
+  "The bevelled portion of a wall at the very top."
+  (hull
+    (wall-element 0 point0)
+    (wall-element 1 point0)
+    (wall-element 0 point1)
+    (wall-element 1 point1)))
+
 (defn wall-skirt [point0 point1]
   "The portion of a wall that follows what it’s built around."
   (hull
@@ -117,7 +125,7 @@
     (wall-element 3 point1)))
 
 (defn wall-hem [point0 point1]
-  "The hem of a wall’s skirt with a vertical section bottoming to the floor."
+  "The hem of a wall’s skirt including a vertical section to the floor."
   (bottom-hull
     (wall-element 2 point0)
     (wall-element 3 point0)
@@ -157,6 +165,9 @@
      direction
      (post-finder corner)
      (offsetter coordinates corner)]))
+
+(defn bevel-only [placer offsetter post-finder anchors]
+  (apply dropping-bevel (map (partial key-wall-deref placer offsetter post-finder) anchors)))
 
 (defn key-wall-skirt-only [placer offsetter post-finder anchors]
   (apply wall-skirt (map (partial key-wall-deref placer offsetter post-finder) anchors)))

@@ -25,15 +25,10 @@
     (do (if (finger? [column row]) (print "□") (print "·"))
         (if (= column last-finger-column) (println)))))
 
-(def wrist-rest-right
-  "Right-hand-side wrist support model."
-  (intersection
-    (difference
-      wrist-rest-model
-      (union
-        case-walls-for-the-fingers
-        case-wrist-hook))
-     (translate [0 0 50] (cube 500 500 100))))
+(def wrist-rest-dual-view
+  (union
+    (wrist-rest-right false)
+    (translate [-100 0 0] (wrist-rest-right true))))
 
 (def keyboard-right
   "Right-hand-side keyboard model."
@@ -41,7 +36,10 @@
     (difference
       (union
         (difference case-walls-for-the-fingers rj9-space)
-        case-wrist-hook
+        (if include-wrist-rest
+          (case wrist-rest-style
+            :solid case-wrist-hook
+            :threaded case-wrist-plate))
         case-walls-for-the-thumbs
         key-cluster-bridge
         finger-case-tweaks
@@ -52,7 +50,7 @@
         thumb-web
         rj9-holder
         (if include-feet foot-plates)
-        (if include-backplate backplate-block))
+        (if include-backplate-block backplate-block))
       key-cluster-bridge-cutouts
       mcu-negative
       finger-cutouts
@@ -60,11 +58,13 @@
       thumb-cutouts
       thumb-key-channels
       (if include-led-housings led-holes)
-      (if include-backplate backplate-fastener-holes)
-      (translate [0 0 -20] (cube 500 500 40)))
+      (if include-backplate-block backplate-fastener-holes)
+      (if include-wrist-rest
+        (if (= wrist-rest-style :threaded) wrist-threaded-rod))
+      (translate [0 0 -500] (cube 1000 1000 1000)))
     ;; The remaining elements are visualizations for use in development.
     ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
-    #_wrist-rest-right
+    #_(wrist-rest-right false)
     #_mcu-visualization
     #_finger-keycaps
     #_thumb-keycaps))
@@ -72,13 +72,14 @@
 (spit "things/right-hand.scad"
       (write-scad keyboard-right))
 
-(spit "things/right-wrist.scad"
-      (write-scad wrist-rest-right))
-
 (spit "things/left-hand.scad"
       (write-scad (mirror [-1 0 0] keyboard-right)))
 
-(spit "things/left-wrist.scad"
-      (write-scad (mirror [-1 0 0] wrist-rest-right)))
+(if include-wrist-rest
+  (do
+    (spit "things/right-wrist.scad"
+          (write-scad wrist-rest-dual-view))
+    (spit "things/left-wrist.scad"
+          (write-scad (mirror [-1 0 0] wrist-rest-dual-view)))))
 
 (defn -main [dum] 1)  ; Dummy to make it easier to batch.

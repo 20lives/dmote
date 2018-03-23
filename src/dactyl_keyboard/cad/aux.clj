@@ -21,11 +21,14 @@
   "An [x y] coordinate pair at the south wall of the keyboard case."
   (take 2 (finger-wall-corner-position (first-in-column column) corner)))
 
-(def wrist-connector-xy-west (case-south-wall-xy [wrist-connection-column SSE]))
-(def wrist-connector-xy-east (case-south-wall-xy [last-finger-column SSE]))
-(def wrist-plinth-xy-west (vec (map + wrist-connector-xy-west wrist-connection-offset)))
-(def wrist-plinth-xy-east [(+ (first wrist-plinth-xy-west) wrist-plinth-width)
-                           (second wrist-plinth-xy-west)])
+(def wrist-placement-xy-keyboard (case-south-wall-xy [wrist-placement-column SSE]))
+
+(def wrist-plinth-xy-nw (vec (map + wrist-placement-xy-keyboard wrist-placement-offset)))
+(def wrist-plinth-xy-ne [(+ (first wrist-plinth-xy-nw) wrist-plinth-width)
+                           (second wrist-plinth-xy-nw)])
+(def wrist-plinth-xy-sw (vec (map - wrist-plinth-xy-nw [0 wrist-plinth-length])))
+(def wrist-plinth-xy-se (vec (map - wrist-plinth-xy-ne [0 wrist-plinth-length])))
+
 (def wrist-grid-unit-x 4)
 (def wrist-grid-unit-y wrist-plinth-length)
 (def wrist-node-size 2)
@@ -52,25 +55,66 @@
     wrist-node-size wrist-node-size web-thickness plate-thickness directions))
 
 (defn node-corner-post [directions]
-  "A post shape that comes offset for one corner of a wrist rest node."
-  (translate (node-corner-offset directions) web-post))
+  "A truncated post shape that comes offset for one corner of a wrist rest node."
+  (translate (node-corner-offset directions)
+    (cube corner-post-width corner-post-width 0.01)))
 
-(def wrist-connector
-  (let [bevel 10
-        p0 (case-south-wall-xy [(- wrist-connection-column 1) SSE])]
+(def wrist-threaded-position-keyboard
+  (conj (vec (map + (case-south-wall-xy [wrist-threaded-column SSE])
+                    wrist-threaded-offset-keyboard))
+        wrist-threaded-height))
+
+(def wrist-threaded-position-plinth
+  (conj (vec (map + wrist-plinth-xy-nw wrist-threaded-offset-plinth))
+        wrist-threaded-height))
+
+(def wrist-threaded-midpoint
+  "The X, Y and Z coordinates of the middle of the threaded rod."
+  (vec (map #(/ % 2)
+            (map + wrist-threaded-position-keyboard wrist-threaded-position-plinth))))
+
+(def wrist-threaded-angle
+  "The angle (from the y axis) of the threaded rod."
+  (let [d (map abs (map - wrist-threaded-position-keyboard wrist-threaded-position-plinth))]
+    (Math/atan (/ (first d) (second d)))))
+
+(def wrist-threaded-rod
+  "An unthreaded model of a theaded cylindrical rod connecting the keyboard and wrist rest."
+  (translate wrist-threaded-midpoint
+    (rotate [(/ π 2) 0 wrist-threaded-angle]
+      (cylinder (/ wrist-threaded-fastener-diameter 2) wrist-threaded-fastener-length))))
+
+(def case-wrist-plate
+  "A plate for attaching a threaded rod to the keyboard case.
+  This is intended to have nuts on both sides and therefore has no bosses."
+  (let [g0 wrist-threaded-anchor-girth
+        g1 (dec g0)
+        d0 wrist-threaded-anchor-depth
+        d1 (dec d0)]
+    (translate wrist-threaded-position-keyboard
+      (rotate [0 0 wrist-threaded-angle]
+        (bottom-hull
+          (cube g0 d1 g0)
+          (cube g1 d0 g1))))))
+
+(def wrist-solid-connector
+  (let [xy-west wrist-plinth-xy-nw
+        xy-east (vec (map + (case-south-wall-xy [last-finger-column SSE]) wrist-placement-offset))
+        bevel 10
+        p0 (case-south-wall-xy [(- wrist-placement-column 1) SSE])]
    (extrude-linear
-     {:height wrist-connector-height}
+     {:height wrist-solid-connector-height}
      (polygon
        (concat
          [p0]
          (map case-south-wall-xy
-           (for [column (filter (partial <= wrist-connection-column) all-finger-columns)
+           (for [column (filter (partial <= wrist-placement-column) all-finger-columns)
                  corner [SSW SSE]]
              [column corner]))
-         [[(first wrist-connector-xy-east) (second wrist-plinth-xy-west)]
-          wrist-plinth-xy-west
-          [(first wrist-plinth-xy-west) (- (second p0) bevel)]
-          [(- (first wrist-plinth-xy-west) bevel) (second p0)]]
+         [[(first xy-east) (second xy-west)]
+          xy-west
+          [(first xy-west) (- (second p0) bevel)]
+          [(- (first xy-west) bevel) (second p0)]]
     )))))
 
 (defn wrist-node-place [[column row] shape]
@@ -84,8 +128,8 @@
        ((rotator-vector [0 (* θ (𝒩′ M μ σ)) 0]))
        (translate [0 0 (- (* z (𝒩 M μ σ)))])
        (translate [(* column wrist-grid-unit-x) (* row wrist-grid-unit-y) 0])
-       (translate [(first wrist-plinth-xy-west)
-                   (- (second wrist-plinth-xy-west) wrist-plinth-length)
+       (translate [(first wrist-plinth-xy-nw)
+                   (- (second wrist-plinth-xy-nw) wrist-plinth-length)
                    wrist-plinth-height])
        )))
 
@@ -94,27 +138,79 @@
     (map #(bottom-hull (wrist-node-place % wrist-node))
       (coordinate-pairs all-wrist-columns all-wrist-rows))))
 
-(def wrist-surface
-  (map bottom-hull
-    (walk-and-web all-wrist-columns all-wrist-rows wrist? wrist-node-place node-corner-post)))
+(def wrist-surface-elements
+  (walk-and-web all-wrist-columns all-wrist-rows wrist? wrist-node-place node-corner-post))
 
-(def wrist-plinth
-  (apply union
-    (map bottom-hull
-      (walk-and-wall
-        [[0 0] :north]
-        [[0 0] :north]
-        (fn [[column row]] (and (<= 0 column last-wrist-column) (<= 0 row last-wrist-row)))
-        (partial key-wall-to-ground wrist-node-place wrist-wall-offsetter node-corner-post)))))
+(def wrist-bevel-elements
+  (walk-and-wall
+    [[0 0] :north]
+    [[0 0] :north]
+    (fn [[column row]] (and (<= 0 column last-wrist-column) (<= 0 row last-wrist-row)))
+    (partial bevel-only wrist-node-place wrist-wall-offsetter node-corner-post)))
 
-(def wrist-rest-model
+(def wrist-bevel-3d-model (apply union wrist-bevel-elements))
+
+(def wrist-bevel-2d-outline (hull (project wrist-bevel-3d-model)))
+
+(def wrist-plinth-zone-rubber
   (union
-    wrist-connector
-    #_wrist-nodes  ; Visualization.
-    (color [1 1 1 1] wrist-surface)
-    wrist-plinth))
+    (translate [0 0 (+ 50 wrist-silicone-starting-height)] (cube 500 500 100))
+    (translate [0 0 (- wrist-silicone-starting-height (/ wrist-silicone-trench-depth 2))]
+      (extrude-linear {:height wrist-silicone-trench-depth}
+        (offset -2 wrist-bevel-2d-outline)))))
+
+(def wrist-plinth-shape
+  "The overall shape of rubber and plastic as one object."
+  (letfn [(shadow [shape]
+            (translate [0 0 wrist-plinth-base-height]
+              (extrude-linear {:height 0.01}
+                (offset 1 (project shape)))))
+          (hull-to-base [shape]
+            (hull shape (shadow shape)))]
+   (union
+     (apply union (map hull-to-base wrist-surface-elements))
+     (apply union (map hull-to-base wrist-bevel-elements))
+     (bottom-hull (shadow wrist-bevel-3d-model)))))
+
+(def wrist-plinth-plastic
+  "The lower portion of a wrist rest, to be printed in a rigid material."
+  (difference
+    wrist-plinth-shape
+    wrist-plinth-zone-rubber
+    (if (= wrist-rest-style :threaded)
+      ;; A hex nut pocket:
+      (translate wrist-threaded-position-plinth
+        (rotate [0 0 wrist-threaded-angle]
+          (hull
+            (rotate [(/ π 2) 0 0]
+              (iso-hex-nut-model wrist-threaded-fastener-diameter))
+            (translate [0 0 100]
+              (rotate [(/ π 2) 0 0]
+                (iso-hex-nut-model wrist-threaded-fastener-diameter)))))))
+    ;; Two square holes for pouring silicone:
+    (translate (vec (map + wrist-plinth-xy-ne [-10 -10]))
+      (extrude-linear {:height 200} (square 10 10)))
+    (translate (vec (map + wrist-plinth-xy-sw [10 10]))
+      (extrude-linear {:height 200} (square 10 10)))))
+
+(def wrist-plinth-rubber
+  "The upper portion of a wrist rest, to be cast or printed in a soft material."
+  (color [0.5 0.5 1 1] (intersection wrist-plinth-zone-rubber wrist-plinth-shape)))
+
+(def wrist-rubber-casting-mould
+  "A thin shell that goes on top of a wrist plinth temporarily.
+  This is for casting silicone into, “in place”, from below. As long as the
+  wrist rest has 180° rotational symmetry around the z axis, one mould should
+  be enough for both halves’ wrist rests, with tape to prevent leaks."
+  (let [dz (- wrist-plinth-height wrist-plinth-base-height)]
+    (difference
+      (translate [0 0 (+ wrist-plinth-base-height (/ dz 2))]
+        (extrude-linear {:height (+ dz 3)}
+          (offset 2 wrist-bevel-2d-outline)))
+      wrist-plinth-shape)))
 
 (def case-wrist-hook
+  "A model hook. In the solid style, this holds the wrest in place."
   (let [[column row] (first-in-column last-finger-column)
         [x4 y2 _] (finger-key-position [column row] (mount-corner-offset ESE))
         x3 (- x4 2)
@@ -124,7 +220,7 @@
         y1 (- y2 6)
         y0 (- y1 1)]
     (extrude-linear
-      {:height wrist-connector-height}
+      {:height wrist-solid-connector-height}
       ;; Draw the outline of the hook moving counterclockwise.
       (polygon [[x0 y1]  ; Left part of the point.
                 [x1 y0]  ; Right part of the point.
@@ -132,6 +228,24 @@
                 [x4 y2]  ; Rightmost contact with the case.
                 [x2 y2]] ; Leftmost contact with the case.
                 ))))
+
+(defn wrist-rest-right [exploded]
+  "Right-hand-side wrist support model(s)."
+  (intersection
+    (difference
+      (union
+        (if (= wrist-rest-style :solid) wrist-solid-connector)
+        (if exploded
+          (union
+            (translate [0 0 70] wrist-rubber-casting-mould)
+            (translate [0 0 30] wrist-plinth-rubber)
+            wrist-plinth-plastic)
+          wrist-plinth-shape))
+      (union
+        (case wrist-rest-style
+          :solid (union case-wrist-hook case-walls-for-the-fingers)
+          :threaded wrist-threaded-rod)))
+    (translate [0 0 500] (cube 1000 1000 1000))))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Microcontroller ;;
@@ -157,7 +271,9 @@
 ;; Arduino Pro Micro MCU:
 (def promicro-width 18)
 (def promicro-length 33)
-(def promicro-thickness 1.6)  ; Slightly exaggerated.
+(def promicro-thickness 1.65)
+
+(def mcu-thickness-tolerance 0.3)
 
 (def mcu-microusb-offset
   "A millimetre offset between an MCU PCB and a micro-USB female."
@@ -188,7 +304,7 @@
       (translate [0 (/ (- promicro-length alcove) 2) 0]
         (cube (+ promicro-width 5) alcove (+ promicro-thickness (* 2 micro-usb-height))))
       ;; The negative of the PCB, just to put a notch in the spine:
-      promicro-pcb)))
+      (cube promicro-width promicro-length (+ promicro-thickness mcu-thickness-tolerance)))))
 
 (def mcu-finger-coordinates (last-in-column mcu-finger-column))
 (defn mcu-position [shape]
@@ -220,30 +336,33 @@
 
 ;; Holder for MCU:
 (def mcu-support
-  (let [plinth-width 4
+  (let [plinth-width (+ promicro-thickness mcu-thickness-tolerance 1.2)
         plinth-height mcu-height-above-ground
+        grip-depth 0.6
+        grip-to-base 5
         rev-dir (turning-left (turning-left mcu-connector-direction))
         cervix-coordinates (walk-matrix mcu-finger-coordinates rev-dir rev-dir)]
     (union
       (mcu-position
         (union
-          ;; A support beneath the end of the PCB.
-          (translate
-            [(- (/ promicro-width -2) (/ plinth-height 2)) (/ promicro-length -2) 0]
-            (cube plinth-height 3 plinth-width))
-          ;; A little gripper stabilize the PCB horizontally.
+          ;; A little gripper to stabilize the PCB horizontally.
           ;; This is intended to be just shallow enough that the outer wall
           ;; will bend back far enough for the installation and is placed to
           ;; avoid covering any of the through-holes.
           (translate
-            [0 (/ promicro-length -2) 0]
-            (cube (/ promicro-width 2) 2 plinth-width))))
+            [0 (+ (/ promicro-length -2) (/ grip-depth 2)) 0]
+            (cube (/ promicro-width 2) grip-depth plinth-width))
+          ;; A block to support the gripper.
+          (translate
+            [0 (- (/ promicro-length -2) (/ grip-to-base 2)) 0]
+            (cube (/ promicro-width 2) grip-to-base plinth-width))))
       ;; The spine connects a sacrum, which is the main body of the plinth
       ;; at ground level, with a cervix that helps support the finger web.
       (hull
         (mcu-position
-          (translate [(+ (/ promicro-width -3) 3) (- (/ promicro-width -2) 12) 0]
-            (cube 16 9 plinth-width)))
+          (translate
+            [0 (- (/ promicro-length -2) grip-to-base) 0]
+            (cube (/ promicro-width 2) grip-to-base plinth-width)))
         (finger-key-place cervix-coordinates
           (mount-corner-post [mcu-connector-direction (turning-left rev-dir)]))
         (finger-key-place cervix-coordinates
@@ -284,8 +403,12 @@
   "Two holes for screws through the back plate."
   (letfn [(hole [x-offset]
             (->>
-              (cylinder (/ backplate-fastener-diameter 2) 25)
-              (rotate (/ π 2) [1 0 0])
+              (union
+                (cylinder (/ backplate-fastener-diameter 2) 25)
+                (if include-backplate-boss
+                  (translate [0 0 10]
+                    (iso-hex-nut-model backplate-fastener-diameter 10))))
+              (rotate [(/ π 2) 0 0])
               (translate [x-offset 0 0])
               backplate-place))]
    (union
@@ -351,7 +474,7 @@
 (defn rj9-position [shape]
   (->> shape
        (translate rj9-translation)
-       (rotate (deg2rad 36) [0 0 1])
+       (rotate (deg->rad 36) [0 0 1])
        (translate [(first rj9-origin) (second rj9-origin) 10.5])))
 
 (def rj9-metasocket

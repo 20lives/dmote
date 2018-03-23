@@ -7,17 +7,46 @@
 
 (ns dactyl-keyboard.cad.misc
   (:require [clojure.core.matrix]
+            [unicode-math.core :refer [π √]]
             [scad-clj.model :exclude [use import] :refer :all]))
 
+(def iso-hex-nut-flat-to-flat
+  "A map of ISO screw diameter to hex nut width in mm.
+  This is measuring flat to flat (i.e. short diagonal).
+  Actual nuts tend to be a little smaller, so these standard
+  sizes are good for 3D printing."
+  {3 5.5
+   4 7
+   5 8
+   6 10
+   8 13})
+
+(def iso-hex-nut-height
+  "A map of ISO screw diameter to (maximum) hex nut height."
+  {3 2.4
+   4 3.2
+   5 4.7
+   6 5.2
+   8 6.8})
+
+(defn iso-hex-nut-diameter [iso-size]
+  "A formula for hex diameter (long diagonal)."
+  (* 2 (/ (iso-hex-nut-flat-to-flat iso-size) (√ 3))))
+
+(defn iso-hex-nut-model
+  "A model of a hex nut for a boss or pocket. No through-hole."
+  ([iso-size]
+    (iso-hex-nut-model iso-size (iso-hex-nut-height iso-size)))
+  ([iso-size height]
+    (rotate [0 0 (/ π 6)]
+      (with-fn 6
+        (cylinder (/ (iso-hex-nut-diameter iso-size) 2) height)))))
+
 (defn pairwise-hulls [& shapes]
-  (apply union
-         (map (partial apply hull)
-              (partition 2 1 shapes))))
+  (apply union (map (partial apply hull) (partition 2 1 shapes))))
 
 (defn triangle-hulls [& shapes]
-  (apply union
-         (map (partial apply hull)
-              (partition 3 1 shapes))))
+  (apply union (map (partial apply hull) (partition 3 1 shapes))))
 
 (defn bottom-extrusion [height p]
   (->> (project p)

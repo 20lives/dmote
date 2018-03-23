@@ -16,7 +16,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def web-post
-  "A shape for attaching things to a corner, e.g. a corner of a switch mount."
+  "A shape for attaching things to a corner of a switch mount."
    (cube corner-post-width corner-post-width web-thickness))
 
 ;; Mounts for neighbouring 1U keys are about 0.75” apart.
@@ -172,14 +172,15 @@
   A cube centered on a switch plate, with some overshoot for clean previews,
   and a further, more narrow dip for the legs of the switch."
   (let [h (- (* 2 keyswitch-cutout-height) plate-thickness)
-        dip-factor 2.5]
+        trench-scale 2.5]
    (translate [0 0 (/ plate-thickness 2)]
      (union
        (cube keyswitch-width keyswitch-depth h)
-       (translate [0 0 (- h)]
-         (extrude-linear
-           {:height keyswitch-cutout-height :center false :scale dip-factor}
-           (square (/ keyswitch-width dip-factor) (/ keyswitch-depth dip-factor))))))))
+       (if (not (zero? keyswitch-trench-depth))
+         (translate [0 0 (- h)]
+           (extrude-linear
+             {:height keyswitch-trench-depth :center false :scale trench-scale}
+             (square (/ keyswitch-width trench-scale) (/ keyswitch-depth trench-scale)))))))))
 
 (defn mount-corner-offset [directions]
   "Produce a translator for getting to one corner of a switch mount."
@@ -194,11 +195,9 @@
 ;; Key Placement Functions — Fingers ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn effective-α [column row] (get finger-column-tweak-α column α))
-
 (defn row-radius [column row]
   (+ (/ (/ (+ mount-1u finger-mount-separation-y) 2)
-           (Math/sin (/ (effective-α column row) 2)))
+           (Math/sin (/ (progressive-pitch [column row]) 2)))
      cap-bottom-height))
 
 (defn column-radius [column]
@@ -214,7 +213,7 @@
   (let [column-curvature-offset (- curvature-centercol column)
         roll-angle (* β column-curvature-offset)
         curvature-centerrow (finger-column-curvature-centerrow column)
-        pitch-angle (* (effective-α column row) (- row curvature-centerrow))
+        pitch-angle (* (progressive-pitch [column row]) (- row curvature-centerrow))
         pitch-radius (row-radius column row)
         column-z-delta (* (column-radius column) (- 1 (Math/cos roll-angle)))
         apply-default-style (fn [obj]

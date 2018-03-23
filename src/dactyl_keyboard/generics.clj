@@ -9,10 +9,6 @@
 (ns dactyl-keyboard.generics
   (:require [unicode-math.core :refer :all]))
 
-(defn deg2rad [degrees]
-  "Convert a number of degrees to radians."
-  (* (/ degrees 180) π))
-
 ;; Each switch mount has four corners with offsets in two directions.
 ;; Capitals in symbol names are reserved for these shorthand definitions
 ;; of the four corners. In each case, the cardinal direction naming the side
