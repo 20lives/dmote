@@ -1,29 +1,19 @@
 # The Dactyl-ManuForm Keyboard: Opposable Thumb Edition
-This is a fork of the [Dactyl](https://github.com/adereth/dactyl-keyboard), a parametrized, split-hand, concave, columnar, ergonomic keyboard.
+This is a fork of the [Dactyl](https://github.com/adereth/dactyl-keyboard), a parametrized, split-hand, concave, columnar, ergonomic keyboard. In this fork,
+the walls drop down as on the [ManuForm](https://github.com/jeffgran/ManuForm) ([geekhack](https://geekhack.org/index.php?topic=46015.0)).
 
 ![Imgur](http://i.imgur.com/LdjEhrR.jpg)
 
-The main change is that the thumb cluster was adapted from the [ManuForm keyboard](https://github.com/jeffgran/ManuForm) ([geekhack](https://geekhack.org/index.php?topic=46015.0)). The walls were changed to just drop to the floor. The keyboard is parametrized to allow adjusting the following:
+The keyboard is parametrized to allow adjusting the following:
 
-* Rows: 4 - 6
-* Columns: 5 and up
-* Exceptions to the rectangle shape of the matrix
-* Row curvature
-* Column curvature
+* 4+ rows and 5+ columns of keys, irregularities permitted
+* Row and column curvature
 * Wrist rest curvature
 * Row tilt (tenting)
 * Column tilt
-* Column offsets
 * Height
-* Exceptions (tilt and placement) for all individual keys
+* Exceptions (tilt and placement) for columns and individual keys
 * Minor features: LED holder etc.
-
-Tom Short, who forked the Dactyl, built a 4x5 version (40% size). See the
-following model files for configurations that may be most common:
-
-* [40% size, (4x5)](https://github.com/tshort/dactyl-keyboard/blob/master/things/right-4x5.stl)
-* [60% size, (5x6)](https://github.com/tshort/dactyl-keyboard/blob/master/things/right-5x6.stl)
-
 
 ## Assembly
 
@@ -34,36 +24,34 @@ following model files for configurations that may be most common:
 * [Install the Leiningen project manager](http://leiningen.org/)
 * [Install OpenSCAD](http://www.openscad.org/)
 
-**Generating the design**
-* Run `lein repl`
-* Load the file `(load-file "src/dactyl_keyboard/dactyl.clj")`
-* This will regenerate the `things/*.scad` files
-* Use OpenSCAD to open a `.scad` file.
-* Make changes to design, repeat `load-file`, OpenSCAD will watch for changes and rerender.
-* When done, use OpenSCAD to export STL files
+On Debian, the first two are accomplished with `apt install clojure leiningen`.
+
+**Generating models**
+* Run `lein repl`. This will generate `things/*.scad` files.
+* Use OpenSCAD to open a `.scad` file for a preview.
+* Make personal changes to `src/dactyl_keyboard/params.clj`.
+* Treat changes by calling `(new-scad)` in the REPL. OpenSCAD will rerender.
+* When done, use OpenSCAD to export STL files.
+
+On Linux, run `create-models.sh` to export all.
 
 **Tips**
-* To render a complex model in OpenSCAD you may need to go to Edit >> Preferences >> Advanced and raise the ceiling for when to “Turn off rendering”
-* [Some other ways to evaluate the clojure design file](http://stackoverflow.com/a/28213489)
-* [Example designing with clojure](http://adereth.github.io/blog/2014/04/09/3d-printing-with-clojure/)
-
+* To render a complex model in OpenSCAD you may need to go to Edit >> Preferences >> Advanced and raise the ceiling for when to “Turn off rendering”.
+* [An example](http://adereth.github.io/blog/2014/04/09/3d-printing-with-clojure/) of designing with Clojure.
+* There are [other ways to evaluate](http://stackoverflow.com/a/28213489) the Clojure code.
 
 ### Printing
 Pregenerated STL files are available in the [things/](things/) directory.
-When a model is generated, it also generates a `.scad` model for a bottom plate.
-This can be exported to a DXF file in OpenSCAD.
-The [things/](things/) directory also has DXF files for the bottom plate.
-When laser cut, some of the inside cuts will need to be removed.
-
-This model can be tricky for non-professionals to print.
-It's wide, so Short had problems with PLA on a Makerbot with edges warping.
-This can cause the printer to think its head is jammed.
-Even if it successfully prints, warping can cause problems.
-On one print, the RJ-9 holder was squished, so Short had to cut down his connector to fit.
+Caution is advised when printing as the web of switch connectors presents a
+series of complicated overhangs. For printing prototypes and any printing with
+materials that stiffen quickly enough to produce viable switch mounts without
+support, build support from the base plate only; this simplifies the process
+of removing the supports.
 
 ### Thingiverse
 
-[The 4x5 STL left/right pair](https://www.thingiverse.com/thing:2349390) from the [things/](things/) directory is in the thingiverse for public printing
+[The 4x5 STL left/right pair](https://www.thingiverse.com/thing:2349390) from
+Tom Short’s original Dactyl-ManuForm is in the thingiverse for public printing.
 
 ### Wiring
 
@@ -111,7 +99,6 @@ For more photos of the first complete wiring of v0.4, see [Imgur](http://imgur.c
 This is how the rows/columns wire to the keys and the Pro Micro
 ![Wire Diagram](https://docs.google.com/drawings/d/1s9aAg5bXBrhtb6Xw-sGOQQEndRNOqpBRyUyHkgpnSps/pub?w=1176&h=621)
 
-
 #### Row-Driven Wiring
 
 This alternative is also for the Pro Micro. Make sure the firmware is set up correctly (e.g. change row pins with col pins) if you are going to use this.
@@ -119,7 +106,6 @@ This alternative is also for the Pro Micro. Make sure the firmware is set up cor
 ![Left Wire Diagram](/resources/dactyl_manuform_left_wire_diagram.png)
 
 ![Left Wire Diagram](/resources/dactyl_manuform_right_wire_diagram.png)
-
 
 ### Firmware
 
@@ -130,6 +116,6 @@ This site also shows connections for the Arduino Pro Micro controllers.
 
 ## License
 
-Copyright © 2015-2018 Matthew Adereth, Tom Short et al.
+Copyright © 2015-2018 Matthew Adereth, Tom Short, Viktor Eikman et al.
 
 The source code for generating the models (everything excluding the [things/](things/) and [resources/](resources/) directories is distributed under the [GNU AFFERO GENERAL PUBLIC LICENSE Version 3](LICENSE).  The generated models and PCB designs are distributed under the [Creative Commons Attribution-NonCommercial-ShareAlike License Version 3.0](LICENSE-models).
