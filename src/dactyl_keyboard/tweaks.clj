@@ -16,197 +16,116 @@
             [dactyl-keyboard.cad.key :refer :all]
             [dactyl-keyboard.cad.case :refer :all]))
 
+
+(defn- placed-segment [key directions segment]
+  "A convenience function for specifying a wall segment."
+  (let [[placer offsetter coordinates] key
+        offsets (offsetter coordinates directions)]
+   (placer coordinates
+     (translate
+       (wall-segment-offset segment (first directions) offsets)
+       (mount-corner-post directions)))))
+
+(defn- post [key directions segment & segments]
+  "Just avoid complicating the SCAD code with a hull unnecessarily."
+  (if (empty? segments)
+    (placed-segment key directions segment)
+    (apply hull (map (partial placed-segment key directions)
+                     (conj segments segment)))))
+
 (def key-cluster-bridge
   "Walling and webbing between the thumb cluster and the finger cluster.
   This makes strict assumptions about the selected keyboard layout and is
   difficult to parameterize."
-  (letfn [(post [key directions segment]
-            (let [[placer offsetter coordinates] key
-                  offsets (offsetter coordinates directions)]
-             (placer coordinates
-               (translate
-                 (wall-segment-offset segment (first directions) offsets)
-                 (mount-corner-post directions)))))]
-   (let [f0 [finger-key-place finger-key-wall-offsets (first-in-column 0)]
-         f1 [finger-key-place finger-key-wall-offsets (first-in-column 1)]
-         f2 [finger-key-place finger-key-wall-offsets (first-in-column 2)]
-         t0 [thumb-key-place thumb-key-wall-offsets [-1 -2]]
-         t1 [thumb-key-place thumb-key-wall-offsets [-1 -1]]
-         t2 [thumb-key-place thumb-key-wall-offsets [-1 0]]
-         t3 [thumb-key-place thumb-key-wall-offsets [0 0]]
-         t4 [thumb-key-place thumb-key-wall-offsets [0 -1]]
-         t5 [thumb-key-place thumb-key-wall-offsets [0 -2]]]
+  (let [f0 [finger-key-place finger-key-wall-offsets (first-in-column 0)]
+        f1 [finger-key-place finger-key-wall-offsets (first-in-column 1)]
+        f2 [finger-key-place finger-key-wall-offsets (first-in-column 2)]
+        t0 [thumb-key-place thumb-key-wall-offsets [-1 -2]]
+        t1 [thumb-key-place thumb-key-wall-offsets [-1 -1]]
+        t2 [thumb-key-place thumb-key-wall-offsets [-1 0]]
+        t3 [thumb-key-place thumb-key-wall-offsets [0 0]]
+        t4 [thumb-key-place thumb-key-wall-offsets [0 -1]]
+        t5 [thumb-key-place thumb-key-wall-offsets [0 -2]]]
     (union
       ;; An extension of the wall of t0:
       (hull
-        (post t0 WSW 0)
-        (post t0 WSW 1)
-        (post t0 WSW 3)
-        (post t0 WNW 0)
-        (post t0 WNW 1))
-      ;; The upper left-hand-side wall:
-      (hull
-        (post f0 WSW 0)
-        (post f0 WSW 1)
-        (post f0 WSW 3)
-        (post t1 WNW 0)
-        (post t2 WSW 0))
-      ;; Bevel on t2:
-      (hull
-        (post t2 NNW 0)
-        (post t2 WNW 0)
-        (post t2 WSW 0)
-        (post t2 NNW 1)
-        (post t2 WNW 1)
-        (post t2 WSW 1))
+        (post t0 WSW 0 1 3)
+        (post t0 WNW 0 1))
       ;; A big chunk where t2 looms over f0:
       (hull
         (post t2 WSW 1)
-        (post t2 WNW 1)
-        (post t2 WNW 2)
-        (post t2 WNW 3)
-        (post t2 WNW 4)
-        (post t2 NNW 1)
-        (post t2 NNW 2)
-        (post t2 NNW 3)
-        (post t2 NNW 4)
-        (post f0 SSW 0)
-        (post f0 SSE 0))
-      ;; Pillar for a silicone foot:
-      (bottom-hull
-        (post t1 WNW 2)
-        (post t1 WNW 1)
+        (post t2 WNW 1 2 3 4)
+        (post t2 NNW 1 2 3 4)
         (post f0 WSW 0)
-        (post f0 WSW 2))
-      ;; Completion of the skirt around f1:
-      (hull
-        (post f1 WNW 0)
-        (post f1 WSW 0)
-        (post f1 WSW 1)
-        (post f1 WSW 2)
-        (post f1 WSW 3))
+        (post f0 SSE 0)
+        (post t1 WNW 1)
+        (post f0 WSW 0))
       ;; Forward joinery:
       (triangle-hulls
         (post f0 SSE 0)
         (hull
           (post f1 WNW 0)
-          (hull
-            (post f1 WSW 0)
-            (post f1 WSW 1)
-            (post f1 WSW 2)
-            (post f1 WSW 3)))
-        (hull
-          (post t2 NNW 3)
-          (post t2 NNW 4))
-        (hull
-          (post f1 WSW 0)
-          (post f1 WSW 2))
-        (hull
-          (post t2 NNE 3)
-          (post t2 NNE 4))
-        (hull
-          (post f1 SSW 0)
-          (post f1 SSW 2)))
+          (post f1 WSW 0 2 3)
+          (post f1 SSW 0 2))
+        (post t2 NNW 4)
+        (post f1 WSW 0 2)
+        (post t2 NNE 4)
+        (post f1 SSW 0 2))
       ;; Rearward top plating:
       (triangle-hulls
+        (post f1 SSW 0 2)
         (hull
-          (post f1 SSW 0)
-          (post f1 SSW 2))
+          (post f1 SSE 0)
+          (post f2 NNW 0))
+        (post t2 NNE 4)
+        (post t3 NNW 4)
         (hull
           (post f1 SSE 0)
           (post f2 NNW 0))
         (hull
-          (post t2 NNE 3)
-          (post t2 NNE 4))
+          (post f2 WSW 0 1)
+          (post f2 SSW 0 1))
+        (post t3 NNW 4)
         (hull
-          (post t3 NNW 3)
-          (post t3 NNW 4))
-        (hull
-          (post f1 SSE 0)
-          (post f2 NNW 0))
-        (hull
-          (post f2 WSW 0)
-          (post f2 WSW 1))
-        (hull
-          (post t3 NNW 3)
-          (post t3 NNW 4))
-        (hull
-          (post t3 ENE 3)
           (post t3 ENE 4)
-          (post t3 NNE 3)
-          (post t3 NNE 4))
+          (post t3 NNE 4)))
+      ;; Plating extending down the user-facing side.
+      (triangle-hulls
+        (post f2 SSW 0 1)
+        (post f2 SSE 0 1)
+        (post t3 NNE 4)
         (hull
-          (post f2 SSW 0)
-          (post f2 SSW 1))
-        (post f2 SSW 3)
-        (hull
-          (post t3 NNE 3)
-          (post f2 WSW 4)
-          (post t3 ENE 3)
-          (post f2 SSW 4))
-        (post t3 ENE 3)
-        (post f2 NNW 4)
-        (hull
-          (post t5 NNE 2)
-          (post t5 NNE 3)
-          (post t5 ENE 2)
-          (post t5 ENE 3)))
-      ;; A bevel running down the right-hand side, just for aesthetics.
-      (hull
-        (post t3 ENE 3)
+          (post f2 SSE 3 4)
+          (post f2 ESE 3 4))
         (post t3 ENE 4)
-        (post t5 ENE 3)
-        (post t5 ENE 4))
+        (post t3 ESE 4)
+        (post f2 ESE 3 4)
+        (post f2 ENE 3 4))
       ;; The back plate of the outermost corner of t5:
       (hull
-        (post t5 ENE 3)
-        (post t5 ENE 4)
-        (post t5 ESE 3)
-        (post t5 ESE 4)
-        (post t5 SSE 3)
-        (post t5 SSE 4)
-        (post t5 SSW 3)
-        (post t5 SSW 4))
-      ;; The back plate of f2:
-      (apply hull
-        (for [segment [3 4]
-              north-south [:north :south]
-              east-west [:east :west]]
-          (union
-            (post f2 [north-south east-west] segment)
-            (post f2 [east-west north-south] segment))))
+        (post t5 ENE 3 4)
+        (post t5 ESE 3 4)
+        (post t5 SSE 3 4)
+        (post t5 SSW 3 4))
+      ;; A large plate coming down the wall on the user-facing side.
+      (hull
+        (post f2 ENE 3 4)
+        (post t3 SSE 4)
+        (post t3 ESE 4)
+        (post t5 NNE 4)
+        (post t5 ENE 4))
       ;; Lower wall:
       (pair-bottom-hulls
         (hull
-          (post f2 ENE 2)
-          (post f2 ENE 3)
-          (post f2 ENE 4))
-        (hull
-          (post f2 NNW 3)
-          (post f2 NNW 4))
-        (hull
-          (post t5 NNE 2)
-          (post t5 NNE 3)
-          (post t5 ENE 2)
-          (post t5 ENE 3))
-        (hull
-          (post t5 WSW 2)
-          (post t5 WSW 3))
-        (hull
-          (post t0 ESE 2)
-          (post t0 ESE 3))
-        (hull
-          (post t0 WSW 2)
-          (post t0 WSW 3))
-        (hull
-          (post t0 WNW 0)
+          (post f0 WSW 0 1 2 3)
+          (post t2 WSW 1)
+          (post t1 WNW 1)
           (post t0 WNW 1))
-        (hull
-          (post t1 WNW 0)
-          (post t1 WNW 1))
-        (hull
-          (post f0 WSW 2)
-          (post f0 WSW 3)))))))
+        (post t0 WSW 2 3)
+        (post t0 ESE 2 3)
+        (post t5 WSW 2 3)
+        (post t5 ENE 4)
+        (post f2 ENE 2 3 4)))))
 
 (def key-cluster-bridge-cutouts
   (union
@@ -215,39 +134,41 @@
 
 (def finger-case-tweaks
   "A collection of ugly workarounds for aesthetics."
-  (letfn [(post [coordinates corner segment]
-            (finger-key-place coordinates
-              (translate
-                (wall-segment-offset segment
-                  (first corner) (finger-key-wall-offsets coordinates corner))
-                (mount-corner-post corner))))
-          (top [coordinates corner]
-            (hull (post coordinates corner 0) (post coordinates corner 1)))
-          (bottom [coordinates corner]
-            (hull (post coordinates corner 2) (post coordinates corner 3)))]
+  (let [weirdo [finger-key-place finger-key-wall-offsets [4 1]]
+        neighbour-nw [finger-key-place finger-key-wall-offsets [3 2]]
+        neighbour-w [finger-key-place finger-key-wall-offsets [3 1]]
+        neighbour-s [finger-key-place finger-key-wall-offsets [4 0]]
+        neighbour-se [finger-key-place finger-key-wall-offsets [5 0]]]
    (union
-     ;; The corners of finger key [4, 1] look strange because of the
-     ;; irregular angle and placement of the key.
+     ;; Upper bevel around the weirdo key.
      (hull
-       (top [4 1] ESE)
-       (top [4 1] SSE)
-       (bottom [4 1] ESE)
-       (bottom [4 1] SSE))
-     (bottom-hull
-       (bottom [4 1] ESE)
-       (bottom [4 1] SSE))
+       (post weirdo NNW 0 1)
+       (post weirdo WNW 0 1)
+       (post weirdo WSW 0 1)
+       (post weirdo SSW 0 1)
+       (post weirdo SSE 0 1)
+       (post weirdo ESE 0 1))
+     ;; West wall-web hybrid.
      (hull
-       (top [4 1] SSE)
-       (top [4 1] SSW)
-       (top [4 1] WSW)
-       (top [4 1] WNW)
-       (top [4 1] NNW))
+       (post neighbour-nw ESE 0)
+       (post neighbour-w ENE 0)
+       (post neighbour-w ESE 0)
+       (post neighbour-s WNW 0)
+       (post weirdo WNW 1)
+       (post weirdo WSW 1)
+       (post weirdo SSW 1))
+     ;; South wall-web hybrid.
+     (hull
+       (post neighbour-s NNW 0)
+       (post neighbour-s NNE 0)
+       (post neighbour-se NNW 0)
+       (post weirdo WSW 1)
+       (post weirdo SSW 1)
+       (post weirdo SSE 1)
+       (post weirdo ESE 1))
      ;; A tidy connection to the neighbouring key.
      (hull
-       (top [4 1] NNW)
-       (top [4 1] WNW)
-       (top [3 2] NNE)
-       (top [3 2] ENE)
-       (bottom [3 2] ENE)
-       (top [3 2] ESE)
-       (bottom [3 2] ESE)))))
+       (post neighbour-nw ENE 0 1 2)
+       (post neighbour-nw ESE 0 1 2)
+       (post weirdo NNW 0 1)
+       (post weirdo WNW 0 1)))))

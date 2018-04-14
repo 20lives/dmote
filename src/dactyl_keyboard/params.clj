@@ -103,9 +103,9 @@
   {[2 -3] [0 -7 2]})
 (def finger-intrinsic-pitch
   {[2 -3] (/ π -8)
-   [4 1] (/ π -2.5)})
+   [4 1] (/ π -1.9)})
 (def finger-tweak-late-translation
-  {[4 1] [0 10 -5]})
+  {[4 1] [0 12 0]})
 
 ;; Finger switch mounts may need more or less spacing depending on the size
 ;; of your keycaps, curvature etc.
@@ -169,8 +169,12 @@
      [0 -13]  ; Extra space for ease of soldering at the high far end.
      (case coordinates
        [1 -2] [2 4]
-       [2 -3] [0 -13]  ; Extra space for ease of soldering.
+       [2 -3] [0 (if (some #{:south} directions) -8 -16)]
+       [4 1] [0 -1]
        [0 -10]))))
+(defn finger-key-web [coordinates]
+  "A predicate function for whether or not to web in a coordinate pair."
+  (not (= coordinates [4 1])))
 (defn thumb-key-wall-offsets [coordinates corner]
   (let [[column row] coordinates]
    (case column
@@ -214,14 +218,29 @@
 (def wrist-placement-offset [0 -40])
 
 ;; Details relevant only with the :threaded style.
-(def wrist-threaded-column 3)  ; Finger column of keyboard-side mount position.
-(def wrist-threaded-offset-keyboard [-12 0])  ; For keyboard-side mount position.
-(def wrist-threaded-offset-plinth [6 -6])  ; Plinth-side mount position.
-(def wrist-threaded-height 10)  ; Height of center of threaded rod.
+(def wrist-threaded-column
+  "Finger column of keyboard-side threaded mount position."
+  2)
+(def wrist-threaded-offset-keyboard
+  "Offset from shadow of first mount in wrist-threaded-column."
+  [-13 -10])
+(def wrist-threaded-offset-plinth
+  "Offset from corner of plinth to plinth-side threaded mount position."
+   [6 (/ wrist-plinth-length -2)])
 (def wrist-threaded-fastener-diameter 6)
+(def wrist-threaded-height
+  "Height above ground of center of first rod."
+   (* 1.2 wrist-threaded-fastener-diameter))
 (def wrist-threaded-fastener-length 110)
-(def wrist-threaded-anchor-girth (* 2 wrist-threaded-fastener-diameter))
-(def wrist-threaded-anchor-depth 13)
+(def wrist-threaded-fastener-amount
+  "Amount of threaded rods."
+  2)
+(def wrist-threaded-separation
+  "Progressive offset between threaded rods."
+  [0 0 20])
+(def wrist-threaded-anchor-girth (* 2.4 wrist-threaded-fastener-diameter))
+(def wrist-threaded-anchor-depth-case 8)
+(def wrist-threaded-anchor-depth-plinth 42)
 
 ;; Details relevant only with the :solid style.
 (def wrist-solid-connector-height 14)
@@ -275,7 +294,7 @@
 (def foot-plate-posts
   [(if (or (not include-wrist-rest) (not (= wrist-rest-style :solid)))
        ;; If there will be no case-to-wrist hook, add a foot in its place.
-       [[[5 -2] SSW [7 1]] [[5 -2] NNE [1 -7]] [[5 -2] ESE]])
+       [[[5 -2] SSW [5 1]] [[5 -2] NNE [1 -7]] [[5 -2] ESE]])
    (if (not (and include-wrist-rest (= wrist-rest-style :threaded)))
        ;; If there will be no threaded rod housing, add a foot in its place.
        [[[2 -3] NNW] [[2 -3] NNE] [[3 -2] SSW [0 2]] [[2 -2] SSE [-3 -5]]])
@@ -292,7 +311,7 @@
 
 ;; Placement of the microcontroller unit.
 (def mcu-finger-column 4)
-(def mcu-offset [0 4 0])
+(def mcu-offset [-0.5 4 0.5])
 (def mcu-connector-direction :east)
 
 ;; Placement of the RJ9 port for interfacing the two halves.

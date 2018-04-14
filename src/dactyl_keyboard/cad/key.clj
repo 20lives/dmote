@@ -32,7 +32,7 @@
 
 ;; ALPS-style switches:
 (def alps-width 15.5)
-(def alps-depth 13.4)
+(def alps-depth 12.6)
 (def alps-notch-height 1)
 (def alps-height-below-notch 4.5)
 
@@ -168,14 +168,19 @@
     (cube mount-width mount-depth plate-thickness)))
 
 (def single-switch-cutout
-  "Negative space for the insertion of a key switch.
+  "Negative space for the insertion of a key switch and the movement of a cap.
   A cube centered on a switch plate, with some overshoot for clean previews,
-  and a further, more narrow dip for the legs of the switch."
+  and a further, more narrow dip for the legs of the switch,
+  and narrowing space above the plate for a keycap."
   (let [h (- (* 2 keyswitch-cutout-height) plate-thickness)
         trench-scale 2.5]
    (translate [0 0 (/ plate-thickness 2)]
      (union
+       negative-cap-minimal
        (cube keyswitch-width keyswitch-depth h)
+       ;; ALPS-specific space for wings to flare out.
+       (translate [0 0 -1.5]
+         (cube (+ keyswitch-width 1) keyswitch-depth plate-thickness))
        (if (not (zero? keyswitch-trench-depth))
          (translate [0 0 (- h)]
            (extrude-linear
@@ -265,9 +270,6 @@
 (def finger-cutouts
   (apply union (map #(finger-key-place % single-switch-cutout) finger-key-coordinates)))
 
-(def finger-key-channels
-  (apply union (map #(finger-key-place % negative-cap-minimal) finger-key-coordinates)))
-
 (def finger-keycaps
   (apply union (map #(finger-key-place % (keycap 1)) finger-key-coordinates)))
 
@@ -302,7 +304,5 @@
 (def thumb-plates (for-thumbs single-switch-plate))
 
 (def thumb-cutouts (for-thumbs single-switch-cutout))
-
-(def thumb-key-channels (for-thumbs negative-cap-minimal))
 
 (def thumb-keycaps (for-thumbs (keycap 1)))

@@ -84,18 +84,52 @@
     (rotate [(/ π 2) 0 wrist-threaded-angle]
       (cylinder (/ wrist-threaded-fastener-diameter 2) wrist-threaded-fastener-length))))
 
-(def case-wrist-plate
-  "A plate for attaching a threaded rod to the keyboard case.
-  This is intended to have nuts on both sides and therefore has no bosses."
+(defn wrist-rod-offset
+  "A rod-specific offset relative to the primary rod (index 0).
+  The nullary form returns the offset of the last rod."
+  ([] (wrist-rod-offset (dec wrist-threaded-fastener-amount)))
+  ([index] (vec (map #(* index %) wrist-threaded-separation))))
+
+(def connecting-rods-and-nuts
+  "The full set of connecting threaded rods with nuts for nut bosses."
+  (let [nut
+          (->> (iso-hex-nut-model wrist-threaded-fastener-diameter)
+               (rotate [(/ π 2) 0 0])
+               (translate [0 3 0])
+               (rotate [0 0 wrist-threaded-angle])
+               (translate wrist-threaded-position-keyboard))]
+   (apply union
+    (for [i (range wrist-threaded-fastener-amount)]
+      (translate (wrist-rod-offset i)
+        (union
+          wrist-threaded-rod
+          nut))))))
+
+(defn- wrist-plate-block [depth]
   (let [g0 wrist-threaded-anchor-girth
         g1 (dec g0)
-        d0 wrist-threaded-anchor-depth
+        d0 depth
         d1 (dec d0)]
+   (union
+     (cube g0 d1 g0)
+     (cube g1 d0 g1)
+     (cube 1 1 (+ g1 8)))))
+
+(def case-wrist-plate
+  "A plate for attaching a threaded rod to the keyboard case.
+  This is intended to have nuts on both sides, with a boss on the inward side."
+  (bottom-hull
     (translate wrist-threaded-position-keyboard
+      (translate (wrist-rod-offset)
+        (rotate [0 0 wrist-threaded-angle]
+          (wrist-plate-block wrist-threaded-anchor-depth-case))))))
+
+(def plinth-wrist-plate
+  "A plate on the plinth side."
+  (bottom-hull
+    (translate (vec (map + wrist-threaded-position-plinth (wrist-rod-offset)))
       (rotate [0 0 wrist-threaded-angle]
-        (bottom-hull
-          (cube g0 d1 g0)
-          (cube g1 d0 g1))))))
+        (wrist-plate-block wrist-threaded-anchor-depth-plinth)))))
 
 (def wrist-solid-connector
   (let [xy-west wrist-plinth-xy-nw
@@ -143,10 +177,13 @@
 
 (def wrist-bevel-elements
   (walk-and-wall
-    [[0 0] :north]
-    [[0 0] :north]
     (fn [[column row]] (and (<= 0 column last-wrist-column) (<= 0 row last-wrist-row)))
-    (partial bevel-only wrist-node-place wrist-wall-offsetter node-corner-post)))
+    wrist-node-place
+    wrist-wall-offsetter
+    node-corner-post
+    dropping-bevel
+    [[0 0] :north]
+    [[0 0] :north]))
 
 (def wrist-bevel-3d-model (apply union wrist-bevel-elements))
 
@@ -168,6 +205,7 @@
           (hull-to-base [shape]
             (hull shape (shadow shape)))]
    (union
+     plinth-wrist-plate
      (apply union (map hull-to-base wrist-surface-elements))
      (apply union (map hull-to-base wrist-bevel-elements))
      (bottom-hull (shadow wrist-bevel-3d-model)))))
@@ -205,7 +243,7 @@
   (let [dz (- wrist-plinth-height wrist-plinth-base-height)]
     (difference
       (translate [0 0 (+ wrist-plinth-base-height (/ dz 2))]
-        (extrude-linear {:height (+ dz 3)}
+        (extrude-linear {:height (+ dz 4)}
           (offset 2 wrist-bevel-2d-outline)))
       wrist-plinth-shape)))
 
@@ -244,7 +282,7 @@
       (union
         (case wrist-rest-style
           :solid (union case-wrist-hook case-walls-for-the-fingers)
-          :threaded wrist-threaded-rod)))
+          :threaded connecting-rods-and-nuts)))
     (translate [0 0 500] (cube 1000 1000 1000))))
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -260,7 +298,7 @@
   "A USB female."
   (color [0.5 0.5 0.5 1]
     (cube micro-usb-width micro-usb-length micro-usb-height)))
-(def micro-usb-channel (cube 7.8 10 2.8))
+(def micro-usb-channel (cube 7.8 10 micro-usb-height))
 
 ;; Teensy MCU: Not fully supported at the moment. Pro Micro is hardcoded below.
 (def teensy-width 20)
@@ -282,7 +320,6 @@
    (+ (/ promicro-thickness 2) (/ micro-usb-height 2))])
 
 (def promicro-pcb (cube promicro-width promicro-length promicro-thickness))
-(def mcu-height-above-ground 2)
 (def mcu-model
   (union
     (translate mcu-microusb-offset micro-usb-receptacle)
@@ -290,7 +327,8 @@
 
 (def mcu-space-requirements
   "Negative space for an MCU in use, including USB connectors."
-  (let [alcove 10]
+  (let [alcove-width (+ micro-usb-height promicro-thickness mcu-thickness-tolerance 1)
+        alcove-height (+ promicro-width 1)]
     (union
       (translate mcu-microusb-offset
         (union
@@ -299,10 +337,12 @@
           ;; Male USB connector:
           (hull
             (translate [0 4 0] (cube 15 1 10))
-            (translate [0 9 0] (cube 20 1 15)))))
+            (translate [0 9 0] (cube 17 1 12)))))
       ;; An alcove in the inner wall, because a blind notch is hard to clean:
-      (translate [0 (/ (- promicro-length alcove) 2) 0]
-        (cube (+ promicro-width 5) alcove (+ promicro-thickness (* 2 micro-usb-height))))
+      (translate [0
+                  (/ (- promicro-length alcove-height) 2)
+                  (/ (- alcove-width promicro-thickness) 2)]
+        (cube (+ promicro-width 5) alcove-height alcove-width))
       ;; The negative of the PCB, just to put a notch in the spine:
       (cube promicro-width promicro-length (+ promicro-thickness mcu-thickness-tolerance)))))
 
@@ -315,15 +355,13 @@
                   (finger-wall-offset mcu-finger-coordinates mcu-connector-direction)))]
    (->>
      shape
-     ;; Put the USB end of the PCB at [0, 0].
+     ;; Put the USB end of the PCB at [0, 0, 0].
      (translate [0 (/ promicro-length -2) 0])
      ;; Flip it to stand on the long edge for soldering access.
      ;; Have the components and silk face the interior of the housing.
      (rotate (/ π 2) [0 1 0])
-     ;; Lift it to ground level.
+     ;; Have the components and silk face the interior of the housing.
      (translate [0 0 (/ promicro-width 2)])
-     ;; Lift it a little further, to clear a support structure.
-     (translate [0 0 mcu-height-above-ground])
      ;; Turn it around the z axis to point USB in the ordered direction.
      (rotate (- (compass-radians mcu-connector-direction)) [0 0 1])
      ;; Move it to the ordered case wall.
@@ -337,7 +375,7 @@
 ;; Holder for MCU:
 (def mcu-support
   (let [plinth-width (+ promicro-thickness mcu-thickness-tolerance 1.2)
-        plinth-height mcu-height-above-ground
+        plinth-height (nth mcu-offset 2)
         grip-depth 0.6
         grip-to-base 5
         rev-dir (turning-left (turning-left mcu-connector-direction))

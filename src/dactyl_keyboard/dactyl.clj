@@ -6,10 +6,8 @@
 (ns dactyl-keyboard.dactyl
   (:require [scad-clj.scad :refer [write-scad]]
             [scad-clj.model :exclude [use import] :refer :all]
-            [dactyl-keyboard.params :refer :all]
-            [dactyl-keyboard.tweaks :refer [key-cluster-bridge
-                                            key-cluster-bridge-cutouts
-                                            finger-case-tweaks]]
+            [dactyl-keyboard.params :as params]
+            [dactyl-keyboard.tweaks :as tweaks]
             [dactyl-keyboard.cad.key :refer :all]
             [dactyl-keyboard.cad.case :refer :all]
             [dactyl-keyboard.cad.aux :refer :all]))
@@ -36,31 +34,29 @@
     (difference
       (union
         (difference case-walls-for-the-fingers rj9-space)
-        (if include-wrist-rest
-          (case wrist-rest-style
+        (if params/include-wrist-rest
+          (case params/wrist-rest-style
             :solid case-wrist-hook
             :threaded case-wrist-plate))
         case-walls-for-the-thumbs
-        key-cluster-bridge
-        finger-case-tweaks
+        tweaks/key-cluster-bridge
+        tweaks/finger-case-tweaks
         mcu-support
         finger-plates
         finger-web
         thumb-plates
         thumb-web
         rj9-holder
-        (if include-feet foot-plates)
-        (if include-backplate-block backplate-block))
-      key-cluster-bridge-cutouts
+        (if params/include-feet foot-plates)
+        (if params/include-backplate-block backplate-block))
+      tweaks/key-cluster-bridge-cutouts
       mcu-negative
       finger-cutouts
-      finger-key-channels
       thumb-cutouts
-      thumb-key-channels
-      (if include-led-housings led-holes)
-      (if include-backplate-block backplate-fastener-holes)
-      (if include-wrist-rest
-        (if (= wrist-rest-style :threaded) wrist-threaded-rod))
+      (if params/include-led-housings led-holes)
+      (if params/include-backplate-block backplate-fastener-holes)
+      (if params/include-wrist-rest
+        (if (= params/wrist-rest-style :threaded) connecting-rods-and-nuts))
       (translate [0 0 -500] (cube 1000 1000 1000)))
     ;; The remaining elements are visualizations for use in development.
     ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
@@ -75,7 +71,7 @@
 (spit "things/left-hand.scad"
       (write-scad (mirror [-1 0 0] keyboard-right)))
 
-(if include-wrist-rest
+(if params/include-wrist-rest
   (do
     (spit "things/right-wrist.scad"
           (write-scad wrist-rest-dual-view))

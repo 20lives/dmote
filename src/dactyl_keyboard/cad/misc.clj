@@ -13,8 +13,9 @@
 (def iso-hex-nut-flat-to-flat
   "A map of ISO screw diameter to hex nut width in mm.
   This is measuring flat to flat (i.e. short diagonal).
-  Actual nuts tend to be a little smaller, so these standard
-  sizes are good for 3D printing."
+  Actual nuts tend to be a little smaller, in which case these standard
+  sizes are good for a very tight fit in 3D printing, after accounting for
+  printer inaccuracy and material shrinkage."
   {3 5.5
    4 7
    5 8
