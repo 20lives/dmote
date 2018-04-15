@@ -24,36 +24,31 @@
     (do (if (key/finger? [column row]) (print "□") (print "·"))
         (if (= column key/last-finger-column) (println)))))
 
-(def wrist-rest-dual-view
-  (union
-    (wrist/rest-right false)
-    (translate [-100 0 0] (wrist/rest-right true))))
-
 (def keyboard-right
   "Right-hand-side keyboard model."
   (union
     (difference
       (union
         (difference body/finger-walls aux/rj9-space)
+        body/thumb-walls
+        body/finger-web
+        body/thumb-web
+        key/finger-plates
+        key/thumb-plates
+        tweaks/key-cluster-bridge
+        tweaks/finger-case-tweaks
         (if params/include-wrist-rest
           (case params/wrist-rest-style
             :solid wrist/case-hook
             :threaded wrist/case-plate))
-        body/thumb-walls
-        tweaks/key-cluster-bridge
-        tweaks/finger-case-tweaks
         aux/mcu-support
-        key/finger-plates
-        body/finger-web
-        key/thumb-plates
-        body/thumb-web
         aux/rj9-holder
         (if params/include-feet aux/foot-plates)
         (if params/include-backplate-block aux/backplate-block))
-      tweaks/key-cluster-bridge-cutouts
-      aux/mcu-negative
       key/finger-cutouts
       key/thumb-cutouts
+      tweaks/key-cluster-bridge-cutouts
+      aux/mcu-negative
       (if params/include-led-housings aux/led-holes)
       (if params/include-backplate-block aux/backplate-fastener-holes)
       (if params/include-wrist-rest
@@ -61,10 +56,10 @@
       (translate [0 0 -500] (cube 1000 1000 1000)))
     ;; The remaining elements are visualizations for use in development.
     ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
-    #_(wrist/rest-right false)
-    #_mcu-visualization
     #_key/finger-keycaps
-    #_key/thumb-keycaps))
+    #_key/thumb-keycaps
+    #_mcu-visualization
+    #_wrist/unified-preview))
 
 (spit "things/right-hand.scad"
       (write-scad keyboard-right))
@@ -74,9 +69,16 @@
 
 (if params/include-wrist-rest
   (do
-    (spit "things/right-wrist.scad"
-          (write-scad wrist-rest-dual-view))
-    (spit "things/left-wrist.scad"
-          (write-scad (mirror [-1 0 0] wrist-rest-dual-view)))))
+    ;; Items that can be used for either side.
+    (spit "things/ambilateral-wrist-mould.scad"
+          (write-scad wrist/rubber-casting-mould))
+    (spit "things/ambilateral-wrist-insert.scad"
+          (write-scad wrist/rubber-insert))
+
+    ;; Items that cannot.
+    (spit "things/right-wrist-plastic-base.scad"
+          (write-scad wrist/plinth-plastic))
+    (spit "things/left-wrist-plastic-base.scad"
+          (write-scad (mirror [-1 0 0] wrist/plinth-plastic)))))
 
 (defn -main [dum] 1)  ; Dummy to make it easier to batch.

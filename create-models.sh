@@ -1,4 +1,4 @@
-#!/bin/sh -eu
+#!/bin/bash -eu
 # Prepare models for a git commit.
 
 OPENSCAD=
@@ -13,10 +13,10 @@ fi
 [ -n "$OPENSCAD" ] || exit 65
 
 lein run src/dactyl_keyboard/dactyl.clj
-$OPENSCAD -o things/right-hand.stl things/right-hand.scad >/dev/null 2>&1 &
-$OPENSCAD -o things/left-hand.stl  things/left-hand.scad >/dev/null 2>&1 &
-$OPENSCAD -o things/right-wrist.stl things/right-wrist.scad >/dev/null 2>&1 &
-$OPENSCAD -o things/left-wrist.stl  things/left-wrist.scad >/dev/null 2>&1 &
+for F in things/*.scad
+do
+  $OPENSCAD -o ${F/scad/stl} $F >/dev/null 2>&1 &
+done
 
 # Patch files need updating.
 wait

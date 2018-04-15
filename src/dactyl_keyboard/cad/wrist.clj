@@ -242,57 +242,64 @@
           (hull-to-base [shape]
             (hull shape (shadow shape)))]
    (union
-     plinth-plate
      (apply union (map hull-to-base surface-elements))
      (apply union (map hull-to-base bevel-elements))
-     (misc/bottom-hull (shadow bevel-3d-model)))))
+     (misc/bottom-hull (shadow bevel-3d-model))
+     (case params/wrist-rest-style
+       :threaded plinth-plate
+       :solid solid-connector))))
 
 (def plinth-plastic
   "The lower portion of a wrist rest, to be printed in a rigid material."
   (let [nut (rotate [(/ π 2) 0 0]
                (misc/iso-hex-nut-model params/wrist-threaded-fastener-diameter))]
-    (difference
-      plinth-shape
-      plinth-zone-rubber
-      (if (= params/wrist-rest-style :threaded)
-        ;; A hex nut pocket:
-        (translate threaded-position-plinth
-          (rotate [0 0 rod-angle]
-            (hull nut (translate [0 0 100] nut)))))
-      ;; Two square holes for pouring silicone:
-      (translate (vec (map + plinth-xy-ne [-10 -10]))
-        (extrude-linear {:height 200} (square 10 10)))
-      (translate (vec (map + plinth-xy-sw [10 10]))
-        (extrude-linear {:height 200} (square 10 10))))))
+   (intersection
+     (difference
+       plinth-shape
+       plinth-zone-rubber
+       (case params/wrist-rest-style
+         :solid
+           (union
+             case-hook
+             body/finger-walls)
+         :threaded
+           (union
+             connecting-rods-and-nuts
+             ;; A hex nut pocket:
+             (translate threaded-position-plinth
+               (rotate [0 0 rod-angle]
+                 (hull nut (translate [0 0 100] nut))))))
+       ;; Two square holes for pouring silicone:
+       (translate (vec (map + plinth-xy-ne [-10 -10]))
+         (extrude-linear {:height 200} (square 10 10)))
+       (translate (vec (map + plinth-xy-sw [10 10]))
+         (extrude-linear {:height 200} (square 10 10))))
+     (translate [0 0 500] (cube 1000 1000 1000)))))
 
-(def plinth-rubber
+(def rubber-insert
   "The upper portion of a wrist rest, to be cast or printed in a soft material."
   (color [0.5 0.5 1 1] (intersection plinth-zone-rubber plinth-shape)))
 
 (def rubber-casting-mould
   "A thin shell that goes on top of a wrist plinth temporarily.
-  This is for casting silicone into, “in place”, from below. As long as the
+  This is for casting silicone into, “in place”. As long as the
   wrist rest has 180° rotational symmetry around the z axis, one mould should
   be enough for both halves’ wrist rests, with tape to prevent leaks."
   (let [dz (- params/wrist-plinth-height params/wrist-plinth-base-height)]
-    (difference
-      (translate [0 0 (+ params/wrist-plinth-base-height (/ dz 2))]
-        (extrude-linear {:height (+ dz 4)}
-          (offset 2 bevel-2d-outline)))
-      plinth-shape)))
+   (rotate [π 0 0]  ;; Print bottom-up.
+     (difference
+       (translate [0 0 (+ params/wrist-plinth-base-height (/ dz 2))]
+         (extrude-linear {:height (+ dz 4)}
+           (offset 2 bevel-2d-outline)))
+       plinth-shape))))
 
-(defn rest-right [exploded]
-  "Right-hand-side wrist support model(s)."
+(def unified-preview
+  "A merged view of a wrist rest. This might be printed in hard plastic for a
+  prototype but is not suitable for long-term use: It would typically be too
+  hard for ergonomy and does not have a nut pocket for threaded rods."
   (intersection
     (difference
-      (union
-        (if (= params/wrist-rest-style :solid) solid-connector)
-        (if exploded
-          (union
-            (translate [0 0 70] rubber-casting-mould)
-            (translate [0 0 30] plinth-rubber)
-            plinth-plastic)
-          plinth-shape))
+      plinth-shape
       (union
         (case params/wrist-rest-style
           :solid (union case-hook body/finger-walls)
