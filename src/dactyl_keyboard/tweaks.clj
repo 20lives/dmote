@@ -14,7 +14,7 @@
             [dactyl-keyboard.cad.misc :refer :all]
             [dactyl-keyboard.cad.matrix :refer :all]
             [dactyl-keyboard.cad.key :refer :all]
-            [dactyl-keyboard.cad.case :refer :all]))
+            [dactyl-keyboard.cad.body :refer :all]))
 
 
 (defn- placed-segment [key directions segment]

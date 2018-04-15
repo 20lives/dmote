@@ -3,7 +3,7 @@
 ;; Keyboard Case Model                                                 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(ns dactyl-keyboard.cad.case
+(ns dactyl-keyboard.cad.body
   (:require [scad-clj.model :exclude [use import] :refer :all]
             [unicode-math.core :refer :all]
             [dactyl-keyboard.generics :refer :all]
@@ -235,7 +235,7 @@
 
 ;; Refer to tweaks.clj for the bridge between the finger and thumb clusters.
 
-(def case-walls-for-the-fingers
+(def finger-walls
   (let [walk (partial walk-and-wall
                 finger?
                 finger-key-place
@@ -245,7 +245,7 @@
      (walk wall-to-ground [(first-in-column 0) :north] [(first-in-column 2) :south])
      (walk wall-skirt [(first-in-column 2) :south] [(first-in-column 2) :west]))))
 
-(def case-walls-for-the-thumbs
+(def thumb-walls
   (let [walk (partial walk-and-wall
                 thumb?
                 thumb-key-place

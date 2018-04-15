@@ -8,9 +8,10 @@
             [scad-clj.model :exclude [use import] :refer :all]
             [dactyl-keyboard.params :as params]
             [dactyl-keyboard.tweaks :as tweaks]
-            [dactyl-keyboard.cad.key :refer :all]
-            [dactyl-keyboard.cad.case :refer :all]
-            [dactyl-keyboard.cad.aux :refer :all]))
+            [dactyl-keyboard.cad.aux :as aux]
+            [dactyl-keyboard.cad.key :as key]
+            [dactyl-keyboard.cad.body :as body]
+            [dactyl-keyboard.cad.wrist :as wrist]))
 
 (defn new-scad []
   "Reload this namespace with any changed dependencies. Redraw .scad files."
@@ -18,52 +19,52 @@
 
 (defn print-finger-matrix []
   "Print a picture of the finger layout. No thumb keys. For your REPL."
-  (for [row (reverse all-finger-rows)
-        column all-finger-columns]
-    (do (if (finger? [column row]) (print "□") (print "·"))
-        (if (= column last-finger-column) (println)))))
+  (for [row (reverse key/all-finger-rows)
+        column key/all-finger-columns]
+    (do (if (key/finger? [column row]) (print "□") (print "·"))
+        (if (= column key/last-finger-column) (println)))))
 
 (def wrist-rest-dual-view
   (union
-    (wrist-rest-right false)
-    (translate [-100 0 0] (wrist-rest-right true))))
+    (wrist/rest-right false)
+    (translate [-100 0 0] (wrist/rest-right true))))
 
 (def keyboard-right
   "Right-hand-side keyboard model."
   (union
     (difference
       (union
-        (difference case-walls-for-the-fingers rj9-space)
+        (difference body/finger-walls aux/rj9-space)
         (if params/include-wrist-rest
           (case params/wrist-rest-style
-            :solid case-wrist-hook
-            :threaded case-wrist-plate))
-        case-walls-for-the-thumbs
+            :solid wrist/case-hook
+            :threaded wrist/case-plate))
+        body/thumb-walls
         tweaks/key-cluster-bridge
         tweaks/finger-case-tweaks
-        mcu-support
-        finger-plates
-        finger-web
-        thumb-plates
-        thumb-web
-        rj9-holder
-        (if params/include-feet foot-plates)
-        (if params/include-backplate-block backplate-block))
+        aux/mcu-support
+        key/finger-plates
+        body/finger-web
+        key/thumb-plates
+        body/thumb-web
+        aux/rj9-holder
+        (if params/include-feet aux/foot-plates)
+        (if params/include-backplate-block aux/backplate-block))
       tweaks/key-cluster-bridge-cutouts
-      mcu-negative
-      finger-cutouts
-      thumb-cutouts
-      (if params/include-led-housings led-holes)
-      (if params/include-backplate-block backplate-fastener-holes)
+      aux/mcu-negative
+      key/finger-cutouts
+      key/thumb-cutouts
+      (if params/include-led-housings aux/led-holes)
+      (if params/include-backplate-block aux/backplate-fastener-holes)
       (if params/include-wrist-rest
-        (if (= params/wrist-rest-style :threaded) connecting-rods-and-nuts))
+        (if (= params/wrist-rest-style :threaded) wrist/connecting-rods-and-nuts))
       (translate [0 0 -500] (cube 1000 1000 1000)))
     ;; The remaining elements are visualizations for use in development.
     ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
-    #_(wrist-rest-right false)
+    #_(wrist/rest-right false)
     #_mcu-visualization
-    #_finger-keycaps
-    #_thumb-keycaps))
+    #_key/finger-keycaps
+    #_key/thumb-keycaps))
 
 (spit "things/right-hand.scad"
       (write-scad keyboard-right))

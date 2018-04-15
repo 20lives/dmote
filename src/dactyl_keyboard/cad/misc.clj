@@ -76,16 +76,6 @@
     [(- (Math/sin angle)) 0 (Math/cos angle)]]
    position))
 
-(defn rotator-vector [[x y z]]
-  "Create an anonymous rotation function for passed vector of three angles.
-  This emulates OpenSCAD’s rotate(a=[...]). scad-clj’s ‘rotatev’ was unable to
-  implement that form in version 0.4.0 of the module."""
-  (fn [obj]
-    (->> obj
-      (rotate x [1 0 0])
-      (rotate y [0 1 0])
-      (rotate z [0 0 1]))))
-
 (defn swing-callables [translator radius rotator obj]
   "Rotate passed object with passed radius, not around its own axes.
 
@@ -96,7 +86,7 @@
   filter, a rotation function will be created based on that."
   (if (vector? rotator)
     (if (= (count rotator) 3)
-      (swing-callables translator radius (rotator-vector rotator) obj)
+      (swing-callables translator radius (partial rotate rotator) obj)
       (swing-callables translator radius (partial rotate (first rotator) (second rotator)) obj))
     ;; Else assume the rotator is usable as a function and apply it.
     (->> obj

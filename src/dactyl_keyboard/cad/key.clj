@@ -286,13 +286,13 @@
 (defn thumb-key-place [[column row] shape]
   (let [offset (if (= -1 column) thumb-cluster-column-offset [0 0 0])]
     (->> shape
-         ((rotator-vector (intrinsic-thumb-key-rotation [column row] [0 0 0])))
+         (rotate (intrinsic-thumb-key-rotation [column row] [0 0 0]))
          (translate [(* column (+ mount-1u thumb-mount-separation))
                      (* row (+ mount-1u thumb-mount-separation))
                      0])
          (translate offset)
          (translate (get intrinsic-thumb-key-translation [column row] [0 0 0]))
-         ((rotator-vector thumb-cluster-rotation))
+         (rotate thumb-cluster-rotation)
          (translate thumb-origin)
          )))
 
