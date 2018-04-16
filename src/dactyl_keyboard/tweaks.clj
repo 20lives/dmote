@@ -168,7 +168,8 @@
        (post weirdo ESE 1))
      ;; A tidy connection to the neighbouring key.
      (hull
-       (post neighbour-nw ENE 0 1 2)
-       (post neighbour-nw ESE 0 1 2)
+       (post neighbour-nw NNE 0 1 2)
+       (post neighbour-nw ENE 0 1 2 3)
+       (post neighbour-nw ESE 0 1 2 3)
        (post weirdo NNW 0 1)
        (post weirdo WNW 0 1)))))

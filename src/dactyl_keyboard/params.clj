@@ -315,7 +315,7 @@
 (def mcu-connector-direction :east)
 
 ;; Placement of the RJ9 port for interfacing the two halves.
-(def rj9-translation [-1.2 -7 0])
+(def rj9-translation [-1.7 -7.5 0])
 
 ;; LED holes along the inner wall. Defaults are for WS2818 at 17 mm intervals.
 (def include-led-housings true)
