@@ -12,6 +12,7 @@
             [dactyl-keyboard.cad.matrix :refer :all]
             [dactyl-keyboard.cad.key :refer :all]))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Key Mount Webbing ;;
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -77,6 +78,7 @@
       thumb?
       thumb-key-place
       mount-corner-post)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Wall-Building Utilities ;;
@@ -228,6 +230,7 @@
                   (bracer (wall-straight-join place-and-direction))
                 :inner-corner
                   (bracer (wall-inner-corner place-and-direction))))))))))
+
 
 ;;;;;;;;;;;;;;;;
 ;; Case Walls ;;

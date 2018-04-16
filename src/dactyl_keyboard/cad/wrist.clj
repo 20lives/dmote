@@ -8,9 +8,11 @@
             [unicode-math.core :refer :all]
             [dactyl-keyboard.params :as params]
             [dactyl-keyboard.generics :refer :all]
-            [dactyl-keyboard.cad.body :as body]            [dactyl-keyboard.cad.matrix :as matrix]
+            [dactyl-keyboard.cad.body :as body]
+            [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.cad.key :as key]))
+
 
 ;;;;;;;;;;;;;;
 ;; Generics ;;
@@ -43,6 +45,7 @@
 (defn- wrist? [[column row]]
   "True if specified node in wrist rest surface has been requested."
   (and (<= 0 column last-column) (<= 0 row last-row)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Threaded Connector Variant ;;
@@ -120,6 +123,7 @@
       (rotate [0 0 rod-angle]
         (plate-block params/wrist-threaded-anchor-depth-plinth)))))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Solid Connector Variant ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -164,6 +168,7 @@
                 [x4 y2]  ; Rightmost contact with the case.
                 [x2 y2]] ; Leftmost contact with the case.
                 ))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Main Model Basics ;;
@@ -222,13 +227,10 @@
 
 (def bevel-2d-outline (hull (project bevel-3d-model)))
 
-;;;;;;;;;;;;;
-;; Outputs ;;
-;;;;;;;;;;;;;
-
 (def plinth-zone-rubber
   (union
-    (translate [0 0 (+ 50 params/wrist-silicone-starting-height)] (cube 500 500 100))
+    (translate [0 0 (+ 50 params/wrist-silicone-starting-height)]
+      (cube 500 500 100))
     (translate [0 0 (- params/wrist-silicone-starting-height (/ params/wrist-silicone-trench-depth 2))]
       (extrude-linear {:height params/wrist-silicone-trench-depth}
         (offset -2 bevel-2d-outline)))))
@@ -248,6 +250,11 @@
      (case params/wrist-rest-style
        :threaded plinth-plate
        :solid solid-connector))))
+
+
+;;;;;;;;;;;;;
+;; Outputs ;;
+;;;;;;;;;;;;;
 
 (def plinth-plastic
   "The lower portion of a wrist rest, to be printed in a rigid material."

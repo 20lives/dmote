@@ -11,6 +11,7 @@
             [dactyl-keyboard.cad.misc :refer :all]
             [dactyl-keyboard.cad.matrix :refer :all]))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Core Definitions — All Switches ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -40,6 +41,7 @@
 (def keyswitch-depth alps-depth)
 (def keyswitch-width alps-width)
 (def keyswitch-cutout-height alps-height-below-notch)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Definitions — Fingers ;;
@@ -79,6 +81,7 @@
 (def finger-key-coordinates
   (coordinate-pairs all-finger-columns all-finger-rows finger?))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Definitions — Thumbs ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -97,6 +100,7 @@
 
 ;; Where to connect to finger cluster.
 (def thumb-connection-column 1)
+
 
 ;;;;;;;;;;;;;;;;;;;
 ;; Keycap Models ;;
@@ -159,6 +163,7 @@
      (translate [0 0 z-offset])
      (color [220/255 163/255 163/255 1]))))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Key Placement Functions — General ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -195,6 +200,7 @@
 (defn mount-corner-post [directions]
   "A post shape that comes offset for one corner of a key mount."
   (translate (mount-corner-offset directions) web-post))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Key Placement Functions — Fingers ;;
@@ -272,6 +278,7 @@
 
 (def finger-keycaps
   (apply union (map #(finger-key-place % (keycap 1)) finger-key-coordinates)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Key Placement Functions — Thumbs ;;

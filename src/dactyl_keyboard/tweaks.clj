@@ -17,21 +17,16 @@
             [dactyl-keyboard.cad.body :refer :all]))
 
 
-(defn- placed-segment [key directions segment]
+(defn- post [key directions segment & segments]
   "A convenience function for specifying a wall segment."
   (let [[placer offsetter coordinates] key
         offsets (offsetter coordinates directions)]
-   (placer coordinates
-     (translate
-       (wall-segment-offset segment (first directions) offsets)
-       (mount-corner-post directions)))))
-
-(defn- post [key directions segment & segments]
-  "Just avoid complicating the SCAD code with a hull unnecessarily."
-  (if (empty? segments)
-    (placed-segment key directions segment)
-    (apply hull (map (partial placed-segment key directions)
-                     (conj segments segment)))))
+   (if (empty? segments)
+     (placer coordinates
+       (translate
+         (wall-segment-offset segment (first directions) offsets)
+         (mount-corner-post directions)))
+     (apply hull (map (partial post key directions) (conj segments segment))))))
 
 (def key-cluster-bridge
   "Walling and webbing between the thumb cluster and the finger cluster.
@@ -51,34 +46,27 @@
       (hull
         (post t0 WSW 0 1 3)
         (post t0 WNW 0 1))
+      ;; An extension of the wall of t2:
+      (hull
+        (post t2 NNW 0 1 2 3 4)
+        (post t2 WNW 0 1 2 3 4))
       ;; A big chunk where t2 looms over f0:
       (hull
-        (post t2 WSW 1)
-        (post t2 WNW 1 2 3 4)
-        (post t2 NNW 1 2 3 4)
+        (post f0 SSE 0)
         (post f0 WSW 0)
-        (post f0 SSE 0)
         (post t1 WNW 1)
-        (post f0 WSW 0))
-      ;; Forward joinery:
+        (post t2 WSW 1)
+        (post t2 WNW 1 2 3 4))
+      ;; Joinery:
       (triangle-hulls
         (post f0 SSE 0)
-        (hull
-          (post f1 WNW 0)
-          (post f1 WSW 0 2 3)
-          (post f1 SSW 0 2))
         (post t2 NNW 4)
-        (post f1 WSW 0 2)
+        (post f1 WNW 0 1)
         (post t2 NNE 4)
-        (post f1 SSW 0 2))
-      ;; Rearward top plating:
-      (triangle-hulls
-        (post f1 SSW 0 2)
         (hull
-          (post f1 SSE 0)
-          (post f2 NNW 0))
-        (post t2 NNE 4)
-        (post t3 NNW 4)
+          (post f1 WSW 0 1 2 3)
+          (post f1 SSW 0 1 2))
+        (post t3 WNW 4)
         (hull
           (post f1 SSE 0)
           (post f2 NNW 0))
@@ -166,7 +154,7 @@
        (post weirdo SSW 1)
        (post weirdo SSE 1)
        (post weirdo ESE 1))
-     ;; A tidy connection to the neighbouring key.
+     ;; A tidy connection to the closest neighbouring key at the back.
      (hull
        (post neighbour-nw NNE 0 1 2)
        (post neighbour-nw ENE 0 1 2 3)

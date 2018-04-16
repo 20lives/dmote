@@ -13,6 +13,7 @@
             [dactyl-keyboard.cad.key :refer :all]
             [dactyl-keyboard.cad.body :refer :all]))
 
+
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Microcontroller ;;
 ;;;;;;;;;;;;;;;;;;;;;
@@ -62,14 +63,14 @@
         (union
           ;; Female USB connector:
           micro-usb-channel
-          ;; Male USB connector:
-          (hull
+          ;; Male USB connector (enable in case of obstruction):
+          #_(hull
             (translate [0 4 0] (cube 15 1 10))
             (translate [0 9 0] (cube 17 1 12)))))
       ;; An alcove in the inner wall, because a blind notch is hard to clean:
       (translate [0
                   (/ (- promicro-length alcove-height) 2)
-                  (/ (- alcove-width promicro-thickness) 2)]
+                  (- (/ alcove-width 2) promicro-thickness)]
         (cube (+ promicro-width 5) alcove-height alcove-width))
       ;; The negative of the PCB, just to put a notch in the spine:
       (cube promicro-width promicro-length (+ promicro-thickness mcu-thickness-tolerance)))))
@@ -134,6 +135,7 @@
         (finger-key-place cervix-coordinates
           (mount-corner-post [mcu-connector-direction (turning-right rev-dir)]))))))
 
+
 ;;;;;;;;;;;;;;;;
 ;; Back Plate ;;
 ;;;;;;;;;;;;;;;;
@@ -184,6 +186,7 @@
 (def backplate-block
   (bottom-hull (backplate-place backplate-shape)))
 
+
 ;;;;;;;;;;;;;;;
 ;; LED Strip ;;
 ;;;;;;;;;;;;;;;
@@ -225,6 +228,7 @@
        (apply union (map led-housing-channel holes)))
      (apply union (map led-emitter-channel holes)))))
 
+
 ;;;;;;;;;;;;;;;;
 ;; Signalling ;;
 ;;;;;;;;;;;;;;;;
@@ -265,6 +269,7 @@
 
 (def rj9-holder (rj9-position (difference rj9-metasocket
                                           rj9-socket-616e)))
+
 
 ;;;;;;;;;;;;;;;;;;;;
 ;; Minor Features ;;

@@ -58,7 +58,7 @@
     ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
     #_key/finger-keycaps
     #_key/thumb-keycaps
-    #_mcu-visualization
+    #_aux/mcu-visualization
     #_wrist/unified-preview))
 
 (spit "things/right-hand.scad"
@@ -76,9 +76,9 @@
           (write-scad wrist/rubber-insert))
 
     ;; Items that cannot.
-    (spit "things/right-wrist-plastic-base.scad"
+    (spit "things/right-wrist-base.scad"
           (write-scad wrist/plinth-plastic))
-    (spit "things/left-wrist-plastic-base.scad"
+    (spit "things/left-wrist-base.scad"
           (write-scad (mirror [-1 0 0] wrist/plinth-plastic)))))
 
 (defn -main [dum] 1)  ; Dummy to make it easier to batch.

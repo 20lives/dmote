@@ -103,7 +103,7 @@
   {[2 -3] [0 -7 2]})
 (def finger-intrinsic-pitch
   {[2 -3] (/ π -8)
-   [4 1] (/ π -1.9)})
+   [4 1] (/ π -1.75)})
 (def finger-tweak-late-translation
   {[4 1] [0 12 0]})
 
@@ -186,6 +186,7 @@
 ;; wall at that point is a function of post size and the angle of the nearest
 ;; switch mount, as well as the thickness parameter itself.
 (def wall-thickness 1)
+
 
 ;;;;;;;;;;;;;;;;
 ;; Wrist Rest ;;
@@ -294,7 +295,7 @@
 (def foot-plate-posts
   [(if (or (not include-wrist-rest) (not (= wrist-rest-style :solid)))
        ;; If there will be no case-to-wrist hook, add a foot in its place.
-       [[[5 -2] SSW [5 1]] [[5 -2] NNE [1 -7]] [[5 -2] ESE]])
+       [[[5 -2] SSW [4 1]] [[5 -2] NNE [1 -5]] [[5 -2] ESE]])
    (if (not (and include-wrist-rest (= wrist-rest-style :threaded)))
        ;; If there will be no threaded rod housing, add a foot in its place.
        [[[2 -3] NNW] [[2 -3] NNE] [[3 -2] SSW [0 2]] [[2 -2] SSE [-3 -5]]])
@@ -311,7 +312,7 @@
 
 ;; Placement of the microcontroller unit.
 (def mcu-finger-column 4)
-(def mcu-offset [-0.5 4 0.5])
+(def mcu-offset [-0.5 3.5 0.5])
 (def mcu-connector-direction :east)
 
 ;; Placement of the RJ9 port for interfacing the two halves.
