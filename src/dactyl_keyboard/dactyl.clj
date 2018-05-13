@@ -29,7 +29,7 @@
   (union
     (difference
       (union
-        (difference body/finger-walls aux/rj9-space)
+        body/finger-walls
         body/thumb-walls
         body/finger-web
         body/thumb-web
@@ -42,12 +42,13 @@
             :solid wrist/case-hook
             :threaded wrist/case-plate))
         aux/mcu-support
-        aux/rj9-holder
+        aux/rj9-positive
         (if params/include-feet aux/foot-plates)
         (if params/include-backplate-block aux/backplate-block))
       key/finger-cutouts
       key/thumb-cutouts
       tweaks/key-cluster-bridge-cutouts
+      aux/rj9-negative
       aux/mcu-negative
       (if params/include-led-housings aux/led-holes)
       (if params/include-backplate-block aux/backplate-fastener-holes)

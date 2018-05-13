@@ -56,7 +56,7 @@
 
 (def mcu-space-requirements
   "Negative space for an MCU in use, including USB connectors."
-  (let [alcove-width (+ micro-usb-height promicro-thickness mcu-thickness-tolerance 1)
+  (let [alcove-width (+ micro-usb-height promicro-thickness mcu-thickness-tolerance 2)
         alcove-height (+ promicro-width 1)]
     (union
       (translate mcu-microusb-offset
@@ -72,8 +72,13 @@
                   (/ (- promicro-length alcove-height) 2)
                   (- (/ alcove-width 2) promicro-thickness)]
         (cube (+ promicro-width 5) alcove-height alcove-width))
-      ;; The negative of the PCB, just to put a notch in the spine:
-      (cube promicro-width promicro-length (+ promicro-thickness mcu-thickness-tolerance)))))
+      ;; The negative of the PCB to put a notch in the spine:
+      (cube promicro-width promicro-length (+ promicro-thickness mcu-thickness-tolerance))
+      ;; Extra space for wiring running very near the MCU:
+      (translate [(/ promicro-width -2) 0 0]
+        (rotate [(+ (/ π 2) (/ π 14)) 0 (/ π -18)]
+          (cylinder 4 (- promicro-length 10))))
+      )))
 
 (def mcu-finger-coordinates (last-in-column mcu-finger-column))
 (defn mcu-position [shape]
@@ -156,7 +161,7 @@
   "A mounting plate for a connecting beam."
   (let [height backplate-beam-height
         width (+ backplate-fastener-distance height)
-        depth 4
+        depth 3
         interior-protrusion 8
         exterior-bevel 1
         interior-bevel 7]
@@ -265,10 +270,9 @@
      (cube 10 11 17.7)
      (translate [0 0 -5] (cube 8 20 7.7)))))
 
-(def rj9-space  (rj9-position rj9-metasocket))
+(def rj9-positive (rj9-position rj9-metasocket))
 
-(def rj9-holder (rj9-position (difference rj9-metasocket
-                                          rj9-socket-616e)))
+(def rj9-negative (rj9-position rj9-socket-616e))
 
 
 ;;;;;;;;;;;;;;;;;;;;

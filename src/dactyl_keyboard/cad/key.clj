@@ -28,19 +28,23 @@
 (def key-margin (/ (- mount-1u key-width-1u) 2))
 
 ;; Mount plates are a bit wider than typical keycaps.
-(def mount-width 18.4)
-(def mount-depth 18.4)
+(def mount-width (+ key-width-1u 0.15))
+(def mount-depth mount-width)
 
 ;; ALPS-style switches:
-(def alps-width 15.5)
-(def alps-depth 12.6)
-(def alps-notch-height 1)
-(def alps-height-below-notch 4.5)
+(def alps-hole-x 15.5)
+(def alps-hole-y 12.6)
+(def alps-overhang-x 17.25)  ; Width of notches.
+(def alps-overhang-y 14.25)
+(def alps-overhang-z 1)  ; Height of notch above hole/plate.
+(def alps-underhang-z 4.5)  ; Height of body up to plate top.
 
 ;; Hardcode ALPS as our switch type.
-(def keyswitch-depth alps-depth)
-(def keyswitch-width alps-width)
-(def keyswitch-cutout-height alps-height-below-notch)
+(def keyswitch-hole-y alps-hole-y)
+(def keyswitch-hole-x alps-hole-x)
+(def keyswitch-overhang-x alps-overhang-x)
+(def keyswitch-overhang-y alps-overhang-y)
+(def keyswitch-cutout-height alps-underhang-z)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -110,7 +114,7 @@
   "The shape of a channel for a keycap to move in.
   These are useful when keys are placed in such a way that the webbing between
   neighbouring mounts, or nearby walls, might otherwise obstruct movement."
-  (let [base (+ (max keyswitch-width keyswitch-depth) 2)
+  (let [base (+ (max keyswitch-hole-x keyswitch-hole-y) 2)
         factor 1.05
         end (* factor key-width-1u)]
    (color [0.75 0.75 1 1]
@@ -182,15 +186,19 @@
    (translate [0 0 (/ plate-thickness 2)]
      (union
        negative-cap-minimal
-       (cube keyswitch-width keyswitch-depth h)
+       ;; Space for the above-hole part of a switch.
+       (translate [0 0 plate-thickness]
+         (cube keyswitch-overhang-x keyswitch-overhang-y plate-thickness))
+       ;; The hole through the plate.
+       (cube keyswitch-hole-x keyswitch-hole-y h)
        ;; ALPS-specific space for wings to flare out.
        (translate [0 0 -1.5]
-         (cube (+ keyswitch-width 1) keyswitch-depth plate-thickness))
+         (cube (+ keyswitch-hole-x 1) keyswitch-hole-y plate-thickness))
        (if (not (zero? keyswitch-trench-depth))
          (translate [0 0 (- h)]
            (extrude-linear
              {:height keyswitch-trench-depth :center false :scale trench-scale}
-             (square (/ keyswitch-width trench-scale) (/ keyswitch-depth trench-scale)))))))))
+             (square (/ keyswitch-hole-x trench-scale) (/ keyswitch-hole-y trench-scale)))))))))
 
 (defn mount-corner-offset [directions]
   "Produce a translator for getting to one corner of a switch mount."

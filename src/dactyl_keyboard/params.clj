@@ -258,7 +258,7 @@
 
 ;; The plate will center along a finger column.
 (def backplate-column 2)
-(def backplate-offset [2 0 -11])
+(def backplate-offset [2 0.5 -11])
 
 (def backplate-beam-height
   "The nominal height (vertical extent) of the plate itself.
