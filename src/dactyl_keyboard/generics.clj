@@ -22,6 +22,25 @@
 (def NNW [:north :west])
 (def WNW [:west :north])
 
+(def keyword-to-directions
+  "Decode sets of directions from configuration data."
+  {:NNE NNE
+   :ENE ENE
+   :SSE SSE
+   :ESE ESE
+   :SSW SSW
+   :WSW WSW
+   :NNW NNW
+   :WNW WNW})
+
+(defn string-corner [string]
+  "For use with YAML, where string values are not automatically converted."
+  (let [directions ((keyword string) keyword-to-directions)]
+   (if (nil? directions)
+     (do (println (format "Unknown corner ID string: “%s”." string))
+         (System/exit 1))
+     directions)))
+
 (defn abs [n]
   "The absolute of n."
   (max n (- n)))
@@ -35,3 +54,18 @@
 (defn 𝒩′ [x ￼￼μ σ]
   "The first derivative of 𝒩."
   (* (/ (- x) (ⁿ σ 2)) (𝒩 x ￼￼μ σ)))
+
+(defn chain-get [coll key & keys]
+  "Chain get calls on a nested mapping."
+   (if keys
+     (apply (partial chain-get (get coll key)) keys)
+     (get coll key)))
+
+(defn soft-merge-maps [& maps]
+  "Take mappings. Merge them depth-first so as to retain all leaves
+  from a mapping except where specifically overridden by the next."
+  (letfn [(f [old new]
+            (if (map? old)
+              (soft-merge-maps old new)
+              new))]
+   (apply (partial merge-with f) maps)))

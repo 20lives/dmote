@@ -191,9 +191,6 @@
 ;; Wrist Rest ;;
 ;;;;;;;;;;;;;;;;
 
-;; A plinth to support the user’s wrist in an appropriate position.
-(def include-wrist-rest true)
-
 (def wrist-rest-style
   "If set to :threaded, have a threaded fastener connect to the wrist rest.
   If set to :solid, print a bridge along the ground."
@@ -278,33 +275,6 @@
 (def installation-angle (deg->rad -6))
 
 
-;;;;;;;;;;
-;; Feet ;;
-;;;;;;;;;;
-
-;; It may be desirable to add silicone rubber feet, cork etc. to the bottom of
-;; the keyboard to increase friction and/or improve feel and sound.
-;; The program therefore includes the option of flat surfaces at ground level.
-(def include-feet true)
-(def foot-height 4)
-
-;; Plates can be added through ‘foot-plate-posts’: A vector of vectors,
-;; defining floor-level plates in relation to finger keys, optionally with
-;; two-dimensional offsets.
-(def foot-plate-posts
-  [(if (or (not include-wrist-rest) (not (= wrist-rest-style :solid)))
-       ;; If there will be no case-to-wrist hook, add a foot in its place.
-       [[[5 -2] SSW [4 1]] [[5 -2] NNE [1 -5]] [[5 -2] ESE]])
-   (if (not (and include-wrist-rest (= wrist-rest-style :threaded)))
-       ;; If there will be no threaded rod housing, add a foot in its place.
-       [[[2 -3] NNW] [[2 -3] NNE] [[3 -2] SSW [0 2]] [[2 -2] SSE [-3 -5]]])
-   ;; On the far right:
-   [[[5 0] WNW [7 0]] [[5 0] NNE] [[5 -1] ENE]]])
-
-;; A future version may support threaded holes through these feet for mounting
-;; printed parts on solid plates.
-
-
 ;;;;;;;;;;;;;;;;;;;;
 ;; Minor Features ;;
 ;;;;;;;;;;;;;;;;;;;;
@@ -323,3 +293,19 @@
 (def led-emitter-diameter 4)
 (def led-pitch 16.8)  ; Allowance for slight wall curvature.
 (def led-amount 3)
+
+
+;;;;;;;;;;;;;;;;;;;;;
+;; Serialized Data ;;
+;;;;;;;;;;;;;;;;;;;;;
+
+(def serialized-base
+  "Default structural placeholders and values to be overridden by user
+  configuration. The main purpose of this mapping is to ensure that
+  getopt calls don’t crash the program by hitting undefined keys."
+  {:wrist-rest
+    {:include false}
+   :foot-plates
+    {:include false
+     :height 4
+     :polygons []}})

@@ -1,0 +1,41 @@
+# Model build parameters for a DMOTE.
+
+# A wrist rest is a plinth to support the user’s wrist.
+wrist-rest:
+  include: false
+
+# The following block describes surfaces at floor level for adding silicone
+# rubber feet or cork strips etc. to the bottom of the keyboard to increase
+# friction and/or improve feel and sound.
+foot-plates:
+  include: true
+  height: 4
+  polygons:
+  - points:
+    - key-coordinates: [5, 0]
+      key-corner: WNW
+      offset-mm: [7, 0]
+    - key-coordinates: [5, 0]
+      key-corner: NNE
+    - key-coordinates: [5, -1]
+      key-corner: ENE
+  - points:
+    - key-coordinates: [5, -2]
+      key-corner: SSW
+      offset-mm: [4, 1]
+    - key-coordinates: [5, -2]
+      key-corner: NNE
+      offset-mm: [1, -5]
+    - key-coordinates: [5, -2]
+      key-corner: ESE
+  - points:
+    - key-coordinates: [2, -3]
+      key-corner: NNW
+    - key-coordinates: [2, -3]
+      key-corner: NNE
+    - key-coordinates: [3, -2]
+      key-corner: SSW
+      offset-mm: [0, 2]
+    - key-coordinates: [2, -2]
+      key-corner: SSE
+      offset-mm: [-3, -5]

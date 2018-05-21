@@ -6,7 +6,7 @@
 (ns dactyl-keyboard.cad.aux
   (:require [scad-clj.model :exclude [use import] :refer :all]
             [unicode-math.core :refer :all]
-            [dactyl-keyboard.generics :refer :all]
+            [dactyl-keyboard.generics :as generics]
             [dactyl-keyboard.params :refer :all]
             [dactyl-keyboard.cad.misc :refer :all]
             [dactyl-keyboard.cad.matrix :refer :all]
@@ -200,7 +200,7 @@
 
 (def west-wall-west-points
   (for [row (finger-row-indices 0)
-        corner [WSW WNW]]
+        corner [generics/WSW generics/WNW]]
    (let [[x y _] (finger-wall-corner-position [0 row] corner)]
     [(+ x wall-thickness) y])))
 
@@ -213,7 +213,7 @@
 
 (defn led-hole-position [ordinal]
   (let [row (first (finger-row-indices 0))
-        [x0 y0 _] (finger-wall-corner-position [0 row] WNW)]
+        [x0 y0 _] (finger-wall-corner-position [0 row] generics/WNW)]
    [x0 (+ y0 (* led-pitch ordinal)) led-height]))
 
 (defn led-emitter-channel [ordinal]
@@ -242,7 +242,7 @@
 (def rj9-origin
   (let [c0 [0 (last (finger-row-indices 0))]
         c1 [1 (last (finger-row-indices 1))]
-        corner (fn [c] (finger-wall-corner-position c NNW))
+        corner (fn [c] (finger-wall-corner-position c generics/NNW))
         [x0 y0] (take 2 (map + (corner c0) (corner c1)))]
    (map + [0 0 0] [(/ x0 2) (/ y0 2) 0])))
 
@@ -279,31 +279,33 @@
 ;; Minor Features ;;
 ;;;;;;;;;;;;;;;;;;;;
 
-(def foot-plates
-  "Model plates from polygons specified in ‘foot-plate-posts’.
+(defn foot-plates [getopt]
+  "Model plates from polygons.
   Each vector specifying a point in a polygon must have finger key coordinates
   and a mount corner identified by a direction tuple. These can be followed by
   a two-dimensional offset for tweaking."
-  (letfn [(xy
-            ([coordinates directions]
-              (xy coordinates directions [0 0 0]))
-            ([coordinates directions offset]
+   (letfn [(point [{coord :key-coordinates
+                   corner :key-corner
+                   offset :offset-mm
+                   :or {offset [0 0]}}]
+             (let [directions (generics/string-corner corner)]
               (vec (map +
-                (take 2 (finger-wall-corner-position coordinates directions))
-                offset))))
-          (plate [positions]
-            (extrude-linear {:height foot-height :center false}
-              (polygon (map (fn [spec] (apply xy spec)) positions))))]
-   (apply union (map plate foot-plate-posts))))
+                 (take 2 (finger-wall-corner-position coord directions))
+                 offset))))
+           (plate [polygon-spec]
+             (extrude-linear
+               {:height (getopt :foot-plates :height) :center false}
+               (polygon (map point (:points polygon-spec)))))]
+    (apply union (map plate (getopt :foot-plates :polygons)))))
 
 ;; USB female holder:
-;; This is not needed if the MCU has an integrated USB connector and that
+;; This is not needed if the MCU has a robust integrated USB connector and that
 ;; connector is directly exposed through the case.
 (def usb-holder-position
   (let [coordinates [0 0]]
    (finger-key-position coordinates
      (map +
-       (wall-segment-offset 2 :north (finger-key-wall-offsets coordinates WNW))
+       (wall-segment-offset 2 :north (finger-key-wall-offsets coordinates generics/WNW))
        [0 (/ mount-depth 2) 0]))))
 (def usb-holder-size [6.5 10.0 13.6])
 (def usb-holder-thickness 4)

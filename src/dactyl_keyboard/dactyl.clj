@@ -1,11 +1,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The Dactyl-ManuForm Keyboard — Opposable Thumb Edition              ;;
-;; Main Module — Final Composition and Outputs                         ;;
+;; Main Module — CLI, Final Composition and Outputs                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (ns dactyl-keyboard.dactyl
-  (:require [scad-clj.scad :refer [write-scad]]
+  (:require [clojure.tools.cli :refer [parse-opts]]
+            [yaml.core :as yaml]
+            [scad-clj.scad :refer [write-scad]]
             [scad-clj.model :exclude [use import] :refer :all]
+            [dactyl-keyboard.generics :as generics]
             [dactyl-keyboard.params :as params]
             [dactyl-keyboard.tweaks :as tweaks]
             [dactyl-keyboard.cad.aux :as aux]
@@ -24,7 +27,7 @@
     (do (if (key/finger? [column row]) (print "□") (print "·"))
         (if (= column key/last-finger-column) (println)))))
 
-(def keyboard-right
+(defn build-keyboard-right [getopt]
   "Right-hand-side keyboard model."
   (union
     (difference
@@ -37,13 +40,13 @@
         key/thumb-plates
         tweaks/key-cluster-bridge
         tweaks/finger-case-tweaks
-        (if params/include-wrist-rest
+        (if (getopt :wrist-rest :include)
           (case params/wrist-rest-style
             :solid wrist/case-hook
             :threaded wrist/case-plate))
         aux/mcu-support
         aux/rj9-positive
-        (if params/include-feet aux/foot-plates)
+        (aux/foot-plates getopt)
         (if params/include-backplate-block aux/backplate-block))
       key/finger-cutouts
       key/thumb-cutouts
@@ -52,7 +55,7 @@
       aux/mcu-negative
       (if params/include-led-housings aux/led-holes)
       (if params/include-backplate-block aux/backplate-fastener-holes)
-      (if params/include-wrist-rest
+      (if (getopt :wrist-rest :include)
         (if (= params/wrist-rest-style :threaded) wrist/connecting-rods-and-nuts))
       (translate [0 0 -500] (cube 1000 1000 1000)))
     ;; The remaining elements are visualizations for use in development.
@@ -62,24 +65,43 @@
     #_aux/mcu-visualization
     #_wrist/unified-preview))
 
-(spit "things/right-hand.scad"
-      (write-scad keyboard-right))
+(defn author-scad [filename model]
+  (spit (str "things/" filename) (write-scad model)))
 
-(spit "things/left-hand.scad"
-      (write-scad (mirror [-1 0 0] keyboard-right)))
+(defn build-all [build-options]
+  (letfn [(getopt [& keys] (apply (partial generics/chain-get build-options) keys))]
+   (assert build-options)
 
-(if params/include-wrist-rest
-  (do
-    ;; Items that can be used for either side.
-    (spit "things/ambilateral-wrist-mould.scad"
-          (write-scad wrist/rubber-casting-mould))
-    (spit "things/ambilateral-wrist-insert.scad"
-          (write-scad wrist/rubber-insert))
+   (author-scad "right-hand.scad" (build-keyboard-right getopt))
+   (author-scad "left-hand.scad"
+     (mirror [-1 0 0] (build-keyboard-right getopt)))
 
-    ;; Items that cannot.
-    (spit "things/right-wrist-base.scad"
-          (write-scad wrist/plinth-plastic))
-    (spit "things/left-wrist-base.scad"
-          (write-scad (mirror [-1 0 0] wrist/plinth-plastic)))))
+   (if (getopt :wrist-rest :include)
+     (do
+       ;; Items that can be used for either side.
+       (author-scad "ambilateral-wrist-mould.scad" wrist/rubber-casting-mould)
+       (author-scad "ambilateral-wrist-insert.scad" wrist/rubber-insert)
 
-(defn -main [dum] 1)  ; Dummy to make it easier to batch.
+       ;; Items that cannot.
+       (author-scad "right-wrist-base.scad" wrist/plinth-plastic)
+       (author-scad "left-wrist-base.scad"
+         (mirror [-1 0 0] wrist/plinth-plastic))))))
+
+(def cli-options
+  "Define command-line interface."
+  [["-f" "--options-file PATH" "Path to parameter file in YAML format"
+    :default "resources/opt/default.yaml"]
+   ["-h" "--help"]])
+
+(defn -main [& raw]
+  (let [args (parse-opts raw cli-options)
+        file (:options-file (:options args))
+        build-options (yaml/from-file file)]
+    (if (and (nil? (:errors args)) (not (:help (:options args))))
+      (if (some? build-options)
+        ; TODO: Multiple files.
+        (build-all (generics/soft-merge-maps params/serialized-base build-options))
+        (do (println "Please specify a build options file.")
+            (System/exit 1)))
+      (do (println (:summary args))
+          (System/exit 1)))))
