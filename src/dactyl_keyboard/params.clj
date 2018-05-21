@@ -47,7 +47,7 @@
 
 ;; The shape of the finger key cluster is defined by the number of rows above
 ;; and below the home row in each column.
-(def rows-above-home {0 1, 1 2, 2 2, 3 2, 4 1, 5 0})
+(def rows-above-home {0 1, 1 1, 2 1, 3 1, 4 0, 5 0})
 (def rows-below-home {0 1, 1 2, 2 3, 3 2, 4 2, 5 2})
 (def rows-default 1)  ; Default number of rows for columns omitted above.
 
@@ -102,10 +102,9 @@
 (def finger-tweak-early-translation
   {[2 -3] [0 -7 2]})
 (def finger-intrinsic-pitch
-  {[2 -3] (/ π -8)
-   [4 1] (/ π -1.75)})
+  {[2 -3] (/ π -8)})
 (def finger-tweak-late-translation
-  {[4 1] [0 12 0]})
+  {})
 
 ;; Finger switch mounts may need more or less spacing depending on the size
 ;; of your keycaps, curvature etc.

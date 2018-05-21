@@ -1,4 +1,4 @@
-(defproject dactyl-keyboard "0.1.0"
+(defproject dactyl-keyboard "0.2.0-SNAPSHOT"
   :description "A parametrized, split-hand, concave, columnar, erogonomic keyboard"
   :url "http://viktor.eikman.se/article/the-dmote/"
   :main dactyl-keyboard.dactyl

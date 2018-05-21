@@ -121,43 +121,6 @@
     (finger-key-place (first-in-column 2) negative-cap-linear)))
 
 (def finger-case-tweaks
-  "A collection of ugly workarounds for aesthetics."
-  (let [weirdo [finger-key-place finger-key-wall-offsets [4 1]]
-        neighbour-nw [finger-key-place finger-key-wall-offsets [3 2]]
-        neighbour-w [finger-key-place finger-key-wall-offsets [3 1]]
-        neighbour-s [finger-key-place finger-key-wall-offsets [4 0]]
-        neighbour-se [finger-key-place finger-key-wall-offsets [5 0]]]
-   (union
-     ;; Upper bevel around the weirdo key.
-     (hull
-       (post weirdo NNW 0 1)
-       (post weirdo WNW 0 1)
-       (post weirdo WSW 0 1)
-       (post weirdo SSW 0 1)
-       (post weirdo SSE 0 1)
-       (post weirdo ESE 0 1))
-     ;; West wall-web hybrid.
-     (hull
-       (post neighbour-nw ESE 0)
-       (post neighbour-w ENE 0)
-       (post neighbour-w ESE 0)
-       (post neighbour-s WNW 0)
-       (post weirdo WNW 1)
-       (post weirdo WSW 1)
-       (post weirdo SSW 1))
-     ;; South wall-web hybrid.
-     (hull
-       (post neighbour-s NNW 0)
-       (post neighbour-s NNE 0)
-       (post neighbour-se NNW 0)
-       (post weirdo WSW 1)
-       (post weirdo SSW 1)
-       (post weirdo SSE 1)
-       (post weirdo ESE 1))
-     ;; A tidy connection to the closest neighbouring key at the back.
-     (hull
-       (post neighbour-nw NNE 0 1 2)
-       (post neighbour-nw ENE 0 1 2 3)
-       (post neighbour-nw ESE 0 1 2 3)
-       (post weirdo NNW 0 1)
-       (post weirdo WNW 0 1)))))
+  "Workarounds for aesthetics."
+  ;; Nothing here at the moment; see DMOTE v0.1.0 for example usage.
+  nil)
