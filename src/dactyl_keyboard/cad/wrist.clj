@@ -235,7 +235,7 @@
       (extrude-linear {:height params/wrist-silicone-trench-depth}
         (offset -2 bevel-2d-outline)))))
 
-(def plinth-shape
+(defn plinth-shape [getopt]
   "The overall shape of rubber and plastic as one object."
   (letfn [(shadow [shape]
             (translate [0 0 params/wrist-plinth-base-height]
@@ -247,7 +247,7 @@
      (apply union (map hull-to-base surface-elements))
      (apply union (map hull-to-base bevel-elements))
      (misc/bottom-hull (shadow bevel-3d-model))
-     (case params/wrist-rest-style
+     (case (getopt :wrist-rest :style)
        :threaded plinth-plate
        :solid solid-connector))))
 
@@ -256,15 +256,15 @@
 ;; Outputs ;;
 ;;;;;;;;;;;;;
 
-(def plinth-plastic
+(defn plinth-plastic [getopt]
   "The lower portion of a wrist rest, to be printed in a rigid material."
   (let [nut (rotate [(/ π 2) 0 0]
                (misc/iso-hex-nut-model params/wrist-threaded-fastener-diameter))]
    (intersection
      (difference
-       plinth-shape
+       (plinth-shape getopt)
        plinth-zone-rubber
-       (case params/wrist-rest-style
+       (case (getopt :wrist-rest :style)
          :solid
            (union
              case-hook
@@ -283,11 +283,11 @@
          (extrude-linear {:height 200} (square 10 10))))
      (translate [0 0 500] (cube 1000 1000 1000)))))
 
-(def rubber-insert
+(defn rubber-insert [getopt]
   "The upper portion of a wrist rest, to be cast or printed in a soft material."
-  (color [0.5 0.5 1 1] (intersection plinth-zone-rubber plinth-shape)))
+  (color [0.5 0.5 1 1] (intersection plinth-zone-rubber (plinth-shape getopt))))
 
-(def rubber-casting-mould
+(defn rubber-casting-mould [getopt]
   "A thin shell that goes on top of a wrist plinth temporarily.
   This is for casting silicone into, “in place”. As long as the
   wrist rest has 180° rotational symmetry around the z axis, one mould should
@@ -298,17 +298,17 @@
        (translate [0 0 (+ params/wrist-plinth-base-height (/ dz 2))]
          (extrude-linear {:height (+ dz 4)}
            (offset 2 bevel-2d-outline)))
-       plinth-shape))))
+       (plinth-shape getopt)))))
 
-(def unified-preview
+(defn unified-preview [getopt]
   "A merged view of a wrist rest. This might be printed in hard plastic for a
   prototype but is not suitable for long-term use: It would typically be too
   hard for ergonomy and does not have a nut pocket for threaded rods."
   (intersection
     (difference
-      plinth-shape
+      (plinth-shape getopt)
       (union
-        (case params/wrist-rest-style
+        (case (getopt :wrist-rest :style)
           :solid (union case-hook body/finger-walls)
           :threaded connecting-rods-and-nuts)))
     (translate [0 0 500] (cube 1000 1000 1000))))

@@ -191,11 +191,6 @@
 ;; Wrist Rest ;;
 ;;;;;;;;;;;;;;;;
 
-(def wrist-rest-style
-  "If set to :threaded, have a threaded fastener connect to the wrist rest.
-  If set to :solid, print a bridge along the ground."
-  :threaded)
-
 ;; Size of the wrist rest.
 (def wrist-plinth-width 35)
 (def wrist-plinth-length 62)
@@ -304,7 +299,9 @@
   configuration. The main purpose of this mapping is to ensure that
   getopt calls don’t crash the program by hitting undefined keys."
   {:wrist-rest
-    {:include false}
+    {:include false
+     :style :threaded
+     :preview false}
    :foot-plates
     {:include false
      :height 4

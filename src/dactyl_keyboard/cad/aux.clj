@@ -285,9 +285,9 @@
   and a mount corner identified by a direction tuple. These can be followed by
   a two-dimensional offset for tweaking."
    (letfn [(point [{coord :key-coordinates
-                   corner :key-corner
-                   offset :offset-mm
-                   :or {offset [0 0]}}]
+                    corner :key-corner
+                    offset :offset-mm
+                    :or {offset [0 0]}}]
              (let [directions (generics/string-corner corner)]
               (vec (map +
                  (take 2 (finger-wall-corner-position coord directions))

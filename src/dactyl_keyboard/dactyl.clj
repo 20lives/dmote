@@ -41,7 +41,7 @@
         tweaks/key-cluster-bridge
         tweaks/finger-case-tweaks
         (if (getopt :wrist-rest :include)
-          (case params/wrist-rest-style
+          (case (getopt :wrist-rest :style)
             :solid wrist/case-hook
             :threaded wrist/case-plate))
         aux/mcu-support
@@ -56,20 +56,24 @@
       (if params/include-led-housings aux/led-holes)
       (if params/include-backplate-block aux/backplate-fastener-holes)
       (if (getopt :wrist-rest :include)
-        (if (= params/wrist-rest-style :threaded) wrist/connecting-rods-and-nuts))
+        (if (= (getopt :wrist-rest :style) :threaded)
+          wrist/connecting-rods-and-nuts))
       (translate [0 0 -500] (cube 1000 1000 1000)))
     ;; The remaining elements are visualizations for use in development.
     ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
     #_key/finger-keycaps
     #_key/thumb-keycaps
     #_aux/mcu-visualization
-    #_wrist/unified-preview))
+    (if (and (getopt :wrist-rest :include) (getopt :wrist-rest :preview))
+      (wrist/unified-preview getopt))))
 
 (defn author-scad [filename model]
   (spit (str "things/" filename) (write-scad model)))
 
 (defn build-all [build-options]
-  (letfn [(getopt [& keys] (apply (partial generics/chain-get build-options) keys))]
+  (letfn [(getopt [& keys]
+            (let [value (apply (partial generics/chain-get build-options) keys)]
+             (if (string? value) (keyword value) value)))]
    (assert build-options)
 
    (author-scad "right-hand.scad" (build-keyboard-right getopt))
@@ -79,13 +83,15 @@
    (if (getopt :wrist-rest :include)
      (do
        ;; Items that can be used for either side.
-       (author-scad "ambilateral-wrist-mould.scad" wrist/rubber-casting-mould)
-       (author-scad "ambilateral-wrist-insert.scad" wrist/rubber-insert)
+       (author-scad "ambilateral-wrist-mould.scad"
+         (wrist/rubber-casting-mould getopt))
+       (author-scad "ambilateral-wrist-insert.scad"
+         (wrist/rubber-insert getopt))
 
        ;; Items that cannot.
-       (author-scad "right-wrist-base.scad" wrist/plinth-plastic)
+       (author-scad "right-wrist-base.scad" (wrist/plinth-plastic getopt))
        (author-scad "left-wrist-base.scad"
-         (mirror [-1 0 0] wrist/plinth-plastic))))))
+         (mirror [-1 0 0] (wrist/plinth-plastic getopt)))))))
 
 (def cli-options
   "Define command-line interface."

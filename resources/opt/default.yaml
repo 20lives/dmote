@@ -1,8 +1,17 @@
 # Model build parameters for a DMOTE.
 
 # A wrist rest is a plinth to support the user’s wrist.
+#
+# Available styles are:
+# ‘threaded’, threaded fastener(s) connecting case and wrist rest.
+# ‘solid’, a printed plastic bridge along the ground as part of the model.
+#
+# Preview mode includes a model of the wrist rest in the same file as the
+# case. The model is simplified, intended for gauging distance, not printing.
 wrist-rest:
   include: false
+  style: threaded
+  preview: false
 
 # The following block describes surfaces at floor level for adding silicone
 # rubber feet or cork strips etc. to the bottom of the keyboard to increase
