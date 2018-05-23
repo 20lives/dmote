@@ -61,11 +61,11 @@
      (apply (partial chain-get (get coll key)) keys)
      (get coll key)))
 
-(defn soft-merge-maps [& maps]
+(defn soft-merge [& maps]
   "Take mappings. Merge them depth-first so as to retain all leaves
   from a mapping except where specifically overridden by the next."
   (letfn [(f [old new]
             (if (map? old)
-              (soft-merge-maps old new)
+              (soft-merge old new)
               new))]
    (apply (partial merge-with f) maps)))

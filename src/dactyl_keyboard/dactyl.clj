@@ -89,19 +89,29 @@
 
 (def cli-options
   "Define command-line interface."
-  [["-f" "--options-file PATH" "Path to parameter file in YAML format"
-    :default "resources/opt/default.yaml"]
+  [["-c" "--configuration-file PATH" "Path to parameter file in YAML format"
+    :default ["resources/opt/default.yaml"]
+    :assoc-fn (fn [m k new] (update-in m [k] (fn [old] (conj old new))))]
    ["-h" "--help"]])
 
+(defn load-configuration [filepaths]
+  "Read and combine YAML from files, in the order given."
+  (let [load (fn [path]
+                (let [data (yaml/from-file path)]
+                 (if (some? data)
+                   data
+                   (do (println (format "Failed to load file “%s”." path))
+                       (System/exit 1)))))
+        onto-base (partial generics/soft-merge params/serialized-base)]
+   (apply onto-base (map load filepaths))))
+
 (defn -main [& raw]
-  (let [args (parse-opts raw cli-options)
-        file (:options-file (:options args))
-        build-options (yaml/from-file file)]
-    (if (and (nil? (:errors args)) (not (:help (:options args))))
-      (if (some? build-options)
-        ; TODO: Multiple files.
-        (build-all (generics/soft-merge-maps params/serialized-base build-options))
-        (do (println "Please specify a build options file.")
-            (System/exit 1)))
-      (do (println (:summary args))
-          (System/exit 1)))))
+  (let [args (parse-opts raw cli-options)]
+   (if (:help (:options args))
+     (do (println (:summary args))
+         (System/exit 0))
+     (if (some? (:errors args))
+       (do (println (first (:errors args)))
+           (println (:summary args))
+           (System/exit 1))
+       (build-all (load-configuration (:configuration-file (:options args))))))))
