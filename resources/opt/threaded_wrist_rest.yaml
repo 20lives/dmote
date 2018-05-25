@@ -3,12 +3,30 @@
 wrist-rest:
   include: true
   style: threaded
+  fasteners:
+    amount: 2
+    diameter: 6
+    length: 110
+    height:
+      first: 6
+      increment: 20
+    mounts:
+      width: 15
+      case-side:
+        finger-key-column: 2
+        key-corner: SSE
+        offset: [-13, -10]
+        depth: 8
+      plinth-side:
+        # Offset from corner of plinth (closest to case) to mount:
+        offset: [6, -20]
+        depth: 42
 foot-plates:
   polygons:
   - points:
     - key-coordinates: [5, 0]
       key-corner: WNW
-      offset-mm: [7, 0]
+      offset: [7, 0]
     - key-coordinates: [5, 0]
       key-corner: NNE
     - key-coordinates: [5, -1]
@@ -16,9 +34,9 @@ foot-plates:
   - points:
     - key-coordinates: [5, -2]
       key-corner: SSW
-      offset-mm: [4, 1]
+      offset: [4, 1]
     - key-coordinates: [5, -2]
       key-corner: NNE
-      offset-mm: [1, -5]
+      offset: [1, -5]
     - key-coordinates: [5, -2]
       key-corner: ESE

@@ -191,51 +191,10 @@
 ;; Wrist Rest ;;
 ;;;;;;;;;;;;;;;;
 
-;; Size of the wrist rest.
-(def wrist-plinth-width 35)
-(def wrist-plinth-length 62)
-(def wrist-plinth-height 54)
-(def wrist-plinth-base-height (- wrist-plinth-height 10))
-(def wrist-silicone-starting-height (+ wrist-plinth-base-height 2))
-(def wrist-silicone-trench-depth 6)
-
 ;; Shape of the top.
 (def wrist-rest-σ 2.5)       ; Softness of curvature.
 (def wrist-rest-θ 12)        ; Surface angle coefficient.
 (def wrist-z-coefficient 3)  ; Relationship of wrist-rest-θ to height.
-
-;; Placement of the wrist rest relative to the keyboard.
-;; With a threaded fastener you will have one degree of freedom beyond this.
-(def wrist-placement-column 4)
-(def wrist-placement-offset [0 -40])
-
-;; Details relevant only with the :threaded style.
-(def wrist-threaded-column
-  "Finger column of keyboard-side threaded mount position."
-  2)
-(def wrist-threaded-offset-keyboard
-  "Offset from shadow of first mount in wrist-threaded-column."
-  [-13 -10])
-(def wrist-threaded-offset-plinth
-  "Offset from corner of plinth to plinth-side threaded mount position."
-   [6 (/ wrist-plinth-length -2)])
-(def wrist-threaded-fastener-diameter 6)
-(def wrist-threaded-height
-  "Height above ground of center of first rod."
-   (* 1.2 wrist-threaded-fastener-diameter))
-(def wrist-threaded-fastener-length 110)
-(def wrist-threaded-fastener-amount
-  "Amount of threaded rods."
-  2)
-(def wrist-threaded-separation
-  "Progressive offset between threaded rods."
-  [0 0 20])
-(def wrist-threaded-anchor-girth (* 2.4 wrist-threaded-fastener-diameter))
-(def wrist-threaded-anchor-depth-case 8)
-(def wrist-threaded-anchor-depth-plinth 42)
-
-;; Details relevant only with the :solid style.
-(def wrist-solid-connector-height 14)
 
 
 ;;;;;;;;;;;;;;;;
@@ -297,11 +256,28 @@
 (def serialized-base
   "Default structural placeholders and values to be overridden by user
   configuration. The main purpose of this mapping is to ensure that
-  getopt calls don’t crash the program by hitting undefined keys."
+  getopt calls don’t crash the program by hitting undefined keys, even for
+  things a user leaves out of their files as irrelevant."
   {:wrist-rest
     {:include false
      :style :threaded
-     :preview false}
+     :preview false
+     :position {:finger-key-column 0 :corner :SSE :offset [0 0]}
+     :plinth-base-size [1 1 1]
+     :lip-height 1
+     :rubber
+      {:height {:above-lip 1 :below-lip 1}
+       :shape {:grid-size [1 1]}}
+     :fasteners
+      {:amount 1
+       :diameter 1
+       :length 1
+       :height {:first 0 :increment 0}
+       :mounts
+        {:width 1
+         :case-side {:finger-key-column 0 :corner :SSE :offset [0 0] :depth 1}
+         :plinth-side {:offset [1 1] :depth 1}}}
+     :solid-bridge {:height 14}}
    :foot-plates
     {:include false
      :height 4

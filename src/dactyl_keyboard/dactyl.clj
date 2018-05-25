@@ -42,8 +42,8 @@
         tweaks/finger-case-tweaks
         (if (getopt :wrist-rest :include)
           (case (getopt :wrist-rest :style)
-            :solid wrist/case-hook
-            :threaded wrist/case-plate))
+            :solid (wrist/case-hook getopt)
+            :threaded (wrist/case-plate getopt)))
         aux/mcu-support
         aux/rj9-positive
         (aux/foot-plates getopt)
@@ -57,7 +57,7 @@
       (if params/include-backplate-block aux/backplate-fastener-holes)
       (if (getopt :wrist-rest :include)
         (if (= (getopt :wrist-rest :style) :threaded)
-          wrist/connecting-rods-and-nuts))
+          (wrist/connecting-rods-and-nuts getopt)))
       (translate [0 0 -500] (cube 1000 1000 1000)))
     ;; The remaining elements are visualizations for use in development.
     ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
@@ -73,7 +73,10 @@
 (defn build-all [build-options]
   (letfn [(getopt [& keys]
             (let [value (apply (partial generics/chain-get build-options) keys)]
-             (if (string? value) (keyword value) value)))]
+             (if (nil? value)
+               (do (println (format "Missing configuration value: “%s”." keys)
+                   (System/exit 1)))
+               (if (string? value) (keyword value) value))))]
    (assert build-options)
 
    (author-scad "right-hand.scad" (build-keyboard-right getopt))

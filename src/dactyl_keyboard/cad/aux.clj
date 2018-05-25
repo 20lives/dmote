@@ -286,7 +286,7 @@
   a two-dimensional offset for tweaking."
    (letfn [(point [{coord :key-coordinates
                     corner :key-corner
-                    offset :offset-mm
+                    offset :offset
                     :or {offset [0 0]}}]
              (let [directions (generics/string-corner corner)]
               (vec (map +

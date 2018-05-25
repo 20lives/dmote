@@ -1,17 +1,35 @@
-# Model build parameters for a DMOTE.
+# Bundled default model build parameters for a DMOTE.
+# This is not the full set of parameters, just a start.
 
 # A wrist rest is a plinth to support the user’s wrist.
 #
 # Available styles are:
-# ‘threaded’, threaded fastener(s) connecting case and wrist rest.
-# ‘solid’, a printed plastic bridge along the ground as part of the model.
+# * ‘threaded’, threaded fastener(s) connecting case and wrist rest.
+# * ‘solid’, a printed plastic bridge along the ground as part of the model.
 #
-# Preview mode includes a model of the wrist rest in the same file as the
-# case. The model is simplified, intended for gauging distance, not printing.
+# There are separate bundled config files with details for both. This file
+# lists shared features.
+#
+# Preview mode puts a model of the wrist rest in the same file as the case.
+# That model is simplified, intended for gauging distance, not printing.
 wrist-rest:
   include: false
   style: threaded
   preview: false
+  position:
+    # The position of the wrist rest relative to the keyboard case.
+    finger-key-column: 4
+    key-corner: SSE
+    offset: [0, -40]
+  plinth-base-size: [35, 62, 44]
+  lip-height: 2
+  rubber:
+    # The size and shape of a silicone rubber top.
+    height:
+      above-lip: 10
+      below-lip: 6
+    shape:
+      grid-size: [4, 62]
 
 # The following block describes surfaces at floor level for adding silicone
 # rubber feet or cork strips etc. to the bottom of the keyboard to increase
@@ -23,7 +41,7 @@ foot-plates:
   - points:
     - key-coordinates: [5, 0]
       key-corner: WNW
-      offset-mm: [7, 0]
+      offset: [7, 0]
     - key-coordinates: [5, 0]
       key-corner: NNE
     - key-coordinates: [5, -1]
@@ -31,10 +49,10 @@ foot-plates:
   - points:
     - key-coordinates: [5, -2]
       key-corner: SSW
-      offset-mm: [4, 1]
+      offset: [4, 1]
     - key-coordinates: [5, -2]
       key-corner: NNE
-      offset-mm: [1, -5]
+      offset: [1, -5]
     - key-coordinates: [5, -2]
       key-corner: ESE
   - points:
@@ -44,7 +62,7 @@ foot-plates:
       key-corner: NNE
     - key-coordinates: [3, -2]
       key-corner: SSW
-      offset-mm: [0, 2]
+      offset: [0, 2]
     - key-coordinates: [2, -2]
       key-corner: SSE
-      offset-mm: [-3, -5]
+      offset: [-3, -5]

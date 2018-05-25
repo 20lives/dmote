@@ -3,13 +3,15 @@
 wrist-rest:
   include: true
   style: solid
+  solid-bridge:
+    height: 14
 foot-plates:
   include: true
   polygons:
   - points:
     - key-coordinates: [5, 0]
       key-corner: WNW
-      offset-mm: [7, 0]
+      offset: [7, 0]
     - key-coordinates: [5, 0]
       key-corner: NNE
     - key-coordinates: [5, -1]
@@ -21,7 +23,7 @@ foot-plates:
       key-corner: NNE
     - key-coordinates: [3, -2]
       key-corner: SSW
-      offset-mm: [0, 2]
+      offset: [0, 2]
     - key-coordinates: [2, -2]
       key-corner: SSE
-      offset-mm: [-3, -5]
+      offset: [-3, -5]
