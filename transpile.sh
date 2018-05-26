@@ -3,15 +3,16 @@
 #: Optionally send SCAD files somewhere for rendering.
 
 TARGET=${1:-}
+RENDERER=${2:-}
 
 while :
 do
   echo "Transpiling."
-  lein run _
-  if [ -n "$TARGET" ]
+  make $TARGET
+  if [ -n "$RENDERER" ]
   then
     echo "Transporting."
-    rsync -a things/*.scad $TARGET &
+    rsync -a things/*.scad $RENDERER &
   fi
   echo "Waiting for source changes."
   inotifywait -re CLOSE_WRITE src/

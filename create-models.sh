@@ -12,7 +12,7 @@ fi
 
 [ -n "$OPENSCAD" ] || exit 65
 
-lein run src/dactyl_keyboard/dactyl.clj
+make "$@"
 for F in things/*.scad
 do
   $OPENSCAD -o ${F/scad/stl} $F >/dev/null 2>&1 &

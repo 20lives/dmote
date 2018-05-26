@@ -10,25 +10,33 @@
             [unicode-math.core :refer [π √]]
             [scad-clj.model :exclude [use import] :refer :all]))
 
+(defn- supported-threaded-fastener [mapping]
+  (fn [size]
+    (let [value (get mapping size)]
+      (if (nil? value)
+        (do (println (format "Unsupported threaded fastener dimension: ‘%s’." size))
+            (System/exit 1))
+        value))))
+
 (def iso-hex-nut-flat-to-flat
   "A map of ISO screw diameter to hex nut width in mm.
   This is measuring flat to flat (i.e. short diagonal).
   Actual nuts tend to be a little smaller, in which case these standard
   sizes are good for a very tight fit in 3D printing, after accounting for
   printer inaccuracy and material shrinkage."
-  {3 5.5
-   4 7
-   5 8
-   6 10
-   8 13})
+  (supported-threaded-fastener {3 5.5
+                                4 7
+                                5 8
+                                6 10
+                                8 13}))
 
 (def iso-hex-nut-height
   "A map of ISO screw diameter to (maximum) hex nut height."
-  {3 2.4
-   4 3.2
-   5 4.7
-   6 5.2
-   8 6.8})
+  (supported-threaded-fastener {3 2.4
+                                4 3.2
+                                5 4.7
+                                6 5.2
+                                8 6.8}))
 
 (defn iso-hex-nut-diameter [iso-size]
   "A formula for hex diameter (long diagonal)."

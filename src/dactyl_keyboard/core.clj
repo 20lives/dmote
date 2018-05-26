@@ -3,7 +3,7 @@
 ;; Main Module — CLI, Final Composition and Outputs                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(ns dactyl-keyboard.dactyl
+(ns dactyl-keyboard.core
   (:require [clojure.tools.cli :refer [parse-opts]]
             [yaml.core :as yaml]
             [scad-clj.scad :refer [write-scad]]
@@ -14,11 +14,12 @@
             [dactyl-keyboard.cad.aux :as aux]
             [dactyl-keyboard.cad.key :as key]
             [dactyl-keyboard.cad.body :as body]
-            [dactyl-keyboard.cad.wrist :as wrist]))
+            [dactyl-keyboard.cad.wrist :as wrist])
+  (:gen-class :main true))
 
 (defn new-scad []
   "Reload this namespace with any changed dependencies. Redraw .scad files."
-  (clojure.core/use 'dactyl-keyboard.dactyl :reload-all))
+  (clojure.core/use 'dactyl-keyboard.core :reload-all))
 
 (defn print-finger-matrix []
   "Print a picture of the finger layout. No thumb keys. For your REPL."
@@ -101,6 +102,7 @@
   [["-c" "--configuration-file PATH" "Path to parameter file in YAML format"
     :default ["resources/opt/default.yaml"]
     :assoc-fn (fn [m k new] (update-in m [k] (fn [old] (conj old new))))]
+   ["-d" "--debug"]
    ["-h" "--help"]])
 
 (defn load-configuration [filepaths]
@@ -123,4 +125,6 @@
        (do (println (first (:errors args)))
            (println (:summary args))
            (System/exit 1))
-       (build-all (load-configuration (:configuration-file (:options args))))))))
+       (let [config (load-configuration (:configuration-file (:options args)))]
+        (if (:debug (:options args)) (println "Building with" config))
+        (build-all config))))))

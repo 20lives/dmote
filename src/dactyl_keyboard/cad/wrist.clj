@@ -286,9 +286,7 @@
 
 (defn plinth-plastic [getopt]
   "The lower portion of a wrist rest, to be printed in a rigid material."
-  (let [properties (derive-properties getopt)
-        nut (rotate [(/ π 2) 0 0]
-               (misc/iso-hex-nut-model (getopt :wrist-rest :fasteners :diameter)))]
+  (let [properties (derive-properties getopt)]
    (intersection
      (difference
        (plinth-shape getopt)
@@ -299,12 +297,14 @@
              (case-hook getopt)
              body/finger-walls)
          :threaded
-           (union
-             (connecting-rods-and-nuts getopt)
-             ;; A hex nut pocket:
-             (translate (threaded-position-plinth getopt)
-               (rotate [0 0 (rod-angle getopt)]
-                 (hull nut (translate [0 0 100] nut))))))
+           (let [d (getopt :wrist-rest :fasteners :diameter)
+                 nut (rotate [(/ π 2) 0 0] (misc/iso-hex-nut-model d))]
+            (union
+              (connecting-rods-and-nuts getopt)
+              ;; A hex nut pocket:
+              (translate (threaded-position-plinth getopt)
+                (rotate [0 0 (rod-angle getopt)]
+                  (hull nut (translate [0 0 100] nut)))))))
        ;; Two square holes for pouring silicone:
        (translate (vec (map + (:ne properties) [-10 -10]))
          (extrude-linear {:height 200} (square 10 10)))
