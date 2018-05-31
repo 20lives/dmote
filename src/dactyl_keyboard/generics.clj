@@ -55,12 +55,6 @@
   "The first derivative of 𝒩."
   (* (/ (- x) (ⁿ σ 2)) (𝒩 x ￼￼μ σ)))
 
-(defn chain-get [coll key & keys]
-  "Chain get calls on a nested mapping."
-   (if keys
-     (apply (partial chain-get (get coll key)) keys)
-     (get coll key)))
-
 (defn soft-merge [& maps]
   "Take mappings. Merge them depth-first so as to retain all leaves
   from a mapping except where specifically overridden by the next."

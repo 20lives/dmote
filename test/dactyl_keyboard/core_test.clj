@@ -2,14 +2,6 @@
   (:require [clojure.test :refer :all]
             [dactyl-keyboard.generics :as generics]))
 
-(deftest test-chainget
-  (testing "1 deep."
-    (is (= (generics/chain-get {:a 1} :a) 1)))
-  (testing "2 deep, fetching a map."
-    (is (= (generics/chain-get {:a {:b 3}} :a) {:b 3})))
-  (testing "2 deep, fetching a value."
-    (is (= (generics/chain-get {:a {:b 3}} :a :b) 3))))
-
 (deftest test-soft-merge
   (testing "1 deep, leaf replacement."
     (is (= (generics/soft-merge {:a 1} {:a 2}) {:a 2})))

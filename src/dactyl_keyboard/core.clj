@@ -73,10 +73,10 @@
 
 (defn build-all [build-options]
   (letfn [(getopt [& keys]
-            (let [value (apply (partial generics/chain-get build-options) keys)]
+            (let [value (get-in build-options keys)]
              (if (nil? value)
-               (do (println (format "Missing configuration value: “%s”." keys)
-                   (System/exit 1)))
+               (do (println (format "Missing configuration value: “%s”." keys))
+                   (System/exit 1))
                (if (string? value) (keyword value) value))))]
    (assert build-options)
 
