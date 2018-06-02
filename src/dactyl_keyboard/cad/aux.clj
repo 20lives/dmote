@@ -65,8 +65,8 @@
           micro-usb-channel
           ;; Male USB connector (enable in case of obstruction):
           #_(hull
-            (translate [0 4 0] (cube 15 1 10))
-            (translate [0 9 0] (cube 17 1 12)))))
+             (translate [0 4 0] (cube 15 1 10))
+             (translate [0 9 0] (cube 17 1 12)))))
       ;; An alcove in the inner wall, because a blind notch is hard to clean:
       (translate [0
                   (/ (- promicro-length alcove-height) 2)
@@ -77,8 +77,8 @@
       ;; Extra space for wiring running very near the MCU:
       (translate [(/ promicro-width -2) 0 0]
         (rotate [(+ (/ π 2) (/ π 14)) 0 (/ π -18)]
-          (cylinder 4 (- promicro-length 10))))
-      )))
+          (cylinder 4 (- promicro-length 10)))))))
+
 
 (def mcu-finger-coordinates (last-in-column mcu-finger-column))
 (defn mcu-position [shape]
@@ -290,8 +290,8 @@
                     :or {offset [0 0]}}]
              (let [directions (generics/string-corner corner)]
               (vec (map +
-                 (take 2 (finger-wall-corner-position coord directions))
-                 offset))))
+                    (take 2 (finger-wall-corner-position coord directions))
+                    offset))))
            (plate [polygon-spec]
              (extrude-linear
                {:height (getopt :foot-plates :height) :center false}

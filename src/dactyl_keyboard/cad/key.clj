@@ -216,12 +216,12 @@
 
 (defn row-radius [column row]
   (+ (/ (/ (+ mount-1u finger-mount-separation-y) 2)
-           (Math/sin (/ (progressive-pitch [column row]) 2)))
+        (Math/sin (/ (progressive-pitch [column row]) 2)))
      cap-bottom-height))
 
 (defn column-radius [column]
   (+ (/ (/ (+ mount-1u finger-mount-separation-x) 2)
-           (Math/sin (/ β 2)))
+        (Math/sin (/ β 2)))
      cap-bottom-height))
 
 (defn column-x-delta [column]
@@ -236,28 +236,28 @@
         pitch-radius (row-radius column row)
         column-z-delta (* (column-radius column) (- 1 (Math/cos roll-angle)))
         apply-default-style (fn [obj]
-          (->> obj
-            (swing-callables translate-fn pitch-radius (partial rotate-x-fn pitch-angle))
-            (swing-callables translate-fn (column-radius column) (partial rotate-y-fn roll-angle))
-            (translate-fn (finger-column-translation column))))
+                             (->> obj
+                               (swing-callables translate-fn pitch-radius (partial rotate-x-fn pitch-angle))
+                               (swing-callables translate-fn (column-radius column) (partial rotate-y-fn roll-angle))
+                               (translate-fn (finger-column-translation column))))
         apply-orthographic-style (fn [obj]
-          (->> obj
-            (swing-callables translate-fn pitch-radius (partial rotate-x-fn pitch-angle))
-            (rotate-y-fn  roll-angle)
-            (translate-fn [(- (* column-curvature-offset (column-x-delta column))) 0 column-z-delta])
-            (translate-fn (finger-column-translation column))))
+                                  (->> obj
+                                    (swing-callables translate-fn pitch-radius (partial rotate-x-fn pitch-angle))
+                                    (rotate-y-fn  roll-angle)
+                                    (translate-fn [(- (* column-curvature-offset (column-x-delta column))) 0 column-z-delta])
+                                    (translate-fn (finger-column-translation column))))
         apply-fixed-style (fn [obj]
-          (->> obj
-            (rotate-y-fn  (nth fixed-angles column))
-            (translate-fn [(nth fixed-x column) 0 (nth fixed-z column)])
-            (swing-callables translate-fn (+ pitch-radius (nth fixed-z column)) (partial rotate-x-fn pitch-angle))
-            (rotate-y-fn  fixed-tenting)
-            (translate-fn [0 (second (finger-column-translation column)) 0])))
+                           (->> obj
+                             (rotate-y-fn  (nth fixed-angles column))
+                             (translate-fn [(nth fixed-x column) 0 (nth fixed-z column)])
+                             (swing-callables translate-fn (+ pitch-radius (nth fixed-z column)) (partial rotate-x-fn pitch-angle))
+                             (rotate-y-fn  fixed-tenting)
+                             (translate-fn [0 (second (finger-column-translation column)) 0])))
         applicator (case column-style
-         :orthographic apply-orthographic-style
-         :fixed        apply-fixed-style
-         :standard     apply-default-style)
-       ]
+                    :orthographic apply-orthographic-style
+                    :fixed        apply-fixed-style
+                    :standard     apply-default-style)]
+
     (->> shape
          (translate-fn (get finger-tweak-early-translation [column row] [0 0 0]))
          (rotate-x-fn (get finger-intrinsic-pitch [column row] 0))
@@ -308,8 +308,8 @@
          (translate offset)
          (translate (get intrinsic-thumb-key-translation [column row] [0 0 0]))
          (rotate thumb-cluster-rotation)
-         (translate thumb-origin)
-         )))
+         (translate thumb-origin))))
+
 
 (defn for-thumbs [shape]
   (apply union (for [column all-thumb-columns

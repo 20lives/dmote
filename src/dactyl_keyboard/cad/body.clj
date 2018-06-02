@@ -33,30 +33,30 @@
             fill-north (spotter coord-north)
             fill-east (spotter coord-east)
             fill-northeast (spotter coord-northeast)]
-      (recur
-        (rest remaining-coordinates)
-        (conj
-          shapes
-          ;; Connecting columns.
-          (if (and fill-here fill-east)
-            (hull
-             (placer coord-here (corner-finder ENE))
-             (placer coord-here (corner-finder ESE))
-             (placer coord-east (corner-finder WNW))
-             (placer coord-east (corner-finder WSW))))
-          ;; Connecting rows.
-          (if (and fill-here fill-north)
-            (hull
-             (placer coord-here (corner-finder WNW))
-             (placer coord-here (corner-finder ENE))
-             (placer coord-north (corner-finder WSW))
-             (placer coord-north (corner-finder ESE))))
-          ;; Selectively filling the area between all four possible mounts.
-          (hull
-            (if fill-here (placer coord-here (corner-finder ENE)))
-            (if fill-north (placer coord-north (corner-finder ESE)))
-            (if fill-east (placer coord-east (corner-finder WNW)))
-            (if fill-northeast (placer coord-northeast (corner-finder WSW))))))))))
+       (recur
+         (rest remaining-coordinates)
+         (conj
+           shapes
+           ;; Connecting columns.
+           (if (and fill-here fill-east)
+             (hull
+              (placer coord-here (corner-finder ENE))
+              (placer coord-here (corner-finder ESE))
+              (placer coord-east (corner-finder WNW))
+              (placer coord-east (corner-finder WSW))))
+           ;; Connecting rows.
+           (if (and fill-here fill-north)
+             (hull
+              (placer coord-here (corner-finder WNW))
+              (placer coord-here (corner-finder ENE))
+              (placer coord-north (corner-finder WSW))
+              (placer coord-north (corner-finder ESE))))
+           ;; Selectively filling the area between all four possible mounts.
+           (hull
+             (if fill-here (placer coord-here (corner-finder ENE)))
+             (if fill-north (placer coord-north (corner-finder ESE)))
+             (if fill-east (placer coord-east (corner-finder WNW)))
+             (if fill-northeast (placer coord-northeast (corner-finder WSW))))))))))
 
 (defn walk-and-web [columns rows spotter placer corner-finder]
   (web-shapes (coordinate-pairs columns rows) spotter placer corner-finder))
@@ -100,8 +100,8 @@
         z-offset]
      4 [(* dx (+ xy-offset))
         (* dy (+ xy-offset))
-        (+ z-offset one-or-negative-one)]
-        )))
+        (+ z-offset one-or-negative-one)])))
+
 
 (defn wall-element [segment [placer direction post offsets]]
   (placer (translate (wall-segment-offset segment direction offsets) post)))
@@ -206,10 +206,10 @@
             ahead-left (walk-matrix coordinates direction (turning-left direction))
             landscape (vec (map occlusion-fn [left ahead-left ahead]))
             situation (case landscape
-              [false false false] :outer-corner
-              [false false true] :straight
-              [false true true] :inner-corner
-              (throw (Exception. (str "Unforeseen landscape at " place-and-direction ": " landscape))))]
+                       [false false false] :outer-corner
+                       [false false true] :straight
+                       [false true true] :inner-corner
+                       (throw (Exception. (str "Unforeseen landscape at " place-and-direction ": " landscape))))]
         (if (and (= place-and-direction stop) (not (empty? shapes)))
           shapes
           (recur

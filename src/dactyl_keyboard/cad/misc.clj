@@ -45,11 +45,11 @@
 (defn iso-hex-nut-model
   "A model of a hex nut for a boss or pocket. No through-hole."
   ([iso-size]
-    (iso-hex-nut-model iso-size (iso-hex-nut-height iso-size)))
+   (iso-hex-nut-model iso-size (iso-hex-nut-height iso-size)))
   ([iso-size height]
-    (rotate [0 0 (/ π 6)]
-      (with-fn 6
-        (cylinder (/ (iso-hex-nut-diameter iso-size) 2) height)))))
+   (rotate [0 0 (/ π 6)]
+     (with-fn 6
+       (cylinder (/ (iso-hex-nut-diameter iso-size) 2) height)))))
 
 (defn pairwise-hulls [& shapes]
   (apply union (map (partial apply hull) (partition 2 1 shapes))))
