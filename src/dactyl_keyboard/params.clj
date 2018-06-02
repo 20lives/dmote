@@ -8,9 +8,12 @@
 ;;; things without having to adjust more complex code.
 
 (ns dactyl-keyboard.params
-  (:require [scad-clj.model :exclude [use import] :refer :all]
+  (:require [clojure.string :refer [join]]
+            [yaml.core :as yaml]
+            [scad-clj.model :exclude [use import] :refer :all]
+            [flatland.ordered.map :refer [ordered-map]]
             [unicode-math.core :refer :all]
-            [dactyl-keyboard.generics :refer :all]))
+            [dactyl-keyboard.generics :as generics]))
 
 ;;; If you get creative and the bridge between the thumb and finger clusters
 ;;; is broken beyond what you can fix from here, you may want to look at
@@ -253,32 +256,244 @@
 ;; Serialized Data ;;
 ;;;;;;;;;;;;;;;;;;;;;
 
-(def serialized-base
-  "Default structural placeholders and values to be overridden by user
-  configuration. The main purpose of this mapping is to ensure that
-  getopt calls don’t crash the program by hitting undefined keys, even for
-  things a user leaves out of their files as irrelevant."
-  {:wrist-rest
-    {:include false
-     :style :threaded
-     :preview false
-     :position {:finger-key-column 0 :corner :SSE :offset [0 0]}
-     :plinth-base-size [1 1 1]
-     :lip-height 1
-     :rubber
-      {:height {:above-lip 1 :below-lip 1}
-       :shape {:grid-size [1 1]}}
-     :fasteners
-      {:amount 1
-       :diameter 1
-       :length 1
-       :height {:first 0 :increment 0}
-       :mounts
-        {:width 1
-         :case-side {:finger-key-column 0 :corner :SSE :offset [0 0] :depth 1}
-         :plinth-side {:offset [1 1] :depth 1}}}
-     :solid-bridge {:height 14}}
-   :foot-plates
-    {:include false
-     :height 4
-     :polygons []}})
+;; This section loads, parses and validates a user configuration from YAML.
+
+(def master
+  "Structural metadata for a user configuration.
+  The main purpose of this mapping is to ensure that getopt calls don’t crash
+  the program by hitting undefined keys."
+  (let [om ordered-map]  ; Ordered to produce documentation and match YAML parser.
+   (om :wrist-rest
+     (om :include
+           {:help (str "If `true`, include a wrist rest with the keyboard.")
+            :default false
+            :parse-fn boolean}
+         :style
+           {:help (str "The style of the wrist rest. Available styles are:\n"
+                       "\n"
+                       "* `threaded`: threaded fastener(s) connect the case "
+                       "and wrist rest.\n"
+                       "* `solid`: a printed plastic bridge along the ground "
+                       "as part of the model.")
+            :default :threaded
+            :parse-fn keyword
+            :validate [(partial contains? #{:threaded :solid})]}
+         :preview
+           {:help (str "Preview mode. This puts a model of the wrist rest "
+                       "in the same file as the case. That model is "
+                       "simplified, intended for gauging distance, not "
+                       "for printing.")
+            :default false
+            :parse-fn boolean}
+         :position
+           (om :finger-key-column
+                 {:help (str "A finger key column ID. The wrist rest will be "
+                             "attached to the first key in that column.")
+                  :default 0
+                  :parse-fn int}
+               :key-corner
+                 {:help (str "A corner for the first key in the column.")
+                  :default "SSE"
+                  :parse-fn generics/string-corner
+                  :validate [generics/corner?]}
+               :offset
+                 {:help (str "An offset in mm from the corner of the finger "
+                             "key to the wrist rest.")
+                  :default [0 0]
+                  :parse-fn vec})
+         :plinth-base-size
+           {:help (str "The size of the plinth up to but not including the "
+                       "narrowing upper lip and rubber parts.")
+            :default [1 1 1]
+            :parse-fn vec}
+         :lip-height
+           {:help (str "The height of a narrowing, printed lip between "
+                      "the base of the plinth and the rubber part.")
+            :default 1
+            :parse-fn int}
+         :rubber
+           (om :height
+             (om :above-lip {:help (str "The height of the rubber wrist "
+                                        "support, measured from the top of "
+                                        "the lip.")
+                             :default 1
+                             :parse-fn int}
+                 :below-lip {:help (str "The depth of the rubber wrist support, "
+                                        "measured from the top of the lip.")
+                             :default 1
+                             :parse-fn int})
+             :shape (om :grid-size {:default [1 1]}))
+         :fasteners
+           (om :amount
+                 {:help (str "The number of fasteners connecting each case to "
+                             "its wrist rest.")
+                  :default 1
+                  :parse-fn int}
+               :diameter
+                 {:help (str "The ISO metric diameter of each fastener.")
+                  :default 1
+                  :parse-fn int}
+               :length
+                 {:help (str "")
+                  :default 1
+                  :parse-fn int}
+               :height
+                 (om :first
+                       {:help (str "The distance in mm from the bottom of the "
+                                   "first fastener down to the ground level "
+                                   "of the model.")
+                        :default 0
+                        :parse-fn int}
+                     :increment
+                       {:help (str "The vertical distance in mm from the "
+                                   "center of each fastener to the center of "
+                                   "the next.")
+                        :default 0
+                        :parse-fn int})
+               :mounts
+                 (om :width
+                       {:help (str "The width in mm of the face or front "
+                                   "bezel on each connecting block that will "
+                                   "anchor a fastener.")
+                        :default 1
+                        :parse-fn int}
+                     :case-side
+                       (om :finger-key-column
+                             {:help (str "A finger key column ID. On the case "
+                                         "side, fastener mounts will be "
+                                         "attached at ground level near the "
+                                         "first key in that column.")
+                              :default 0
+                              :parse-fn int}
+                           :key-corner
+                             {:help "A key corner to narrow down the position."
+                              :default "SSE"
+                              :parse-fn generics/string-corner
+                              :validate [generics/corner?]}
+                           :offset
+                             {:help (str "An offset in mm from the corner of "
+                                         "the finger key to the mount.")
+                              :default [0 0]
+                              :parse-fn vec}
+                           :depth
+                             {:help (str "The thickness of the mount in mm "
+                                         "along the axis of the fastener(s).")
+                              :default 1
+                              :parse-fn int})
+                     :plinth-side
+                       (om :offset
+                             {:help (str "The offset in mm from the nearest "
+                                         "corner of the plinth to the "
+                                         "fastener mount attached to the "
+                                         "plinth.")
+                              :default [1 1]
+                              :parse-fn vec}
+                           :depth
+                             {:help (str "The thickness of the mount in mm "
+                                         "along the axis of the fastener(s). "
+                                         "This is typically larger than the "
+                                         "case-side depth to allow adjustment.")
+                              :default 1
+                              :parse-fn int})))
+         :solid-bridge
+           (om :height
+                 {:help (str "The height in mm of the land bridge between the "
+                             "case and the plinth.")
+                  :default 14
+                  :parse-fn int}))
+     :foot-plates
+     (om :include
+           {:help (str "If `true`, include flat surfaces at ground level for "
+                       "adding silicone rubber feet or cork strips etc. to the "
+                       "bottom of the keyboard to increase friction and/or "
+                       "improve feel, sound and ground clearance.")
+            :default false
+            :parse-fn boolean}
+          :height
+           {:help (str "The height in mm of each mounting plate.")
+            :default 4}
+          :polygons
+           {:help (str "A list describing the horizontal shape, size and "
+                    "position of each mounting plate as a polygon.")
+            :default []}))))
+
+(def reserved-key?
+  "Metada imitates clojure.tools.cli but adds :help."
+  (partial contains? #{:help :default :parse-fn :validate}))
+
+(defn endpoint? [node]
+  (boolean
+    (and (map? node)
+         (or (empty? node)
+             (some reserved-key? (keys node))))))
+
+(declare validate-leaf validate-branch)
+
+(defn validate-node [nominal candidate key]
+  (assert (not (reserved-key? key)))
+  (if (contains? nominal key)
+    (if (endpoint? (key nominal))
+      (try
+        (assoc candidate key (validate-leaf (key nominal) (key candidate)))
+        (catch clojure.lang.ExceptionInfo e
+          ;; Add the current key for richer logging at a higher level.
+          ;; This would work better if the call stack were deep.
+          (let [data (ex-data e)
+                keys (get data :keys ())
+                new-data (assoc data :keys (conj keys key))]
+           (throw (ex-info (.getMessage e) new-data)))))
+      (assoc candidate key (validate-branch (key nominal) (key candidate))))
+    (throw (ex-info "Superfluous configuration key"
+                    {:type :superfluous-key :keys (list key)}))))
+
+(defn validate-branch [nominal candidate]
+  "Validate a fragment of a configuration received through the UI."
+  (reduce (partial validate-node nominal)
+          candidate
+          (distinct (apply concat (map keys [nominal candidate])))))
+
+(defn parse-leaf [nominal candidate]
+  (let [raw (or candidate (:default nominal))
+        parse-fn (get nominal :parse-fn identity)]
+   (try
+     (parse-fn raw)
+     (catch Exception e
+       (throw (ex-info "Could not cast value to correct data type"
+                        {:type :parse-error :value raw :original-exception e}))))))
+
+(defn validate-leaf [nominal candidate]
+  (assert (endpoint? nominal))
+  (try
+    (reduce
+      (fn [unvalidated validator]
+        (if (validator unvalidated)
+           unvalidated
+           (throw (ex-info "Value out of range"
+                           {:type :validation-error
+                            :value unvalidated
+                            :raw-value candidate
+                            :validator validator}))))
+      (parse-leaf nominal candidate)
+      (get nominal :validate [some?]))))
+
+(defn validate-configuration [candidate]
+  "Attempt to describe any errors in the user configuration."
+  (try
+     (validate-branch master candidate)
+     (catch clojure.lang.ExceptionInfo e
+       (let [data (ex-data e)]
+        (println "Validation error:" (.getMessage e))
+        (println "  At key(s):" (join " >> " (:keys data)))
+        (if (:value data) (println "  Value:" (:value data)))
+        (if (:raw-value data) (println "  Value before parsing:" (:raw-value data)))
+        (if (:validator data) (println "  Validator:" (:validator data)))
+        (System/exit 1)))))
+
+(defn load-configuration [filepaths]
+  "Read and combine YAML from files, in the order given."
+  (let [load (fn [path]
+               (if-let [data (yaml/from-file path)]
+                 data
+                 (do (println (format "Failed to load file “%s”." path))
+                     (System/exit 1))))]
+   (validate-configuration (apply generics/soft-merge (map load filepaths)))))

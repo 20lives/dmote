@@ -35,11 +35,11 @@
 
 (defn string-corner [string]
   "For use with YAML, where string values are not automatically converted."
-  (let [directions ((keyword string) keyword-to-directions)]
-   (if (nil? directions)
-     (do (println (format "Unknown corner ID string: “%s”." string))
-         (System/exit 1))
-     directions)))
+  ((keyword string) keyword-to-directions))
+
+(defn corner? [candidate]
+  "A validation function for use with YAML."
+  (contains? (set (vals keyword-to-directions)) candidate))
 
 (defn abs [n]
   "The absolute of n."
@@ -58,8 +58,6 @@
 (defn soft-merge [& maps]
   "Take mappings. Merge them depth-first so as to retain all leaves
   from a mapping except where specifically overridden by the next."
-  (letfn [(f [old new]
-            (if (map? old)
-              (soft-merge old new)
-              new))]
-   (apply (partial merge-with f) maps)))
+  (apply (partial merge-with
+           (fn  [old new] (if (map? old) (soft-merge old new) new)))
+         maps))

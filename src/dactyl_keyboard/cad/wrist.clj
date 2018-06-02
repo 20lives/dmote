@@ -33,8 +33,7 @@
 (defn- derive-properties [getopt]
   (let [pivot
           (case-south-wall-xy [(getopt :wrist-rest :position :finger-key-column)
-                               (keyword-to-directions
-                                 (getopt :wrist-rest :position :key-corner))])
+                               (getopt :wrist-rest :position :key-corner)])
         offset (getopt :wrist-rest :position :offset)
         [base-x base-y base-z] (getopt :wrist-rest :plinth-base-size)
         lip (getopt :wrist-rest :lip-height)
@@ -68,7 +67,7 @@
 (defn threaded-position-keyboard [getopt]
   (let [position (getopt :wrist-rest :fasteners :mounts :case-side)
         {column :finger-key-column corner :key-corner offset :offset} position
-        base (case-south-wall-xy [column ((keyword corner) keyword-to-directions)])
+        base (case-south-wall-xy [column corner])
         height (threaded-center-height getopt)]
    (conj (vec (map + base offset)) height)))
 
@@ -168,8 +167,8 @@
          [[(first xy-east) (second xy-west)]
           xy-west
           [(first xy-west) (- (second p0) bevel)]
-          [(- (first xy-west) bevel) (second p0)]]
-    )))))
+          [(- (first xy-west) bevel) (second p0)]])))))
+
 
 (defn case-hook [getopt]
   "A model hook. In the solid style, this holds the wrest in place."
@@ -189,8 +188,8 @@
                 [x1 y0]  ; Right part of the point.
                 [x3 y0]  ; Rightmost contact with the connector.
                 [x4 y2]  ; Rightmost contact with the case.
-                [x2 y2]] ; Leftmost contact with the case.
-                ))))
+                [x2 y2]])))) ; Leftmost contact with the case.
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -232,20 +231,20 @@
                   (translate [0 0 (- (* z (𝒩 M μ σ)))])
                   (translate [(* column grid-x) (* row grid-y) 0])
                   (translate origin))))]
-  {:top  (body/walk-and-web
-           all-columns
-           all-rows
-           wrist?
-           node-place
-           node-corner-post)
-   :edge (body/walk-and-wall
-           wrist?
-           node-place
-           (fn [_ _] [0 wall-z-offset])  ; Offsetter.
-           node-corner-post
-           body/dropping-bevel
-           [[0 0] :north]
-           [[0 0] :north])}))
+   {:top  (body/walk-and-web
+            all-columns
+            all-rows
+            wrist?
+            node-place
+            node-corner-post)
+    :edge (body/walk-and-wall
+            wrist?
+            node-place
+            (fn [_ _] [0 wall-z-offset])  ; Offsetter.
+            node-corner-post
+            body/dropping-bevel
+            [[0 0] :north]
+            [[0 0] :north])}))
 
 (defn bevel-3d-model [getopt]
   (apply union (:edge (pad-shape getopt))))

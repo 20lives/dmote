@@ -5,7 +5,6 @@
 
 (ns dactyl-keyboard.core
   (:require [clojure.tools.cli :refer [parse-opts]]
-            [yaml.core :as yaml]
             [scad-clj.scad :refer [write-scad]]
             [scad-clj.model :exclude [use import] :refer :all]
             [dactyl-keyboard.generics :as generics]
@@ -102,29 +101,21 @@
   [["-c" "--configuration-file PATH" "Path to parameter file in YAML format"
     :default ["resources/opt/default.yaml"]
     :assoc-fn (fn [m k new] (update-in m [k] (fn [old] (conj old new))))]
+   [nil "--check-parser-defaults"
+    "See whether the configuration parser accepts its own default values"]
    ["-d" "--debug"]
    ["-h" "--help"]])
 
-(defn load-configuration [filepaths]
-  "Read and combine YAML from files, in the order given."
-  (let [load (fn [path]
-                (let [data (yaml/from-file path)]
-                 (if (some? data)
-                   data
-                   (do (println (format "Failed to load file “%s”." path))
-                       (System/exit 1)))))
-        onto-base (partial generics/soft-merge params/serialized-base)]
-   (apply onto-base (map load filepaths))))
-
 (defn -main [& raw]
-  (let [args (parse-opts raw cli-options)]
-   (if (:help (:options args))
-     (do (println (:summary args))
-         (System/exit 0))
-     (if (some? (:errors args))
-       (do (println (first (:errors args)))
-           (println (:summary args))
-           (System/exit 1))
-       (let [config (load-configuration (:configuration-file (:options args)))]
+  (let [args (parse-opts raw cli-options)
+        options (:options args)]
+   (cond
+     (some? (:errors args)) (do (println (first (:errors args)))
+                                (println (:summary args))
+                                (System/exit 1))
+     (:help options) (do (println (:summary args)) (System/exit 0))
+     (:check-parser-defaults options) (params/validate-configuration {})
+     :else
+       (let [config (params/load-configuration (:configuration-file options))]
         (if (:debug (:options args)) (println "Building with" config))
-        (build-all config))))))
+        (build-all config)))))
