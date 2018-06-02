@@ -209,16 +209,6 @@
   "A post shape that comes offset for one corner of a key mount."
   (translate (mount-corner-offset directions) web-post))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Key Placement Functions — Fingers ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn row-radius [column row]
-  (+ (/ (/ (+ mount-1u finger-mount-separation-y) 2)
-        (Math/sin (/ (progressive-pitch [column row]) 2)))
-     cap-bottom-height))
-
 (defn column-radius [column]
   (+ (/ (/ (+ mount-1u finger-mount-separation-x) 2)
         (Math/sin (/ β 2)))
@@ -227,41 +217,49 @@
 (defn column-x-delta [column]
   (+ -1 (- (* (column-radius column) (Math/sin β)))))
 
+(defn stylist [style translate-fn pitcher pitch-radius rotate-y-fn [column row] obj]
+  "Produce a closure that will apply a specific key cluster style."
+  (let [column-curvature-offset (- curvature-centercol column)
+        roll-angle (* β column-curvature-offset)]
+   (case style
+     :standard
+       (->> obj
+         (swing-callables translate-fn pitch-radius pitcher)
+         (swing-callables translate-fn (column-radius column) (partial rotate-y-fn roll-angle))
+         (translate-fn (finger-column-translation column)))
+     :orthographic
+       (->> obj
+         (swing-callables translate-fn pitch-radius pitcher)
+         (rotate-y-fn roll-angle)
+         (translate-fn [(- (* column-curvature-offset (column-x-delta column)))
+                        0
+                        (* (column-radius column)
+                           (- 1 (Math/cos (* β column-curvature-offset))))])
+         (translate-fn (finger-column-translation column)))
+     :fixed
+       (->> obj
+         (rotate-y-fn (nth fixed-angles column))
+         (translate-fn [(nth fixed-x column) 0 (nth fixed-z column)])
+         (swing-callables translate-fn (+ pitch-radius (nth fixed-z column)) pitcher)
+         (rotate-y-fn fixed-tenting)
+         (translate-fn [0 (second (finger-column-translation column)) 0])))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Key Placement Functions — Fingers ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn finger-placement [translate-fn rotate-x-fn rotate-y-fn [column row] shape]
   "Place and tilt passed ‘shape’ as if it were a key."
-  (let [column-curvature-offset (- curvature-centercol column)
-        roll-angle (* β column-curvature-offset)
-        curvature-centerrow (finger-column-curvature-centerrow column)
+  (let [curvature-centerrow (finger-column-curvature-centerrow column)
         pitch-angle (* (progressive-pitch [column row]) (- row curvature-centerrow))
-        pitch-radius (row-radius column row)
-        column-z-delta (* (column-radius column) (- 1 (Math/cos roll-angle)))
-        apply-default-style (fn [obj]
-                             (->> obj
-                               (swing-callables translate-fn pitch-radius (partial rotate-x-fn pitch-angle))
-                               (swing-callables translate-fn (column-radius column) (partial rotate-y-fn roll-angle))
-                               (translate-fn (finger-column-translation column))))
-        apply-orthographic-style (fn [obj]
-                                  (->> obj
-                                    (swing-callables translate-fn pitch-radius (partial rotate-x-fn pitch-angle))
-                                    (rotate-y-fn  roll-angle)
-                                    (translate-fn [(- (* column-curvature-offset (column-x-delta column))) 0 column-z-delta])
-                                    (translate-fn (finger-column-translation column))))
-        apply-fixed-style (fn [obj]
-                           (->> obj
-                             (rotate-y-fn  (nth fixed-angles column))
-                             (translate-fn [(nth fixed-x column) 0 (nth fixed-z column)])
-                             (swing-callables translate-fn (+ pitch-radius (nth fixed-z column)) (partial rotate-x-fn pitch-angle))
-                             (rotate-y-fn  fixed-tenting)
-                             (translate-fn [0 (second (finger-column-translation column)) 0])))
-        applicator (case column-style
-                    :orthographic apply-orthographic-style
-                    :fixed        apply-fixed-style
-                    :standard     apply-default-style)]
-
+        pitch-radius (+ (/ (/ (+ mount-1u finger-mount-separation-y) 2)
+                           (Math/sin (/ (progressive-pitch [column row]) 2)))
+                        cap-bottom-height)]
     (->> shape
          (translate-fn (get finger-tweak-early-translation [column row] [0 0 0]))
          (rotate-x-fn (get finger-intrinsic-pitch [column row] 0))
-         applicator
+         (stylist column-style translate-fn (partial rotate-x-fn pitch-angle) pitch-radius rotate-y-fn [column row])
          (rotate-x-fn pitch-centerrow)
          (rotate-y-fn tenting-angle)
          (translate-fn [0 (* mount-1u curvature-centerrow) keyboard-z-offset])
