@@ -36,7 +36,8 @@ other variant defined in the makefile.
 **Making changes**
 
 If you want to change what the default configuration looks like, edit
-`resources/opt/default.yaml`. It contains a nested structure of parameters.
+`resources/opt/default.yaml`. It contains a nested structure of parameters
+[documented here](options.md).
 
 You do not have to make all of your changes in `default.yaml`. As you can see
 in the makefile, you can call the generating program with one or more `-c`

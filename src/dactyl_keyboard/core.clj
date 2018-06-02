@@ -103,6 +103,8 @@
     :assoc-fn (fn [m k new] (update-in m [k] (fn [old] (conj old new))))]
    [nil "--check-parser-defaults"
     "See whether the configuration parser accepts its own default values"]
+   [nil "--describe-parameters"
+    "Print a Markdown document specifying what a configuration file may contain"]
    ["-d" "--debug"]
    ["-h" "--help"]])
 
@@ -113,8 +115,9 @@
      (some? (:errors args)) (do (println (first (:errors args)))
                                 (println (:summary args))
                                 (System/exit 1))
-     (:help options) (do (println (:summary args)) (System/exit 0))
+     (:help options) (println (:summary args))
      (:check-parser-defaults options) (params/validate-configuration {})
+     (:describe-parameters options) (params/print-markdown-documentation)
      :else
        (let [config (params/load-configuration (:configuration-file options))]
         (if (:debug (:options args)) (println "Building with" config))

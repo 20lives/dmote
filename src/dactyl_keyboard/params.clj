@@ -279,10 +279,10 @@
             :parse-fn keyword
             :validate [(partial contains? #{:threaded :solid})]}
          :preview
-           {:help (str "Preview mode. This puts a model of the wrist rest "
-                       "in the same file as the case. That model is "
-                       "simplified, intended for gauging distance, not "
-                       "for printing.")
+           {:help (str "Preview mode. If `true`, this puts a model of the "
+                       "wrist rest in the same OpenSCAD file as the case. "
+                       "That model is simplified, intended for gauging "
+                       "distance, not for printing.")
             :default false
             :parse-fn boolean}
          :position
@@ -334,7 +334,7 @@
                   :default 1
                   :parse-fn int}
                :length
-                 {:help (str "")
+                 {:help (str "The length in mm of each fastener.")
                   :default 1
                   :parse-fn int}
                :height
@@ -426,6 +426,25 @@
     (and (map? node)
          (or (empty? node)
              (some reserved-key? (keys node))))))
+
+(defn- print-markdown-fragment [node level]
+  (doseq [key (keys node)]
+    (println)
+    (if (endpoint? (key node))
+      (do (println (join "" (repeat level "#")) (format "Parameter `%s`" (name key)))
+          (println)
+          (println (get-in node [key :help] "Undocumented.")))
+      (do (println (join "" (repeat level "#")) (format "Section `%s`" (name key)))
+          (print-markdown-fragment (key node) (inc level))))))
+
+(defn print-markdown-documentation []
+  (println "# Configuration options")
+  (println)
+  (println (str "Each heading in this document represents a recognized "
+                "configuration key in YAML files for a DMOTE variant."))
+  (println)
+  (println (str "This documentation was generated from the application CLI."))
+  (print-markdown-fragment master 2))
 
 (declare validate-leaf validate-branch)
 
