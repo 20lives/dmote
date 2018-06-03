@@ -51,20 +51,49 @@
 ;; Definitions — Fingers ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def last-finger-column (apply max (keys rows-above-home)))
-(def all-finger-columns (range 0 (+ last-finger-column 1)))
-(def max-rows-above-home (apply max (vals rows-above-home)))  ; This doubles as the top row index.
-(def max-rows-below-home (apply max (vals rows-below-home)))
-(def all-finger-rows (range (- max-rows-below-home) (+ max-rows-above-home 1)))
+(defn cluster-properties [cluster getopt]
+  "Derive some properties about a specific key cluster from raw configuration info."
+  (let [matrix (getopt :key-clusters cluster :matrix-columns)
+        gather (fn [key default] (map #(get % key default) matrix))
+        column-range (range 0 (count matrix))
+        last-column (last column-range)
+        max-rows-above-home (apply max (gather :rows-above-home 0))
+        max-rows-below-home (apply max (gather :rows-below-home 0))
+        row-range (range (- max-rows-below-home) (+ max-rows-above-home 1))
+        key-requested?
+          (fn [[column row]]
+            "True if specified key is requested."
+            (if-let [data (nth matrix column nil)]
+              (cond
+                (< row 0) (>= (get data :rows-below-home 0) (abs row))
+                (> row 0) (>= (get data :rows-above-home 0) row)
+                :else true)  ; Home row.
+              false))  ; Column not in matrix.
+        key-coordinates (coordinate-pairs column-range row-range key-requested?)
+        row-indices-by-column
+          (apply hash-map
+            (mapcat
+              (fn [c] [c (filter #(key-requested? [c %]) row-range)])
+              column-range))
+        column-indices-by-row
+          (apply hash-map
+            (mapcat
+              (fn [r] [r (filter #(key-requested? [% r]) column-range)])
+              row-range))]
+   {:last-column last-column
+    :column-range column-range
+    :row-range row-range
+    :key-requested? key-requested?
+    :key-coordinates key-coordinates
+    :row-indices-by-column row-indices-by-column
+    :column-indices-by-row column-indices-by-row}))
 
-(defn finger? [[column row]]
-  "True if specified finger key has been requested."
-  (cond
-    (< column 0) false  ; Off grid.
-    (> column last-finger-column) false  ; Off grid; lookups would cause null pointer.
-    (= row 0) true  ;  Home row.
-    (> row 0) (>= (get rows-above-home column row) row)
-    (< row 0) (>= (get rows-below-home column row) (abs row))))
+(defn print-matrix [cluster getopt]
+  "Print a schematic picture of a key cluster. For your REPL."
+  (let [prop (partial getopt :key-clusters cluster :derived)]
+    (doseq [row (reverse (prop :row-range)) column (prop :column-range)]
+      (if ((prop :key-requested?) [column row]) (print "□") (print "·"))
+      (if (= column (prop :last-column)) (println)))))
 
 (defn finger-row-indices [column]
   "Return the range of row indices valid for passed column index."
@@ -77,13 +106,6 @@
 
 (defn last-in-column [column]
   [column (last (finger-row-indices column))])
-
-(defn finger-column-indices [row]
-  "Return the range of column indices valid for passed row index."
-  (filter #(finger? [% row]) all-finger-columns))
-
-(def finger-key-coordinates
-  (coordinate-pairs all-finger-columns all-finger-rows finger?))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -276,14 +298,17 @@
   (finger-placement
     translate (fn [angle obj] (rotate angle [1 0 0] obj)) (fn [angle obj] (rotate angle [0 1 0] obj)) coordinates shape))
 
-(def finger-plates
-  (apply union (map #(finger-key-place % single-switch-plate) finger-key-coordinates)))
+(defn finger-plates [getopt]
+  (apply union (map #(finger-key-place % single-switch-plate)
+                    (getopt :key-clusters :finger :derived :key-coordinates))))
 
-(def finger-cutouts
-  (apply union (map #(finger-key-place % single-switch-cutout) finger-key-coordinates)))
+(defn finger-cutouts [getopt]
+  (apply union (map #(finger-key-place % single-switch-cutout)
+                    (getopt :key-clusters :finger :derived :key-coordinates))))
 
-(def finger-keycaps
-  (apply union (map #(finger-key-place % (keycap 1)) finger-key-coordinates)))
+(defn finger-keycaps [getopt]
+  (apply union (map #(finger-key-place % (keycap 1))
+                    (getopt :key-clusters :finger :derived :key-coordinates))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

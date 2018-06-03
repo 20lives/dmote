@@ -1,7 +1,20 @@
 # Bundled default model build parameters for a DMOTE.
-# This is not the full set of parameters.
-# Deeper, less sane default values are built into the parser.
+# This is not the full set of available parameters.
+# Read the project documentation.
 
+key-clusters:
+  finger:
+    matrix-columns:
+    - rows-above-home: 1
+      rows-below-home: 1
+    - rows-above-home: 1
+      rows-below-home: 2
+    - rows-above-home: 1
+      rows-below-home: 3
+    - rows-above-home: 1
+      rows-below-home: 2
+    - rows-below-home: 2
+    - rows-below-home: 2
 wrist-rest:
   include: false
   style: threaded

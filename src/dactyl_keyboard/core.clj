@@ -20,23 +20,16 @@
   "Reload this namespace with any changed dependencies. Redraw .scad files."
   (clojure.core/use 'dactyl-keyboard.core :reload-all))
 
-(defn print-finger-matrix []
-  "Print a picture of the finger layout. No thumb keys. For your REPL."
-  (for [row (reverse key/all-finger-rows)
-        column key/all-finger-columns]
-    (do (if (key/finger? [column row]) (print "□") (print "·"))
-        (if (= column key/last-finger-column) (println)))))
-
 (defn build-keyboard-right [getopt]
   "Right-hand-side keyboard model."
   (union
     (difference
       (union
-        body/finger-walls
+        (body/finger-walls getopt)
         body/thumb-walls
-        body/finger-web
+        (body/finger-web getopt)
         body/thumb-web
-        key/finger-plates
+        (key/finger-plates getopt)
         key/thumb-plates
         tweaks/key-cluster-bridge
         tweaks/finger-case-tweaks
@@ -48,7 +41,7 @@
         aux/rj9-positive
         (aux/foot-plates getopt)
         (if params/include-backplate-block aux/backplate-block))
-      key/finger-cutouts
+      (key/finger-cutouts getopt)
       key/thumb-cutouts
       tweaks/key-cluster-bridge-cutouts
       aux/rj9-negative
@@ -61,7 +54,7 @@
       (translate [0 0 -500] (cube 1000 1000 1000)))
     ;; The remaining elements are visualizations for use in development.
     ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
-    #_key/finger-keycaps
+    (if (getopt :key-clusters :finger :preview) (key/finger-keycaps getopt))
     #_key/thumb-keycaps
     #_aux/mcu-visualization
     (if (and (getopt :wrist-rest :include) (getopt :wrist-rest :preview))
@@ -70,15 +63,30 @@
 (defn author-scad [filename model]
   (spit (str "things/" filename) (write-scad model)))
 
-(defn build-all [build-options]
-  (letfn [(getopt [& keys]
-            (let [value (get-in build-options keys)]
-             (if (nil? value)
-               (do (println (format "Missing configuration value: “%s”." keys))
-                   (System/exit 1))
-               (if (string? value) (keyword value) value))))]
-   (assert build-options)
+(defn build-option-accessor [build-options]
+  "Close over a user configuration."
+  (fn [& path]
+    ;; Can’t use if-let because some legitimate values are false.
+    (let [value (get-in build-options path)]
+     (if (nil? value)
+      (throw (ex-info (format "Missing configuration at %s" path)
+                      {:keys-nearby (keys (get-in build-options (butlast path)))}))
+      value))))
 
+(defn enrich-option-metadata [build-options]
+  "Derive certain properties that are implicit in the user configuration.
+  Store these results under the ”:derived” key in each section."
+  (let [accessor (build-option-accessor build-options)]
+    (assert build-options)
+    (reduce
+      (fn [coll [path callable]]
+        (assoc-in coll (conj path :derived) (callable accessor)))
+      build-options
+      [[[:key-clusters :finger] (partial key/cluster-properties :finger)]
+       [[:wrist-rest] wrist/derive-properties]])))
+
+(defn build-all [build-options]
+  (let [getopt (build-option-accessor (enrich-option-metadata build-options))]
    (author-scad "right-hand.scad" (build-keyboard-right getopt))
    (author-scad "left-hand.scad"
      (mirror [-1 0 0] (build-keyboard-right getopt)))

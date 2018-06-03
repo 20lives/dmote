@@ -4,6 +4,22 @@ Each heading in this document represents a recognized configuration key in YAML 
 
 This documentation was generated from the application CLI.
 
+## Section `key-clusters`
+
+This section describes where to put keys on the keyboard.
+
+### Section `finger`
+
+The main cluster of keys, for “fingers” in a sense excluding the thumb.
+
+#### Parameter `preview`
+
+If `true`, include models of the keycaps. This is intended for development, not for printing.
+
+#### Parameter `matrix-columns`
+
+A list of hash maps. Each one describes a column of keys, starting with a column indexed at zero.
+
 ## Section `wrist-rest`
 
 An optional extension to support the user’s wrist.

@@ -30,7 +30,8 @@
   a simple matrix extending from [0, 0] to [max-x max-y]."
   (fn [[x y]] (and (<= 0 x max-x) (<= 0 y max-y))))
 
-(defn- derive-properties [getopt]
+(defn derive-properties [getopt]
+  "Derive certain properties from the base configuration."
   (let [pivot
           (case-south-wall-xy [(getopt :wrist-rest :position :finger-key-column)
                                (getopt :wrist-rest :position :key-corner)])
@@ -72,7 +73,7 @@
    (conj (vec (map + base offset)) height)))
 
 (defn threaded-position-plinth [getopt]
-  (let [corner (:nw (derive-properties getopt))
+  (let [corner (getopt :wrist-rest :derived :nw)
         offset (getopt :wrist-rest :fasteners :mounts :plinth-side :offset)
         height (threaded-center-height getopt)]
    (conj (vec (map + corner offset)) height)))
@@ -149,10 +150,11 @@
 
 (defn solid-connector [getopt]
   (let [basecol (getopt :wrist-rest :position :finger-key-column)
-        lastcol key/last-finger-column
-        prop (derive-properties getopt)
-        xy-west (:nw prop)
-        xy-east (vec (map + (case-south-wall-xy [lastcol SSE]) (:offset prop)))
+        cols (getopt :key-clusters :finger :derived :column-range)
+        lastcol (last cols)
+        xy-west (getopt :wrist-rest :derived :nw)
+        xy-east (vec (map + (case-south-wall-xy [lastcol SSE])
+                            (getopt :wrist-rest :derived :offset)))
         bevel 10
         p0 (case-south-wall-xy [(- basecol 1) SSE])]
    (extrude-linear
@@ -161,7 +163,7 @@
        (concat
          [p0]
          (map case-south-wall-xy
-           (for [column (filter (partial <= basecol) key/all-finger-columns)
+           (for [column (filter (partial <= basecol) cols)
                  corner [SSW SSE]]
              [column corner]))
          [[(first xy-east) (second xy-west)]
@@ -172,7 +174,8 @@
 
 (defn case-hook [getopt]
   "A model hook. In the solid style, this holds the wrest in place."
-  (let [[column row] (key/first-in-column key/last-finger-column)
+  (let [[column row] (key/first-in-column
+                       (getopt :key-clusters :finger :derived :last-column))
         [x4 y2 _] (key/finger-key-position [column row]
                                            (key/mount-corner-offset ESE))
         x3 (- x4 2)
@@ -184,12 +187,11 @@
     (extrude-linear
       {:height (getopt :wrist-rest :solid-bridge :height)}
       ;; Draw the outline of the hook moving counterclockwise.
-      (polygon [[x0 y1]  ; Left part of the point.
-                [x1 y0]  ; Right part of the point.
-                [x3 y0]  ; Rightmost contact with the connector.
-                [x4 y2]  ; Rightmost contact with the case.
-                [x2 y2]])))) ; Leftmost contact with the case.
-
+      (polygon [[x0 y1]       ; Left part of the point.
+                [x1 y0]       ; Right part of the point.
+                [x3 y0]       ; Rightmost contact with the connector.
+                [x4 y2]       ; Rightmost contact with the case.
+                [x2 y2]]))))  ; Leftmost contact with the case.
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -209,16 +211,16 @@
 (defn pad-shape [getopt]
   "A single function to determine the shape of the rubber pad.
   This outputs a map of two separate objects that need similar inputs."
-  (let [prop (derive-properties getopt)
+  (let [deropt (partial getopt :wrist-rest :derived)
         [grid-x grid-y] (getopt :wrist-rest :rubber :shape :grid-size)
-        last-column (int (/ (:base-x prop) grid-x))
-        last-row (int (/ (:base-y prop) grid-y))
+        last-column (int (/ (deropt :base-x) grid-x))
+        last-row (int (/ (deropt :base-y) grid-y))
         all-columns (range 0 (+ last-column 1))
         all-rows (range 0 (+ last-row 1))
         wrist? (square-matrix-checker [last-column last-row])
-        origin [(first (:sw prop))
-                (second (:sw prop))
-                (:total-z prop)]
+        origin [(first (deropt :sw))
+                (second (deropt :sw))
+                (deropt :total-z)]
         μ 0
         σ params/wrist-rest-σ
         θ params/wrist-rest-θ
@@ -255,9 +257,9 @@
 (defn plinth-zone-rubber [getopt]
   (let [depth (getopt :wrist-rest :rubber :height :below-lip)]
    (union
-     (translate [0 0 (+ 50 (:mtz-z (derive-properties getopt)))]
+     (translate [0 0 (+ 50 (getopt :wrist-rest :derived :mtz-z))]
        (cube 500 500 100))
-     (translate [0 0 (- (:mtz-z (derive-properties getopt)) (/ depth 2))]
+     (translate [0 0 (- (getopt :wrist-rest :derived :mtz-z) (/ depth 2))]
        (extrude-linear {:height depth}
          (offset -2 (bevel-2d-outline getopt)))))))
 
@@ -265,7 +267,7 @@
   "The overall shape of rubber and plastic as one object."
   (let [{top :top edge :edge} (pad-shape getopt)]
    (letfn [(shadow [shape]
-             (translate [0 0 (:base-z (derive-properties getopt))]
+             (translate [0 0 (getopt :wrist-rest :derived :base-z)]
                (extrude-linear {:height 0.01}
                  (offset 1 (project shape)))))
            (hull-to-base [shape]
@@ -285,31 +287,30 @@
 
 (defn plinth-plastic [getopt]
   "The lower portion of a wrist rest, to be printed in a rigid material."
-  (let [properties (derive-properties getopt)]
-   (intersection
-     (difference
-       (plinth-shape getopt)
-       (plinth-zone-rubber getopt)
-       (case (getopt :wrist-rest :style)
-         :solid
+  (intersection
+    (difference
+      (plinth-shape getopt)
+      (plinth-zone-rubber getopt)
+      (case (getopt :wrist-rest :style)
+        :solid
+          (union
+            (case-hook getopt)
+            (body/finger-walls getopt))
+        :threaded
+          (let [d (getopt :wrist-rest :fasteners :diameter)
+                nut (rotate [(/ π 2) 0 0] (misc/iso-hex-nut-model d))]
            (union
-             (case-hook getopt)
-             body/finger-walls)
-         :threaded
-           (let [d (getopt :wrist-rest :fasteners :diameter)
-                 nut (rotate [(/ π 2) 0 0] (misc/iso-hex-nut-model d))]
-            (union
-              (connecting-rods-and-nuts getopt)
-              ;; A hex nut pocket:
-              (translate (threaded-position-plinth getopt)
-                (rotate [0 0 (rod-angle getopt)]
-                  (hull nut (translate [0 0 100] nut)))))))
-       ;; Two square holes for pouring silicone:
-       (translate (vec (map + (:ne properties) [-10 -10]))
-         (extrude-linear {:height 200} (square 10 10)))
-       (translate (vec (map + (:sw properties) [10 10]))
-         (extrude-linear {:height 200} (square 10 10))))
-     (translate [0 0 500] (cube 1000 1000 1000)))))
+             (connecting-rods-and-nuts getopt)
+             ;; A hex nut pocket:
+             (translate (threaded-position-plinth getopt)
+               (rotate [0 0 (rod-angle getopt)]
+                 (hull nut (translate [0 0 100] nut)))))))
+      ;; Two square holes for pouring silicone:
+      (translate (vec (map + (getopt :wrist-rest :derived :ne) [-10 -10]))
+        (extrude-linear {:height 200} (square 10 10)))
+      (translate (vec (map + (getopt :wrist-rest :derived :sw) [10 10]))
+        (extrude-linear {:height 200} (square 10 10))))
+    (translate [0 0 500] (cube 1000 1000 1000))))
 
 (defn rubber-insert [getopt]
   "The upper portion of a wrist rest, to be cast or printed in a soft material."
@@ -321,10 +322,11 @@
   This is for casting silicone into, “in place”. As long as the
   wrist rest has 180° rotational symmetry around the z axis, one mould should
   be enough for both halves’ wrist rests, with tape to prevent leaks."
-  (let [dz (- (:total-z (derive-properties getopt)) (:base-z (derive-properties getopt)))]
+  (let [derived (partial getopt :wrist-rest :derived)
+        dz (- (derived :total-z) (derived :base-z))]
    (rotate [π 0 0]  ;; Print bottom-up.
      (difference
-       (translate [0 0 (+ (:base-z (derive-properties getopt)) (/ dz 2))]
+       (translate [0 0 (+ (derived :base-z) (/ dz 2))]
          (extrude-linear {:height (+ dz 4)}
            (offset 2 (bevel-2d-outline getopt))))
        (plinth-shape getopt)))))
@@ -338,6 +340,6 @@
       (plinth-shape getopt)
       (union
         (case (getopt :wrist-rest :style)
-          :solid (union case-hook body/finger-walls)
+          :solid (union case-hook (body/finger-walls getopt))
           :threaded (connecting-rods-and-nuts getopt))))
     (translate [0 0 500] (cube 1000 1000 1000))))

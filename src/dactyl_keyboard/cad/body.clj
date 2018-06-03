@@ -61,12 +61,14 @@
 (defn walk-and-web [columns rows spotter placer corner-finder]
   (web-shapes (coordinate-pairs columns rows) spotter placer corner-finder))
 
-(def finger-web
+(defn finger-web [getopt]
   (apply union
     (walk-and-web
-      all-finger-columns
-      all-finger-rows
-      (fn [coordinates] (and (finger? coordinates) (finger-key-web coordinates)))
+      (getopt :key-clusters :finger :derived :column-range)
+      (getopt :key-clusters :finger :derived :row-range)
+      (fn [coordinates]
+        (and ((getopt :key-clusters :finger :derived :key-requested?) coordinates)
+             (finger-key-web coordinates)))
       finger-key-place
       mount-corner-post)))
 
@@ -238,9 +240,9 @@
 
 ;; Refer to tweaks.clj for the bridge between the finger and thumb clusters.
 
-(def finger-walls
+(defn finger-walls [getopt]
   (let [walk (partial walk-and-wall
-                finger?
+                (getopt :key-clusters :finger :derived :key-requested?)
                 finger-key-place
                 finger-key-wall-offsets
                 mount-corner-post)]

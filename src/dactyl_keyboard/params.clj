@@ -260,7 +260,21 @@
 
 (def configuration-raws
   "A flat version of the specification for a user configuration."
-  [[:section [:wrist-rest]
+  [[:section [:key-clusters]
+     "This section describes where to put keys on the keyboard."]
+   [:section [:key-clusters :finger]
+    "The main cluster of keys, for “fingers” in a sense excluding the thumb."]
+   [:parameter [:key-clusters :finger :preview]
+    {:help (str "If `true`, include models of the keycaps. This is intended "
+                "for development, not for printing.")
+     :default false
+     :parse-fn boolean}]
+   [:parameter [:key-clusters :finger :matrix-columns]
+    {:help (str "A list of hash maps. Each one describes a column of "
+                "keys, starting with a column indexed at zero.")
+     :default [{}]
+     :parse-fn vec}]
+   [:section [:wrist-rest]
     "An optional extension to support the user’s wrist."]
    [:parameter [:wrist-rest :include]
     {:help (str "If `true`, include a wrist rest with the keyboard.")
