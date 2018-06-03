@@ -258,167 +258,191 @@
 
 ;; This section loads, parses and validates a user configuration from YAML.
 
+(def configuration-raws
+  "A flat version of the specification for a user configuration."
+  [[:section [:wrist-rest]
+    "An optional extension to support the user’s wrist."]
+   [:parameter [:wrist-rest :include]
+    {:help (str "If `true`, include a wrist rest with the keyboard.")
+     :default false
+     :parse-fn boolean}]
+   [:parameter [:wrist-rest :style]
+    {:help (str "The style of the wrist rest. Available styles are:\n\n"
+                "* `threaded`: threaded fastener(s) connect the case "
+                "and wrist rest.\n"
+                "* `solid`: a printed plastic bridge along the ground "
+                "as part of the model.")
+     :default :threaded
+     :parse-fn keyword
+     :validate [(partial contains? #{:threaded :solid})]}]
+   [:parameter [:wrist-rest :preview]
+    {:help (str "Preview mode. If `true`, this puts a model of the "
+                "wrist rest in the same OpenSCAD file as the case. "
+                "That model is simplified, intended for gauging "
+                "distance, not for printing.")
+     :default false
+     :parse-fn boolean}]
+   [:section [:wrist-rest :position]
+    "The wrist rest is positioned in relation to a specific key."]
+   [:parameter [:wrist-rest :position :finger-key-column]
+    {:help (str "A finger key column ID. The wrist rest will be "
+                "attached to the first key in that column.")
+     :default 0
+     :parse-fn int}]
+   [:parameter [:wrist-rest :position :key-corner]
+    {:help (str "A corner for the first key in the column.")
+     :default "SSE"
+     :parse-fn generics/string-corner
+     :validate [generics/corner?]}]
+   [:parameter [:wrist-rest :position :offset]
+    {:help "An offset in mm from the selected key."
+     :default [0 0]
+     :parse-fn vec}]
+   [:parameter [:wrist-rest :plinth-base-size]
+    {:help (str "The size of the plinth up to but not including the "
+                "narrowing upper lip and rubber parts.")
+     :default [1 1 1]
+     :parse-fn vec}]
+   [:parameter [:wrist-rest :lip-height]
+    {:help (str "The height of a narrowing, printed lip between "
+                "the base of the plinth and the rubber part.")
+     :default 1
+     :parse-fn int}]
+   [:section [:wrist-rest :rubber]
+    "The top of the wrist rest should be printed or cast in a soft material, "
+    "such as silicone rubber."]
+   [:section [:wrist-rest :rubber :height]
+    "The piece of rubber extends a certain distance up into the air and down "
+    "into the plinth."]
+   [:parameter [:wrist-rest :rubber :height :above-lip]
+    {:help (str "The height of the rubber wrist support, measured from the "
+                "top of the lip.")
+     :default 1
+     :parse-fn int}]
+   [:parameter [:wrist-rest :rubber :height :below-lip]
+    {:help (str "The depth of the rubber wrist support, "
+                "measured from the top of the lip.")
+     :default 1
+     :parse-fn int}]
+   [:section [:wrist-rest :rubber :shape]
+    "The piece of rubber should fit the user’s hand."]
+   [:parameter [:wrist-rest :rubber :shape :grid-size]
+    {:default [1 1]}]
+   [:section [:wrist-rest :fasteners]
+    "This is only relevant with the `threaded` style of wrist rest."]
+   [:parameter [:wrist-rest :fasteners :amount]
+    {:help (str "The number of fasteners connecting each case to "
+                "its wrist rest.")
+     :default 1
+     :parse-fn int}]
+   [:parameter [:wrist-rest :fasteners :diameter]
+    {:help (str "The ISO metric diameter of each fastener.")
+     :default 1
+     :parse-fn int}]
+   [:parameter [:wrist-rest :fasteners :length]
+    {:help (str "The length in mm of each fastener.")
+     :default 1
+     :parse-fn int}]
+   [:section [:wrist-rest :fasteners :height]
+    "The vertical level of the fasteners."]
+   [:parameter [:wrist-rest :fasteners :height :first]
+    {:help (str "The distance in mm from the bottom of the first fastener "
+                "down to the ground level of the model.")
+     :default 0
+     :parse-fn int}]
+   [:parameter [:wrist-rest :fasteners :height :increment]
+    {:help (str "The vertical distance in mm from the center of each fastener "
+                "to the center of the next.")
+     :default 0
+     :parse-fn int}]
+   [:section [:wrist-rest :fasteners :mounts]
+    "The mounts, or anchor points, for each fastener on each side."]
+   [:parameter [:wrist-rest :fasteners :mounts :width]
+    {:help (str "The width in mm of the face or front bezel on each "
+                "connecting block that will anchor a fastener.")
+     :default 1
+     :parse-fn int}]
+   [:section [:wrist-rest :fasteners :mounts :case-side]
+    "The side of the keyboard case."]
+   [:parameter [:wrist-rest :fasteners :mounts :case-side :finger-key-column]
+    {:help (str "A finger key column ID. On the case side, fastener mounts "
+                "will be attached at ground level near the first key in that "
+                "column.")
+     :default 0
+     :parse-fn int}]
+   [:parameter [:wrist-rest :fasteners :mounts :case-side :key-corner]
+    {:help "A corner of the key identified by `finger-key-column`."
+     :default "SSE"
+     :parse-fn generics/string-corner
+     :validate [generics/corner?]}]
+   [:parameter [:wrist-rest :fasteners :mounts :case-side :offset]
+    {:help (str "An offset in mm from the corner of "
+                "the finger key to the mount.")
+     :default [0 0]
+     :parse-fn vec}]
+   [:parameter [:wrist-rest :fasteners :mounts :case-side :depth]
+    {:help (str "The thickness of the mount in mm "
+                "along the axis of the fastener(s).")
+     :default 1
+     :parse-fn int}]
+   [:section [:wrist-rest :fasteners :mounts :plinth-side]
+    "The side of the wrist rest."]
+   [:parameter [:wrist-rest :fasteners :mounts :plinth-side :offset]
+    {:help (str "The offset in mm from the nearest "
+                "corner of the plinth to the "
+                "fastener mount attached to the "
+                "plinth.")
+     :default [1 1]
+     :parse-fn vec}]
+   [:parameter [:wrist-rest :fasteners :mounts :plinth-side :depth]
+    {:help (str "The thickness of the mount in mm "
+                "along the axis of the fastener(s). "
+                "This is typically larger than the "
+                "case-side depth to allow adjustment.")
+     :default 1
+     :parse-fn int}]
+   [:section [:wrist-rest :solid-bridge]
+    "This is only relevant with the `solid` style of wrist rest."]
+   [:parameter [:wrist-rest :solid-bridge :height]
+    {:help (str "The height in mm of the land bridge between the "
+                "case and the plinth.")
+     :default 14
+     :parse-fn int}]
+   [:section [:foot-plates]
+    "Optional flat surfaces at ground level for adding silicone rubber feet "
+    "or cork strips etc. to the "
+    "bottom of the keyboard to increase friction and/or "
+    "improve feel, sound and ground clearance."]
+   [:parameter [:foot-plates :include]
+    {:help (str "If `true`, include foot plates.")
+     :default false
+     :parse-fn boolean}]
+   [:parameter [:foot-plates :height]
+    {:help (str "The height in mm of each mounting plate.")
+     :default 4}]
+   [:parameter [:foot-plates :polygons]
+    {:help (str "A list describing the horizontal shape, size and "
+                "position of each mounting plate as a polygon.")
+     :default []
+     :parse-fn vec}]])
+
 (def master
-  "Structural metadata for a user configuration.
-  The main purpose of this mapping is to ensure that getopt calls don’t crash
-  the program by hitting undefined keys."
-  (let [om ordered-map]  ; Ordered to produce documentation and match YAML parser.
-   (om :wrist-rest
-     (om :include
-           {:help (str "If `true`, include a wrist rest with the keyboard.")
-            :default false
-            :parse-fn boolean}
-         :style
-           {:help (str "The style of the wrist rest. Available styles are:\n"
-                       "\n"
-                       "* `threaded`: threaded fastener(s) connect the case "
-                       "and wrist rest.\n"
-                       "* `solid`: a printed plastic bridge along the ground "
-                       "as part of the model.")
-            :default :threaded
-            :parse-fn keyword
-            :validate [(partial contains? #{:threaded :solid})]}
-         :preview
-           {:help (str "Preview mode. If `true`, this puts a model of the "
-                       "wrist rest in the same OpenSCAD file as the case. "
-                       "That model is simplified, intended for gauging "
-                       "distance, not for printing.")
-            :default false
-            :parse-fn boolean}
-         :position
-           (om :finger-key-column
-                 {:help (str "A finger key column ID. The wrist rest will be "
-                             "attached to the first key in that column.")
-                  :default 0
-                  :parse-fn int}
-               :key-corner
-                 {:help (str "A corner for the first key in the column.")
-                  :default "SSE"
-                  :parse-fn generics/string-corner
-                  :validate [generics/corner?]}
-               :offset
-                 {:help (str "An offset in mm from the corner of the finger "
-                             "key to the wrist rest.")
-                  :default [0 0]
-                  :parse-fn vec})
-         :plinth-base-size
-           {:help (str "The size of the plinth up to but not including the "
-                       "narrowing upper lip and rubber parts.")
-            :default [1 1 1]
-            :parse-fn vec}
-         :lip-height
-           {:help (str "The height of a narrowing, printed lip between "
-                      "the base of the plinth and the rubber part.")
-            :default 1
-            :parse-fn int}
-         :rubber
-           (om :height
-             (om :above-lip {:help (str "The height of the rubber wrist "
-                                        "support, measured from the top of "
-                                        "the lip.")
-                             :default 1
-                             :parse-fn int}
-                 :below-lip {:help (str "The depth of the rubber wrist support, "
-                                        "measured from the top of the lip.")
-                             :default 1
-                             :parse-fn int})
-             :shape (om :grid-size {:default [1 1]}))
-         :fasteners
-           (om :amount
-                 {:help (str "The number of fasteners connecting each case to "
-                             "its wrist rest.")
-                  :default 1
-                  :parse-fn int}
-               :diameter
-                 {:help (str "The ISO metric diameter of each fastener.")
-                  :default 1
-                  :parse-fn int}
-               :length
-                 {:help (str "The length in mm of each fastener.")
-                  :default 1
-                  :parse-fn int}
-               :height
-                 (om :first
-                       {:help (str "The distance in mm from the bottom of the "
-                                   "first fastener down to the ground level "
-                                   "of the model.")
-                        :default 0
-                        :parse-fn int}
-                     :increment
-                       {:help (str "The vertical distance in mm from the "
-                                   "center of each fastener to the center of "
-                                   "the next.")
-                        :default 0
-                        :parse-fn int})
-               :mounts
-                 (om :width
-                       {:help (str "The width in mm of the face or front "
-                                   "bezel on each connecting block that will "
-                                   "anchor a fastener.")
-                        :default 1
-                        :parse-fn int}
-                     :case-side
-                       (om :finger-key-column
-                             {:help (str "A finger key column ID. On the case "
-                                         "side, fastener mounts will be "
-                                         "attached at ground level near the "
-                                         "first key in that column.")
-                              :default 0
-                              :parse-fn int}
-                           :key-corner
-                             {:help "A key corner to narrow down the position."
-                              :default "SSE"
-                              :parse-fn generics/string-corner
-                              :validate [generics/corner?]}
-                           :offset
-                             {:help (str "An offset in mm from the corner of "
-                                         "the finger key to the mount.")
-                              :default [0 0]
-                              :parse-fn vec}
-                           :depth
-                             {:help (str "The thickness of the mount in mm "
-                                         "along the axis of the fastener(s).")
-                              :default 1
-                              :parse-fn int})
-                     :plinth-side
-                       (om :offset
-                             {:help (str "The offset in mm from the nearest "
-                                         "corner of the plinth to the "
-                                         "fastener mount attached to the "
-                                         "plinth.")
-                              :default [1 1]
-                              :parse-fn vec}
-                           :depth
-                             {:help (str "The thickness of the mount in mm "
-                                         "along the axis of the fastener(s). "
-                                         "This is typically larger than the "
-                                         "case-side depth to allow adjustment.")
-                              :default 1
-                              :parse-fn int})))
-         :solid-bridge
-           (om :height
-                 {:help (str "The height in mm of the land bridge between the "
-                             "case and the plinth.")
-                  :default 14
-                  :parse-fn int}))
-     :foot-plates
-     (om :include
-           {:help (str "If `true`, include flat surfaces at ground level for "
-                       "adding silicone rubber feet or cork strips etc. to the "
-                       "bottom of the keyboard to increase friction and/or "
-                       "improve feel, sound and ground clearance.")
-            :default false
-            :parse-fn boolean}
-          :height
-           {:help (str "The height in mm of each mounting plate.")
-            :default 4}
-          :polygons
-           {:help (str "A list describing the horizontal shape, size and "
-                    "position of each mounting plate as a polygon.")
-            :default []}))))
+  "Collect structural metadata for a user configuration.
+  This happens in two stages: Sections (branches), then individual parameters
+  (leaves), as a simple means of ensuring that the tree is composed of
+  ordered maps rather than ordinary maps."
+  (reduce
+    (fn [coll [type path & metadata]]
+      (case type
+        :section (assoc-in coll path
+                   (ordered-map :metadata {:help (apply str metadata)}))
+        :parameter (assoc-in coll path (first metadata))
+        (throw (Exception. "Bad type in configuration master."))))
+    (ordered-map)
+    configuration-raws))
 
 (def reserved-key?
-  "Metada imitates clojure.tools.cli but adds :help."
+  "Endpoint metadata imitates clojure.tools.cli but adds :help."
   (partial contains? #{:help :default :parse-fn :validate}))
 
 (defn endpoint? [node]
@@ -428,14 +452,17 @@
              (some reserved-key? (keys node))))))
 
 (defn- print-markdown-fragment [node level]
-  (doseq [key (keys node)]
-    (println)
-    (if (endpoint? (key node))
-      (do (println (join "" (repeat level "#")) (format "Parameter `%s`" (name key)))
-          (println)
-          (println (get-in node [key :help] "Undocumented.")))
-      (do (println (join "" (repeat level "#")) (format "Section `%s`" (name key)))
-          (print-markdown-fragment (key node) (inc level))))))
+  (let [h (join "" (repeat level "#"))]
+    (doseq [key (remove #(= :metadata %) (keys node))]
+      (println)
+      (if (endpoint? (key node))
+        (do (println h (format "Parameter `%s`" (name key)))
+            (println)
+            (println (get-in node [key :help] "Undocumented.")))
+        (do (println h (format "Section `%s`" (name key)))
+            (println)
+            (println (get-in node [key :metadata :help] "Undocumented."))
+            (print-markdown-fragment (key node) (inc level)))))))
 
 (defn print-markdown-documentation []
   (println "# Configuration options")
@@ -469,7 +496,8 @@
   "Validate a fragment of a configuration received through the UI."
   (reduce (partial validate-node nominal)
           candidate
-          (distinct (apply concat (map keys [nominal candidate])))))
+          (remove #(= :metadata %)
+            (distinct (apply concat (map keys [nominal candidate]))))))
 
 (defn parse-leaf [nominal candidate]
   (let [raw (or candidate (:default nominal))

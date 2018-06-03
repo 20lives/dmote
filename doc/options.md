@@ -6,6 +6,8 @@ This documentation was generated from the application CLI.
 
 ## Section `wrist-rest`
 
+An optional extension to support the user’s wrist.
+
 ### Parameter `include`
 
 If `true`, include a wrist rest with the keyboard.
@@ -23,6 +25,8 @@ Preview mode. If `true`, this puts a model of the wrist rest in the same OpenSCA
 
 ### Section `position`
 
+The wrist rest is positioned in relation to a specific key.
+
 #### Parameter `finger-key-column`
 
 A finger key column ID. The wrist rest will be attached to the first key in that column.
@@ -33,7 +37,7 @@ A corner for the first key in the column.
 
 #### Parameter `offset`
 
-An offset in mm from the corner of the finger key to the wrist rest.
+An offset in mm from the selected key.
 
 ### Parameter `plinth-base-size`
 
@@ -45,7 +49,11 @@ The height of a narrowing, printed lip between the base of the plinth and the ru
 
 ### Section `rubber`
 
+The top of the wrist rest should be printed or cast in a soft material, such as silicone rubber.
+
 #### Section `height`
+
+The piece of rubber extends a certain distance up into the air and down into the plinth.
 
 ##### Parameter `above-lip`
 
@@ -57,11 +65,15 @@ The depth of the rubber wrist support, measured from the top of the lip.
 
 #### Section `shape`
 
+The piece of rubber should fit the user’s hand.
+
 ##### Parameter `grid-size`
 
 Undocumented.
 
 ### Section `fasteners`
+
+This is only relevant with the `threaded` style of wrist rest.
 
 #### Parameter `amount`
 
@@ -77,6 +89,8 @@ The length in mm of each fastener.
 
 #### Section `height`
 
+The vertical level of the fasteners.
+
 ##### Parameter `first`
 
 The distance in mm from the bottom of the first fastener down to the ground level of the model.
@@ -87,11 +101,15 @@ The vertical distance in mm from the center of each fastener to the center of th
 
 #### Section `mounts`
 
+The mounts, or anchor points, for each fastener on each side.
+
 ##### Parameter `width`
 
 The width in mm of the face or front bezel on each connecting block that will anchor a fastener.
 
 ##### Section `case-side`
+
+The side of the keyboard case.
 
 ###### Parameter `finger-key-column`
 
@@ -99,7 +117,7 @@ A finger key column ID. On the case side, fastener mounts will be attached at gr
 
 ###### Parameter `key-corner`
 
-A key corner to narrow down the position.
+A corner of the key identified by `finger-key-column`.
 
 ###### Parameter `offset`
 
@@ -111,6 +129,8 @@ The thickness of the mount in mm along the axis of the fastener(s).
 
 ##### Section `plinth-side`
 
+The side of the wrist rest.
+
 ###### Parameter `offset`
 
 The offset in mm from the nearest corner of the plinth to the fastener mount attached to the plinth.
@@ -121,15 +141,19 @@ The thickness of the mount in mm along the axis of the fastener(s). This is typi
 
 ### Section `solid-bridge`
 
+This is only relevant with the `solid` style of wrist rest.
+
 #### Parameter `height`
 
 The height in mm of the land bridge between the case and the plinth.
 
 ## Section `foot-plates`
 
+Optional flat surfaces at ground level for adding silicone rubber feet or cork strips etc. to the bottom of the keyboard to increase friction and/or improve feel, sound and ground clearance.
+
 ### Parameter `include`
 
-If `true`, include flat surfaces at ground level for adding silicone rubber feet or cork strips etc. to the bottom of the keyboard to increase friction and/or improve feel, sound and ground clearance.
+If `true`, include foot plates.
 
 ### Parameter `height`
 
