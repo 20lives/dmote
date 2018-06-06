@@ -48,9 +48,6 @@
 ;; Key Layout ;;
 ;;;;;;;;;;;;;;;;
 
-;; The tenting angle controls overall left-to-right tilt.
-(def tenting-angle (/ π 11.5))
-
 ;; The offset controls the overall height of the keyboard.
 (def keyboard-z-offset 7)
 
@@ -263,6 +260,11 @@
                 "for illustration in development, not for printing.")
      :default false
      :parse-fn boolean}]
+   [:parameter [:key-clusters :finger :tenting]
+    {:help (str "An angle in radians. The tenting angle controls the overall "
+                "left-to-right tilt of each half of the keyboard.")
+     :default 0
+     :parse-fn double}]
    [:parameter [:key-clusters :finger :matrix-columns]
     {:help (str "A list of key columns. Columns are aligned with the user’s "
                 "fingers. Each column will be known by its index in this "

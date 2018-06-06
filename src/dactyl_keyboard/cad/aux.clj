@@ -87,6 +87,7 @@
   "Transform passed shape into the reference frame for an MCU holder."
   (let [[x y] (take 2
                 (finger-key-position
+                  getopt
                   (mcu-finger-coordinates getopt)
                   (finger-wall-offset (mcu-finger-coordinates getopt) mcu-connector-direction)))]
    (->>
@@ -152,7 +153,7 @@
 (defn backplate-place [getopt shape]
   (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
         coordinates (last (by-col backplate-column))
-        position (finger-key-position coordinates (finger-wall-offset coordinates :north))]
+        position (finger-key-position getopt coordinates (finger-wall-offset coordinates :north))]
    (->>
      shape
      (rotate installation-angle [0 0 1])
@@ -204,7 +205,7 @@
 (defn west-wall-west-points [getopt]
   (for [row ((getopt :key-clusters :finger :derived :row-indices-by-column) 0)
         corner [generics/WSW generics/WNW]]
-   (let [[x y _] (finger-wall-corner-position [0 row] corner)]
+   (let [[x y _] (finger-wall-corner-position getopt [0 row] corner)]
     [(+ x wall-thickness) y])))
 
 (defn west-wall-east-points [getopt]
@@ -219,7 +220,7 @@
 (defn led-hole-position [getopt ordinal]
   (let [by-col (getopt :key-clusters :finger :derived :row-indices-by-column)
         row (first (by-col 0))
-        [x0 y0 _] (finger-wall-corner-position [0 row] generics/WNW)]
+        [x0 y0 _] (finger-wall-corner-position getopt [0 row] generics/WNW)]
    [x0 (+ y0 (* led-pitch ordinal)) led-height]))
 
 (defn led-emitter-channel [getopt ordinal]
@@ -251,7 +252,7 @@
   (let [by-col (getopt :key-clusters :finger :derived :row-indices-by-column)
         c0 [0 (last (by-col 0))]
         c1 [1 (last (by-col 1))]
-        corner (fn [c] (finger-wall-corner-position c generics/NNW))
+        corner (fn [c] (finger-wall-corner-position getopt c generics/NNW))
         [x0 y0] (take 2 (map + (corner c0) (corner c1)))]
    (map + [0 0 0] [(/ x0 2) (/ y0 2) 0])))
 
@@ -300,7 +301,7 @@
                     :or {offset [0 0]}}]
              (let [directions (generics/string-corner corner)]
               (vec (map +
-                    (take 2 (finger-wall-corner-position coord directions))
+                    (take 2 (finger-wall-corner-position getopt coord directions))
                     offset))))
            (plate [polygon-spec]
              (extrude-linear
@@ -311,17 +312,29 @@
 ;; USB female holder:
 ;; This is not needed if the MCU has a robust integrated USB connector and that
 ;; connector is directly exposed through the case.
-(def usb-holder-position
-  (let [coordinates [0 0]]
-   (finger-key-position coordinates
-     (map +
-       (wall-segment-offset 2 :north (finger-key-wall-offsets coordinates generics/WNW))
-       [0 (/ mount-depth 2) 0]))))
 (def usb-holder-size [6.5 10.0 13.6])
 (def usb-holder-thickness 4)
-(def usb-holder
-    (->> (cube (+ (first usb-holder-size) usb-holder-thickness) (second usb-holder-size) (+ (last usb-holder-size) usb-holder-thickness))
-         (translate [(first usb-holder-position) (second usb-holder-position) (/ (+ (last usb-holder-size) usb-holder-thickness) 2)])))
-(def usb-holder-hole
-    (->> (apply cube usb-holder-size)
-         (translate [(first usb-holder-position) (second usb-holder-position) (/ (+ (last usb-holder-size) usb-holder-thickness) 2)])))
+
+(defn usb-holder-placement [getopt shape]
+  (let [coordinates [0 0]
+        origin
+          (finger-key-position
+            getopt
+            coordinates
+            (map +
+              (wall-segment-offset 2 :north (finger-key-wall-offsets coordinates generics/WNW))
+              [0 (/ mount-depth 2) 0]))]
+    (translate [(first origin)
+                (second origin)
+                (/ (+ (last usb-holder-size) usb-holder-thickness) 2)]
+               shape)))
+
+(defn usb-holder-positive [getopt]
+  (usb-holder-placement
+    getopt
+    (cube (+ (first usb-holder-size) usb-holder-thickness)
+          (second usb-holder-size)
+          (+ (last usb-holder-size) usb-holder-thickness))))
+
+(defn usb-holder-negative [getopt]
+  (usb-holder-placement getopt (apply cube usb-holder-size)))

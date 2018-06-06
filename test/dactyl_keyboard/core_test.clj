@@ -83,3 +83,7 @@
                (om :k0 (om :k0b 3)))
              (om :k0 (om :k0a 1
                          :k0b 3)))))))
+
+(deftest test-parser-defaults
+  (testing "validation of configuraton parser defaults"
+    (params/validate-configuration {})))

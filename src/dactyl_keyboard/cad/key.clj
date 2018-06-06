@@ -263,32 +263,50 @@
 ;; Key Placement Functions — Fingers ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn finger-placement [translate-fn rotate-x-fn rotate-y-fn [column row] shape]
-  "Place and tilt passed ‘shape’ as if it were a key."
+(defn finger-placement [translate-fn rotate-x-fn rotate-y-fn getopt [column row] subject]
+  "Place and tilt passed ‘subject’ as if it were a key or coordinate vector."
   (let [curvature-centerrow (finger-column-curvature-centerrow column)
         pitch-angle (* (progressive-pitch [column row]) (- row curvature-centerrow))
         pitch-radius (+ (/ (/ (+ mount-1u finger-mount-separation-y) 2)
                            (Math/sin (/ (progressive-pitch [column row]) 2)))
                         cap-bottom-height)]
-    (->> shape
+    (->> subject
          (translate-fn (get finger-tweak-early-translation [column row] [0 0 0]))
          (rotate-x-fn (get finger-intrinsic-pitch [column row] 0))
          (stylist column-style translate-fn (partial rotate-x-fn pitch-angle) pitch-radius rotate-y-fn [column row])
          (rotate-x-fn pitch-centerrow)
-         (rotate-y-fn tenting-angle)
+         (rotate-y-fn (getopt :key-clusters :finger :tenting))
          (translate-fn [0 (* mount-1u curvature-centerrow) keyboard-z-offset])
          (translate-fn (get finger-tweak-late-translation [column row] [0 0 0])))))
 
-(defn finger-key-position [coordinates position]
-  "Produce coordinates for passed matrix position with offset 'position'."
-  (finger-placement (partial map +) rotate-around-x rotate-around-y coordinates position))
+(def finger-key-position
+  "A function that outputs coordinates for a key matrix position.
+  Using this wrapper, the ‘subject’ argument to finger-placement should be a
+  single point in 3-dimensional space, typically an offset in mm from the
+  middle of the indicated key."
+  (partial finger-placement
+    (partial map +)
+    (fn [angle position]
+      "Transform a set of coordinates as if in rotation around the X axis."
+      (clojure.core.matrix/mmul
+       [[1 0 0]
+        [0 (Math/cos angle) (- (Math/sin angle))]
+        [0 (Math/sin angle)    (Math/cos angle)]]
+       position))
+    (fn [angle position]
+      "Same for the Y axis."
+      (clojure.core.matrix/mmul
+       [[(Math/cos angle)     0 (Math/sin angle)]
+        [0                    1 0]
+        [(- (Math/sin angle)) 0 (Math/cos angle)]]
+       position))))
 
-(defn finger-key-place [getopt coordinates shape]
-  "Put passed shape in specified matrix position.
-  This resembles (translate (finger-key-position column row [0 0 0]) shape)), but
-  performs the full transformation on the shape, not just the translation."
-  (finger-placement
-    translate (fn [angle obj] (rotate angle [1 0 0] obj)) (fn [angle obj] (rotate angle [0 1 0] obj)) coordinates shape))
+(def finger-key-place
+  "A function that puts a passed shape in a specified key matrix position."
+  (partial finger-placement
+    translate
+    (fn [angle obj] (rotate angle [1 0 0] obj))
+    (fn [angle obj] (rotate angle [0 1 0] obj))))
 
 (defn finger-plates [getopt]
   (apply union (map #(finger-key-place getopt % single-switch-plate)
@@ -310,6 +328,7 @@
 (defn thumb-origin [getopt]
   (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)]
     (map + (finger-key-position
+             getopt
              (first (by-col thumb-connection-column))
              [(/ mount-width -2) (/ mount-depth -2) 0])
            thumb-cluster-offset-from-fingers)))

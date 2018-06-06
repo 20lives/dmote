@@ -16,6 +16,10 @@ The main cluster of keys, for “fingers” in a sense excluding the thumb.
 
 If `true`, include models of the keycaps. This is intended for illustration in development, not for printing.
 
+#### Parameter `tenting`
+
+An angle in radians. The tenting angle controls the overall left-to-right tilt of each half of the keyboard.
+
 #### Parameter `matrix-columns`
 
 A list of key columns. Columns are aligned with the user’s fingers. Each column will be known by its index in this list, starting at zero for the first item. Each item may contain:

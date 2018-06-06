@@ -21,7 +21,7 @@
 (defn- case-south-wall-xy [getopt [column corner]]
   "An [x y] coordinate pair at the south wall of the keyboard case."
   (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)]
-   (take 2 (body/finger-wall-corner-position (first (by-col column)) corner))))
+   (take 2 (body/finger-wall-corner-position getopt (first (by-col column)) corner))))
 
 (def node-size 2)
 (def wall-z-offset -1)
@@ -178,8 +178,8 @@
   "A model hook. In the solid style, this holds the wrest in place."
   (let [last-col (getopt :key-clusters :finger :derived :last-column)
         rows (getopt :key-clusters :finger :derived :coordinates-by-column)
-        [x4 y2 _] (key/finger-key-position (first (rows last-col))
-                                           (key/mount-corner-offset ESE))
+        [x4 y2 _] (key/finger-key-position
+                    getopt (first (rows last-col)) (key/mount-corner-offset ESE))
         x3 (- x4 2)
         x2 (- x3 6)
         x1 (- x2 2)

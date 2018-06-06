@@ -70,20 +70,6 @@
          (map (partial apply bottom-hull)
               (partition 2 1 shapes))))
 
-(defn rotate-around-x [angle position]
-  (clojure.core.matrix/mmul
-   [[1 0 0]
-    [0 (Math/cos angle) (- (Math/sin angle))]
-    [0 (Math/sin angle)    (Math/cos angle)]]
-   position))
-
-(defn rotate-around-y [angle position]
-  (clojure.core.matrix/mmul
-   [[(Math/cos angle)     0 (Math/sin angle)]
-    [0                    1 0]
-    [(- (Math/sin angle)) 0 (Math/cos angle)]]
-   position))
-
 (defn swing-callables [translator radius rotator obj]
   "Rotate passed object with passed radius, not around its own axes.
 

@@ -142,9 +142,9 @@
         3 (first directions) (finger-key-wall-offsets coordinates directions))
       (mount-corner-offset directions))))
 
-(defn finger-wall-corner-position [coordinates directions]
+(defn finger-wall-corner-position [getopt coordinates directions]
   "Absolute position of the lower wall around a finger key."
-  (finger-key-position coordinates
+  (finger-key-position getopt coordinates
     (finger-wall-corner-offset coordinates directions)))
 
 (defn finger-wall-offset [coordinates direction]
