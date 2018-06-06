@@ -14,11 +14,14 @@ The main cluster of keys, for “fingers” in a sense excluding the thumb.
 
 #### Parameter `preview`
 
-If `true`, include models of the keycaps. This is intended for development, not for printing.
+If `true`, include models of the keycaps. This is intended for illustration in development, not for printing.
 
 #### Parameter `matrix-columns`
 
-A list of hash maps. Each one describes a column of keys, starting with a column indexed at zero.
+A list of key columns. Columns are aligned with the user’s fingers. Each column will be known by its index in this list, starting at zero for the first item. Each item may contain:
+
+* `rows-above-home`: An integer specifying the amount of keys on the far side of the home row in the column. If this parameter is omitted, the effective value will be zero.
+* `rows-below-home`: An integer specifying the amount of keys on the near side of the home row in the column. If this parameter is omitted, the effective value will be zero.
 
 ## Section `wrist-rest`
 

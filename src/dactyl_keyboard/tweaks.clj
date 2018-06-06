@@ -19,28 +19,30 @@
 
 (defn- post [key directions segment & segments]
   "A convenience function for specifying a wall segment."
-  (let [[placer offsetter coordinates] key
+  (let [[getopt placer offsetter coordinates] key
         offsets (offsetter coordinates directions)]
    (if (empty? segments)
-     (placer coordinates
+     (placer getopt coordinates
        (translate
          (wall-segment-offset segment (first directions) offsets)
          (mount-corner-post directions)))
      (apply hull (map (partial post key directions) (conj segments segment))))))
 
-(def key-cluster-bridge
+(defn key-cluster-bridge [getopt]
   "Walling and webbing between the thumb cluster and the finger cluster.
   This makes strict assumptions about the selected keyboard layout and is
   difficult to parameterize."
-  (let [f0 [finger-key-place finger-key-wall-offsets (first-in-column 0)]
-        f1 [finger-key-place finger-key-wall-offsets (first-in-column 1)]
-        f2 [finger-key-place finger-key-wall-offsets (first-in-column 2)]
-        t0 [thumb-key-place thumb-key-wall-offsets [-1 -2]]
-        t1 [thumb-key-place thumb-key-wall-offsets [-1 -1]]
-        t2 [thumb-key-place thumb-key-wall-offsets [-1 0]]
-        t3 [thumb-key-place thumb-key-wall-offsets [0 0]]
-        t4 [thumb-key-place thumb-key-wall-offsets [0 -1]]
-        t5 [thumb-key-place thumb-key-wall-offsets [0 -2]]]
+  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
+        first-row (fn [column] (first (by-col column)))
+        f0 [getopt finger-key-place finger-key-wall-offsets (first-row 0)]
+        f1 [getopt finger-key-place finger-key-wall-offsets (first-row 1)]
+        f2 [getopt finger-key-place finger-key-wall-offsets (first-row 2)]
+        t0 [getopt thumb-key-place thumb-key-wall-offsets [-1 -2]]
+        t1 [getopt thumb-key-place thumb-key-wall-offsets [-1 -1]]
+        t2 [getopt thumb-key-place thumb-key-wall-offsets [-1 0]]
+        t3 [getopt thumb-key-place thumb-key-wall-offsets [0 0]]
+        t4 [getopt thumb-key-place thumb-key-wall-offsets [0 -1]]
+        t5 [getopt thumb-key-place thumb-key-wall-offsets [0 -2]]]
     (union
       ;; An extension of the wall of t0:
       (hull
@@ -115,10 +117,12 @@
         (post t5 ENE 4)
         (post f2 ENE 2 3 4)))))
 
-(def key-cluster-bridge-cutouts
-  (union
-    (finger-key-place (first-in-column 1) negative-cap-linear)
-    (finger-key-place (first-in-column 2) negative-cap-linear)))
+(defn key-cluster-bridge-cutouts [getopt]
+  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
+        first-row (fn [column] (first (by-col column)))]
+    (union
+      (finger-key-place getopt (first-row 1) negative-cap-linear)
+      (finger-key-place getopt (first-row 2) negative-cap-linear))))
 
 (def finger-case-tweaks
   "Workarounds for aesthetics."

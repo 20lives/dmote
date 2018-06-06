@@ -18,9 +18,10 @@
 ;; Generics ;;
 ;;;;;;;;;;;;;;
 
-(defn- case-south-wall-xy [[column corner]]
+(defn- case-south-wall-xy [getopt [column corner]]
   "An [x y] coordinate pair at the south wall of the keyboard case."
-  (take 2 (body/finger-wall-corner-position (key/first-in-column column) corner)))
+  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)]
+   (take 2 (body/finger-wall-corner-position (first (by-col column)) corner))))
 
 (def node-size 2)
 (def wall-z-offset -1)
@@ -33,7 +34,8 @@
 (defn derive-properties [getopt]
   "Derive certain properties from the base configuration."
   (let [pivot
-          (case-south-wall-xy [(getopt :wrist-rest :position :finger-key-column)
+          (case-south-wall-xy getopt
+                              [(getopt :wrist-rest :position :finger-key-column)
                                (getopt :wrist-rest :position :key-corner)])
         offset (getopt :wrist-rest :position :offset)
         [base-x base-y base-z] (getopt :wrist-rest :plinth-base-size)
@@ -68,7 +70,7 @@
 (defn threaded-position-keyboard [getopt]
   (let [position (getopt :wrist-rest :fasteners :mounts :case-side)
         {column :finger-key-column corner :key-corner offset :offset} position
-        base (case-south-wall-xy [column corner])
+        base (case-south-wall-xy getopt [column corner])
         height (threaded-center-height getopt)]
    (conj (vec (map + base offset)) height)))
 
@@ -153,16 +155,16 @@
         cols (getopt :key-clusters :finger :derived :column-range)
         lastcol (last cols)
         xy-west (getopt :wrist-rest :derived :nw)
-        xy-east (vec (map + (case-south-wall-xy [lastcol SSE])
+        xy-east (vec (map + (case-south-wall-xy getopt [lastcol SSE])
                             (getopt :wrist-rest :derived :offset)))
         bevel 10
-        p0 (case-south-wall-xy [(- basecol 1) SSE])]
+        p0 (case-south-wall-xy getopt [(- basecol 1) SSE])]
    (extrude-linear
      {:height (getopt :wrist-rest :solid-bridge :height)}
      (polygon
        (concat
          [p0]
-         (map case-south-wall-xy
+         (map (partial case-south-wall-xy getopt)
            (for [column (filter (partial <= basecol) cols)
                  corner [SSW SSE]]
              [column corner]))
@@ -174,9 +176,9 @@
 
 (defn case-hook [getopt]
   "A model hook. In the solid style, this holds the wrest in place."
-  (let [[column row] (key/first-in-column
-                       (getopt :key-clusters :finger :derived :last-column))
-        [x4 y2 _] (key/finger-key-position [column row]
+  (let [last-col (getopt :key-clusters :finger :derived :last-column)
+        rows (getopt :key-clusters :finger :derived :coordinates-by-column)
+        [x4 y2 _] (key/finger-key-position (first (rows last-col))
                                            (key/mount-corner-offset ESE))
         x3 (- x4 2)
         x2 (- x3 6)

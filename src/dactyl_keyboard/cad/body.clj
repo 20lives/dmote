@@ -69,16 +69,16 @@
       (fn [coordinates]
         (and ((getopt :key-clusters :finger :derived :key-requested?) coordinates)
              (finger-key-web coordinates)))
-      finger-key-place
+      (partial finger-key-place getopt)
       mount-corner-post)))
 
-(def thumb-web
+(defn thumb-web [getopt]
   (apply union
     (walk-and-web
       all-thumb-columns
       all-thumb-rows
       thumb?
-      thumb-key-place
+      (partial thumb-key-place getopt)
       mount-corner-post)))
 
 
@@ -241,19 +241,21 @@
 ;; Refer to tweaks.clj for the bridge between the finger and thumb clusters.
 
 (defn finger-walls [getopt]
-  (let [walk (partial walk-and-wall
+  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
+        first-row (fn [column] (first (by-col column)))
+        walk (partial walk-and-wall
                 (getopt :key-clusters :finger :derived :key-requested?)
-                finger-key-place
+                (partial finger-key-place getopt)
                 finger-key-wall-offsets
                 mount-corner-post)]
    (apply union
-     (walk wall-to-ground [(first-in-column 0) :north] [(first-in-column 2) :south])
-     (walk wall-skirt [(first-in-column 2) :south] [(first-in-column 2) :west]))))
+     (walk wall-to-ground [(first-row 0) :north] [(first-row 2) :south])
+     (walk wall-skirt [(first-row 2) :south] [(first-row 2) :west]))))
 
-(def thumb-walls
+(defn thumb-walls [getopt]
   (let [walk (partial walk-and-wall
                 thumb?
-                thumb-key-place
+                (partial thumb-key-place getopt)
                 thumb-key-wall-offsets
                 mount-corner-post)]
    (apply union

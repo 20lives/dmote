@@ -70,23 +70,27 @@
                 :else true)  ; Home row.
               false))  ; Column not in matrix.
         key-coordinates (coordinate-pairs column-range row-range key-requested?)
+        M (fn [f coll] (into {} (map f coll)))
         row-indices-by-column
-          (apply hash-map
-            (mapcat
-              (fn [c] [c (filter #(key-requested? [c %]) row-range)])
-              column-range))
+          (M (fn [c] [c (filter #(key-requested? [c %]) row-range)])
+             column-range)
+        coordinates-by-column
+          (M (fn [[c rows]] [c (for [r rows] [c r])]) row-indices-by-column)
         column-indices-by-row
-          (apply hash-map
-            (mapcat
-              (fn [r] [r (filter #(key-requested? [% r]) column-range)])
-              row-range))]
+          (M
+            (fn [r] [r (filter #(key-requested? [% r]) column-range)])
+            row-range)
+        coordinates-by-row
+          (M (fn [[r cols]] [r (for [c cols] [c r])]) column-indices-by-row)]
    {:last-column last-column
     :column-range column-range
     :row-range row-range
     :key-requested? key-requested?
     :key-coordinates key-coordinates
     :row-indices-by-column row-indices-by-column
-    :column-indices-by-row column-indices-by-row}))
+    :coordinates-by-column coordinates-by-column
+    :column-indices-by-row column-indices-by-row
+    :coordinates-by-row coordinates-by-row}))
 
 (defn print-matrix [cluster getopt]
   "Print a schematic picture of a key cluster. For your REPL."
@@ -94,18 +98,6 @@
     (doseq [row (reverse (prop :row-range)) column (prop :column-range)]
       (if ((prop :key-requested?) [column row]) (print "□") (print "·"))
       (if (= column (prop :last-column)) (println)))))
-
-(defn finger-row-indices [column]
-  "Return the range of row indices valid for passed column index."
-  (range (- (get rows-below-home column rows-default))
-         (+ (get rows-above-home column rows-default) 1)))
-                                 ; range is exclusive ^
-
-(defn first-in-column [column]
-  [column (first (finger-row-indices column))])
-
-(defn last-in-column [column]
-  [column (last (finger-row-indices column))])
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -291,7 +283,7 @@
   "Produce coordinates for passed matrix position with offset 'position'."
   (finger-placement (partial map +) rotate-around-x rotate-around-y coordinates position))
 
-(defn finger-key-place [coordinates shape]
+(defn finger-key-place [getopt coordinates shape]
   "Put passed shape in specified matrix position.
   This resembles (translate (finger-key-position column row [0 0 0]) shape)), but
   performs the full transformation on the shape, not just the translation."
@@ -299,15 +291,15 @@
     translate (fn [angle obj] (rotate angle [1 0 0] obj)) (fn [angle obj] (rotate angle [0 1 0] obj)) coordinates shape))
 
 (defn finger-plates [getopt]
-  (apply union (map #(finger-key-place % single-switch-plate)
+  (apply union (map #(finger-key-place getopt % single-switch-plate)
                     (getopt :key-clusters :finger :derived :key-coordinates))))
 
 (defn finger-cutouts [getopt]
-  (apply union (map #(finger-key-place % single-switch-cutout)
+  (apply union (map #(finger-key-place getopt % single-switch-cutout)
                     (getopt :key-clusters :finger :derived :key-coordinates))))
 
 (defn finger-keycaps [getopt]
-  (apply union (map #(finger-key-place % (keycap 1))
+  (apply union (map #(finger-key-place getopt % (keycap 1))
                     (getopt :key-clusters :finger :derived :key-coordinates))))
 
 
@@ -315,13 +307,14 @@
 ;; Key Placement Functions — Thumbs ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def thumb-origin
-  (map + (finger-key-position
-           (first-in-column thumb-connection-column)
-           [(/ mount-width -2) (/ mount-depth -2) 0])
-         thumb-cluster-offset-from-fingers))
+(defn thumb-origin [getopt]
+  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)]
+    (map + (finger-key-position
+             (first (by-col thumb-connection-column))
+             [(/ mount-width -2) (/ mount-depth -2) 0])
+           thumb-cluster-offset-from-fingers)))
 
-(defn thumb-key-place [[column row] shape]
+(defn thumb-key-place [getopt [column row] shape]
   (let [offset (if (= -1 column) thumb-cluster-column-offset [0 0 0])]
     (->> shape
          (rotate (intrinsic-thumb-key-rotation [column row] [0 0 0]))
@@ -331,16 +324,16 @@
          (translate offset)
          (translate (get intrinsic-thumb-key-translation [column row] [0 0 0]))
          (rotate thumb-cluster-rotation)
-         (translate thumb-origin))))
+         (translate (thumb-origin getopt)))))
 
 
-(defn for-thumbs [shape]
+(defn for-thumbs [getopt shape]
   (apply union (for [column all-thumb-columns
                      row all-thumb-rows]
-                 (thumb-key-place [column row] shape))))
+                 (thumb-key-place getopt [column row] shape))))
 
-(def thumb-plates (for-thumbs single-switch-plate))
+(defn thumb-plates [getopt] (for-thumbs getopt single-switch-plate))
 
-(def thumb-cutouts (for-thumbs single-switch-cutout))
+(defn thumb-cutouts [getopt] (for-thumbs getopt single-switch-cutout))
 
-(def thumb-keycaps (for-thumbs (keycap 1)))
+(defn thumb-keycaps [getopt] (for-thumbs getopt (keycap 1)))

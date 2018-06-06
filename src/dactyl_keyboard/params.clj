@@ -48,12 +48,6 @@
 ;; Key Layout ;;
 ;;;;;;;;;;;;;;;;
 
-;; The shape of the finger key cluster is defined by the number of rows above
-;; and below the home row in each column.
-(def rows-above-home {0 1, 1 1, 2 1, 3 1, 4 0, 5 0})
-(def rows-below-home {0 1, 1 2, 2 3, 3 2, 4 2, 5 2})
-(def rows-default 1)  ; Default number of rows for columns omitted above.
-
 ;; The tenting angle controls overall left-to-right tilt.
 (def tenting-angle (/ π 11.5))
 
@@ -266,12 +260,20 @@
     "The main cluster of keys, for “fingers” in a sense excluding the thumb."]
    [:parameter [:key-clusters :finger :preview]
     {:help (str "If `true`, include models of the keycaps. This is intended "
-                "for development, not for printing.")
+                "for illustration in development, not for printing.")
      :default false
      :parse-fn boolean}]
    [:parameter [:key-clusters :finger :matrix-columns]
-    {:help (str "A list of hash maps. Each one describes a column of "
-                "keys, starting with a column indexed at zero.")
+    {:help (str "A list of key columns. Columns are aligned with the user’s "
+                "fingers. Each column will be known by its index in this "
+                "list, starting at zero for the first item. Each item may "
+                "contain:\n\n"
+                "* `rows-above-home`: An integer specifying the amount of keys "
+                "on the far side of the home row in the column. If "
+                "this parameter is omitted, the effective value will be zero.\n"
+                "* `rows-below-home`: An integer specifying the amount of keys "
+                "on the near side of the home row in the column. If this "
+                "parameter is omitted, the effective value will be zero.")
      :default [{}]
      :parse-fn vec}]
    [:section [:wrist-rest]

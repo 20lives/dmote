@@ -5,6 +5,7 @@
 
 (ns dactyl-keyboard.core
   (:require [clojure.tools.cli :refer [parse-opts]]
+            [clojure.pprint :refer [pprint]]
             [scad-clj.scad :refer [write-scad]]
             [scad-clj.model :exclude [use import] :refer :all]
             [dactyl-keyboard.generics :as generics]
@@ -26,28 +27,28 @@
     (difference
       (union
         (body/finger-walls getopt)
-        body/thumb-walls
+        (body/thumb-walls getopt)
         (body/finger-web getopt)
-        body/thumb-web
+        (body/thumb-web getopt)
         (key/finger-plates getopt)
-        key/thumb-plates
-        tweaks/key-cluster-bridge
+        (key/thumb-plates getopt)
+        (tweaks/key-cluster-bridge getopt)
         tweaks/finger-case-tweaks
         (if (getopt :wrist-rest :include)
           (case (getopt :wrist-rest :style)
             :solid (wrist/case-hook getopt)
             :threaded (wrist/case-plate getopt)))
-        aux/mcu-support
-        aux/rj9-positive
+        (aux/mcu-support getopt)
+        (aux/rj9-positive getopt)
         (aux/foot-plates getopt)
-        (if params/include-backplate-block aux/backplate-block))
+        (if params/include-backplate-block (aux/backplate-block getopt)))
       (key/finger-cutouts getopt)
-      key/thumb-cutouts
-      tweaks/key-cluster-bridge-cutouts
-      aux/rj9-negative
-      aux/mcu-negative
-      (if params/include-led-housings aux/led-holes)
-      (if params/include-backplate-block aux/backplate-fastener-holes)
+      (key/thumb-cutouts getopt)
+      (tweaks/key-cluster-bridge-cutouts getopt)
+      (aux/rj9-negative getopt)
+      (aux/mcu-negative getopt)
+      (if params/include-led-housings (aux/led-holes getopt))
+      (if params/include-backplate-block (aux/backplate-fastener-holes getopt))
       (if (getopt :wrist-rest :include)
         (if (= (getopt :wrist-rest :style) :threaded)
           (wrist/connecting-rods-and-nuts getopt)))
@@ -55,8 +56,8 @@
     ;; The remaining elements are visualizations for use in development.
     ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
     (if (getopt :key-clusters :finger :preview) (key/finger-keycaps getopt))
-    #_key/thumb-keycaps
-    #_aux/mcu-visualization
+    #_(key/thumb-keycaps getopt)
+    #_(aux/mcu-visualization getopt)
     (if (and (getopt :wrist-rest :include) (getopt :wrist-rest :preview))
       (wrist/unified-preview getopt))))
 
@@ -65,25 +66,29 @@
 
 (defn build-option-accessor [build-options]
   "Close over a user configuration."
-  (fn [& path]
-    ;; Can’t use if-let because some legitimate values are false.
-    (let [value (get-in build-options path)]
-     (if (nil? value)
-      (throw (ex-info (format "Missing configuration at %s" path)
-                      {:keys-nearby (keys (get-in build-options (butlast path)))}))
-      value))))
+  (letfn [(value-at [path] (get-in build-options path))
+          (valid? [path] (not (nil? (value-at path))))  ; “false” is OK.
+          (step [path key]
+            (let [next-path (conj path key)]
+             (if (valid? next-path) next-path path)))
+          (backtrack [path] (reduce step [] path))]
+    (fn [& path]
+      (if (valid? path)
+        (value-at path)
+        (throw (ex-info (format "Missing configuration at %s" path)
+                        {:last-good (backtrack path)
+                         :at-last-good (keys (value-at (backtrack path)))}))))))
 
 (defn enrich-option-metadata [build-options]
   "Derive certain properties that are implicit in the user configuration.
   Store these results under the ”:derived” key in each section."
-  (let [accessor (build-option-accessor build-options)]
-    (assert build-options)
-    (reduce
-      (fn [coll [path callable]]
-        (assoc-in coll (conj path :derived) (callable accessor)))
-      build-options
-      [[[:key-clusters :finger] (partial key/cluster-properties :finger)]
-       [[:wrist-rest] wrist/derive-properties]])))
+  (reduce
+    (fn [coll [path callable]]
+      (assoc-in coll (conj path :derived) (callable (build-option-accessor coll))))
+    build-options
+    ;; Mind the order. One of these may depend upon earlier steps.
+    [[[:key-clusters :finger] (partial key/cluster-properties :finger)]
+     [[:wrist-rest] wrist/derive-properties]]))
 
 (defn build-all [build-options]
   (let [getopt (build-option-accessor (enrich-option-metadata build-options))]
@@ -128,5 +133,5 @@
      (:describe-parameters options) (params/print-markdown-documentation)
      :else
        (let [config (params/load-configuration (:configuration-file options))]
-        (if (:debug (:options args)) (println "Building with" config))
+        (if (:debug options) (do (println "Merged options:") (pprint config)))
         (build-all config)))))

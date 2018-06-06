@@ -2,7 +2,7 @@
 # YAML configuration files into demonstration models of the DMOTE.
 # https://www.gnu.org/software/make/manual/make.html
 
-.PHONY: default threaded solid all clean
+.PHONY: default threaded solid all test clean
 
 OBJECTS = $(shell find src/)
 
@@ -18,8 +18,14 @@ solid: target/dmote.jar
 # “all” will overwrite its own outputs. Intended for code sanity checking.
 all: default threaded solid
 
+doc/options.md: target/dmote.jar
+	java -jar target/dmote.jar --describe-parameters > doc/options.md
+
 target/dmote.jar: $(OBJECTS)
 	lein uberjar
+
+test:
+	lein test
 
 clean:
 	-rm things/*.scad

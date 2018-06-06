@@ -79,14 +79,16 @@
         (rotate [(+ (/ π 2) (/ π 14)) 0 (/ π -18)]
           (cylinder 4 (- promicro-length 10)))))))
 
+(defn mcu-finger-coordinates [getopt]
+  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)]
+    (last (by-col mcu-finger-column))))
 
-(def mcu-finger-coordinates (last-in-column mcu-finger-column))
-(defn mcu-position [shape]
+(defn mcu-position [getopt shape]
   "Transform passed shape into the reference frame for an MCU holder."
   (let [[x y] (take 2
                 (finger-key-position
-                  mcu-finger-coordinates
-                  (finger-wall-offset mcu-finger-coordinates mcu-connector-direction)))]
+                  (mcu-finger-coordinates getopt)
+                  (finger-wall-offset (mcu-finger-coordinates getopt) mcu-connector-direction)))]
    (->>
      shape
      ;; Put the USB end of the PCB at [0, 0, 0].
@@ -103,19 +105,19 @@
      ;; Tweak as ordered.
      (translate mcu-offset))))
 
-(def mcu-visualization (mcu-position mcu-model))
-(def mcu-negative (mcu-position mcu-space-requirements))
+(defn mcu-visualization [getopt] (mcu-position getopt mcu-model))
+(defn mcu-negative [getopt] (mcu-position getopt mcu-space-requirements))
 
 ;; Holder for MCU:
-(def mcu-support
+(defn mcu-support [getopt]
   (let [plinth-width (+ promicro-thickness mcu-thickness-tolerance 1.2)
         plinth-height (nth mcu-offset 2)
         grip-depth 0.6
         grip-to-base 5
         rev-dir (turning-left (turning-left mcu-connector-direction))
-        cervix-coordinates (walk-matrix mcu-finger-coordinates rev-dir rev-dir)]
+        cervix-coordinates (walk-matrix (mcu-finger-coordinates getopt) rev-dir rev-dir)]
     (union
-      (mcu-position
+      (mcu-position getopt
         (union
           ;; A little gripper to stabilize the PCB horizontally.
           ;; This is intended to be just shallow enough that the outer wall
@@ -131,13 +133,13 @@
       ;; The spine connects a sacrum, which is the main body of the plinth
       ;; at ground level, with a cervix that helps support the finger web.
       (hull
-        (mcu-position
+        (mcu-position getopt
           (translate
             [0 (- (/ promicro-length -2) grip-to-base) 0]
             (cube (/ promicro-width 2) grip-to-base plinth-width)))
-        (finger-key-place cervix-coordinates
+        (finger-key-place getopt cervix-coordinates
           (mount-corner-post [mcu-connector-direction (turning-left rev-dir)]))
-        (finger-key-place cervix-coordinates
+        (finger-key-place getopt cervix-coordinates
           (mount-corner-post [mcu-connector-direction (turning-right rev-dir)]))))))
 
 
@@ -147,8 +149,9 @@
 
 ;; Plate for a connecting beam, rod etc.
 
-(defn backplate-place [shape]
-  (let [coordinates (last-in-column backplate-column)
+(defn backplate-place [getopt shape]
+  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
+        coordinates (last (by-col backplate-column))
         position (finger-key-position coordinates (finger-wall-offset coordinates :north))]
    (->>
      shape
@@ -172,7 +175,7 @@
      (translate [0 exterior-bevel 0]
        (cube (dec width) depth (dec height))))))
 
-(def backplate-fastener-holes
+(defn backplate-fastener-holes [getopt]
   "Two holes for screws through the back plate."
   (letfn [(hole [x-offset]
             (->>
@@ -183,13 +186,13 @@
                     (iso-hex-nut-model backplate-fastener-diameter 10))))
               (rotate [(/ π 2) 0 0])
               (translate [x-offset 0 0])
-              backplate-place))]
+              (backplate-place getopt)))]
    (union
      (hole (/ backplate-fastener-distance 2))
      (hole (/ backplate-fastener-distance -2)))))
 
-(def backplate-block
-  (bottom-hull (backplate-place backplate-shape)))
+(defn backplate-block [getopt]
+  (bottom-hull (backplate-place getopt backplate-shape)))
 
 
 ;;;;;;;;;;;;;;;
@@ -198,40 +201,45 @@
 
 (def led-height (+ (/ led-housing-size 2) 5))
 
-(def west-wall-west-points
-  (for [row (finger-row-indices 0)
+(defn west-wall-west-points [getopt]
+  (for [row ((getopt :key-clusters :finger :derived :row-indices-by-column) 0)
         corner [generics/WSW generics/WNW]]
    (let [[x y _] (finger-wall-corner-position [0 row] corner)]
     [(+ x wall-thickness) y])))
 
-(def west-wall-east-points
-  (map (fn [[x y]] [(+ x 10) y]) west-wall-west-points))
+(defn west-wall-east-points [getopt]
+  (map (fn [[x y]] [(+ x 10) y]) (west-wall-west-points getopt)))
 
-(def west-wall-led-channel
-  (extrude-linear {:height 50}
-    (polygon (concat west-wall-west-points (reverse west-wall-east-points)))))
+(defn west-wall-led-channel [getopt]
+  (let [west-points (west-wall-west-points getopt)
+        east-points (west-wall-east-points getopt)]
+    (extrude-linear {:height 50}
+      (polygon (concat west-points (reverse east-points))))))
 
-(defn led-hole-position [ordinal]
-  (let [row (first (finger-row-indices 0))
+(defn led-hole-position [getopt ordinal]
+  (let [by-col (getopt :key-clusters :finger :derived :row-indices-by-column)
+        row (first (by-col 0))
         [x0 y0 _] (finger-wall-corner-position [0 row] generics/WNW)]
    [x0 (+ y0 (* led-pitch ordinal)) led-height]))
 
-(defn led-emitter-channel [ordinal]
+(defn led-emitter-channel [getopt ordinal]
   (->> (cylinder (/ led-emitter-diameter 2) 50)
        (rotatev (/ π 2) [0 1 0])
-       (translate (led-hole-position ordinal))))
+       (translate (led-hole-position getopt ordinal))))
 
-(defn led-housing-channel [ordinal]
+(defn led-housing-channel [getopt ordinal]
   (->> (cube 50 led-housing-size led-housing-size)
-       (translate (led-hole-position ordinal))))
+       (translate (led-hole-position getopt ordinal))))
 
-(def led-holes
-  (let [holes (range led-amount)]
+(defn led-holes [getopt]
+  (let [holes (range led-amount)
+        housings (apply union (map (partial led-housing-channel getopt) holes))
+        emitters (apply union (map (partial led-emitter-channel getopt) holes))]
    (union
      (intersection
-       west-wall-led-channel
-       (apply union (map led-housing-channel holes)))
-     (apply union (map led-emitter-channel holes)))))
+       (west-wall-led-channel getopt)
+       housings)
+     emitters)))
 
 
 ;;;;;;;;;;;;;;;;
@@ -239,18 +247,20 @@
 ;;;;;;;;;;;;;;;;
 
 ;; 4P4C connector holder:
-(def rj9-origin
-  (let [c0 [0 (last (finger-row-indices 0))]
-        c1 [1 (last (finger-row-indices 1))]
+(defn rj9-origin [getopt]
+  (let [by-col (getopt :key-clusters :finger :derived :row-indices-by-column)
+        c0 [0 (last (by-col 0))]
+        c1 [1 (last (by-col 1))]
         corner (fn [c] (finger-wall-corner-position c generics/NNW))
         [x0 y0] (take 2 (map + (corner c0) (corner c1)))]
    (map + [0 0 0] [(/ x0 2) (/ y0 2) 0])))
 
-(defn rj9-position [shape]
-  (->> shape
-       (translate rj9-translation)
-       (rotate (deg->rad 36) [0 0 1])
-       (translate [(first rj9-origin) (second rj9-origin) 10.5])))
+(defn rj9-position [getopt shape]
+  (let [origin (rj9-origin getopt)]
+   (->> shape
+        (translate rj9-translation)
+        (rotate (deg->rad 36) [0 0 1])
+        (translate [(first origin) (second origin) 10.5]))))
 
 (def rj9-metasocket
   (hull
@@ -270,9 +280,9 @@
      (cube 10 11 17.7)
      (translate [0 0 -5] (cube 8 20 7.7)))))
 
-(def rj9-positive (rj9-position rj9-metasocket))
+(defn rj9-positive [getopt] (rj9-position getopt rj9-metasocket))
 
-(def rj9-negative (rj9-position rj9-socket-616e))
+(defn rj9-negative [getopt] (rj9-position getopt rj9-socket-616e))
 
 
 ;;;;;;;;;;;;;;;;;;;;
