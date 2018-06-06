@@ -10,11 +10,15 @@ This section describes where to put keys on the keyboard.
 
 ### Section `finger`
 
-The main cluster of keys, for “fingers” in a sense excluding the thumb.
+The main cluster of keys, for “fingers” in a sense excluding the thumb.Everything else is placed in relation to the finger cluster.
 
 #### Parameter `preview`
 
 If `true`, include models of the keycaps. This is intended for illustration in development, not for printing.
+
+#### Parameter `vertical-offset`
+
+A vertical offset in mm shared by all finger cluster keys. This ultimately controls the overall height of the keyboard.
 
 #### Parameter `tenting`
 

@@ -4,6 +4,7 @@
 
 key-clusters:
   finger:
+    vertical-offset: 7
     tenting: 0.27
     matrix-columns:
     - rows-above-home: 1

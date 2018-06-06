@@ -48,9 +48,6 @@
 ;; Key Layout ;;
 ;;;;;;;;;;;;;;;;
 
-;; The offset controls the overall height of the keyboard.
-(def keyboard-z-offset 7)
-
 ;; Finger key placement parameters:
 (def keycap-style :dsa)       ; :sa or :dsa.
 (def column-style :standard)  ; :standard, :orthographic, or :fixed.
@@ -254,12 +251,18 @@
   [[:section [:key-clusters]
      "This section describes where to put keys on the keyboard."]
    [:section [:key-clusters :finger]
-    "The main cluster of keys, for “fingers” in a sense excluding the thumb."]
+    "The main cluster of keys, for “fingers” in a sense excluding the thumb."
+    "Everything else is placed in relation to the finger cluster."]
    [:parameter [:key-clusters :finger :preview]
     {:help (str "If `true`, include models of the keycaps. This is intended "
                 "for illustration in development, not for printing.")
      :default false
      :parse-fn boolean}]
+   [:parameter [:key-clusters :finger :vertical-offset]
+    {:help (str "A vertical offset in mm shared by all finger cluster keys. "
+                "This ultimately controls the overall height of the keyboard.")
+     :default 0
+     :parse-fn double}]
    [:parameter [:key-clusters :finger :tenting]
     {:help (str "An angle in radians. The tenting angle controls the overall "
                 "left-to-right tilt of each half of the keyboard.")
@@ -325,7 +328,7 @@
     {:help (str "The height of a narrowing, printed lip between "
                 "the base of the plinth and the rubber part.")
      :default 1
-     :parse-fn int}]
+     :parse-fn double}]
    [:section [:wrist-rest :rubber]
     "The top of the wrist rest should be printed or cast in a soft material, "
     "such as silicone rubber."]
@@ -336,12 +339,12 @@
     {:help (str "The height of the rubber wrist support, measured from the "
                 "top of the lip.")
      :default 1
-     :parse-fn int}]
+     :parse-fn double}]
    [:parameter [:wrist-rest :rubber :height :below-lip]
     {:help (str "The depth of the rubber wrist support, "
                 "measured from the top of the lip.")
      :default 1
-     :parse-fn int}]
+     :parse-fn double}]
    [:section [:wrist-rest :rubber :shape]
     "The piece of rubber should fit the user’s hand."]
    [:parameter [:wrist-rest :rubber :shape :grid-size]
@@ -372,14 +375,14 @@
     {:help (str "The vertical distance in mm from the center of each fastener "
                 "to the center of the next.")
      :default 0
-     :parse-fn int}]
+     :parse-fn double}]
    [:section [:wrist-rest :fasteners :mounts]
     "The mounts, or anchor points, for each fastener on each side."]
    [:parameter [:wrist-rest :fasteners :mounts :width]
     {:help (str "The width in mm of the face or front bezel on each "
                 "connecting block that will anchor a fastener.")
      :default 1
-     :parse-fn int}]
+     :parse-fn double}]
    [:section [:wrist-rest :fasteners :mounts :case-side]
     "The side of the keyboard case."]
    [:parameter [:wrist-rest :fasteners :mounts :case-side :finger-key-column]
@@ -402,7 +405,7 @@
     {:help (str "The thickness of the mount in mm "
                 "along the axis of the fastener(s).")
      :default 1
-     :parse-fn int}]
+     :parse-fn double}]
    [:section [:wrist-rest :fasteners :mounts :plinth-side]
     "The side of the wrist rest."]
    [:parameter [:wrist-rest :fasteners :mounts :plinth-side :offset]
@@ -418,14 +421,14 @@
                 "This is typically larger than the "
                 "case-side depth to allow adjustment.")
      :default 1
-     :parse-fn int}]
+     :parse-fn double}]
    [:section [:wrist-rest :solid-bridge]
     "This is only relevant with the `solid` style of wrist rest."]
    [:parameter [:wrist-rest :solid-bridge :height]
     {:help (str "The height in mm of the land bridge between the "
                 "case and the plinth.")
      :default 14
-     :parse-fn int}]
+     :parse-fn double}]
    [:section [:foot-plates]
     "Optional flat surfaces at ground level for adding silicone rubber feet "
     "or cork strips etc. to the "

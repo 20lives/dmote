@@ -269,14 +269,16 @@
         pitch-angle (* (progressive-pitch [column row]) (- row curvature-centerrow))
         pitch-radius (+ (/ (/ (+ mount-1u finger-mount-separation-y) 2)
                            (Math/sin (/ (progressive-pitch [column row]) 2)))
-                        cap-bottom-height)]
+                        cap-bottom-height)
+        y-offset (* mount-1u curvature-centerrow)
+        z-offset (getopt :key-clusters :finger :vertical-offset)]
     (->> subject
          (translate-fn (get finger-tweak-early-translation [column row] [0 0 0]))
          (rotate-x-fn (get finger-intrinsic-pitch [column row] 0))
          (stylist column-style translate-fn (partial rotate-x-fn pitch-angle) pitch-radius rotate-y-fn [column row])
          (rotate-x-fn pitch-centerrow)
          (rotate-y-fn (getopt :key-clusters :finger :tenting))
-         (translate-fn [0 (* mount-1u curvature-centerrow) keyboard-z-offset])
+         (translate-fn [0 y-offset z-offset])
          (translate-fn (get finger-tweak-late-translation [column row] [0 0 0])))))
 
 (def finger-key-position
