@@ -9,6 +9,7 @@
 
 (ns dactyl-keyboard.params
   (:require [clojure.string :refer [join lower-case]]
+            [clojure.spec.alpha :as spec]
             [yaml.core :as yaml]
             [scad-clj.model :exclude [use import] :refer :all]
             [flatland.ordered.map :refer [ordered-map]]
@@ -247,6 +248,10 @@
 
 ;; Parsers:
 
+(defn string-corner [string]
+  "For use with YAML, where string values are not automatically converted."
+  ((keyword string) generics/keyword-to-directions))
+
 (defn parse-tuple-of [item-parser]
   "A maker of parsers for vectors."
   (fn [candidate] (into [] (map item-parser candidate))))
@@ -267,6 +272,9 @@
   (map-of (map-item-of (parse-tuple-of key-coordinate) identity)))
 
 ;; Validators:
+
+(spec/def ::supported-wrist-rest-style #{:threaded :solid})
+(spec/def ::corner (set (vals generics/keyword-to-directions)))
 
 (defn pair? [candidate] (= (count candidate) 2))
 
@@ -324,7 +332,8 @@
   "A flat version of the specification for a user configuration."
   [[:section [:keycaps]
     "Keycaps are the plastic covers placed over the switches. The choice of "
-    "caps affect the shape of the keyboard: The physical profile limits " "curvature and therefore determines the default distance betweeen keys, "
+    "caps affect the shape of the keyboard: The physical profile limits "
+    "curvature and therefore determines the default distance betweeen keys, "
     "as well as the amount of negative space reserved for the movement of the "
     "cap itself over the switch."]
    [:parameter [:keycaps :body-height]
@@ -396,7 +405,7 @@
                 "as part of the model.")
      :default :threaded
      :parse-fn keyword
-     :validate [(partial contains? #{:threaded :solid})]}]
+     :validate [::supported-wrist-rest-style]}]
    [:parameter [:wrist-rest :preview]
     {:help (str "Preview mode. If `true`, this puts a model of the "
                 "wrist rest in the same OpenSCAD file as the case. "
@@ -414,8 +423,8 @@
    [:parameter [:wrist-rest :position :key-corner]
     {:help (str "A corner for the first key in the column.")
      :default "SSE"
-     :parse-fn generics/string-corner
-     :validate [generics/corner?]}]
+     :parse-fn string-corner
+     :validate [::corner]}]
    [:parameter [:wrist-rest :position :offset]
     {:help "An offset in mm from the selected key."
      :default [0 0]
@@ -495,8 +504,8 @@
    [:parameter [:wrist-rest :fasteners :mounts :case-side :key-corner]
     {:help "A corner of the key identified by `finger-key-column`."
      :default "SSE"
-     :parse-fn generics/string-corner
-     :validate [generics/corner?]}]
+     :parse-fn string-corner
+     :validate [::corner]}]
    [:parameter [:wrist-rest :fasteners :mounts :case-side :offset]
     {:help (str "An offset in mm from the corner of "
                 "the finger key to the mount.")
@@ -639,13 +648,13 @@
   (try
     (reduce
       (fn [unvalidated validator]
-        (if (validator unvalidated)
-           unvalidated
-           (throw (ex-info "Value out of range"
-                           {:type :validation-error
-                            :value unvalidated
-                            :raw-value candidate
-                            :validator validator}))))
+        (if (spec/valid? validator unvalidated)
+          unvalidated
+          (throw (ex-info "Value out of range"
+                          {:type :validation-error
+                           :value unvalidated
+                           :raw-value candidate
+                           :spec-explanation (spec/explain-str validator unvalidated)}))))
       (parse-leaf nominal candidate)
       (get nominal :validate [some?]))))
 
@@ -657,9 +666,9 @@
        (let [data (ex-data e)]
         (println "Validation error:" (.getMessage e))
         (println "  At key(s):" (join " >> " (:keys data)))
-        (if (:value data) (println "  Value:" (:value data)))
         (if (:raw-value data) (println "  Value before parsing:" (:raw-value data)))
-        (if (:validator data) (println "  Validator:" (:validator data)))
+        (if (:value data) (println "  Value after parsing:" (:value data)))
+        (if (:spec-explanation data) (println "  Validator output:" (:spec-explanation data)))
         (System/exit 1)))))
 
 (defn load-configuration [filepaths]

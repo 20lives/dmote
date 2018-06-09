@@ -299,7 +299,7 @@
                     corner :key-corner
                     offset :offset
                     :or {offset [0 0]}}]
-             (let [directions (generics/string-corner corner)]
+             (let [directions (string-corner corner)]
               (vec (map +
                     (take 2 (finger-wall-corner-position getopt coord directions))
                     offset))))

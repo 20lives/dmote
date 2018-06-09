@@ -1,9 +1,9 @@
 (defproject dactyl-keyboard "0.2.0-SNAPSHOT"
-  :description "A parametrized, split-hand, concave, columnar, erogonomic keyboard"
+  :description "A parametrized, split-hand, concave, columnar, ergonomic keyboard"
   :url "http://viktor.eikman.se/article/the-dmote/"
   :license {:name "GNU Affero General Public License"
             :url "https://www.gnu.org/licenses/agpl-3.0.en.html"}
-  :dependencies [[org.clojure/clojure "1.8.0"]
+  :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/tools.cli "0.3.7"]
                  [org.flatland/ordered "1.5.2"]
                  [io.forward/yaml "1.0.8"]

@@ -33,14 +33,6 @@
    :NNW NNW
    :WNW WNW})
 
-(defn string-corner [string]
-  "For use with YAML, where string values are not automatically converted."
-  ((keyword string) keyword-to-directions))
-
-(defn corner? [candidate]
-  "A validation function for use with YAML."
-  (contains? (set (vals keyword-to-directions)) candidate))
-
 (defn abs [n]
   "The absolute of n."
   (max n (- n)))
