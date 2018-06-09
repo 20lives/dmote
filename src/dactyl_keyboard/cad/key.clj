@@ -124,61 +124,50 @@
 ;; Keycap Models ;;
 ;;;;;;;;;;;;;;;;;;;
 
-(defn negative-cap-shape [scale-top]
-  "The shape of a channel for a keycap to move in.
-  These are useful when keys are placed in such a way that the webbing between
-  neighbouring mounts, or nearby walls, might otherwise obstruct movement."
-  (let [base (+ (max keyswitch-hole-x keyswitch-hole-y) 2)
-        factor 1.05
-        end (* factor key-width-1u)]
+(defn keycap-properties [getopt]
+  (let [height (getopt :keycaps :body-height)
+        travel (getopt :switches :travel)
+        resting-clearance (getopt :keycaps :resting-clearance)
+        pressed-clearance (- resting-clearance travel)
+        plate plate-thickness
+        bottom-to-bottom (+ plate resting-clearance)
+        bottom-to-middle (+ bottom-to-bottom (/ height 2))
+        bottom-to-pressed-bottom (+ plate pressed-clearance)]
+   {:from-plate-top {:resting-cap-middle bottom-to-middle
+                     :resting-cap-bottom resting-clearance
+                     :pressed-cap-bottom pressed-clearance}
+    :from-plate-bottom {:resting-cap-bottom bottom-to-bottom
+                        :pressed-cap-bottom bottom-to-pressed-bottom}}))
+
+(defn negative-cap-shape [getopt {h3 :height w3 :top-width m :margin}]
+  "The shape of a channel for a keycap to move in."
+  (let [step (fn [h w] (translate [0 0 h] (cube w w 1)))
+        h1 (getopt :keycaps :derived :from-plate-top :pressed-cap-bottom)
+        w1 (+ key-width-1u m)
+        h2 (getopt :keycaps :derived :from-plate-top :resting-cap-bottom)]
    (color [0.75 0.75 1 1]
     (translate [0 0 plate-thickness]
-      (union
-        ;; A base to accommodate the edges of a switch overhanging the hole:
-        (extrude-linear
-          {:height 1 :center false :scale (/ key-width-1u base)}
-          (square base base))
+      (pairwise-hulls
+        ;; A bottom plate for ease of mounting a switch:
+        (step 0.5 (max keyswitch-hole-x keyswitch-hole-y))
         ;; Space for the keycap’s edges in travel:
-        (translate [0 0 1]
-          (extrude-linear
-            {:height 5 :center false :scale factor}
-            (square key-width-1u key-width-1u)))
+        (step h1 w1)
+        (step h2 w1)
         ;; Space for the upper body of a keycap at rest:
-        (translate [0 0 6]
-          (extrude-linear
-            {:height 20 :center false :scale scale-top}
-            (square end end))))))))
-
-(def negative-cap-maximal (negative-cap-shape 2))
-(def negative-cap-linear (negative-cap-shape 1))
-(def negative-cap-minimal (negative-cap-shape 0.2))
+        (step h3 w3))))))
 
 (defn key-length [units] (- (* units mount-1u) (* 2 key-margin)))
 
-;; Keycap form factor differences.
-(def sa-profile-key-height 12.7)  ; Signature Plastics says 11.6 (home row).
-(def dsa-profile-key-height 8.1)  ; Signature Plastics says 7.3.
-(def dsa-profile-key-to-mount 5.8)
-
-;; Implementation of keycap form choice.
-(def keycap-height
-  (case keycap-style
-    :sa sa-profile-key-height
-    :dsa dsa-profile-key-height))
-(def keycap-to-mount dsa-profile-key-to-mount)
-(def cap-bottom-height (+ plate-thickness keycap-to-mount))
-(def cap-top-height (+ cap-bottom-height keycap-height))
-
-(defn keycap [units]
+(defn keycap-model [getopt units]
   "The shape of one keycap, rectangular base, ’units’ in width, at rest."
   (let [base-width (key-length units)
         base-depth (key-length 1)
-        vertical-scale 0.73  ; Approximately correct for DSA.
-        z-offset (+ cap-bottom-height (/ keycap-height 2))]
+        z (getopt :keycaps :derived :from-plate-bottom :resting-cap-middle)]
    (->>
      (square base-width base-depth)
-     (extrude-linear {:height keycap-height :scale vertical-scale})
-     (translate [0 0 z-offset])
+     (extrude-linear {:height (getopt :keycaps :body-height)
+                      :scale 0.73})  ; Based on DSA.
+     (translate [0 0 z])
      (color [220/255 163/255 163/255 1]))))
 
 
@@ -199,8 +188,7 @@
         trench-scale 2.5]
    (translate [0 0 (/ plate-thickness 2)]
      (union
-       negative-cap-minimal
-       ;; Space for the above-hole part of a switch.
+       ;; Space for the part of a switch above the mounting hole.
        (translate [0 0 plate-thickness]
          (cube keyswitch-overhang-x keyswitch-overhang-y plate-thickness))
        ;; The hole through the plate.
@@ -223,33 +211,30 @@
   "A post shape that comes offset for one corner of a key mount."
   (translate (mount-corner-offset directions) web-post))
 
-(defn column-radius [column]
-  (+ (/ (/ (+ mount-1u finger-mount-separation-x) 2)
-        (Math/sin (/ β 2)))
-     cap-bottom-height))
-
-(defn column-x-delta [column]
-  (+ -1 (- (* (column-radius column) (Math/sin β)))))
-
-(defn stylist [style translate-fn pitcher pitch-radius rotate-y-fn [column row] obj]
+(defn stylist [style translate-fn pitcher pitch-radius rotate-y-fn getopt [column row] obj]
   "Produce a closure that will apply a specific key cluster style."
   (let [column-curvature-offset (- curvature-centercol column)
-        roll-angle (* β column-curvature-offset)]
+        roll-angle (* β column-curvature-offset)
+        radius-base (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)
+        column-radius (+ radius-base
+                         (/ (/ (+ mount-1u finger-mount-separation-x) 2)
+                            (Math/sin (/ β 2))))]
    (case style
      :standard
        (->> obj
          (swing-callables translate-fn pitch-radius pitcher)
-         (swing-callables translate-fn (column-radius column) (partial rotate-y-fn roll-angle))
+         (swing-callables translate-fn column-radius (partial rotate-y-fn roll-angle))
          (translate-fn (finger-column-translation column)))
      :orthographic
-       (->> obj
-         (swing-callables translate-fn pitch-radius pitcher)
-         (rotate-y-fn roll-angle)
-         (translate-fn [(- (* column-curvature-offset (column-x-delta column)))
-                        0
-                        (* (column-radius column)
-                           (- 1 (Math/cos (* β column-curvature-offset))))])
-         (translate-fn (finger-column-translation column)))
+       (let [column-x-delta (+ -1 (- (* column-radius (Math/sin β))))
+             x (- (* column-curvature-offset column-x-delta))
+             radius-coefficient (- 1 (Math/cos (* β column-curvature-offset)))
+             z (* radius-coefficient column-radius)]
+         (->> obj
+           (swing-callables translate-fn pitch-radius pitcher)
+           (rotate-y-fn roll-angle)
+           (translate-fn [x 0 z])
+           (translate-fn (finger-column-translation column))))
      :fixed
        (->> obj
          (rotate-y-fn (nth fixed-angles column))
@@ -267,15 +252,16 @@
   "Place and tilt passed ‘subject’ as if it were a key or coordinate vector."
   (let [curvature-centerrow (finger-column-curvature-centerrow column)
         pitch-angle (* (progressive-pitch [column row]) (- row curvature-centerrow))
-        pitch-radius (+ (/ (/ (+ mount-1u finger-mount-separation-y) 2)
-                           (Math/sin (/ (progressive-pitch [column row]) 2)))
-                        cap-bottom-height)
+        cap-height (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)
+        pitch-radius (+ cap-height
+                        (/ (/ (+ mount-1u finger-mount-separation-y) 2)
+                           (Math/sin (/ (progressive-pitch [column row]) 2))))
         y-offset (* mount-1u curvature-centerrow)
         z-offset (getopt :key-clusters :finger :vertical-offset)]
     (->> subject
          (translate-fn (get finger-tweak-early-translation [column row] [0 0 0]))
          (rotate-x-fn (get finger-intrinsic-pitch [column row] 0))
-         (stylist column-style translate-fn (partial rotate-x-fn pitch-angle) pitch-radius rotate-y-fn [column row])
+         (stylist column-style translate-fn (partial rotate-x-fn pitch-angle) pitch-radius rotate-y-fn getopt [column row])
          (rotate-x-fn pitch-centerrow)
          (rotate-y-fn (getopt :key-clusters :finger :tenting))
          (translate-fn [0 y-offset z-offset])
@@ -310,6 +296,77 @@
     (fn [angle obj] (rotate angle [1 0 0] obj))
     (fn [angle obj] (rotate angle [0 1 0] obj))))
 
+(defn coordinate-pair-matcher [getopt cluster]
+  "Return a function that checks if two coordinates match.
+  This allows for integers as well as the keywords :first and :last, meaning
+  first and last in the column or row."
+  (let [rows (getopt :key-cluster cluster :derived :row-range)
+        columns (getopt :key-cluster cluster :derived :column-range)]
+    (fn [[config-column config-row] [subject-column subject-row]]
+      (and (or (= config-column subject-column)
+               (and (= config-column :first)
+                    (= subject-column (first columns)))
+               (and (= config-column :last)
+                    (= subject-column (last columns))))
+           (or (= config-row subject-row)
+               (and (= config-row :first)
+                    (= subject-row (first rows)))
+               (and (= config-row :last)
+                    (= subject-row (last rows))))))))
+
+(defn single-coordinate-matcher [getopt cluster indices]
+  "Return a function that checks if a coordinate matches another.
+  This allows for integers as well as the keywords :first and :last, meaning
+  first and last in the column or row."
+  (fn [config subject]
+    (or (= config subject)
+        (and (= config :first) (= subject (first indices)))
+        (and (= config :last) (= subject (last indices))))))
+
+(defn most-specific-option [getopt end-path]
+  "Return a function that will find the most specific configuration value
+  available for a key on the keyboard."
+  (let [get-in-section
+          (fn [& section-path]
+            (apply getopt (concat [:by-key] section-path [:parameters] end-path)))
+        try-get (fn [& section-path]
+                  (try
+                    (apply get-in-section section-path)
+                    (catch clojure.lang.ExceptionInfo e
+                      (if-not (= (:type (ex-data e)) :missing-parameter)
+                        (throw e)))))
+        always (fn [] true)
+        find-index (fn [pred coll]
+                     (first (keep-indexed #(when (pred %2) %1) coll)))]
+    (fn [cluster [column row]]
+      "Check, in order: Key-specific values favouring first/last row;
+      column-specific values favouring first/last column;
+      cluster-specific values; and finally the base section, where a
+      value is required to exist."
+      (let [rows (getopt :key-cluster cluster :derived :row-range)
+            columns (getopt :key-cluster cluster :derived :column-range)
+            first-column? #(= (first columns) column)
+            last-column? #(= (last columns) column)
+            first-row? #(= (first rows) row)
+            last-row? #(= (last rows) row)
+            sources
+              [[always]  ; Cluster level.
+               [always :columns column]
+               [first-column? :columns :first]
+               [last-column? :columns :last]
+               [always :columns column :row row]
+               [first-row? :columns column :row :first]
+               [last-row? :columns column :row :last]]
+            good-source
+              (fn [coll [pred & section-path]]
+                (if (pred)
+                  (conj coll (concat [:clusters cluster] section-path))
+                  coll))
+            prio (reduce good-source [] (reverse sources))]
+        (if-let [non-default (some try-get prio)]
+          non-default
+          (get-in-section))))))
+
 (defn finger-plates [getopt]
   (apply union (map #(finger-key-place getopt % single-switch-plate)
                     (getopt :key-clusters :finger :derived :key-coordinates))))
@@ -318,8 +375,19 @@
   (apply union (map #(finger-key-place getopt % single-switch-cutout)
                     (getopt :key-clusters :finger :derived :key-coordinates))))
 
+(defn finger-channels [getopt]
+  (letfn [(modeller [coord]
+            (letfn [(most [path]
+                      ((most-specific-option getopt path) :finger coord))]
+              (negative-cap-shape getopt
+                {:top-width (most [:channel :top-width])
+                 :height (most [:channel :height])
+                 :margin (most [:channel :margin])})))]
+    (apply union (map #(finger-key-place getopt % (modeller %))
+                      (getopt :key-clusters :finger :derived :key-coordinates)))))
+
 (defn finger-keycaps [getopt]
-  (apply union (map #(finger-key-place getopt % (keycap 1))
+  (apply union (map #(finger-key-place getopt % (keycap-model getopt 1))
                     (getopt :key-clusters :finger :derived :key-coordinates))))
 
 
@@ -357,4 +425,4 @@
 
 (defn thumb-cutouts [getopt] (for-thumbs getopt single-switch-cutout))
 
-(defn thumb-keycaps [getopt] (for-thumbs getopt (keycap 1)))
+(defn thumb-keycaps [getopt] (for-thumbs getopt (keycap-model getopt 1)))

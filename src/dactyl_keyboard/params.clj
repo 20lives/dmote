@@ -8,7 +8,7 @@
 ;;; things without having to adjust more complex code.
 
 (ns dactyl-keyboard.params
-  (:require [clojure.string :refer [join]]
+  (:require [clojure.string :refer [join lower-case]]
             [yaml.core :as yaml]
             [scad-clj.model :exclude [use import] :refer :all]
             [flatland.ordered.map :refer [ordered-map]]
@@ -49,7 +49,6 @@
 ;;;;;;;;;;;;;;;;
 
 ;; Finger key placement parameters:
-(def keycap-style :dsa)       ; :sa or :dsa.
 (def column-style :standard)  ; :standard, :orthographic, or :fixed.
 
 ;; Cutouts for switches optionally include a trench beneath the switch, which
@@ -246,9 +245,108 @@
 
 ;; This section loads, parses and validates a user configuration from YAML.
 
+;; Parsers:
+
+(defn parse-tuple-of [item-parser]
+  "A maker of parsers for vectors."
+  (fn [candidate] (into [] (map item-parser candidate))))
+
+(defn map-item-of [key-parser value-parser]
+  "A maker of parsers for both keys and values in hash maps."
+  (fn [[key value]] [(key-parser key) (value-parser value)]))
+
+(defn map-of [item-parser]
+  "A maker of parsers for multilevel parameters."
+  (fn [candidate] (into {} (map item-parser candidate))))
+
+(defn key-coordinate [candidate]
+  "A parser that takes a number as an integer or a string as a keyword."
+  (try (int candidate) (catch ClassCastException _ (keyword candidate))))
+
+(def map-of-key-coordinates
+  (map-of (map-item-of (parse-tuple-of key-coordinate) identity)))
+
+;; Validators:
+
+(defn pair? [candidate] (= (count candidate) 2))
+
+(defn pair-of? [item-validator]
+  "A maker of validators for items that are pairs of nested items."
+  (fn [candidate]
+    (and (pair? candidate)
+         (every? item-validator candidate))))
+
+(defn map-of? [key-validator value-validator]
+  "A maker of validators for multilevel parameters."
+  (fn [candidate]
+    (and (every? key-validator (keys candidate))
+         (every? value-validator (vals candidate)))))
+
+(defn key-coordinate? [candidate]
+  "A validator for a flexible notation. This permits both integer coordinates
+  and the keywords “:first” and “:last” in place of any integer. The words
+  are to be interpreted in the context of key matrix shapes."
+  (if (keyword? candidate) (contains? #{:first :last} candidate) (integer? candidate)))
+
+(def map-of-key-coordinate-pairs?
+  (map-of? (pair-of? key-coordinate?) identity))
+
+;; Specification:
+
+(def nested-raws
+  "A flat version of a special part of a user configuration."
+  [[:section [:parameters]
+    "This section, and everything in it, can be repeated at several levels: "
+    "The global, the key cluster, the key column, and finally the individual "
+    "key. Only the most specific option available for each key will be applied."]
+   [:section [:parameters :channel]
+    "Above each switch mount, there is a channel of negative space for the "
+    "user’s finger and the keycap to move inside. This is only useful in those "
+    "cases where nearby walls or webbing between mounts on the keyboard would "
+    "otherwise obstruct movement."]
+   [:parameter [:parameters :channel :height]
+    {:help (str "The height in mm of the negative space, starting from the "
+                "bottom edge of each keycap in its pressed (active) state.")
+     :default 1
+     :parse-fn num}]
+   [:parameter [:parameters :channel :top-width]
+    {:help (str "The width in mm of the negative space at its top. Its width "
+                "at the bottom is defined by the keycap.")
+     :default 0
+     :parse-fn num}]
+   [:parameter [:parameters :channel :margin]
+    {:help (str "The width in mm of extra negative space around the edges of "
+                "a keycap, on all sides.")
+     :default 0
+     :parse-fn num}]])
+
 (def configuration-raws
   "A flat version of the specification for a user configuration."
-  [[:section [:key-clusters]
+  [[:section [:keycaps]
+    "Keycaps are the plastic covers placed over the switches. The choice of "
+    "caps affect the shape of the keyboard: The physical profile limits " "curvature and therefore determines the default distance betweeen keys, "
+    "as well as the amount of negative space reserved for the movement of the "
+    "cap itself over the switch."]
+   [:parameter [:keycaps :body-height]
+    {:help (str "The height in mm of each keycap, measured from top to bottom "
+                "of the entire cap by itself.\n\n"
+                "An SA cap would be about 11.6 mm, DSA 7.3 mm.")
+     :default 1
+     :parse-fn num}]
+   [:parameter [:keycaps :resting-clearance]
+    {:help (str "The height in mm of the air gap between keycap and switch "
+                "mount, in a resting state.")
+     :default 1
+     :parse-fn num}]
+   [:section [:switches]
+    "Electrical switches close a circuit when pressed. They cannot be "
+    "printed. This section specifies how much space they need to be mounted."]
+   [:parameter [:switches :travel]
+    {:help (str "The distance in mm that a keycap can travel vertically when "
+                "mounted on a switch.")
+     :default 1
+     :parse-fn num}]
+   [:section [:key-clusters]
      "This section describes where to put keys on the keyboard."]
    [:section [:key-clusters :finger]
     "The main cluster of keys, for “fingers” in a sense excluding the thumb."
@@ -262,12 +360,12 @@
     {:help (str "A vertical offset in mm shared by all finger cluster keys. "
                 "This ultimately controls the overall height of the keyboard.")
      :default 0
-     :parse-fn double}]
+     :parse-fn num}]
    [:parameter [:key-clusters :finger :tenting]
     {:help (str "An angle in radians. The tenting angle controls the overall "
                 "left-to-right tilt of each half of the keyboard.")
      :default 0
-     :parse-fn double}]
+     :parse-fn num}]
    [:parameter [:key-clusters :finger :matrix-columns]
     {:help (str "A list of key columns. Columns are aligned with the user’s "
                 "fingers. Each column will be known by its index in this "
@@ -281,6 +379,9 @@
                 "parameter is omitted, the effective value will be zero.")
      :default [{}]
      :parse-fn vec}]
+   [:nest [:by-key] nested-raws
+    "This section is special. It’s nested for all levels of specificity from "
+    "the global down to a single column-row coordinate pair."]
    [:section [:wrist-rest]
     "An optional extension to support the user’s wrist."]
    [:parameter [:wrist-rest :include]
@@ -328,7 +429,7 @@
     {:help (str "The height of a narrowing, printed lip between "
                 "the base of the plinth and the rubber part.")
      :default 1
-     :parse-fn double}]
+     :parse-fn num}]
    [:section [:wrist-rest :rubber]
     "The top of the wrist rest should be printed or cast in a soft material, "
     "such as silicone rubber."]
@@ -339,12 +440,12 @@
     {:help (str "The height of the rubber wrist support, measured from the "
                 "top of the lip.")
      :default 1
-     :parse-fn double}]
+     :parse-fn num}]
    [:parameter [:wrist-rest :rubber :height :below-lip]
     {:help (str "The depth of the rubber wrist support, "
                 "measured from the top of the lip.")
      :default 1
-     :parse-fn double}]
+     :parse-fn num}]
    [:section [:wrist-rest :rubber :shape]
     "The piece of rubber should fit the user’s hand."]
    [:parameter [:wrist-rest :rubber :shape :grid-size]
@@ -375,14 +476,14 @@
     {:help (str "The vertical distance in mm from the center of each fastener "
                 "to the center of the next.")
      :default 0
-     :parse-fn double}]
+     :parse-fn num}]
    [:section [:wrist-rest :fasteners :mounts]
     "The mounts, or anchor points, for each fastener on each side."]
    [:parameter [:wrist-rest :fasteners :mounts :width]
     {:help (str "The width in mm of the face or front bezel on each "
                 "connecting block that will anchor a fastener.")
      :default 1
-     :parse-fn double}]
+     :parse-fn num}]
    [:section [:wrist-rest :fasteners :mounts :case-side]
     "The side of the keyboard case."]
    [:parameter [:wrist-rest :fasteners :mounts :case-side :finger-key-column]
@@ -405,7 +506,7 @@
     {:help (str "The thickness of the mount in mm "
                 "along the axis of the fastener(s).")
      :default 1
-     :parse-fn double}]
+     :parse-fn num}]
    [:section [:wrist-rest :fasteners :mounts :plinth-side]
     "The side of the wrist rest."]
    [:parameter [:wrist-rest :fasteners :mounts :plinth-side :offset]
@@ -421,46 +522,48 @@
                 "This is typically larger than the "
                 "case-side depth to allow adjustment.")
      :default 1
-     :parse-fn double}]
+     :parse-fn num}]
    [:section [:wrist-rest :solid-bridge]
     "This is only relevant with the `solid` style of wrist rest."]
    [:parameter [:wrist-rest :solid-bridge :height]
     {:help (str "The height in mm of the land bridge between the "
                 "case and the plinth.")
      :default 14
-     :parse-fn double}]
+     :parse-fn num}]
    [:section [:foot-plates]
     "Optional flat surfaces at ground level for adding silicone rubber feet "
-    "or cork strips etc. to the "
-    "bottom of the keyboard to increase friction and/or "
-    "improve feel, sound and ground clearance."]
+    "or cork strips etc. to the bottom of the keyboard to increase friction "
+    "and/or improve feel, sound and ground clearance."]
    [:parameter [:foot-plates :include]
     {:help (str "If `true`, include foot plates.")
      :default false
      :parse-fn boolean}]
    [:parameter [:foot-plates :height]
     {:help (str "The height in mm of each mounting plate.")
-     :default 4}]
+     :default 4
+     :parse-fn num}]
    [:parameter [:foot-plates :polygons]
     {:help (str "A list describing the horizontal shape, size and "
                 "position of each mounting plate as a polygon.")
      :default []
      :parse-fn vec}]])
 
+(defn- coalesce [coll [type path & metadata]]
+  "Recursively assemble a tree structure from flat specifications."
+  (case type
+    :nest (assoc-in coll path
+            (reduce
+              coalesce
+              (ordered-map :metadata {:help (apply str (rest metadata))})
+              (first metadata)))
+    :section (assoc-in coll path
+               (ordered-map :metadata {:help (apply str metadata)}))
+    :parameter (assoc-in coll path (first metadata))
+    (throw (Exception. "Bad type in configuration master."))))
+
 (def master
-  "Collect structural metadata for a user configuration.
-  This happens in two stages: Sections (branches), then individual parameters
-  (leaves), as a simple means of ensuring that the tree is composed of
-  ordered maps rather than ordinary maps."
-  (reduce
-    (fn [coll [type path & metadata]]
-      (case type
-        :section (assoc-in coll path
-                   (ordered-map :metadata {:help (apply str metadata)}))
-        :parameter (assoc-in coll path (first metadata))
-        (throw (Exception. "Bad type in configuration master."))))
-    (ordered-map)
-    configuration-raws))
+  "Collected structural metadata for a user configuration."
+  (reduce coalesce (ordered-map) configuration-raws))
 
 (def reserved-key?
   "Endpoint metadata imitates clojure.tools.cli but adds :help."
@@ -527,7 +630,9 @@
      (parse-fn raw)
      (catch Exception e
        (throw (ex-info "Could not cast value to correct data type"
-                        {:type :parse-error :value raw :original-exception e}))))))
+                        {:type :parsing-error
+                         :value raw
+                         :original-exception e}))))))
 
 (defn validate-leaf [nominal candidate]
   (assert (endpoint? nominal))

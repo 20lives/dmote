@@ -2,6 +2,11 @@
 # This is not the full set of available parameters.
 # Read the project documentation.
 
+keycaps:
+  body-height: 7.3  # DSA-profile caps.
+  resting-clearance: 6.5  # DSA on Matias switches.
+switches:
+  travel: 3.5
 key-clusters:
   finger:
     vertical-offset: 7
@@ -17,6 +22,12 @@ key-clusters:
       rows-below-home: 2
     - rows-below-home: 2
     - rows-below-home: 2
+by-key:
+  parameters:
+    channel:
+      height: 20
+      top-width: 10
+      margin: 0.5
 wrist-rest:
   include: false
   style: threaded

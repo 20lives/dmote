@@ -44,7 +44,6 @@
         (if params/include-backplate-block (aux/backplate-block getopt)))
       (key/finger-cutouts getopt)
       (key/thumb-cutouts getopt)
-      (tweaks/key-cluster-bridge-cutouts getopt)
       (aux/rj9-negative getopt)
       (aux/mcu-negative getopt)
       (if params/include-led-housings (aux/led-holes getopt))
@@ -66,18 +65,25 @@
 
 (defn build-option-accessor [build-options]
   "Close over a user configuration."
-  (letfn [(value-at [path] (get-in build-options path))
-          (valid? [path] (not (nil? (value-at path))))  ; “false” is OK.
+  (letfn [(value-at [path] (get-in build-options path ::none))
+          (path-exists? [path] (not (= ::none (value-at path))))
+          (valid? [path] (and (path-exists? path)
+                              (not (nil? (value-at path)))))  ; “false” is OK.
           (step [path key]
             (let [next-path (conj path key)]
-             (if (valid? next-path) next-path path)))
+             (if (path-exists? next-path) next-path path)))
           (backtrack [path] (reduce step [] path))]
     (fn [& path]
-      (if (valid? path)
-        (value-at path)
-        (throw (ex-info (format "Missing configuration at %s" path)
-                        {:last-good (backtrack path)
-                         :at-last-good (keys (value-at (backtrack path)))}))))))
+      (let [exc {:path path
+                 :last-good (backtrack path)
+                 :at-last-good (value-at (backtrack path))}]
+        (if-not (path-exists? path)
+          (throw (ex-info "Configuration lacks key"
+                          (assoc exc :type :missing-parameter)))
+          (if-not (valid? path)
+            (throw (ex-info "Configuration lacks value for key"
+                            (assoc exc :type :unset-parameter)))
+            (value-at path)))))))
 
 (defn enrich-option-metadata [build-options]
   "Derive certain properties that are implicit in the user configuration.
@@ -88,6 +94,7 @@
     build-options
     ;; Mind the order. One of these may depend upon earlier steps.
     [[[:key-clusters :finger] (partial key/cluster-properties :finger)]
+     [[:keycaps] key/keycap-properties]
      [[:wrist-rest] wrist/derive-properties]]))
 
 (defn build-all [build-options]

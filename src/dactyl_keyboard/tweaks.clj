@@ -117,13 +117,6 @@
         (post t5 ENE 4)
         (post f2 ENE 2 3 4)))))
 
-(defn key-cluster-bridge-cutouts [getopt]
-  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
-        first-row (fn [column] (first (by-col column)))]
-    (union
-      (finger-key-place getopt (first-row 1) negative-cap-linear)
-      (finger-key-place getopt (first-row 2) negative-cap-linear))))
-
 (def finger-case-tweaks
   "Workarounds for aesthetics."
   ;; Nothing here at the moment; see DMOTE v0.1.0 for example usage.

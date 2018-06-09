@@ -4,6 +4,28 @@ Each heading in this document represents a recognized configuration key in YAML 
 
 This documentation was generated from the application CLI.
 
+## Section `keycaps`
+
+Keycaps are the plastic covers placed over the switches. The choice of caps affect the shape of the keyboard: The physical profile limits curvature and therefore determines the default distance betweeen keys, as well as the amount of negative space reserved for the movement of the cap itself over the switch.
+
+### Parameter `body-height`
+
+The height in mm of each keycap, measured from top to bottom of the entire cap by itself.
+
+An SA cap would be about 11.6 mm, DSA 7.3 mm.
+
+### Parameter `resting-clearance`
+
+The height in mm of the air gap between keycap and switch mount, in a resting state.
+
+## Section `switches`
+
+Electrical switches close a circuit when pressed. They cannot be printed. This section specifies how much space they need to be mounted.
+
+### Parameter `travel`
+
+The distance in mm that a keycap can travel vertically when mounted on a switch.
+
 ## Section `key-clusters`
 
 This section describes where to put keys on the keyboard.
@@ -30,6 +52,30 @@ A list of key columns. Columns are aligned with the user’s fingers. Each colum
 
 * `rows-above-home`: An integer specifying the amount of keys on the far side of the home row in the column. If this parameter is omitted, the effective value will be zero.
 * `rows-below-home`: An integer specifying the amount of keys on the near side of the home row in the column. If this parameter is omitted, the effective value will be zero.
+
+## Section `by-key`
+
+This section is special. It’s nested for all levels of specificity from the global down to a single column-row coordinate pair.
+
+### Section `parameters`
+
+This section, and everything in it, can be repeated at several levels: The global, the key cluster, the key column, and finally the individual key. Only the most specific option available for each key will be applied.
+
+#### Section `channel`
+
+Above each switch mount, there is a channel of negative space for the user’s finger and the keycap to move inside. This is only useful in those cases where nearby walls or webbing between mounts on the keyboard would otherwise obstruct movement.
+
+##### Parameter `height`
+
+The height in mm of the negative space, starting from the bottom edge of each keycap in its pressed (active) state.
+
+##### Parameter `top-width`
+
+The width in mm of the negative space at its top. Its width at the bottom is defined by the keycap.
+
+##### Parameter `margin`
+
+The width in mm of extra negative space around the edges of a keycap, on all sides.
 
 ## Section `wrist-rest`
 
