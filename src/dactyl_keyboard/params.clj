@@ -275,29 +275,12 @@
 
 (spec/def ::supported-wrist-rest-style #{:threaded :solid})
 (spec/def ::corner (set (vals generics/keyword-to-directions)))
-
-(defn pair? [candidate] (= (count candidate) 2))
-
-(defn pair-of? [item-validator]
-  "A maker of validators for items that are pairs of nested items."
-  (fn [candidate]
-    (and (pair? candidate)
-         (every? item-validator candidate))))
-
-(defn map-of? [key-validator value-validator]
-  "A maker of validators for multilevel parameters."
-  (fn [candidate]
-    (and (every? key-validator (keys candidate))
-         (every? value-validator (vals candidate)))))
-
-(defn key-coordinate? [candidate]
-  "A validator for a flexible notation. This permits both integer coordinates
-  and the keywords “:first” and “:last” in place of any integer. The words
-  are to be interpreted in the context of key matrix shapes."
-  (if (keyword? candidate) (contains? #{:first :last} candidate) (integer? candidate)))
-
-(def map-of-key-coordinate-pairs?
-  (map-of? (pair-of? key-coordinate?) identity))
+(spec/def ::points some?)
+(spec/def ::foot-plate (spec/keys :req-un [::points]))
+(spec/def ::foot-plate-polygons (spec/coll-of ::foot-plate))
+(spec/def ::flexcoord (spec/or :absolute int?
+                               :extreme #{:first :last}))
+(spec/def ::flexcoord-pair (spec/coll-of ::flexcoord :count 2))
 
 ;; Specification:
 
@@ -555,7 +538,7 @@
     {:help (str "A list describing the horizontal shape, size and "
                 "position of each mounting plate as a polygon.")
      :default []
-     :parse-fn vec}]])
+     :validate [::foot-plate-polygons]}]])
 
 (defn- coalesce [coll [type path & metadata]]
   "Recursively assemble a tree structure from flat specifications."
