@@ -11,7 +11,7 @@
   (:require [clojure.string :refer [join lower-case]]
             [clojure.spec.alpha :as spec]
             [yaml.core :as yaml]
-            [scad-clj.model :exclude [use import] :refer :all]
+            [scad-clj.model :refer [deg->rad]]
             [flatland.ordered.map :refer [ordered-map]]
             [unicode-math.core :refer :all]
             [dactyl-keyboard.generics :as generics]))
@@ -252,35 +252,43 @@
   "For use with YAML, where string values are not automatically converted."
   ((keyword string) generics/keyword-to-directions))
 
-(defn parse-tuple-of [item-parser]
+(defn tuple-of [item-parser]
   "A maker of parsers for vectors."
   (fn [candidate] (into [] (map item-parser candidate))))
 
-(defn map-item-of [key-parser value-parser]
-  "A maker of parsers for both keys and values in hash maps."
-  (fn [[key value]] [(key-parser key) (value-parser value)]))
-
-(defn map-of [item-parser]
+(defn map-of [value-parsers]
   "A maker of parsers for multilevel parameters."
-  (fn [candidate] (into {} (map item-parser candidate))))
+  (letfn [(parse-item [[key value]]
+            (if-let [value-parser (get value-parsers key)]
+              [key (value-parser value)]
+              (throw (Exception. (format "Invalid key: %s" key)))))]
+    (fn [candidate] (into {} (map parse-item candidate)))))
 
-(defn key-coordinate [candidate]
+(defn flexcoord [candidate]
   "A parser that takes a number as an integer or a string as a keyword."
   (try (int candidate) (catch ClassCastException _ (keyword candidate))))
 
-(def map-of-key-coordinates
-  (map-of (map-item-of (parse-tuple-of key-coordinate) identity)))
+(def key-based-polygons
+  (tuple-of
+    (map-of
+      {:points (tuple-of
+                 (map-of {:key-coordinates (tuple-of flexcoord)
+                          :key-corner string-corner
+                          :offset vec}))})))
 
 ;; Validators:
 
-(spec/def ::supported-wrist-rest-style #{:threaded :solid})
-(spec/def ::corner (set (vals generics/keyword-to-directions)))
-(spec/def ::points some?)
-(spec/def ::foot-plate (spec/keys :req-un [::points]))
-(spec/def ::foot-plate-polygons (spec/coll-of ::foot-plate))
 (spec/def ::flexcoord (spec/or :absolute int?
                                :extreme #{:first :last}))
 (spec/def ::flexcoord-pair (spec/coll-of ::flexcoord :count 2))
+(spec/def ::corner (set (vals generics/keyword-to-directions)))
+(spec/def ::supported-wrist-rest-style #{:threaded :solid})
+
+(spec/def ::key-coordinates ::flexcoord-pair)
+(spec/def ::point (spec/keys :req-un [::key-coordinates]))
+(spec/def ::points (spec/coll-of ::point))
+(spec/def ::foot-plate (spec/keys :req-un [::points]))
+(spec/def ::foot-plate-polygons (spec/coll-of ::foot-plate))
 
 ;; Specification:
 
@@ -538,6 +546,7 @@
     {:help (str "A list describing the horizontal shape, size and "
                 "position of each mounting plate as a polygon.")
      :default []
+     :parse-fn key-based-polygons
      :validate [::foot-plate-polygons]}]])
 
 (defn- coalesce [coll [type path & metadata]]
@@ -623,7 +632,7 @@
      (catch Exception e
        (throw (ex-info "Could not cast value to correct data type"
                         {:type :parsing-error
-                         :value raw
+                         :raw-value raw
                          :original-exception e}))))))
 
 (defn validate-leaf [nominal candidate]
@@ -635,7 +644,7 @@
           unvalidated
           (throw (ex-info "Value out of range"
                           {:type :validation-error
-                           :value unvalidated
+                           :parsed-value unvalidated
                            :raw-value candidate
                            :spec-explanation (spec/explain-str validator unvalidated)}))))
       (parse-leaf nominal candidate)
@@ -648,10 +657,15 @@
      (catch clojure.lang.ExceptionInfo e
        (let [data (ex-data e)]
         (println "Validation error:" (.getMessage e))
-        (println "  At key(s):" (join " >> " (:keys data)))
-        (if (:raw-value data) (println "  Value before parsing:" (:raw-value data)))
-        (if (:value data) (println "  Value after parsing:" (:value data)))
-        (if (:spec-explanation data) (println "  Validator output:" (:spec-explanation data)))
+        (println "    At key(s):" (join " >> " (:keys data)))
+        (if (:raw-value data)
+          (println "    Value before parsing:" (:raw-value data)))
+        (if (:parsed-value data)
+          (println "    Value after parsing:" (:parsed-value data)))
+        (if (:spec-explanation data)
+          (println "    Validator output:" (:spec-explanation data)))
+        (if (:original-exception data)
+          (println "    Originating exception:" (.getMessage (:original-exception data))))
         (System/exit 1)))))
 
 (defn load-configuration [filepaths]

@@ -295,14 +295,11 @@
   Each vector specifying a point in a polygon must have finger key coordinates
   and a mount corner identified by a direction tuple. These can be followed by
   a two-dimensional offset for tweaking."
-   (letfn [(point [{coord :key-coordinates
-                    corner :key-corner
-                    offset :offset
+   (letfn [(point [{coord :key-coordinates directions :key-corner offset :offset
                     :or {offset [0 0]}}]
-             (let [directions (string-corner corner)]
-              (vec (map +
-                    (take 2 (finger-wall-corner-position getopt coord directions))
-                    offset))))
+             (let [res (getopt :key-clusters :finger :derived :resolve-coordinates)
+                   base (take 2 (finger-wall-corner-position getopt (res coord) directions))]
+               (vec (map + base offset))))
            (plate [polygon-spec]
              (extrude-linear
                {:height (getopt :foot-plates :height) :center false}

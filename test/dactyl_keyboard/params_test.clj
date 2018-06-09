@@ -1,5 +1,6 @@
 (ns dactyl-keyboard.params-test
   (:require [clojure.test :refer :all]
+            [clojure.spec.alpha :as spec]
             [flatland.ordered.map :refer [ordered-map]]
             [dactyl-keyboard.params :as params]))
 
@@ -59,32 +60,24 @@
              (om :k0 (om :k0a 1
                          :k0b 3)))))))
 
-(deftest test-coordinate-map-parser
-  (testing "map of literal key coordinates"
-    (is (= (params/map-of-key-coordinates {[1 1] 1})
-           {[1 1] 1})))
-  (testing "map containing relative key coordinates"
-    (is (= (params/map-of-key-coordinates {["first" 1] 1})
-           {[:first 1] 1})))
-  (testing "map of nothing but relative key coordinates"
-    (is (= (params/map-of-key-coordinates {["first" "last"] 1})
-           {[:first :last] 1}))))
-
-(deftest test-coordinate-map-validator
-  (testing "map of literal key coordinates"
-    (is (= (params/map-of-key-coordinate-pairs? {[1 1] 1})
-           true)))
-  (testing "map keyed with a valid keyword"
-    (is (= (params/map-of-key-coordinate-pairs? {[1 :last] 1})
-           true)))
-  (testing "map keyed with an invalid keyword"
-    (is (= (params/map-of-key-coordinate-pairs? {[1 :soup] 1})
+(deftest test-coordinates-validator
+  (testing "empty"
+    (is (= (spec/valid? ::params/key-coordinates [])
            false)))
-  (testing "short key"
-    (is (= (params/map-of-key-coordinate-pairs? {[1] 1})
+  (testing "short"
+    (is (= (spec/valid? ::params/key-coordinates [1])
            false)))
-  (testing "empty key"
-    (is (= (params/map-of-key-coordinate-pairs? {[] 1})
+  (testing "literal key coordinates"
+    (is (= (spec/valid? ::params/key-coordinates [1 1])
+           true)))
+  (testing "a mapping"
+    (is (= (spec/valid? ::params/key-coordinates {1 1})
+           false)))
+  (testing "a valid keyword"
+    (is (= (spec/valid? ::params/key-coordinates [1 :last])
+           true)))
+  (testing "an invalid keyword"
+    (is (= (spec/valid? ::params/key-coordinates [1 :soup])
            false))))
 
 (deftest test-parser-defaults

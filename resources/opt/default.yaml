@@ -49,21 +49,21 @@ foot-plates:
   height: 4
   polygons:
   - points:
-    - key-coordinates: [5, 0]
+    - key-coordinates: [last, last]
       key-corner: WNW
       offset: [7, 0]
-    - key-coordinates: [5, 0]
+    - key-coordinates: [last, last]
       key-corner: NNE
-    - key-coordinates: [5, -1]
+    - key-coordinates: [last, -1]
       key-corner: ENE
   - points:
-    - key-coordinates: [5, -2]
+    - key-coordinates: [last, first]
       key-corner: SSW
       offset: [4, 1]
-    - key-coordinates: [5, -2]
+    - key-coordinates: [last, first]
       key-corner: NNE
       offset: [1, -5]
-    - key-coordinates: [5, -2]
+    - key-coordinates: [last, first]
       key-corner: ESE
   - points:
     - key-coordinates: [2, -3]

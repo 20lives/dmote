@@ -81,7 +81,19 @@
             (fn [r] [r (filter #(key-requested? [% r]) column-range)])
             row-range)
         coordinates-by-row
-          (M (fn [[r cols]] [r (for [c cols] [c r])]) column-indices-by-row)]
+          (M (fn [[r cols]] [r (for [c cols] [c r])]) column-indices-by-row)
+        resolve-coordinates
+          (fn [[column row]]
+            "Resolve the keywords :first and :last to absolute indices."
+            (let [rc (case column
+                       :first (first column-range)
+                       :last (last column-range)
+                       column)
+                  rr (case row
+                       :first (first (row-indices-by-column rc))
+                       :last (last (row-indices-by-column rc))
+                       row)]
+              [rc rr]))]
    {:last-column last-column
     :column-range column-range
     :row-range row-range
@@ -90,7 +102,8 @@
     :row-indices-by-column row-indices-by-column
     :coordinates-by-column coordinates-by-column
     :column-indices-by-row column-indices-by-row
-    :coordinates-by-row coordinates-by-row}))
+    :coordinates-by-row coordinates-by-row
+    :resolve-coordinates resolve-coordinates}))
 
 (defn print-matrix [cluster getopt]
   "Print a schematic picture of a key cluster. For your REPL."

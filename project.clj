@@ -7,7 +7,7 @@
                  [org.clojure/tools.cli "0.3.7"]
                  [org.flatland/ordered "1.5.2"]
                  [io.forward/yaml "1.0.8"]
-                 [unicode-math "0.2.0"]
+                 [unicode-math "0.2.1"]
                  [scad-clj "0.5.2"]]
   :main dactyl-keyboard.core
   :aot :all
