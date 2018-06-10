@@ -24,6 +24,8 @@ key-clusters:
     - rows-below-home: 2
 by-key:
   parameters:
+    layout:
+      neutral-pitch-row: 0
     channel:
       height: 20
       top-width: 10
@@ -37,6 +39,14 @@ by-key:
               parameters:
                 channel:
                   top-width: 15
+        "4":
+          parameters:
+            layout:
+              neutral-pitch-row: -1
+        "5":
+          parameters:
+            layout:
+              neutral-pitch-row: -1
 wrist-rest:
   include: false
   style: threaded

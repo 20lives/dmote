@@ -6,6 +6,7 @@
 (ns dactyl-keyboard.core
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.pprint :refer [pprint]]
+            [clj-yaml.core :as yaml]
             [scad-clj.scad :refer [write-scad]]
             [scad-clj.model :exclude [use import] :refer :all]
             [dactyl-keyboard.generics :as generics]
@@ -127,6 +128,13 @@
    ["-d" "--debug"]
    ["-h" "--help"]])
 
+(defn- from-file [filepath]
+  (try
+    (yaml/parse-string (slurp filepath))
+    (catch java.io.FileNotFoundException _
+      (do (println (format "Failed to load file “%s”." filepath))
+          (System/exit 1)))))
+
 (defn -main [& raw]
   (let [args (parse-opts raw cli-options)
         options (:options args)]
@@ -137,10 +145,11 @@
      (:help options) (println (:summary args))
      (:describe-parameters options) (params/print-markdown-documentation)
      :else
-       (let [config (params/load-configuration (:configuration-file options))]
-        (if (:debug options) (do (println "Merged options:") (pprint config)))
+       (let [raws (apply generics/soft-merge
+                    (map from-file (:configuration-file options)))]
+        (if (:debug options) (do (println "Merged options:") (pprint raws)))
         (try
-          (build-all config)
+          (build-all (params/validate-configuration raws))
           (catch clojure.lang.ExceptionInfo e
             ;; Likely raised by getopt.
             (println "An exception occurred:" (.getMessage e))

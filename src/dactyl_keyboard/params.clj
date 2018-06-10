@@ -10,7 +10,6 @@
 (ns dactyl-keyboard.params
   (:require [clojure.string :as string]
             [clojure.spec.alpha :as spec]
-            [clj-yaml.core :as yaml]
             [scad-clj.model :refer [deg->rad]]
             [flatland.ordered.map :refer [ordered-map]]
             [unicode-math.core :refer :all]
@@ -48,13 +47,6 @@
 ;;;;;;;;;;;;;;;;
 ;; Key Layout ;;
 ;;;;;;;;;;;;;;;;
-
-(defn finger-column-curvature-centerrow [column]
-  "Identify the row where Tait-Bryan pitch will have no progressive element."
-  ;; This is a function (‘defn’) acting on a column (‘[column]’) of keys.
-  (cond  ; The result here is conditional.
-    (>= column 4) -1
-    :else 0))
 
 (def pitch-centerrow
   "The pitch of the center row controls the general front-to-back incline."
@@ -350,7 +342,8 @@
       (assoc candidate key (validate-branch (key nominal) (key candidate))))
     (throw (ex-info "Superfluous configuration key"
                     {:type :superfluous-key
-                     :keys (list key)}))))
+                     :keys (list key)
+                     :accepted-keys (keys nominal)}))))
 
 (defn validate-branch [nominal candidate]
   "Validate a section of a configuration received through the UI."
@@ -383,6 +376,13 @@
     "Here at the global level, for each key cluster, for each column, and "
     "at the row level. See below. Only the most specific option available "
     "for each key will be applied to that key."]
+   [:section [:parameters :layout]
+    "How to place keys. See also key cluster style."]
+   [:parameter [:parameters :layout :neutral-pitch-row]
+    {:help (str "An integer row ID. This identifies the row where progressive "
+                "Tait-Bryan pitch will be neutral (zero) in a column of keys.")
+     :default 0
+     :parse-fn int}]
    [:section [:parameters :channel]
     "Above each switch mount, there is a channel of negative space for the "
     "user’s finger and the keycap to move inside. This is only useful in those "
@@ -423,8 +423,10 @@
                      flexcoord
                      (map-like {:parameters iteration}))}))})})))
 
-(spec/def ::parameters #(some? (validate-branch nested-cooked %)))
-(spec/def ::rows (spec/map-of ::flexcoord ::parameters))
+;; A predicate made from nested-cooked is applied in validation of nested appearances.
+(spec/def ::parameters #(some? (validate-branch (:parameters nested-cooked) %)))
+(spec/def ::individual-row (spec/keys :opt-un [::parameters]))
+(spec/def ::rows (spec/map-of ::flexcoord ::individual-row))
 (spec/def ::individual-column (spec/keys :opt-un [::rows ::parameters]))
 (spec/def ::columns (spec/map-of ::flexcoord ::individual-column))
 (spec/def ::individual-cluster (spec/keys :opt-un [::columns ::parameters]))
@@ -743,6 +745,8 @@
        (let [data (ex-data e)]
         (println "Validation error:" (.getMessage e))
         (println "    At key(s):" (string/join " >> " (:keys data)))
+        (if (:accepted-keys data)
+          (println "    Accepted key(s) there:" (:accepted-keys data)))
         (if (:raw-value data)
           (println "    Value before parsing:" (:raw-value data)))
         (if (:parsed-value data)
@@ -756,14 +760,3 @@
                 (string/join "\n      "
                   (string/split-lines (pr-str (:original-exception data)))))))
         (System/exit 1)))))
-
-(defn- from-file [filepath]
-  (try
-    (yaml/parse-string (slurp filepath))
-    (catch java.io.FileNotFoundException _
-      (do (println (format "Failed to load file “%s”." filepath))
-          (System/exit 1)))))
-
-(defn load-configuration [filepaths]
-  "Read and combine YAML from files, in the order given."
-  (validate-configuration (apply generics/soft-merge (map from-file filepaths))))

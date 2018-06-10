@@ -51,6 +51,55 @@
 ;; Definitions — Fingers ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn most-specific-getter [getopt end-path]
+  "Return a function that will find the most specific configuration value
+  available for a key on the keyboard."
+  (let [get-in-section
+          (fn [section-path]
+            (let [full-path (concat [:by-key] section-path [:parameters] end-path)]
+              (apply getopt full-path)))
+        get-default (fn [] (get-in-section []))
+        try-get
+          (fn [section-path]
+            (try
+              (get-in-section section-path)
+              (catch clojure.lang.ExceptionInfo e
+                (if-not (= (:type (ex-data e)) :missing-parameter)
+                  (throw e)))))
+        find-index (fn [pred coll]
+                     (first (keep-indexed #(when (pred %2) %1) coll)))]
+    (fn [cluster [column row]]
+      "Check, in order: Key-specific values favouring first/last row;
+      column-specific values favouring first/last column;
+      cluster-specific values; and finally the base section, where a
+      value is required to exist."
+      (let [columns (getopt :key-clusters cluster :derived :column-range)
+            by-col (getopt :key-clusters cluster :derived :row-indices-by-column)
+            rows (by-col column)
+            first-column (= (first columns) column)
+            last-column (= (last columns) column)
+            first-row (= (first rows) row)
+            last-row (= (last rows) row)
+            sources
+              [[[] []]
+               [[first-column] [:columns :first]]
+               [[last-column] [:columns :last]]
+               [[] [:columns column]]
+               [[first-column first-row] [:columns :first :rows :first]]
+               [[first-column last-row] [:columns :first :rows :last]]
+               [[last-column first-row] [:columns :last :rows :first]]
+               [[last-column last-row] [:columns :last :rows :last]]
+               [[first-row] [:columns column :rows :first]]
+               [[last-row] [:columns column :rows :last]]
+               [[] [:columns column :rows row]]]
+            good-source
+              (fn [coll [requirements section-path]]
+                (if (every? boolean requirements)
+                  (conj coll (concat [:clusters cluster] section-path))
+                  coll))
+            prio (reduce good-source [] (reverse sources))]
+        (if-let [non-default (some try-get prio)] non-default (get-default))))))
+
 (defn cluster-properties [cluster getopt]
   "Derive some properties about a specific key cluster from raw configuration info."
   (let [matrix (getopt :key-clusters cluster :matrix-columns)
@@ -104,6 +153,9 @@
     :column-indices-by-row column-indices-by-row
     :coordinates-by-row coordinates-by-row
     :resolve-coordinates resolve-coordinates}))
+
+(defn most-specific-option [getopt end-path cluster coord]
+  ((most-specific-getter getopt end-path) cluster coord))
 
 (defn print-matrix [cluster getopt]
   "Print a schematic picture of a key cluster. For your REPL."
@@ -254,24 +306,25 @@
 ;; Key Placement Functions — Fingers ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn finger-placement [translate-fn rotate-x-fn rotate-y-fn getopt [column row] subject]
+(defn finger-placement [translate-fn rotate-x-fn rotate-y-fn getopt coord subject]
   "Place and tilt passed ‘subject’ as if it were a key or coordinate vector."
-  (let [curvature-centerrow (finger-column-curvature-centerrow column)
-        pitch-angle (* (progressive-pitch [column row]) (- row curvature-centerrow))
+  (let [[column row] coord
+        neutral (most-specific-option getopt [:layout :neutral-pitch-row] :finger coord)
+        pitch-angle (* (progressive-pitch coord) (- row neutral))
         cap-height (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)
         pitch-radius (+ cap-height
                         (/ (/ (+ mount-1u finger-mount-separation-y) 2)
-                           (Math/sin (/ (progressive-pitch [column row]) 2))))
-        y-offset (* mount-1u curvature-centerrow)
+                           (Math/sin (/ (progressive-pitch coord) 2))))
+        y-offset (* mount-1u neutral)
         z-offset (getopt :key-clusters :finger :vertical-offset)]
     (->> subject
-         (translate-fn (get finger-tweak-early-translation [column row] [0 0 0]))
-         (rotate-x-fn (get finger-intrinsic-pitch [column row] 0))
-         (stylist translate-fn (partial rotate-x-fn pitch-angle) pitch-radius rotate-y-fn getopt :finger [column row])
+         (translate-fn (get finger-tweak-early-translation coord [0 0 0]))
+         (rotate-x-fn (get finger-intrinsic-pitch coord 0))
+         (stylist translate-fn (partial rotate-x-fn pitch-angle) pitch-radius rotate-y-fn getopt :finger coord)
          (rotate-x-fn pitch-centerrow)
          (rotate-y-fn (getopt :key-clusters :finger :tenting))
          (translate-fn [0 y-offset z-offset])
-         (translate-fn (get finger-tweak-late-translation [column row] [0 0 0])))))
+         (translate-fn (get finger-tweak-late-translation coord [0 0 0])))))
 
 (def finger-key-position
   "A function that outputs coordinates for a key matrix position.
@@ -318,67 +371,7 @@
                (and (= config-row :first)
                     (= subject-row (first rows)))
                (and (= config-row :last)
-                    (= subject-row (last rows))))))))
-
-(defn single-coordinate-matcher [getopt cluster indices]
-  "Return a function that checks if a coordinate matches another.
-  This allows for integers as well as the keywords :first and :last, meaning
-  first and last in the column or row."
-  (fn [config subject]
-    (or (= config subject)
-        (and (= config :first) (= subject (first indices)))
-        (and (= config :last) (= subject (last indices))))))
-
-(defn most-specific-option [getopt end-path]
-  "Return a function that will find the most specific configuration value
-  available for a key on the keyboard."
-  (let [get-in-section
-          (fn [section-path]
-            (let [full-path (concat [:by-key] section-path [:parameters] end-path)]
-              (apply getopt full-path)))
-        get-default (fn [] (get-in-section []))
-        try-get
-          (fn [section-path]
-            (try
-              (get-in-section section-path)
-              (catch clojure.lang.ExceptionInfo e
-                (if-not (= (:type (ex-data e)) :missing-parameter)
-                  (throw e)))))
-        find-index (fn [pred coll]
-                     (first (keep-indexed #(when (pred %2) %1) coll)))]
-    (fn [cluster [column row]]
-      "Check, in order: Key-specific values favouring first/last row;
-      column-specific values favouring first/last column;
-      cluster-specific values; and finally the base section, where a
-      value is required to exist."
-      (let [columns (getopt :key-clusters cluster :derived :column-range)
-            by-col (getopt :key-clusters cluster :derived :row-indices-by-column)
-            rows (by-col column)
-            first-column (= (first columns) column)
-            last-column (= (last columns) column)
-            first-row (= (first rows) row)
-            last-row (= (last rows) row)
-            sources
-              [[[] []]
-               [[first-column] [:columns :first]]
-               [[last-column] [:columns :last]]
-               [[] [:columns column]]
-               [[first-column first-row] [:columns :first :rows :first]]
-               [[first-column last-row] [:columns :first :rows :last]]
-               [[last-column first-row] [:columns :last :rows :first]]
-               [[last-column last-row] [:columns :last :rows :last]]
-               [[first-row] [:columns column :rows :first]]
-               [[last-row] [:columns column :rows :last]]
-               [[] [:columns column :rows row]]]
-            good-source
-              (fn [coll [requirements section-path]]
-                (if (every? boolean requirements)
-                  (conj coll (concat [:clusters cluster] section-path))
-                  coll))
-            prio (reduce good-source [] (reverse sources))]
-        (if-let [non-default (some try-get prio)]
-          non-default
-          (get-default))))))
+                    (= subject-row (last))))))))
 
 (defn finger-plates [getopt]
   (apply union (map #(finger-key-place getopt % single-switch-plate)
@@ -391,7 +384,7 @@
 (defn finger-channels [getopt]
   (letfn [(modeller [coord]
             (letfn [(most [path]
-                      ((most-specific-option getopt path) :finger coord))]
+                      (most-specific-option getopt path :finger coord))]
               (negative-cap-shape getopt
                 {:top-width (most [:channel :top-width])
                  :height (most [:channel :height])
