@@ -224,9 +224,10 @@
   "A post shape that comes offset for one corner of a key mount."
   (translate (mount-corner-offset directions) web-post))
 
-(defn stylist [style translate-fn pitcher pitch-radius rotate-y-fn getopt [column row] obj]
+(defn stylist [translate-fn pitcher pitch-radius rotate-y-fn getopt cluster [column row] obj]
   "Produce a closure that will apply a specific key cluster style."
-  (let [column-curvature-offset (- curvature-centercol column)
+  (let [style (getopt :key-clusters cluster :style)
+        column-curvature-offset (- curvature-centercol column)
         roll-angle (* β column-curvature-offset)
         radius-base (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)
         column-radius (+ radius-base
@@ -274,7 +275,7 @@
     (->> subject
          (translate-fn (get finger-tweak-early-translation [column row] [0 0 0]))
          (rotate-x-fn (get finger-intrinsic-pitch [column row] 0))
-         (stylist column-style translate-fn (partial rotate-x-fn pitch-angle) pitch-radius rotate-y-fn getopt [column row])
+         (stylist translate-fn (partial rotate-x-fn pitch-angle) pitch-radius rotate-y-fn getopt :finger [column row])
          (rotate-x-fn pitch-centerrow)
          (rotate-y-fn (getopt :key-clusters :finger :tenting))
          (translate-fn [0 y-offset z-offset])

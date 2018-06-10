@@ -49,9 +49,6 @@
 ;; Key Layout ;;
 ;;;;;;;;;;;;;;;;
 
-;; Finger key placement parameters:
-(def column-style :standard)  ; :standard, :orthographic, or :fixed.
-
 ;; Cutouts for switches optionally include a trench beneath the switch, which
 ;; is useful when other choices here produce obstacles to soldering.
 (def keyswitch-trench-depth 0)
@@ -306,12 +303,14 @@
 
 ;; Validators:
 
+(spec/def ::supported-key-cluster #{:finger :thumb})
+(spec/def ::supported-layout-style #{:standard :orthographic :fixed.})
+(spec/def ::supported-wrist-rest-style #{:threaded :solid})
+
 (spec/def ::flexcoord (spec/or :absolute int?
                                :extreme #{:first :last}))
 (spec/def ::flexcoord-pair (spec/coll-of ::flexcoord :count 2))
 (spec/def ::corner (set (vals generics/keyword-to-directions)))
-(spec/def ::supported-wrist-rest-style #{:threaded :solid})
-(spec/def ::supported-key-cluster #{:finger :thumb})
 
 (spec/def ::key-coordinates ::flexcoord-pair)
 (spec/def ::point (spec/keys :req-un [::key-coordinates]))
@@ -472,6 +471,14 @@
                 "for illustration in development, not for printing.")
      :default false
      :parse-fn boolean}]
+   [:parameter [:key-clusters :finger :style]
+    {:help (str "Key layout style. One of:\n\n"
+                "* `standard`: A sort of bowl shape. Columns curve inward.\n"
+                "* `orthographic`: More straight.\n"
+                "* `fixed`: DIY.")
+     :default :standard
+     :parse-fn keyword
+     :validate [::supported-layout-style]}]
    [:parameter [:key-clusters :finger :vertical-offset]
     {:help (str "A vertical offset in mm shared by all finger cluster keys. "
                 "This ultimately controls the overall height of the keyboard.")
