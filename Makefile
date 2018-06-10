@@ -9,6 +9,12 @@ OBJECTS = $(shell find src/)
 default: target/dmote.jar
 	java -jar target/dmote.jar
 
+orthographic: target/dmote.jar
+	java -jar target/dmote.jar -c resources/opt/orthographic_layout.yaml
+
+fixed: target/dmote.jar
+	java -jar target/dmote.jar -c resources/opt/fixed_layout.yaml
+
 threaded: target/dmote.jar
 	java -jar target/dmote.jar -c resources/opt/threaded_wrist_rest.yaml
 
@@ -24,9 +30,9 @@ target/dmote.jar: $(OBJECTS)
 test:
 	lein test
 
-# “all” will overwrite its own outputs. Intended for code sanity checking
-# before pushing a commit.
-all: test default threaded solid doc/options.md
+# “all” will overwrite its own outputs.
+# Intended for code sanity checking before pushing a commit.
+all: test default orthographic fixed threaded solid doc/options.md
 
 clean:
 	-rm things/*.scad

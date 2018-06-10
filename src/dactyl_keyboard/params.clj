@@ -48,11 +48,6 @@
 ;; Key Layout ;;
 ;;;;;;;;;;;;;;;;
 
-;; β is the default progressive Tait-Bryan roll of each finger column.
-;; β therefore controls the side-to-side curvature of the keyboard.
-(def β (/ π 50))
-(def curvature-centercol 3)   ; Column where the effect of β will be zero.
-
 ;; Individual columns may be translated (offset).
 (defn finger-column-translation [column]
   (cond
@@ -279,7 +274,7 @@
 ;; Validators:
 
 (spec/def ::supported-key-cluster #{:finger :thumb})
-(spec/def ::supported-layout-style #{:standard :orthographic :fixed.})
+(spec/def ::supported-column-layout-style #{:standard :orthographic :fixed})
 (spec/def ::supported-wrist-rest-style #{:threaded :solid})
 
 (spec/def ::flexcoord (spec/or :absolute int?
@@ -374,7 +369,7 @@
      :parse-fn num}]
    [:section [:parameters :layout :pitch :progressive]
     "A progressive pitch factor is multiplied by the index of a key. This is "
-    "one simple way to give each column a curve."]
+    "one simple way to give each column a curvature."]
    [:parameter [:parameters :layout :pitch :progressive :angle]
     {:help (str "An angle in radians.")
      :default 0
@@ -382,6 +377,24 @@
    [:parameter [:parameters :layout :pitch :progressive :neutral-row]
     {:help (str "An integer row ID. This identifies the “starting” row where "
                 "`angle` will be multiplied by zero in a column of keys.")
+     :default 0
+     :parse-fn int}]
+   [:section [:parameters :layout :roll]
+    "Tait-Bryan roll, meaning the rotation of keys around the y axis."]
+   [:parameter [:parameters :layout :roll :base]
+    {:help (str "An angle in radians. This is the “tenting” angle, controlling "
+                "the overall left-to-right tilt of each half of the keyboard.")
+     :default 0
+     :parse-fn num}]
+   [:section [:parameters :layout :roll :progressive]
+    "A progressive roll factor is multiplied by the index of a key, giving "
+    "each row a curvature."]
+   [:parameter [:parameters :layout :roll :progressive :angle]
+    {:help (str "An angle in radians.")
+     :default 0
+     :parse-fn num}]
+   [:parameter [:parameters :layout :roll :progressive :neutral-column]
+    {:help (str "An integer column ID.")
      :default 0
      :parse-fn int}]
    [:section [:parameters :channel]
@@ -471,21 +484,16 @@
      :default false
      :parse-fn boolean}]
    [:parameter [:key-clusters :finger :style]
-    {:help (str "Key layout style. One of:\n\n"
+    {:help (str "Key column layout style. One of:\n\n"
                 "* `standard`: A sort of bowl shape. Columns curve inward.\n"
                 "* `orthographic`: More straight.\n"
                 "* `fixed`: DIY.")
      :default :standard
      :parse-fn keyword
-     :validate [::supported-layout-style]}]
+     :validate [::supported-column-layout-style]}]
    [:parameter [:key-clusters :finger :vertical-offset]
     {:help (str "A vertical offset in mm shared by all finger cluster keys. "
                 "This ultimately controls the overall height of the keyboard.")
-     :default 0
-     :parse-fn num}]
-   [:parameter [:key-clusters :finger :tenting]
-    {:help (str "An angle in radians. The tenting angle controls the overall "
-                "left-to-right tilt of each half of the keyboard.")
      :default 0
      :parse-fn num}]
    [:parameter [:key-clusters :finger :matrix-columns]

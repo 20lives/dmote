@@ -10,7 +10,6 @@ switches:
 key-clusters:
   finger:
     vertical-offset: 7
-    tenting: 0.27
     matrix-columns:
     - rows-above-home: 1
       rows-below-home: 1
@@ -30,6 +29,11 @@ by-key:
         progressive:
           angle: 0.45
           neutral-row: 0
+      roll:
+        base: 0.26
+        progressive:
+          angle: 0.06
+          neutral-column: 3
     channel:
       height: 20
       top-width: 10

@@ -40,7 +40,7 @@ If `true`, include models of the keycaps. This is intended for illustration in d
 
 #### Parameter `style`
 
-Key layout style. One of:
+Key column layout style. One of:
 
 * `standard`: A sort of bowl shape. Columns curve inward.
 * `orthographic`: More straight.
@@ -49,10 +49,6 @@ Key layout style. One of:
 #### Parameter `vertical-offset`
 
 A vertical offset in mm shared by all finger cluster keys. This ultimately controls the overall height of the keyboard.
-
-#### Parameter `tenting`
-
-An angle in radians. The tenting angle controls the overall left-to-right tilt of each half of the keyboard.
 
 #### Parameter `matrix-columns`
 
@@ -83,7 +79,7 @@ An angle in radians. Set at a high level, this controls the general front-to-bac
 
 ###### Section `progressive`
 
-A progressive pitch factor is multiplied by the index of a key. This is one simple way to give each column a curve.
+A progressive pitch factor is multiplied by the index of a key. This is one simple way to give each column a curvature.
 
 ####### Parameter `angle`
 
@@ -92,6 +88,26 @@ An angle in radians.
 ####### Parameter `neutral-row`
 
 An integer row ID. This identifies the “starting” row where `angle` will be multiplied by zero in a column of keys.
+
+##### Section `roll`
+
+Tait-Bryan roll, meaning the rotation of keys around the y axis.
+
+###### Parameter `base`
+
+An angle in radians. This is the “tenting” angle, controlling the overall left-to-right tilt of each half of the keyboard.
+
+###### Section `progressive`
+
+A progressive roll factor is multiplied by the index of a key, giving each row a curvature.
+
+####### Parameter `angle`
+
+An angle in radians.
+
+####### Parameter `neutral-column`
+
+An integer column ID.
 
 #### Section `channel`
 

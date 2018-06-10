@@ -1,0 +1,5 @@
+# Configuration fragment for a fixed key cluster layout style.
+
+key-clusters:
+  finger:
+    style: fixed

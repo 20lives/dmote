@@ -268,31 +268,34 @@
   "A post shape that comes offset for one corner of a key mount."
   (translate (mount-corner-offset directions) web-post))
 
-(defn stylist [translate-fn pitcher pitch-radius rotate-y-fn getopt cluster [column row] obj]
+(defn stylist [translate-fn pitcher pitch-radius rotate-y-fn getopt cluster coord obj]
   "Produce a closure that will apply a specific key cluster style."
-  (let [style (getopt :key-clusters cluster :style)
-        column-curvature-offset (- curvature-centercol column)
-        roll-angle (* β column-curvature-offset)
+  (let [[column row] coord
+        style (getopt :key-clusters cluster :style)
+        most #(most-specific-option getopt % :finger coord)
+        roll-angle (most [:layout :roll :progressive :angle])
+        roll-neutral (most [:layout :roll :progressive :neutral-column])
+        col-Δ (- roll-neutral column)
+        roll-prog-effective (* roll-angle col-Δ)
         radius-base (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)
         column-radius (+ radius-base
                          (/ (/ (+ mount-1u finger-mount-separation-x) 2)
-                            (Math/sin (/ β 2))))]
+                            (Math/sin (/ roll-angle 2))))]
    (case style
      :standard
        (->> obj
          (swing-callables translate-fn pitch-radius pitcher)
-         (swing-callables translate-fn column-radius (partial rotate-y-fn roll-angle))
+         (swing-callables translate-fn column-radius (partial rotate-y-fn roll-prog-effective))
          (translate-fn (finger-column-translation column)))
      :orthographic
-       (let [column-x-delta (+ -1 (- (* column-radius (Math/sin β))))
-             x (- (* column-curvature-offset column-x-delta))
-             radius-coefficient (- 1 (Math/cos (* β column-curvature-offset)))
-             z (* radius-coefficient column-radius)]
-         (->> obj
-           (swing-callables translate-fn pitch-radius pitcher)
-           (rotate-y-fn roll-angle)
-           (translate-fn [x 0 z])
-           (translate-fn (finger-column-translation column))))
+       (let [x (- (* (- column roll-neutral)
+                     (+ -1 (- (* column-radius (Math/sin roll-angle))))))
+             z (* column-radius (- 1 (Math/cos roll-prog-effective)))]
+        (->> obj
+          (swing-callables translate-fn pitch-radius pitcher)
+          (rotate-y-fn roll-prog-effective)
+          (translate-fn [x 0 z])
+          (translate-fn (finger-column-translation column))))
      :fixed
        (->> obj
          (rotate-y-fn (nth fixed-angles column))
@@ -310,22 +313,22 @@
   "Place and tilt passed ‘subject’ as if it were a key or coordinate vector."
   (let [[column row] coord
         most #(most-specific-option getopt % :finger coord)
-        pitch-base (most [:layout :pitch :base])
-        pitch-factor (most [:layout :pitch :progressive :angle])
-        neutral (most [:layout :pitch :progressive :neutral-row])
-        effective-prog (* pitch-factor (- row neutral))
+        pitch-angle (most [:layout :pitch :progressive :angle])
+        pitch-neutral (most [:layout :pitch :progressive :neutral-row])
+        row-Δ (- row pitch-neutral)
+        pitch-prog-effective (* pitch-angle row-Δ)
         cap-height (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)
         pitch-radius (+ cap-height
                         (/ (/ (+ mount-1u finger-mount-separation-y) 2)
-                           (Math/sin (/ pitch-factor 2))))
-        y-offset (* mount-1u neutral)
+                           (Math/sin (/ pitch-angle 2))))
+        y-offset (* mount-1u pitch-neutral)
         z-offset (getopt :key-clusters :finger :vertical-offset)]
     (->> subject
          (translate-fn (get finger-tweak-early-translation coord [0 0 0]))
          (rotate-x-fn (get finger-intrinsic-pitch coord 0))
-         (stylist translate-fn (partial rotate-x-fn effective-prog) pitch-radius rotate-y-fn getopt :finger coord)
-         (rotate-x-fn pitch-base)
-         (rotate-y-fn (getopt :key-clusters :finger :tenting))
+         (stylist translate-fn (partial rotate-x-fn pitch-prog-effective) pitch-radius rotate-y-fn getopt :finger coord)
+         (rotate-x-fn (most [:layout :pitch :base]))
+         (rotate-y-fn (most [:layout :roll :base]))
          (translate-fn [0 y-offset z-offset])
          (translate-fn (get finger-tweak-late-translation coord [0 0 0])))))
 

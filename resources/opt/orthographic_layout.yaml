@@ -1,0 +1,5 @@
+# Configuration fragment for an orthographic key cluster layout style.
+
+key-clusters:
+  finger:
+    style: orthographic
