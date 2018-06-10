@@ -8,9 +8,9 @@
 ;;; things without having to adjust more complex code.
 
 (ns dactyl-keyboard.params
-  (:require [clojure.string :refer [join lower-case]]
+  (:require [clojure.string :as string]
             [clojure.spec.alpha :as spec]
-            [yaml.core :as yaml]
+            [clj-yaml.core :as yaml]
             [scad-clj.model :refer [deg->rad]]
             [flatland.ordered.map :refer [ordered-map]]
             [unicode-math.core :refer :all]
@@ -246,6 +246,19 @@
 
 ;; This section loads, parses and validates a user configuration from YAML.
 
+(defn- coalesce [coll [type path & metadata]]
+  "Recursively assemble a tree structure from flat specifications."
+  (case type
+    :nest (assoc-in coll path
+            (reduce
+              coalesce
+              (ordered-map :metadata {:help (apply str (rest metadata))})
+              (first metadata)))
+    :section (assoc-in coll path
+               (ordered-map :metadata {:help (apply str metadata)}))
+    :parameter (assoc-in coll path (first metadata))
+    (throw (Exception. "Bad type in configuration master."))))
+
 ;; Parsers:
 
 (defn string-corner [string]
@@ -256,25 +269,40 @@
   "A maker of parsers for vectors."
   (fn [candidate] (into [] (map item-parser candidate))))
 
-(defn map-of [value-parsers]
-  "A maker of parsers for multilevel parameters."
+(defn map-like [key-value-parsers]
+  "Return a parser of a map where the exact keys are known."
   (letfn [(parse-item [[key value]]
-            (if-let [value-parser (get value-parsers key)]
+            (if-let [value-parser (get key-value-parsers key)]
               [key (value-parser value)]
               (throw (Exception. (format "Invalid key: %s" key)))))]
     (fn [candidate] (into {} (map parse-item candidate)))))
 
+(defn map-of [key-parser value-parser]
+  "Return a parser of a map where the general type of key is known."
+  (letfn [(parse-item [[key value]]
+            [(key-parser key) (value-parser value)])]
+    (fn [candidate] (into {} (map parse-item candidate)))))
+
 (defn flexcoord [candidate]
-  "A parser that takes a number as an integer or a string as a keyword."
-  (try (int candidate) (catch ClassCastException _ (keyword candidate))))
+  "A parser that takes a number as an integer or a string as a keyword.
+  This works around a peculiar facet of clj-yaml, wherein integer keys to
+  maps are parsed as keywords."
+  (try
+    (int candidate)  ; Input like “1”.
+    (catch ClassCastException _
+      (try
+        (Integer/parseInt (name candidate))  ; Input like “:1” (clj-yaml key).
+        (catch java.lang.NumberFormatException _
+          (keyword candidate))))))           ; Input like “:first” or “"first"”.
 
 (def key-based-polygons
   (tuple-of
-    (map-of
+    (map-like
       {:points (tuple-of
-                 (map-of {:key-coordinates (tuple-of flexcoord)
-                          :key-corner string-corner
-                          :offset vec}))})))
+                 (map-like
+                   {:key-coordinates (tuple-of flexcoord)
+                    :key-corner string-corner
+                    :offset vec}))})))
 
 ;; Validators:
 
@@ -283,6 +311,7 @@
 (spec/def ::flexcoord-pair (spec/coll-of ::flexcoord :count 2))
 (spec/def ::corner (set (vals generics/keyword-to-directions)))
 (spec/def ::supported-wrist-rest-style #{:threaded :solid})
+(spec/def ::supported-key-cluster #{:finger :thumb})
 
 (spec/def ::key-coordinates ::flexcoord-pair)
 (spec/def ::point (spec/keys :req-un [::key-coordinates]))
@@ -290,14 +319,75 @@
 (spec/def ::foot-plate (spec/keys :req-un [::points]))
 (spec/def ::foot-plate-polygons (spec/coll-of ::foot-plate))
 
+;; Composition of parsing and validation:
+
+;; Leaf metadata imitates clojure.tools.cli with extras.
+(spec/def ::parameter-descriptor #{:heading-template :help :default :parse-fn :validate})
+(spec/def ::parameter-spec (spec/map-of ::parameter-descriptor some?))
+
+(defn parse-leaf [nominal candidate]
+  (let [raw (or candidate (:default nominal))
+        parse-fn (get nominal :parse-fn identity)]
+   (try
+     (parse-fn raw)
+     (catch Exception e
+       (throw (ex-info "Could not cast value to correct data type"
+                        {:type :parsing-error
+                         :raw-value raw
+                         :original-exception e}))))))
+
+(declare validate-leaf validate-branch)
+
+(defn validate-node [nominal candidate key]
+  "Validate a fragment of a configuration received through the UI."
+  (assert (not (spec/valid? ::parameter-descriptor key)))
+  (if (contains? nominal key)
+    (if (spec/valid? ::parameter-spec (key nominal))
+      (try
+        (assoc candidate key (validate-leaf (key nominal) (key candidate)))
+        (catch clojure.lang.ExceptionInfo e
+          ;; Add the current key for richer logging at a higher level.
+          ;; This would work better if the call stack were deep.
+          (let [data (ex-data e)
+                keys (get data :keys ())
+                new-data (assoc data :keys (conj keys key))]
+           (throw (ex-info (.getMessage e) new-data)))))
+      (assoc candidate key (validate-branch (key nominal) (key candidate))))
+    (throw (ex-info "Superfluous configuration key"
+                    {:type :superfluous-key
+                     :keys (list key)}))))
+
+(defn validate-branch [nominal candidate]
+  "Validate a section of a configuration received through the UI."
+  (reduce (partial validate-node nominal)
+          candidate
+          (remove #(= :metadata %)
+            (distinct (apply concat (map keys [nominal candidate]))))))
+
+(defn validate-leaf [nominal candidate]
+  "Validate a specific parameter received through the UI."
+  (assert (spec/valid? ::parameter-spec nominal))
+  (reduce
+    (fn [unvalidated validator]
+      (if (spec/valid? validator unvalidated)
+        unvalidated
+        (throw (ex-info "Value out of range"
+                        {:type :validation-error
+                         :parsed-value unvalidated
+                         :raw-value candidate
+                         :spec-explanation (spec/explain-str validator unvalidated)}))))
+    (parse-leaf nominal candidate)
+    (get nominal :validate [some?])))
+
 ;; Specification:
 
 (def nested-raws
   "A flat version of a special part of a user configuration."
   [[:section [:parameters]
     "This section, and everything in it, can be repeated at several levels: "
-    "The global, the key cluster, the key column, and finally the individual "
-    "key. Only the most specific option available for each key will be applied."]
+    "Here at the global level, for each key cluster, for each column, and "
+    "at the row level. See below. Only the most specific option available "
+    "for each key will be applied to that key."]
    [:section [:parameters :channel]
     "Above each switch mount, there is a channel of negative space for the "
     "user’s finger and the keycap to move inside. This is only useful in those "
@@ -318,6 +408,32 @@
                 "a keycap, on all sides.")
      :default 0
      :parse-fn num}]])
+
+(def nested-cooked (reduce coalesce (ordered-map) nested-raws))
+
+(def parse-overrides
+  "A function to parse input for the entire [:by-key :clusters] section."
+  (let [iteration identity] ;#(validate-node nested-cooked % :parameters)
+    (map-like
+      {:finger
+        (map-like
+          {:parameters iteration
+           :columns
+            (map-of
+              flexcoord
+              (map-like
+                {:parameters iteration
+                 :rows
+                   (map-of
+                     flexcoord
+                     (map-like {:parameters iteration}))}))})})))
+
+(spec/def ::parameters #(some? (validate-branch nested-cooked %)))
+(spec/def ::rows (spec/map-of ::flexcoord ::parameters))
+(spec/def ::individual-column (spec/keys :opt-un [::rows ::parameters]))
+(spec/def ::columns (spec/map-of ::flexcoord ::individual-column))
+(spec/def ::individual-cluster (spec/keys :opt-un [::columns ::parameters]))
+(spec/def ::overrides (spec/map-of ::supported-key-cluster ::individual-cluster))
 
 (def configuration-raws
   "A flat version of the specification for a user configuration."
@@ -380,8 +496,49 @@
      :default [{}]
      :parse-fn vec}]
    [:nest [:by-key] nested-raws
-    "This section is special. It’s nested for all levels of specificity from "
-    "the global down to a single column-row coordinate pair."]
+    "This section is special. It’s nested for all levels of specificity."]
+   [:parameter [:by-key :clusters]
+    {:heading-template "Section `%s` ← overrides go in here"
+     :help (str "This is an anchor point for overrides of the `parameters` "
+                "section described above. Overrides start at the key cluster "
+                "level. This section therefore permits keys that identify "
+                "specific key clusters.\n"
+                "\n"
+                "For each such key, two subsections are permitted: A new, more "
+                "specific `parameters` section and a `columns` "
+                "section. Columns are indexed by their ordinal integers or "
+                "the words “first” or “last”, which take priority.\n"
+                "\n"
+                "A column can have its own `parameters` and "
+                "its own `rows`, which are indexed in relation to the home "
+                "row or again with “first” or “last”. Finally, each row can "
+                "have its own `parameters`, which are specific to the "
+                "full combination of cluster, column and row.\n"
+                "\n"
+                "WARNING: Due to a peculiarity of the YAML parser, take care "
+                "to quote your numeric column and row indices as strings.\n"
+                "\n"
+                "In the following example, the parameter `P`, which is not "
+                "really supported, will have the value “true” for all keys "
+                "except the one closest to the user (“first” row) in the "
+                "second column from the left on the right-hand side of the "
+                "keyboard (column 1; this is the second from the right on the "
+                "left-hand side of the keyboard).\n"
+                "\n"
+                "```by-key:\n"
+                "  parameters:\n"
+                "    P: true\n"
+                "  clusters:\n"
+                "    finger:\n"
+                "      columns:\n"
+                "        \"1\":\n"
+                "          rows:\n"
+                "            first:\n"
+                "              parameters:\n"
+                "                P: false```")
+     :default {}
+     :parse-fn parse-overrides
+     :validate [::overrides]}]
    [:section [:wrist-rest]
     "An optional extension to support the user’s wrist."]
    [:parameter [:wrist-rest :include]
@@ -549,39 +706,16 @@
      :parse-fn key-based-polygons
      :validate [::foot-plate-polygons]}]])
 
-(defn- coalesce [coll [type path & metadata]]
-  "Recursively assemble a tree structure from flat specifications."
-  (case type
-    :nest (assoc-in coll path
-            (reduce
-              coalesce
-              (ordered-map :metadata {:help (apply str (rest metadata))})
-              (first metadata)))
-    :section (assoc-in coll path
-               (ordered-map :metadata {:help (apply str metadata)}))
-    :parameter (assoc-in coll path (first metadata))
-    (throw (Exception. "Bad type in configuration master."))))
-
 (def master
   "Collected structural metadata for a user configuration."
   (reduce coalesce (ordered-map) configuration-raws))
 
-(def reserved-key?
-  "Endpoint metadata imitates clojure.tools.cli but adds :help."
-  (partial contains? #{:help :default :parse-fn :validate}))
-
-(defn endpoint? [node]
-  (boolean
-    (and (map? node)
-         (or (empty? node)
-             (some reserved-key? (keys node))))))
-
 (defn- print-markdown-fragment [node level]
-  (let [h (join "" (repeat level "#"))]
+  (let [h (string/join "" (repeat level "#"))]
     (doseq [key (remove #(= :metadata %) (keys node))]
       (println)
-      (if (endpoint? (key node))
-        (do (println h (format "Parameter `%s`" (name key)))
+      (if (spec/valid? ::parameter-spec (key node))
+        (do (println h (format (get-in node [key :heading-template] "Parameter `%s`") (name key)))
             (println)
             (println (get-in node [key :help] "Undocumented.")))
         (do (println h (format "Section `%s`" (name key)))
@@ -598,58 +732,6 @@
   (println (str "This documentation was generated from the application CLI."))
   (print-markdown-fragment master 2))
 
-(declare validate-leaf validate-branch)
-
-(defn validate-node [nominal candidate key]
-  (assert (not (reserved-key? key)))
-  (if (contains? nominal key)
-    (if (endpoint? (key nominal))
-      (try
-        (assoc candidate key (validate-leaf (key nominal) (key candidate)))
-        (catch clojure.lang.ExceptionInfo e
-          ;; Add the current key for richer logging at a higher level.
-          ;; This would work better if the call stack were deep.
-          (let [data (ex-data e)
-                keys (get data :keys ())
-                new-data (assoc data :keys (conj keys key))]
-           (throw (ex-info (.getMessage e) new-data)))))
-      (assoc candidate key (validate-branch (key nominal) (key candidate))))
-    (throw (ex-info "Superfluous configuration key"
-                    {:type :superfluous-key :keys (list key)}))))
-
-(defn validate-branch [nominal candidate]
-  "Validate a fragment of a configuration received through the UI."
-  (reduce (partial validate-node nominal)
-          candidate
-          (remove #(= :metadata %)
-            (distinct (apply concat (map keys [nominal candidate]))))))
-
-(defn parse-leaf [nominal candidate]
-  (let [raw (or candidate (:default nominal))
-        parse-fn (get nominal :parse-fn identity)]
-   (try
-     (parse-fn raw)
-     (catch Exception e
-       (throw (ex-info "Could not cast value to correct data type"
-                        {:type :parsing-error
-                         :raw-value raw
-                         :original-exception e}))))))
-
-(defn validate-leaf [nominal candidate]
-  (assert (endpoint? nominal))
-  (try
-    (reduce
-      (fn [unvalidated validator]
-        (if (spec/valid? validator unvalidated)
-          unvalidated
-          (throw (ex-info "Value out of range"
-                          {:type :validation-error
-                           :parsed-value unvalidated
-                           :raw-value candidate
-                           :spec-explanation (spec/explain-str validator unvalidated)}))))
-      (parse-leaf nominal candidate)
-      (get nominal :validate [some?]))))
-
 (defn validate-configuration [candidate]
   "Attempt to describe any errors in the user configuration."
   (try
@@ -657,7 +739,7 @@
      (catch clojure.lang.ExceptionInfo e
        (let [data (ex-data e)]
         (println "Validation error:" (.getMessage e))
-        (println "    At key(s):" (join " >> " (:keys data)))
+        (println "    At key(s):" (string/join " >> " (:keys data)))
         (if (:raw-value data)
           (println "    Value before parsing:" (:raw-value data)))
         (if (:parsed-value data)
@@ -665,14 +747,20 @@
         (if (:spec-explanation data)
           (println "    Validator output:" (:spec-explanation data)))
         (if (:original-exception data)
-          (println "    Originating exception:" (.getMessage (:original-exception data))))
+          (do (println "    Caused by:")
+              (print "      ")
+              (println
+                (string/join "\n      "
+                  (string/split-lines (pr-str (:original-exception data)))))))
         (System/exit 1)))))
+
+(defn- from-file [filepath]
+  (try
+    (yaml/parse-string (slurp filepath))
+    (catch java.io.FileNotFoundException _
+      (do (println (format "Failed to load file “%s”." filepath))
+          (System/exit 1)))))
 
 (defn load-configuration [filepaths]
   "Read and combine YAML from files, in the order given."
-  (let [load (fn [path]
-               (if-let [data (yaml/from-file path)]
-                 data
-                 (do (println (format "Failed to load file “%s”." path))
-                     (System/exit 1))))]
-   (validate-configuration (apply generics/soft-merge (map load filepaths)))))
+  (validate-configuration (apply generics/soft-merge (map from-file filepaths))))

@@ -43,6 +43,7 @@
         (aux/foot-plates getopt)
         (if params/include-backplate-block (aux/backplate-block getopt)))
       (key/finger-cutouts getopt)
+      (key/finger-channels getopt)
       (key/thumb-cutouts getopt)
       (aux/rj9-negative getopt)
       (aux/mcu-negative getopt)
@@ -138,4 +139,10 @@
      :else
        (let [config (params/load-configuration (:configuration-file options))]
         (if (:debug options) (do (println "Merged options:") (pprint config)))
-        (build-all config)))))
+        (try
+          (build-all config)
+          (catch clojure.lang.ExceptionInfo e
+            ;; Likely raised by getopt.
+            (println "An exception occurred:" (.getMessage e))
+            (pprint (ex-data e))
+            (System/exit 1)))))))

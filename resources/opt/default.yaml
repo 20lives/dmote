@@ -28,6 +28,15 @@ by-key:
       height: 20
       top-width: 10
       margin: 0.5
+  clusters:
+    finger:
+      columns:
+        "1":
+          rows:
+            first:
+              parameters:
+                channel:
+                  top-width: 15
 wrist-rest:
   include: false
   style: threaded

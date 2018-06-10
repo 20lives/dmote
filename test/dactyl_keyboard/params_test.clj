@@ -4,15 +4,15 @@
             [flatland.ordered.map :refer [ordered-map]]
             [dactyl-keyboard.params :as params]))
 
-(deftest test-endpoint?
+(deftest test-parameter-spec
   (testing "empty"
-    (is (= (params/endpoint? {}) true)))
+    (is (= (spec/valid? ::params/parameter-spec {}) true)))
   (testing "default only"
-    (is (= (params/endpoint? {:default 1}) true)))
+    (is (= (spec/valid? ::params/parameter-spec {:default 1}) true)))
   (testing "non-reserved keyword"
-    (is (= (params/endpoint? {:a 1}) false)))
+    (is (= (spec/valid? ::params/parameter-spec {:a 1}) false)))
   (testing "nested"
-    (is (= (params/endpoint? {:k {:default 1}}) false))))
+    (is (= (spec/valid? ::params/parameter-spec {:k {:default 1}}) false))))
 
 (deftest test-validate-leaf
   (testing "simple"

@@ -55,11 +55,11 @@ A list of key columns. Columns are aligned with the user’s fingers. Each colum
 
 ## Section `by-key`
 
-This section is special. It’s nested for all levels of specificity from the global down to a single column-row coordinate pair.
+This section is special. It’s nested for all levels of specificity.
 
 ### Section `parameters`
 
-This section, and everything in it, can be repeated at several levels: The global, the key cluster, the key column, and finally the individual key. Only the most specific option available for each key will be applied.
+This section, and everything in it, can be repeated at several levels: Here at the global level, for each key cluster, for each column, and at the row level. See below. Only the most specific option available for each key will be applied to that key.
 
 #### Section `channel`
 
@@ -76,6 +76,30 @@ The width in mm of the negative space at its top. Its width at the bottom is def
 ##### Parameter `margin`
 
 The width in mm of extra negative space around the edges of a keycap, on all sides.
+
+### Section `clusters` ← overrides go in here
+
+This is an anchor point for overrides of the `parameters` section described above. Overrides start at the key cluster level. This section therefore permits keys that identify specific key clusters.
+
+For each such key, two subsections are permitted: A new, more specific `parameters` section and a `columns` section. Columns are indexed by their ordinal integers or the words “first” or “last”, which take priority.
+
+A column can have its own `parameters` and its own `rows`, which are indexed in relation to the home row or again with “first” or “last”. Finally, each row can have its own `parameters`, which are specific to the full combination of cluster, column and row.
+
+WARNING: Due to a peculiarity of the YAML parser, take care to quote your numeric column and row indices as strings.
+
+In the following example, the parameter `P`, which is not really supported, will have the value “true” for all keys except the one closest to the user (“first” row) in the second column from the left on the right-hand side of the keyboard (column 1; this is the second from the right on the left-hand side of the keyboard).
+
+```by-key:
+  parameters:
+    P: true
+  clusters:
+    finger:
+      columns:
+        "1":
+          rows:
+            first:
+              parameters:
+                P: false```
 
 ## Section `wrist-rest`
 

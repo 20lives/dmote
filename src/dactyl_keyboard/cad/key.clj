@@ -159,15 +159,15 @@
         w1 (+ key-width-1u m)
         h2 (getopt :keycaps :derived :from-plate-top :resting-cap-bottom)]
    (color [0.75 0.75 1 1]
-    (translate [0 0 plate-thickness]
-      (pairwise-hulls
-        ;; A bottom plate for ease of mounting a switch:
-        (step 0.5 (max keyswitch-hole-x keyswitch-hole-y))
-        ;; Space for the keycap’s edges in travel:
-        (step h1 w1)
-        (step h2 w1)
-        ;; Space for the upper body of a keycap at rest:
-        (step h3 w3))))))
+     (translate [0 0 plate-thickness]
+       (pairwise-hulls
+         ;; A bottom plate for ease of mounting a switch:
+         (step 0.5 (max keyswitch-hole-x keyswitch-hole-y))
+         ;; Space for the keycap’s edges in travel:
+         (step h1 w1)
+         (step h2 w1)
+         ;; Space for the upper body of a keycap at rest:
+         (step h3 w3))))))
 
 (defn key-length [units] (- (* units mount-1u) (* 2 key-margin)))
 
@@ -313,8 +313,8 @@
   "Return a function that checks if two coordinates match.
   This allows for integers as well as the keywords :first and :last, meaning
   first and last in the column or row."
-  (let [rows (getopt :key-cluster cluster :derived :row-range)
-        columns (getopt :key-cluster cluster :derived :column-range)]
+  (let [rows (getopt :key-clusters cluster :derived :row-range)
+        columns (getopt :key-clusters cluster :derived :column-range)]
     (fn [[config-column config-row] [subject-column subject-row]]
       (and (or (= config-column subject-column)
                (and (= config-column :first)
@@ -340,15 +340,17 @@
   "Return a function that will find the most specific configuration value
   available for a key on the keyboard."
   (let [get-in-section
-          (fn [& section-path]
-            (apply getopt (concat [:by-key] section-path [:parameters] end-path)))
-        try-get (fn [& section-path]
-                  (try
-                    (apply get-in-section section-path)
-                    (catch clojure.lang.ExceptionInfo e
-                      (if-not (= (:type (ex-data e)) :missing-parameter)
-                        (throw e)))))
-        always (fn [] true)
+          (fn [section-path]
+            (let [full-path (concat [:by-key] section-path [:parameters] end-path)]
+              (apply getopt full-path)))
+        get-default (fn [] (get-in-section []))
+        try-get
+          (fn [section-path]
+            (try
+              (get-in-section section-path)
+              (catch clojure.lang.ExceptionInfo e
+                (if-not (= (:type (ex-data e)) :missing-parameter)
+                  (throw e)))))
         find-index (fn [pred coll]
                      (first (keep-indexed #(when (pred %2) %1) coll)))]
     (fn [cluster [column row]]
@@ -356,29 +358,34 @@
       column-specific values favouring first/last column;
       cluster-specific values; and finally the base section, where a
       value is required to exist."
-      (let [rows (getopt :key-cluster cluster :derived :row-range)
-            columns (getopt :key-cluster cluster :derived :column-range)
-            first-column? #(= (first columns) column)
-            last-column? #(= (last columns) column)
-            first-row? #(= (first rows) row)
-            last-row? #(= (last rows) row)
+      (let [columns (getopt :key-clusters cluster :derived :column-range)
+            by-col (getopt :key-clusters cluster :derived :row-indices-by-column)
+            rows (by-col column)
+            first-column (= (first columns) column)
+            last-column (= (last columns) column)
+            first-row (= (first rows) row)
+            last-row (= (last rows) row)
             sources
-              [[always]  ; Cluster level.
-               [always :columns column]
-               [first-column? :columns :first]
-               [last-column? :columns :last]
-               [always :columns column :row row]
-               [first-row? :columns column :row :first]
-               [last-row? :columns column :row :last]]
+              [[[] []]
+               [[first-column] [:columns :first]]
+               [[last-column] [:columns :last]]
+               [[] [:columns column]]
+               [[first-column first-row] [:columns :first :rows :first]]
+               [[first-column last-row] [:columns :first :rows :last]]
+               [[last-column first-row] [:columns :last :rows :first]]
+               [[last-column last-row] [:columns :last :rows :last]]
+               [[first-row] [:columns column :rows :first]]
+               [[last-row] [:columns column :rows :last]]
+               [[] [:columns column :rows row]]]
             good-source
-              (fn [coll [pred & section-path]]
-                (if (pred)
+              (fn [coll [requirements section-path]]
+                (if (every? boolean requirements)
                   (conj coll (concat [:clusters cluster] section-path))
                   coll))
             prio (reduce good-source [] (reverse sources))]
         (if-let [non-default (some try-get prio)]
           non-default
-          (get-in-section))))))
+          (get-default))))))
 
 (defn finger-plates [getopt]
   (apply union (map #(finger-key-place getopt % single-switch-plate)
