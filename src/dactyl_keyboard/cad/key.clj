@@ -193,10 +193,7 @@
     (cube mount-width mount-depth plate-thickness)))
 
 (def single-switch-cutout
-  "Negative space for the insertion of a key switch and the movement of a cap.
-  A cube centered on a switch plate, with some overshoot for clean previews,
-  and a further, more narrow dip for the legs of the switch,
-  and narrowing space above the plate for a keycap."
+  "Negative space for the insertion of a key switch through a mounting plate."
   (let [h (- (* 2 keyswitch-cutout-height) plate-thickness)
         trench-scale 2.5]
    (translate [0 0 (/ plate-thickness 2)]
@@ -208,12 +205,7 @@
        (cube keyswitch-hole-x keyswitch-hole-y h)
        ;; ALPS-specific space for wings to flare out.
        (translate [0 0 -1.5]
-         (cube (+ keyswitch-hole-x 1) keyswitch-hole-y plate-thickness))
-       (if (not (zero? keyswitch-trench-depth))
-         (translate [0 0 (- h)]
-           (extrude-linear
-             {:height keyswitch-trench-depth :center false :scale trench-scale}
-             (square (/ keyswitch-hole-x trench-scale) (/ keyswitch-hole-y trench-scale)))))))))
+         (cube (+ keyswitch-hole-x 1) keyswitch-hole-y plate-thickness))))))
 
 (defn mount-corner-offset [directions]
   "Produce a translator for getting to one corner of a switch mount."

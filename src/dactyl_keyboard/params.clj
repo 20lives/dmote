@@ -49,10 +49,6 @@
 ;; Key Layout ;;
 ;;;;;;;;;;;;;;;;
 
-;; Cutouts for switches optionally include a trench beneath the switch, which
-;; is useful when other choices here produce obstacles to soldering.
-(def keyswitch-trench-depth 0)
-
 (defn finger-column-curvature-centerrow [column]
   "Identify the row where Tait-Bryan pitch will have no progressive element."
   ;; This is a function (‘defn’) acting on a column (‘[column]’) of keys.
