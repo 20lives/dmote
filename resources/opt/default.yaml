@@ -25,6 +25,7 @@ key-clusters:
 by-key:
   parameters:
     layout:
+      pitch-base: 0.26
       neutral-pitch-row: 0
     channel:
       height: 20

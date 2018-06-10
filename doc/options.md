@@ -38,6 +38,14 @@ The main cluster of keys, for “fingers” in a sense excluding the thumb.Every
 
 If `true`, include models of the keycaps. This is intended for illustration in development, not for printing.
 
+#### Parameter `style`
+
+Key layout style. One of:
+
+* `standard`: A sort of bowl shape. Columns curve inward.
+* `orthographic`: More straight.
+* `fixed`: DIY.
+
 #### Parameter `vertical-offset`
 
 A vertical offset in mm shared by all finger cluster keys. This ultimately controls the overall height of the keyboard.
@@ -60,6 +68,18 @@ This section is special. It’s nested for all levels of specificity.
 ### Section `parameters`
 
 This section, and everything in it, can be repeated at several levels: Here at the global level, for each key cluster, for each column, and at the row level. See below. Only the most specific option available for each key will be applied to that key.
+
+#### Section `layout`
+
+How to place keys. See also key cluster style.
+
+##### Parameter `pitch-base`
+
+An angle in radians by which to rotate all keys around the x axis. Set at a high level, this controls the general front-to-back incline of a cluster.
+
+##### Parameter `neutral-pitch-row`
+
+An integer row ID. This identifies the row where progressive Tait-Bryan pitch will be neutral (zero) in a column of keys.
 
 #### Section `channel`
 

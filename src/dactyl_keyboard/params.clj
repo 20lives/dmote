@@ -48,10 +48,6 @@
 ;; Key Layout ;;
 ;;;;;;;;;;;;;;;;
 
-(def pitch-centerrow
-  "The pitch of the center row controls the general front-to-back incline."
-  (/ π 12))
-
 (defn progressive-pitch [[column row]]
   "Define the progressive Tait-Bryan pitch of each finger key, acting in
   addition to the pitch of the center row.
@@ -378,6 +374,12 @@
     "for each key will be applied to that key."]
    [:section [:parameters :layout]
     "How to place keys. See also key cluster style."]
+   [:parameter [:parameters :layout :pitch-base]
+    {:help (str "An angle in radians by which to rotate all keys around the x "
+                "axis. Set at a high level, this controls the general "
+                "front-to-back incline of a cluster.")
+     :default 0
+     :parse-fn num}]
    [:parameter [:parameters :layout :neutral-pitch-row]
     {:help (str "An integer row ID. This identifies the row where progressive "
                 "Tait-Bryan pitch will be neutral (zero) in a column of keys.")

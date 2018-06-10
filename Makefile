@@ -15,9 +15,6 @@ threaded: target/dmote.jar
 solid: target/dmote.jar
 	java -jar target/dmote.jar -c resources/opt/solid_wrist_rest.yaml
 
-# “all” will overwrite its own outputs. Intended for code sanity checking.
-all: default threaded solid
-
 doc/options.md: target/dmote.jar
 	java -jar target/dmote.jar --describe-parameters > doc/options.md
 
@@ -26,6 +23,10 @@ target/dmote.jar: $(OBJECTS)
 
 test:
 	lein test
+
+# “all” will overwrite its own outputs. Intended for code sanity checking
+# before pushing a commit.
+all: test default threaded solid doc/options.md
 
 clean:
 	-rm things/*.scad
