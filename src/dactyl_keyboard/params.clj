@@ -48,15 +48,6 @@
 ;; Key Layout ;;
 ;;;;;;;;;;;;;;;;
 
-(defn progressive-pitch [[column row]]
-  "Define the progressive Tait-Bryan pitch of each finger key, acting in
-  addition to the pitch of the center row.
-  This controls the front-to-back curvature of the keyboard."
-  (cond
-    (= column 2) (if (pos? row) (deg->rad 22) (deg->rad 25))
-    (and (= column 3) (pos? row)) (deg->rad 20)
-    :else (deg->rad 26)))
-
 ;; β is the default progressive Tait-Bryan roll of each finger column.
 ;; β therefore controls the side-to-side curvature of the keyboard.
 (def β (/ π 50))
@@ -374,15 +365,23 @@
     "for each key will be applied to that key."]
    [:section [:parameters :layout]
     "How to place keys. See also key cluster style."]
-   [:parameter [:parameters :layout :pitch-base]
-    {:help (str "An angle in radians by which to rotate all keys around the x "
-                "axis. Set at a high level, this controls the general "
-                "front-to-back incline of a cluster.")
+   [:section [:parameters :layout :pitch]
+    "Tait-Bryan pitch, meaning the rotation of keys around the x axis."]
+   [:parameter [:parameters :layout :pitch :base]
+    {:help (str "An angle in radians. Set at a high level, this controls the "
+                "general front-to-back incline of a key cluster.")
      :default 0
      :parse-fn num}]
-   [:parameter [:parameters :layout :neutral-pitch-row]
-    {:help (str "An integer row ID. This identifies the row where progressive "
-                "Tait-Bryan pitch will be neutral (zero) in a column of keys.")
+   [:section [:parameters :layout :pitch :progressive]
+    "A progressive pitch factor is multiplied by the index of a key. This is "
+    "one simple way to give each column a curve."]
+   [:parameter [:parameters :layout :pitch :progressive :angle]
+    {:help (str "An angle in radians.")
+     :default 0
+     :parse-fn num}]
+   [:parameter [:parameters :layout :pitch :progressive :neutral-row]
+    {:help (str "An integer row ID. This identifies the “starting” row where "
+                "`angle` will be multiplied by zero in a column of keys.")
      :default 0
      :parse-fn int}]
    [:section [:parameters :channel]

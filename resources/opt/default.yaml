@@ -25,8 +25,11 @@ key-clusters:
 by-key:
   parameters:
     layout:
-      pitch-base: 0.26
-      neutral-pitch-row: 0
+      pitch:
+        base: 0.26
+        progressive:
+          angle: 0.45
+          neutral-row: 0
     channel:
       height: 20
       top-width: 10
@@ -43,11 +46,15 @@ by-key:
         "4":
           parameters:
             layout:
-              neutral-pitch-row: -1
+              pitch:
+                progressive:
+                  neutral-row: -1
         "5":
           parameters:
             layout:
-              neutral-pitch-row: -1
+              pitch:
+                progressive:
+                  neutral-row: -1
 wrist-rest:
   include: false
   style: threaded

@@ -309,19 +309,21 @@
 (defn finger-placement [translate-fn rotate-x-fn rotate-y-fn getopt coord subject]
   "Place and tilt passed ‘subject’ as if it were a key or coordinate vector."
   (let [[column row] coord
-        pitch-base (most-specific-option getopt [:layout :pitch-base] :finger coord)
-        neutral (most-specific-option getopt [:layout :neutral-pitch-row] :finger coord)
-        pitch-prog (* (progressive-pitch coord) (- row neutral))
+        most #(most-specific-option getopt % :finger coord)
+        pitch-base (most [:layout :pitch :base])
+        pitch-factor (most [:layout :pitch :progressive :angle])
+        neutral (most [:layout :pitch :progressive :neutral-row])
+        effective-prog (* pitch-factor (- row neutral))
         cap-height (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)
         pitch-radius (+ cap-height
                         (/ (/ (+ mount-1u finger-mount-separation-y) 2)
-                           (Math/sin (/ (progressive-pitch coord) 2))))
+                           (Math/sin (/ pitch-factor 2))))
         y-offset (* mount-1u neutral)
         z-offset (getopt :key-clusters :finger :vertical-offset)]
     (->> subject
          (translate-fn (get finger-tweak-early-translation coord [0 0 0]))
          (rotate-x-fn (get finger-intrinsic-pitch coord 0))
-         (stylist translate-fn (partial rotate-x-fn pitch-prog) pitch-radius rotate-y-fn getopt :finger coord)
+         (stylist translate-fn (partial rotate-x-fn effective-prog) pitch-radius rotate-y-fn getopt :finger coord)
          (rotate-x-fn pitch-base)
          (rotate-y-fn (getopt :key-clusters :finger :tenting))
          (translate-fn [0 y-offset z-offset])

@@ -73,13 +73,25 @@ This section, and everything in it, can be repeated at several levels: Here at t
 
 How to place keys. See also key cluster style.
 
-##### Parameter `pitch-base`
+##### Section `pitch`
 
-An angle in radians by which to rotate all keys around the x axis. Set at a high level, this controls the general front-to-back incline of a cluster.
+Tait-Bryan pitch, meaning the rotation of keys around the x axis.
 
-##### Parameter `neutral-pitch-row`
+###### Parameter `base`
 
-An integer row ID. This identifies the row where progressive Tait-Bryan pitch will be neutral (zero) in a column of keys.
+An angle in radians. Set at a high level, this controls the general front-to-back incline of a key cluster.
+
+###### Section `progressive`
+
+A progressive pitch factor is multiplied by the index of a key. This is one simple way to give each column a curve.
+
+####### Parameter `angle`
+
+An angle in radians.
+
+####### Parameter `neutral-row`
+
+An integer row ID. This identifies the “starting” row where `angle` will be multiplied by zero in a column of keys.
 
 #### Section `channel`
 
