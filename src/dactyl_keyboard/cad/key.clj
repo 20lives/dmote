@@ -263,38 +263,42 @@
   "A post shape that comes offset for one corner of a key mount."
   (translate (mount-corner-offset directions) web-post))
 
-(defn stylist [translate-fn pitcher pitch-radius rotate-y-fn getopt cluster coord obj]
-  "Produce a closure that will apply a specific key cluster style."
-  (let [[column row] coord
-        style (getopt :key-clusters cluster :style)
-        most #(most-specific-option getopt % :finger coord)
-        roll-angle (most [:layout :roll :progressive :angle])
-        roll-neutral (most [:layout :roll :progressive :neutral-column])
-        col-Δ (- roll-neutral column)
-        roll-prog-effective (* roll-angle col-Δ)
-        radius-base (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)
-        column-radius (+ radius-base
-                         (/ (/ (+ mount-1u finger-mount-separation-x) 2)
-                            (Math/sin (/ roll-angle 2))))]
-   (case style
-     :standard
+(defn curver [subject dimension-n rotate-type delta-fn orthographic
+              translate-fn rotate-fn getopt cluster coord obj]
+  "Given an angle for progressive curvature, apply it. Else lay keys out flat."
+  (let [index (nth coord dimension-n)
+        most #(most-specific-option getopt % cluster coord)
+        angle-factor (most [:layout rotate-type :progressive])
+        neutral (most [:layout :matrix :neutral subject])
+        separation (most [:layout :matrix :separation subject])
+        delta-f (delta-fn index neutral)
+        delta-r (delta-fn neutral index)
+        angle-product (* angle-factor delta-f)
+        flat-distance (* mount-1u (- index neutral))
+        cap-height (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)
+        radius (+ cap-height
+                  (/ (/ (+ mount-1u separation) 2)
+                     (Math/sin (/ angle-factor 2))))
+        ortho-x (- (* delta-r (+ -1 (- (* radius (Math/sin angle-factor))))))
+        ortho-z (* radius (- 1 (Math/cos angle-product)))]
+   (if (zero? angle-factor)
+     (translate-fn (assoc [0 0 0] dimension-n flat-distance) obj)
+     (if orthographic
        (->> obj
-         (swing-callables translate-fn pitch-radius pitcher)
-         (swing-callables translate-fn column-radius (partial rotate-y-fn roll-prog-effective)))
-     :orthographic
-       (let [x (- (* (- column roll-neutral)
-                     (+ -1 (- (* column-radius (Math/sin roll-angle))))))
-             z (* column-radius (- 1 (Math/cos roll-prog-effective)))]
-        (->> obj
-          (swing-callables translate-fn pitch-radius pitcher)
-          (rotate-y-fn roll-prog-effective)
-          (translate-fn [x 0 z])))
-     :fixed
-       (->> obj
-         (rotate-y-fn (nth fixed-angles column))
-         (translate-fn [(nth fixed-x column) 0 (nth fixed-z column)])
-         (swing-callables translate-fn (+ pitch-radius (nth fixed-z column)) pitcher)
-         (rotate-y-fn fixed-tenting)))))
+            (rotate-fn angle-product)
+            (translate-fn [ortho-x 0 ortho-z]))
+       (swing-callables translate-fn radius (partial rotate-fn angle-product) obj)))))
+
+(defn put-in-column [translate-fn rotate-fn getopt cluster coord obj]
+  "Place a key in relation to its column."
+  (curver :row 1 :pitch #(- %1 %2) false
+          translate-fn rotate-fn getopt cluster coord obj))
+
+(defn put-in-row [translate-fn rotate-fn getopt cluster coord obj]
+  "Place a key in relation to its row."
+  (let [style (getopt :key-clusters cluster :style)]
+   (curver :column 0 :roll #(- %2 %1) (= style :orthographic)
+           translate-fn rotate-fn getopt cluster coord obj)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -305,24 +309,16 @@
   "Place and tilt passed ‘subject’ as if it were a key or coordinate vector."
   (let [[column row] coord
         most #(most-specific-option getopt % :finger coord)
-        pitch-angle (most [:layout :pitch :progressive :angle])
-        pitch-neutral (most [:layout :pitch :progressive :neutral-row])
-        row-Δ (- row pitch-neutral)
-        pitch-prog-effective (* pitch-angle row-Δ)
-        cap-height (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)
-        pitch-radius (+ cap-height
-                        (/ (/ (+ mount-1u finger-mount-separation-y) 2)
-                           (Math/sin (/ pitch-angle 2))))]
+        center (most [:layout :matrix :neutral :row])]
     (->> subject
          (translate-fn (most [:layout :translation :early]))
          (rotate-x-fn (most [:layout :pitch :intrinsic]))
-         (stylist translate-fn
-           (partial rotate-x-fn pitch-prog-effective)
-           pitch-radius rotate-y-fn getopt :finger coord)
+         (put-in-column translate-fn rotate-x-fn getopt :finger coord)
+         (put-in-row translate-fn rotate-y-fn getopt :finger coord)
          (translate-fn (most [:layout :translation :mid]))
          (rotate-x-fn (most [:layout :pitch :base]))
          (rotate-y-fn (most [:layout :roll :base]))
-         (translate-fn [0 (* mount-1u pitch-neutral) 0])
+         (translate-fn [0 (* mount-1u center) 0])
          (translate-fn (most [:layout :translation :late])))))
 
 (def finger-key-position

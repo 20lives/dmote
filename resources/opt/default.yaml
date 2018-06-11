@@ -9,6 +9,7 @@ switches:
   travel: 3.5
 key-clusters:
   finger:
+    style: standard
     matrix-columns:
     - rows-above-home: 1
       rows-below-home: 1
@@ -23,16 +24,19 @@ key-clusters:
 by-key:
   parameters:
     layout:
+      matrix:
+        neutral:
+          row: 0
+          column: 3
+        separation:
+          row: -0.4
+          column: 0.3
       pitch:
         base: 0.26
-        progressive:
-          angle: 0.45
-          neutral-row: 0
+        progressive: 0.45
       roll:
         base: 0.26
-        progressive:
-          angle: 0.06
-          neutral-column: 3
+        progressive: 0.06
       translation:
         late: [0, 0, 7]
     channel:
@@ -101,9 +105,9 @@ by-key:
         "4":
           parameters:
             layout:
-              pitch:
-                progressive:
-                  neutral-row: -1
+              matrix:
+                neutral:
+                  row: -1
               translation:
                 mid: [0, 4, 5]
           rows:
@@ -115,9 +119,9 @@ by-key:
         "5":
           parameters:
             layout:
-              pitch:
-                progressive:
-                  neutral-row: -1
+              matrix:
+                neutral:
+                  row: -1
               translation:
                 mid: [0, 4, 5]
 wrist-rest:

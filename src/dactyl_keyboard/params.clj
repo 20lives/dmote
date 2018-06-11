@@ -48,11 +48,6 @@
 ;; Key Layout ;;
 ;;;;;;;;;;;;;;;;
 
-;; Finger switch mounts may need more or less spacing depending on the size
-;; of your keycaps, curvature etc.
-(def finger-mount-separation-x 0.3)
-(def finger-mount-separation-y -0.4)
-
 ;; Thumb key placement is similar to finger key placement:
 (def thumb-cluster-offset-from-fingers [10 1 6])
 (def thumb-cluster-column-offset [0 0 2])
@@ -69,15 +64,6 @@
     [0 -1] [0 0 15]
     [0 -2] [0 0 15]})
 (def thumb-mount-separation 0)
-
-;; Settings for column-style :fixed.
-;; The defaults roughly match Maltron settings:
-;;   http://patentimages.storage.googleapis.com/EP0219944A2/imgf0002.png
-;; Fixed-z overrides the z portion of the column offsets above.
-(def fixed-angles [(deg->rad 10) (deg->rad 10) 0 0 0 (deg->rad -15) (deg->rad -15)])
-(def fixed-x [-41.5 -22.5 0 20.3 41.4 65.5 89.6])  ; Relative to middle finger.
-(def fixed-z [12.1    8.3 0  5   10.7 14.5 17.5])
-(def fixed-tenting (deg->rad 0))
 
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -258,7 +244,7 @@
 ;; Validators:
 
 (spec/def ::supported-key-cluster #{:finger :thumb})
-(spec/def ::supported-column-layout-style #{:standard :orthographic :fixed})
+(spec/def ::supported-cluster-style #{:standard :orthographic})
 (spec/def ::supported-wrist-rest-style #{:threaded :solid})
 
 (spec/def ::flexcoord (spec/or :absolute int?
@@ -344,7 +330,32 @@
     "at the row level. See below. Only the most specific option available "
     "for each key will be applied to that key."]
    [:section [:parameters :layout]
-    "How to place keys. See also key cluster style."]
+    "How to place keys."]
+   [:section [:parameters :layout :matrix]
+    "Roughly how keys are spaced out to form a matrix."]
+   [:section [:parameters :layout :matrix :neutral]
+    "The neutral point in a column or row is where any progressive curvature "
+    "both starts and has no effect."]
+   [:parameter [:parameters :layout :matrix :neutral :column]
+    {:help (str "An integer column ID.")
+     :default 0
+     :parse-fn int}]
+   [:parameter [:parameters :layout :matrix :neutral :row]
+    {:help (str "An integer row ID.")
+     :default 0
+     :parse-fn int}]
+   [:section [:parameters :layout :matrix :separation]
+    "Tweaks to control the systematic separation of keys. The parameters in "
+    "this section will be multiplied by the difference between each affected "
+    "key’s coordinates and the neutral column and row."]
+   [:parameter [:parameters :layout :matrix :separation :column]
+    {:help (str "A distance in mm.")
+     :default 0
+     :parse-fn num}]
+   [:parameter [:parameters :layout :matrix :separation :row]
+    {:help (str "A distance in mm.")
+     :default 0
+     :parse-fn num}]
    [:section [:parameters :layout :pitch]
     "Tait-Bryan pitch, meaning the rotation of keys around the x axis."]
    [:parameter [:parameters :layout :pitch :base]
@@ -359,18 +370,11 @@
                 "terracing common on flat keyboards with OEM-profile caps.")
      :default 0
      :parse-fn num}]
-   [:section [:parameters :layout :pitch :progressive]
-    "A progressive pitch factor is multiplied by the index of a key. This is "
-    "one simple way to give each column a curvature."]
-   [:parameter [:parameters :layout :pitch :progressive :angle]
-    {:help (str "An angle in radians.")
+   [:parameter [:parameters :layout :pitch :progressive]
+    {:help (str "An angle in radians. This progressive pitch factor bends "
+                "columns lengthwise. If set to zero, columns are flat.")
      :default 0
      :parse-fn num}]
-   [:parameter [:parameters :layout :pitch :progressive :neutral-row]
-    {:help (str "An integer row ID. This identifies the “starting” row where "
-                "`angle` will be multiplied by zero in a column of keys.")
-     :default 0
-     :parse-fn int}]
    [:section [:parameters :layout :roll]
     "Tait-Bryan roll, meaning the rotation of keys around the y axis."]
    [:parameter [:parameters :layout :roll :base]
@@ -378,17 +382,11 @@
                 "the overall left-to-right tilt of each half of the keyboard.")
      :default 0
      :parse-fn num}]
-   [:section [:parameters :layout :roll :progressive]
-    "A progressive roll factor is multiplied by the index of a key, giving "
-    "each row a curvature."]
-   [:parameter [:parameters :layout :roll :progressive :angle]
-    {:help (str "An angle in radians.")
+   [:parameter [:parameters :layout :roll :progressive]
+    {:help (str "An angle in radians. This progressive roll factor bends rows "
+                "lengthwise, which also gives the columns a lateral curvature.")
      :default 0
      :parse-fn num}]
-   [:parameter [:parameters :layout :roll :progressive :neutral-column]
-    {:help (str "An integer column ID.")
-     :default 0
-     :parse-fn int}]
    [:section [:parameters :layout :translation]
     "Translation in the geometric sense, displacing keys in relation to each "
     "other. Depending on when this translation takes places, it may have a "
@@ -506,13 +504,16 @@
      :default false
      :parse-fn boolean}]
    [:parameter [:key-clusters :finger :style]
-    {:help (str "Key column layout style. One of:\n\n"
-                "* `standard`: A sort of bowl shape. Columns curve inward.\n"
-                "* `orthographic`: More straight.\n"
-                "* `fixed`: DIY.")
+    {:help (str "Cluster layout style. One of:\n"
+                "\n"
+                "* `standard`: Both columns and rows have the same type of "
+                "curvature applied in a logically consistent manner."
+                "* `orthographic`: Rows are curved somewhat differently. "
+                "This creates more space between columns and may prevent "
+                "key mounts from fusing together if you have a broad matrix.")
      :default :standard
      :parse-fn keyword
-     :validate [::supported-column-layout-style]}]
+     :validate [::supported-cluster-style]}]
    [:parameter [:key-clusters :finger :matrix-columns]
     {:help (str "A list of key columns. Columns are aligned with the user’s "
                 "fingers. Each column will be known by its index in this "

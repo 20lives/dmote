@@ -15,8 +15,8 @@ visualization: target/dmote.jar
 orthographic: target/dmote.jar
 	java -jar target/dmote.jar -c resources/opt/orthographic_layout.yaml
 
-fixed: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/fixed_layout.yaml
+flat: target/dmote.jar
+	java -jar target/dmote.jar -c resources/opt/flat_layout.yaml
 
 threaded: target/dmote.jar
 	java -jar target/dmote.jar -c resources/opt/threaded_wrist_rest.yaml
@@ -35,7 +35,7 @@ test:
 
 # “all” will overwrite its own outputs.
 # Intended for code sanity checking before pushing a commit.
-all: test default visualization orthographic fixed threaded solid doc/options.md
+all: test default visualization orthographic flat threaded solid doc/options.md
 
 clean:
 	-rm things/*.scad

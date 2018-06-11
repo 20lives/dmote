@@ -1,0 +1,15 @@
+# Configuration fragment for a flat key cluster.
+
+by-key:
+  parameters:
+    layout:
+      matrix:
+        separation:
+          row: 0
+          column: 0
+      pitch:
+        progressive: 0
+      roll:
+        progressive: 0
+      translation:
+        late: [0, 0, 17]

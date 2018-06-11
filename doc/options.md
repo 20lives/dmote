@@ -40,11 +40,9 @@ If `true`, include models of the keycaps. This is intended for illustration in d
 
 #### Parameter `style`
 
-Key column layout style. One of:
+Cluster layout style. One of:
 
-* `standard`: A sort of bowl shape. Columns curve inward.
-* `orthographic`: More straight.
-* `fixed`: DIY.
+* `standard`: Both columns and rows have the same type of curvature applied in a logically consistent manner.* `orthographic`: Rows are curved somewhat differently. This creates more space between columns and may prevent key mounts from fusing together if you have a broad matrix.
 
 #### Parameter `matrix-columns`
 
@@ -63,7 +61,35 @@ This section, and everything in it, can be repeated at several levels: Here at t
 
 #### Section `layout`
 
-How to place keys. See also key cluster style.
+How to place keys.
+
+##### Section `matrix`
+
+Roughly how keys are spaced out to form a matrix.
+
+###### Section `neutral`
+
+The neutral point in a column or row is where any progressive curvature both starts and has no effect.
+
+####### Parameter `column`
+
+An integer column ID.
+
+####### Parameter `row`
+
+An integer row ID.
+
+###### Section `separation`
+
+Tweaks to control the systematic separation of keys. The parameters in this section will be multiplied by the difference between each affected key’s coordinates and the neutral column and row.
+
+####### Parameter `column`
+
+A distance in mm.
+
+####### Parameter `row`
+
+A distance in mm.
 
 ##### Section `pitch`
 
@@ -77,17 +103,9 @@ An angle in radians. Set at a high level, this controls the general front-to-bac
 
 An angle in radians. Intrinsic pitching occurs early in key placement. It is typically intended to produce a tactile break between two rows of keys, as in the typewriter-like terracing common on flat keyboards with OEM-profile caps.
 
-###### Section `progressive`
+###### Parameter `progressive`
 
-A progressive pitch factor is multiplied by the index of a key. This is one simple way to give each column a curvature.
-
-####### Parameter `angle`
-
-An angle in radians.
-
-####### Parameter `neutral-row`
-
-An integer row ID. This identifies the “starting” row where `angle` will be multiplied by zero in a column of keys.
+An angle in radians. This progressive pitch factor bends columns lengthwise. If set to zero, columns are flat.
 
 ##### Section `roll`
 
@@ -97,17 +115,9 @@ Tait-Bryan roll, meaning the rotation of keys around the y axis.
 
 An angle in radians. This is the “tenting” angle, controlling the overall left-to-right tilt of each half of the keyboard.
 
-###### Section `progressive`
+###### Parameter `progressive`
 
-A progressive roll factor is multiplied by the index of a key, giving each row a curvature.
-
-####### Parameter `angle`
-
-An angle in radians.
-
-####### Parameter `neutral-column`
-
-An integer column ID.
+An angle in radians. This progressive roll factor bends rows lengthwise, which also gives the columns a lateral curvature.
 
 ##### Section `translation`
 
