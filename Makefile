@@ -9,6 +9,9 @@ OBJECTS = $(shell find src/)
 default: target/dmote.jar
 	java -jar target/dmote.jar
 
+visualization: target/dmote.jar
+	java -jar target/dmote.jar -c resources/opt/visualization.yaml
+
 orthographic: target/dmote.jar
 	java -jar target/dmote.jar -c resources/opt/orthographic_layout.yaml
 
@@ -32,7 +35,7 @@ test:
 
 # “all” will overwrite its own outputs.
 # Intended for code sanity checking before pushing a commit.
-all: test default orthographic fixed threaded solid doc/options.md
+all: test default visualization orthographic fixed threaded solid doc/options.md
 
 clean:
 	-rm things/*.scad

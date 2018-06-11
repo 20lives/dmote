@@ -193,16 +193,11 @@
   (let [height (getopt :keycaps :body-height)
         travel (getopt :switches :travel)
         resting-clearance (getopt :keycaps :resting-clearance)
-        pressed-clearance (- resting-clearance travel)
         plate plate-thickness
-        bottom-to-bottom (+ plate resting-clearance)
-        bottom-to-middle (+ bottom-to-bottom (/ height 2))
-        bottom-to-pressed-bottom (+ plate pressed-clearance)]
-   {:from-plate-top {:resting-cap-middle bottom-to-middle
-                     :resting-cap-bottom resting-clearance
-                     :pressed-cap-bottom pressed-clearance}
-    :from-plate-bottom {:resting-cap-bottom bottom-to-bottom
-                        :pressed-cap-bottom bottom-to-pressed-bottom}}))
+        coll {:pressed-cap-bottom (- resting-clearance travel)
+              :resting-cap-bottom resting-clearance}]
+   {:from-plate-top coll
+    :from-plate-bottom (into {} (map (fn [[k v]] [k (+ plate v)]) coll))}))
 
 (defn negative-cap-shape [getopt {h3 :height w3 :top-width m :margin}]
   "The shape of a channel for a keycap to move in."
@@ -227,11 +222,11 @@
   "The shape of one keycap, rectangular base, ’units’ in width, at rest."
   (let [base-width (key-length units)
         base-depth (key-length 1)
-        z (getopt :keycaps :derived :from-plate-bottom :resting-cap-middle)]
+        z (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)]
    (->>
      (square base-width base-depth)
      (extrude-linear {:height (getopt :keycaps :body-height)
-                      :scale 0.73})  ; Based on DSA.
+                      :center false :scale 0.73})  ; Based on DSA.
      (translate [0 0 z])
      (color [220/255 163/255 163/255 1]))))
 

@@ -93,7 +93,6 @@ by-key:
 wrist-rest:
   include: false
   style: threaded
-  preview: false
   position:
     finger-key-column: 4
     key-corner: SSE
