@@ -48,21 +48,10 @@
 ;; Key Layout ;;
 ;;;;;;;;;;;;;;;;
 
-;; Individual columns may be translated (offset).
-(defn finger-column-translation [column]
-  (cond
-    (= column 2) [0 4 -4.5]
-    (>= column 4) [0 4 5]
-    :else [0 0 0]))
-
 ;; Individual switches may be finely adjusted, including intrinsic rotation.
 ;; These are maps of column-row pairs to operator values.
-(def finger-tweak-early-translation
-  {[2 -3] [0 -7 2]})
 (def finger-intrinsic-pitch
   {[2 -3] (/ π -8)})
-(def finger-tweak-late-translation
-  {})
 
 ;; Finger switch mounts may need more or less spacing depending on the size
 ;; of your keycaps, curvature etc.
@@ -279,10 +268,11 @@
 
 (spec/def ::flexcoord (spec/or :absolute int?
                                :extreme #{:first :last}))
-(spec/def ::flexcoord-pair (spec/coll-of ::flexcoord :count 2))
+(spec/def ::2d-flexcoord (spec/coll-of ::flexcoord :count 2))
+(spec/def ::3d-point (spec/coll-of number? :count 3))
 (spec/def ::corner (set (vals generics/keyword-to-directions)))
 
-(spec/def ::key-coordinates ::flexcoord-pair)
+(spec/def ::key-coordinates ::2d-flexcoord)
 (spec/def ::point (spec/keys :req-un [::key-coordinates]))
 (spec/def ::points (spec/coll-of ::point))
 (spec/def ::foot-plate (spec/keys :req-un [::points]))
@@ -397,6 +387,36 @@
     {:help (str "An integer column ID.")
      :default 0
      :parse-fn int}]
+   [:section [:parameters :layout :translation]
+    "Translation in the geometric sense, displacing keys in relation to each "
+    "other. Depending on when this translation takes places, it may have a "
+    "a cascading effect on other aspects of key placement. All measurements "
+    "are in mm."]
+   [:parameter [:parameters :layout :translation :early]
+    {:help (str "A 3-dimensional vector. ”Early” translation happens before "
+                "other operations in key placement and therefore has the "
+                "biggest knock-on effects.")
+     :default [0 0 0]
+     :parse-fn vec
+     :validate [::3d-point]}]
+   [:parameter [:parameters :layout :translation :mid]
+    {:help (str "A 3-dimensional vector. This happens after columns are styled "
+                "but before base pitch and roll. As such it is a good place to "
+                "adjust whole columns for relative finger length.")
+     :default [0 0 0]
+     :parse-fn vec
+     :validate [::3d-point]}]
+   [:parameter [:parameters :layout :translation :late]
+    {:help (str "A 3-dimensional vector. “Late” translation is the last step "
+                "in key placement and therefore interacts very little with "
+                "other steps. As a result, the z-coordinate, which is the last "
+                "number in this vector, serves as a general vertical offset "
+                "of the finger key cluster from the ground plane. If set at a "
+                "high level, this controls the overall height of the keyboard, "
+                "including the height of the case walls.")
+     :default [0 0 0]
+     :parse-fn vec
+     :validate [::3d-point]}]
    [:section [:parameters :channel]
     "Above each switch mount, there is a channel of negative space for the "
     "user’s finger and the keycap to move inside. This is only useful in those "
@@ -491,11 +511,6 @@
      :default :standard
      :parse-fn keyword
      :validate [::supported-column-layout-style]}]
-   [:parameter [:key-clusters :finger :vertical-offset]
-    {:help (str "A vertical offset in mm shared by all finger cluster keys. "
-                "This ultimately controls the overall height of the keyboard.")
-     :default 0
-     :parse-fn num}]
    [:parameter [:key-clusters :finger :matrix-columns]
     {:help (str "A list of key columns. Columns are aligned with the user’s "
                 "fingers. Each column will be known by its index in this "
@@ -595,7 +610,8 @@
     {:help (str "The size of the plinth up to but not including the "
                 "narrowing upper lip and rubber parts.")
      :default [1 1 1]
-     :parse-fn vec}]
+     :parse-fn vec
+     :validate [::3d-point]}]
    [:parameter [:wrist-rest :lip-height]
     {:help (str "The height of a narrowing, printed lip between "
                 "the base of the plinth and the rubber part.")

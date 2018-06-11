@@ -46,10 +46,6 @@ Key column layout style. One of:
 * `orthographic`: More straight.
 * `fixed`: DIY.
 
-#### Parameter `vertical-offset`
-
-A vertical offset in mm shared by all finger cluster keys. This ultimately controls the overall height of the keyboard.
-
 #### Parameter `matrix-columns`
 
 A list of key columns. Columns are aligned with the user’s fingers. Each column will be known by its index in this list, starting at zero for the first item. Each item may contain:
@@ -108,6 +104,22 @@ An angle in radians.
 ####### Parameter `neutral-column`
 
 An integer column ID.
+
+##### Section `translation`
+
+Translation in the geometric sense, displacing keys in relation to each other. Depending on when this translation takes places, it may have a a cascading effect on other aspects of key placement. All measurements are in mm.
+
+###### Parameter `early`
+
+A 3-dimensional vector. ”Early” translation happens before other operations in key placement and therefore has the biggest knock-on effects.
+
+###### Parameter `mid`
+
+A 3-dimensional vector. This happens after columns are styled but before base pitch and roll. As such it is a good place to adjust whole columns for relative finger length.
+
+###### Parameter `late`
+
+A 3-dimensional vector. “Late” translation is the last step in key placement and therefore interacts very little with other steps. As a result, the z-coordinate, which is the last number in this vector, serves as a general vertical offset of the finger key cluster from the ground plane. If set at a high level, this controls the overall height of the keyboard, including the height of the case walls.
 
 #### Section `channel`
 

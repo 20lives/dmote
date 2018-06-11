@@ -285,8 +285,7 @@
      :standard
        (->> obj
          (swing-callables translate-fn pitch-radius pitcher)
-         (swing-callables translate-fn column-radius (partial rotate-y-fn roll-prog-effective))
-         (translate-fn (finger-column-translation column)))
+         (swing-callables translate-fn column-radius (partial rotate-y-fn roll-prog-effective)))
      :orthographic
        (let [x (- (* (- column roll-neutral)
                      (+ -1 (- (* column-radius (Math/sin roll-angle))))))
@@ -294,15 +293,13 @@
         (->> obj
           (swing-callables translate-fn pitch-radius pitcher)
           (rotate-y-fn roll-prog-effective)
-          (translate-fn [x 0 z])
-          (translate-fn (finger-column-translation column))))
+          (translate-fn [x 0 z])))
      :fixed
        (->> obj
          (rotate-y-fn (nth fixed-angles column))
          (translate-fn [(nth fixed-x column) 0 (nth fixed-z column)])
          (swing-callables translate-fn (+ pitch-radius (nth fixed-z column)) pitcher)
-         (rotate-y-fn fixed-tenting)
-         (translate-fn [0 (second (finger-column-translation column)) 0])))))
+         (rotate-y-fn fixed-tenting)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -320,17 +317,18 @@
         cap-height (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)
         pitch-radius (+ cap-height
                         (/ (/ (+ mount-1u finger-mount-separation-y) 2)
-                           (Math/sin (/ pitch-angle 2))))
-        y-offset (* mount-1u pitch-neutral)
-        z-offset (getopt :key-clusters :finger :vertical-offset)]
+                           (Math/sin (/ pitch-angle 2))))]
     (->> subject
-         (translate-fn (get finger-tweak-early-translation coord [0 0 0]))
+         (translate-fn (most [:layout :translation :early]))
          (rotate-x-fn (get finger-intrinsic-pitch coord 0))
-         (stylist translate-fn (partial rotate-x-fn pitch-prog-effective) pitch-radius rotate-y-fn getopt :finger coord)
+         (stylist translate-fn
+           (partial rotate-x-fn pitch-prog-effective)
+           pitch-radius rotate-y-fn getopt :finger coord)
+         (translate-fn (most [:layout :translation :mid]))
          (rotate-x-fn (most [:layout :pitch :base]))
          (rotate-y-fn (most [:layout :roll :base]))
-         (translate-fn [0 y-offset z-offset])
-         (translate-fn (get finger-tweak-late-translation coord [0 0 0])))))
+         (translate-fn [0 (* mount-1u pitch-neutral) 0])
+         (translate-fn (most [:layout :translation :late])))))
 
 (def finger-key-position
   "A function that outputs coordinates for a key matrix position.
