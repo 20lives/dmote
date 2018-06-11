@@ -315,7 +315,7 @@
                            (Math/sin (/ pitch-angle 2))))]
     (->> subject
          (translate-fn (most [:layout :translation :early]))
-         (rotate-x-fn (get finger-intrinsic-pitch coord 0))
+         (rotate-x-fn (most [:layout :pitch :intrinsic]))
          (stylist translate-fn
            (partial rotate-x-fn pitch-prog-effective)
            pitch-radius rotate-y-fn getopt :finger coord)

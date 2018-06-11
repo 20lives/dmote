@@ -48,11 +48,6 @@
 ;; Key Layout ;;
 ;;;;;;;;;;;;;;;;
 
-;; Individual switches may be finely adjusted, including intrinsic rotation.
-;; These are maps of column-row pairs to operator values.
-(def finger-intrinsic-pitch
-  {[2 -3] (/ π -8)})
-
 ;; Finger switch mounts may need more or less spacing depending on the size
 ;; of your keycaps, curvature etc.
 (def finger-mount-separation-x 0.3)
@@ -355,6 +350,13 @@
    [:parameter [:parameters :layout :pitch :base]
     {:help (str "An angle in radians. Set at a high level, this controls the "
                 "general front-to-back incline of a key cluster.")
+     :default 0
+     :parse-fn num}]
+   [:parameter [:parameters :layout :pitch :intrinsic]
+    {:help (str "An angle in radians. Intrinsic pitching occurs early in key "
+                "placement. It is typically intended to produce a tactile "
+                "break between two rows of keys, as in the typewriter-like "
+                "terracing common on flat keyboards with OEM-profile caps.")
      :default 0
      :parse-fn num}]
    [:section [:parameters :layout :pitch :progressive]

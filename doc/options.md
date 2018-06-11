@@ -73,6 +73,10 @@ Tait-Bryan pitch, meaning the rotation of keys around the x axis.
 
 An angle in radians. Set at a high level, this controls the general front-to-back incline of a key cluster.
 
+###### Parameter `intrinsic`
+
+An angle in radians. Intrinsic pitching occurs early in key placement. It is typically intended to produce a tactile break between two rows of keys, as in the typewriter-like terracing common on flat keyboards with OEM-profile caps.
+
 ###### Section `progressive`
 
 A progressive pitch factor is multiplied by the index of a key. This is one simple way to give each column a curvature.
