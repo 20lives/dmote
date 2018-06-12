@@ -99,9 +99,7 @@
        [2 -3] [0 (if (some #{:south} directions) -8 -16)]
        [4 1] [0 -1]
        [0 -10]))))
-(defn finger-key-web [coordinates]
-  "A predicate function for whether or not to web in a coordinate pair."
-  (not (= coordinates [4 1])))
+
 (defn thumb-key-wall-offsets [coordinates corner]
   (let [[column row] coordinates]
    (case column

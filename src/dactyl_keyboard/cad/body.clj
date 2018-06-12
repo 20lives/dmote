@@ -66,9 +66,7 @@
     (walk-and-web
       (getopt :key-clusters :finger :derived :column-range)
       (getopt :key-clusters :finger :derived :row-range)
-      (fn [coordinates]
-        (and ((getopt :key-clusters :finger :derived :key-requested?) coordinates)
-             (finger-key-web coordinates)))
+      (getopt :key-clusters :finger :derived :key-requested?)
       (partial finger-key-place getopt)
       mount-corner-post)))
 
