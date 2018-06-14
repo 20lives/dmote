@@ -9,7 +9,6 @@ switches:
   travel: 3.5
 key-clusters:
   finger:
-    style: standard
     matrix-columns:
     - rows-above-home: 1
       rows-below-home: 1
@@ -21,30 +20,43 @@ key-clusters:
       rows-below-home: 2
     - rows-below-home: 2
     - rows-below-home: 2
+  thumb:
+    position:
+      key: [first, first]
+      offset: [-5, -5, -25]
+    matrix-columns:
+    - rows-above-home: 1
+    - rows-above-home: 1
+      rows-below-home: 1
+    - rows-above-home: 1
 by-key:
   parameters:
     layout:
       matrix:
         neutral:
           row: 0
-          column: 3
-        separation:
-          row: -0.4
-          column: 0.3
-      pitch:
-        base: 0.26
-        progressive: 0.45
-      roll:
-        base: 0.26
-        progressive: 0.06
-      translation:
-        late: [0, 0, 7]
     channel:
       height: 20
       top-width: 10
       margin: 0.5
   clusters:
     finger:
+      parameters:
+        layout:
+          matrix:
+            neutral:
+              column: 2
+            separation:
+              row: -0.4
+              column: 0.3
+          pitch:
+            base: 0.26
+            progressive: 0.45
+          roll:
+            base: 0.26
+            progressive: 0.06
+          translation:
+            late: [0, 0, 7]
       columns:
         "1":
           rows:
@@ -96,7 +108,7 @@ by-key:
                   pitch:
                     intrinsic: -0.1
                   translation:
-                    early: [ 1, -2, 3]
+                    early: [0.5, -2, 3]
             "0":
               parameters:
                 layout:
@@ -124,6 +136,30 @@ by-key:
                   row: -1
               translation:
                 mid: [0, 4, 5]
+    thumb:
+      parameters:
+        layout:
+          matrix:
+            neutral:
+              column: 1
+          roll:
+            base: -1
+            progressive: 0.3
+          pitch:
+            progressive: 0.3
+          yaw:
+            base: 1.04
+      columns:
+        "0":
+          parameters:
+            layout:
+              translation:
+                mid: [0, -10, 0]
+        "2":
+          parameters:
+            layout:
+              translation:
+                mid: [0, -10, 0]
 wrist-rest:
   include: false
   style: threaded

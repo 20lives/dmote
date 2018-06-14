@@ -86,8 +86,9 @@
 (defn mcu-position [getopt shape]
   "Transform passed shape into the reference frame for an MCU holder."
   (let [[x y] (take 2
-                (finger-key-position
+                (cluster-position
                   getopt
+                  :finger
                   (mcu-finger-coordinates getopt)
                   (finger-wall-offset (mcu-finger-coordinates getopt) mcu-connector-direction)))]
    (->>
@@ -138,9 +139,9 @@
           (translate
             [0 (- (/ promicro-length -2) grip-to-base) 0]
             (cube (/ promicro-width 2) grip-to-base plinth-width)))
-        (finger-key-place getopt cervix-coordinates
+        (cluster-place getopt :finger cervix-coordinates
           (mount-corner-post [mcu-connector-direction (turning-left rev-dir)]))
-        (finger-key-place getopt cervix-coordinates
+        (cluster-place getopt :finger cervix-coordinates
           (mount-corner-post [mcu-connector-direction (turning-right rev-dir)]))))))
 
 
@@ -153,7 +154,7 @@
 (defn backplate-place [getopt shape]
   (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
         coordinates (last (by-col backplate-column))
-        position (finger-key-position getopt coordinates (finger-wall-offset coordinates :north))]
+        position (cluster-position getopt :finger coordinates (finger-wall-offset coordinates :north))]
    (->>
      shape
      (rotate installation-angle [0 0 1])
@@ -315,8 +316,9 @@
 (defn usb-holder-placement [getopt shape]
   (let [coordinates [0 0]
         origin
-          (finger-key-position
+          (cluster-position
             getopt
+            :finger
             coordinates
             (map +
               (wall-segment-offset 2 :north (finger-key-wall-offsets coordinates generics/WNW))

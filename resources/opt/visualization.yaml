@@ -1,8 +1,7 @@
 # Configuration fragment for visualization of an assembled keyboard.
 # You probably don’t want to print with these settings.
 
-key-clusters:
-  finger:
-    preview: true
+keycaps:
+  preview: true
 wrist-rest:
   preview: true

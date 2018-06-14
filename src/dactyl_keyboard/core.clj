@@ -27,12 +27,12 @@
   (union
     (difference
       (union
+        (key/cluster-plates getopt :finger)
+        (key/cluster-plates getopt :thumb)
         (body/finger-walls getopt)
         (body/thumb-walls getopt)
         (body/finger-web getopt)
-        (body/thumb-web getopt)
-        (key/finger-plates getopt)
-        (key/thumb-plates getopt)
+        (color [1 0 0 1] (body/thumb-web getopt))
         (tweaks/key-cluster-bridge getopt)
         tweaks/finger-case-tweaks
         (if (getopt :wrist-rest :include)
@@ -43,9 +43,10 @@
         (aux/rj9-positive getopt)
         (aux/foot-plates getopt)
         (if params/include-backplate-block (aux/backplate-block getopt)))
-      (key/finger-cutouts getopt)
-      (key/finger-channels getopt)
-      (key/thumb-cutouts getopt)
+      (key/cluster-cutouts getopt :finger)
+      (key/cluster-cutouts getopt :thumb)
+      (key/cluster-channels getopt :finger)
+      (key/cluster-channels getopt :thumb)
       (aux/rj9-negative getopt)
       (aux/mcu-negative getopt)
       (if params/include-led-housings (aux/led-holes getopt))
@@ -56,8 +57,8 @@
       (translate [0 0 -500] (cube 1000 1000 1000)))
     ;; The remaining elements are visualizations for use in development.
     ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
-    (if (getopt :key-clusters :finger :preview) (key/finger-keycaps getopt))
-    #_(key/thumb-keycaps getopt)
+    (if (getopt :keycaps :preview) (key/cluster-keycaps getopt :finger))
+    (if (getopt :keycaps :preview) (key/cluster-keycaps getopt :thumb))
     #_(aux/mcu-visualization getopt)
     (if (and (getopt :wrist-rest :include) (getopt :wrist-rest :preview))
       (wrist/unified-preview getopt))))
@@ -96,6 +97,7 @@
     build-options
     ;; Mind the order. One of these may depend upon earlier steps.
     [[[:key-clusters :finger] (partial key/cluster-properties :finger)]
+     [[:key-clusters :thumb] (partial key/cluster-properties :thumb)]
      [[:keycaps] key/keycap-properties]
      [[:wrist-rest] wrist/derive-properties]]))
 

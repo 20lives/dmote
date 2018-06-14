@@ -4,6 +4,16 @@
             [flatland.ordered.map :refer [ordered-map]]
             [dactyl-keyboard.params :as params]))
 
+(deftest test-coordinate-parser
+  (testing "single integer flexcoord"
+    (is (= (params/flexcoord 1) 1)))
+  (testing "single string flexcoord"
+    (is (= (params/flexcoord "abc") :abc)))
+  (testing "single nonsensical flexcoord"
+    (is (thrown? java.lang.ClassCastException (params/flexcoord {}))))
+  (testing "string pair"
+    (is (= ((params/tuple-of params/flexcoord) '("a" "b")) [:a :b]))))
+
 (deftest test-parameter-spec
   (testing "empty"
     (is (= (spec/valid? ::params/parameter-spec {}) true)))
@@ -60,7 +70,7 @@
              (om :k0 (om :k0a 1
                          :k0b 3)))))))
 
-(deftest test-coordinates-validator
+(deftest test-coordinate-validator
   (testing "empty"
     (is (= (spec/valid? ::params/key-coordinates [])
            false)))

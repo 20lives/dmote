@@ -178,8 +178,9 @@
   "A model hook. In the solid style, this holds the wrest in place."
   (let [last-col (getopt :key-clusters :finger :derived :last-column)
         rows (getopt :key-clusters :finger :derived :coordinates-by-column)
-        [x4 y2 _] (key/finger-key-position
-                    getopt (first (rows last-col)) (key/mount-corner-offset ESE))
+        [x4 y2 _] (key/cluster-position
+                    getopt :finger (first (rows last-col))
+                    (key/mount-corner-offset ESE))
         x3 (- x4 2)
         x2 (- x3 6)
         x1 (- x2 2)

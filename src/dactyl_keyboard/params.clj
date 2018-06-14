@@ -52,18 +52,8 @@
 (def thumb-cluster-offset-from-fingers [10 1 6])
 (def thumb-cluster-column-offset [0 0 2])
 (def thumb-cluster-rotation [(/ π 3) 0 (/ π -12)])
-(def intrinsic-thumb-key-rotation
-   {[-1 0] [0 (/ π -5) 0]
-    [-1 -1] [0 (/ π -5) 0]
-    [-1 -2] [0 (/ π -5) 0]
-    [0 0] [0 (/ π -3) 0]
-    [0 -1] [0 (/ π -3) 0]
-    [0 -2] [0 (/ π -3) 0]})
-(def intrinsic-thumb-key-translation
-   {[0 0] [0 0 15]
-    [0 -1] [0 0 15]
-    [0 -2] [0 0 15]})
-(def thumb-mount-separation 0)
+;; Where to connect to finger cluster.
+(def thumb-connection-column 1)
 
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -376,13 +366,20 @@
    [:section [:parameters :layout :roll]
     "Tait-Bryan roll, meaning the rotation of keys around the y axis."]
    [:parameter [:parameters :layout :roll :base]
-    {:help (str "An angle in radians. This is the “tenting” angle, controlling "
-                "the overall left-to-right tilt of each half of the keyboard.")
+    {:help (str "An angle in radians. This is the “tenting” angle. Applied to "
+                "the finger cluster, it controls the overall left-to-right "
+                "tilt of each half of the keyboard.")
      :default 0
      :parse-fn num}]
    [:parameter [:parameters :layout :roll :progressive]
     {:help (str "An angle in radians. This progressive roll factor bends rows "
                 "lengthwise, which also gives the columns a lateral curvature.")
+     :default 0
+     :parse-fn num}]
+   [:section [:parameters :layout :yaw]
+    "Tait-Bryan yaw, meaning the rotation of keys around the z axis."]
+   [:parameter [:parameters :layout :yaw :base]
+    {:help (str "An angle in radians.")
      :default 0
      :parse-fn num}]
    [:section [:parameters :layout :translation]
@@ -441,19 +438,19 @@
 (def parse-overrides
   "A function to parse input for the entire [:by-key :clusters] section."
   (let [iteration identity] ;#(validate-node nested-cooked % :parameters)
-    (map-like
-      {:finger
-        (map-like
-          {:parameters iteration
-           :columns
-            (map-of
-              flexcoord
-              (map-like
-                {:parameters iteration
-                 :rows
-                   (map-of
-                     flexcoord
-                     (map-like {:parameters iteration}))}))})})))
+    (map-of
+      (partial spec/conform ::supported-key-cluster)
+      (map-like
+        {:parameters iteration
+         :columns
+          (map-of
+            flexcoord
+            (map-like
+              {:parameters iteration
+               :rows
+                 (map-of
+                   flexcoord
+                   (map-like {:parameters iteration}))}))}))))
 
 ;; A predicate made from nested-cooked is applied in validation of nested appearances.
 (spec/def ::parameters #(some? (validate-branch (:parameters nested-cooked) %)))
@@ -467,11 +464,15 @@
 (def configuration-raws
   "A flat version of the specification for a user configuration."
   [[:section [:keycaps]
-    "Keycaps are the plastic covers placed over the switches. The choice of "
-    "caps affect the shape of the keyboard: The physical profile limits "
-    "curvature and therefore determines the default distance betweeen keys, "
-    "as well as the amount of negative space reserved for the movement of the "
-    "cap itself over the switch."]
+    "Keycaps are the plastic covers placed over the switches. Their shape will "
+    "help determine the spacing between key mounts if the keyboard is curved. "
+    "Negative space is also reserved for the caps."]
+   [:parameter [:keycaps :preview]
+    {:help (str "If `true`, include models of the keycaps. This is intended "
+                "for illustration in development. The models are not good "
+                "enough for printing.")
+     :default false
+     :parse-fn boolean}]
    [:parameter [:keycaps :body-height]
     {:help (str "The height in mm of each keycap, measured from top to bottom "
                 "of the entire cap by itself.\n\n"
@@ -496,11 +497,6 @@
    [:section [:key-clusters :finger]
     "The main cluster of keys, for “fingers” in a sense excluding the thumb."
     "Everything else is placed in relation to the finger cluster."]
-   [:parameter [:key-clusters :finger :preview]
-    {:help (str "If `true`, include models of the keycaps. This is intended "
-                "for illustration in development, not for printing.")
-     :default false
-     :parse-fn boolean}]
    [:parameter [:key-clusters :finger :style]
     {:help (str "Cluster layout style. One of:\n"
                 "\n"
@@ -523,6 +519,29 @@
                 "* `rows-below-home`: An integer specifying the amount of keys "
                 "on the near side of the home row in the column. If this "
                 "parameter is omitted, the effective value will be zero.")
+     :default [{}]
+     :parse-fn vec}]
+   [:section [:key-clusters :thumb]
+    "A cluster of keys just for the thumb."]
+   [:section [:key-clusters :thumb :position]
+    "The thumb cluster is positioned in relation to the finger cluster."]
+   [:parameter [:key-clusters :thumb :position :key]
+    {:help (str "A finger key coordinate pair.")
+     :default [0 0]
+     :parse-fn (tuple-of flexcoord)
+     :validate [::2d-flexcoord]}]
+   [:parameter [:key-clusters :thumb :position :offset]
+    {:help (str "A 3-dimensional offset in mm from the indicated key.")
+     :default [0 0 0]
+     :parse-fn (tuple-of num)
+     :validate [::3d-point]}]
+   [:parameter [:key-clusters :thumb :style]
+    {:help (str "As for the finger cluster.")
+     :default :standard
+     :parse-fn keyword
+     :validate [::supported-cluster-style]}]
+   [:parameter [:key-clusters :thumb :matrix-columns]
+    {:help (str "As for the finger cluster.")
      :default [{}]
      :parse-fn vec}]
    [:nest [:by-key] nested-raws

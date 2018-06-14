@@ -67,16 +67,16 @@
       (getopt :key-clusters :finger :derived :column-range)
       (getopt :key-clusters :finger :derived :row-range)
       (getopt :key-clusters :finger :derived :key-requested?)
-      (partial finger-key-place getopt)
+      (partial cluster-place getopt :finger)
       mount-corner-post)))
 
 (defn thumb-web [getopt]
   (apply union
     (walk-and-web
-      all-thumb-columns
-      all-thumb-rows
-      thumb?
-      (partial thumb-key-place getopt)
+      (getopt :key-clusters :thumb :derived :column-range)
+      (getopt :key-clusters :thumb :derived :row-range)
+      (getopt :key-clusters :thumb :derived :key-requested?)
+      (partial cluster-place getopt :thumb)
       mount-corner-post)))
 
 
@@ -142,7 +142,7 @@
 
 (defn finger-wall-corner-position [getopt coordinates directions]
   "Absolute position of the lower wall around a finger key."
-  (finger-key-position getopt coordinates
+  (cluster-position getopt :finger coordinates
     (finger-wall-corner-offset coordinates directions)))
 
 (defn finger-wall-offset [coordinates direction]
@@ -243,7 +243,7 @@
         first-row (fn [column] (first (by-col column)))
         walk (partial walk-and-wall
                 (getopt :key-clusters :finger :derived :key-requested?)
-                (partial finger-key-place getopt)
+                (partial cluster-place getopt :finger)
                 finger-key-wall-offsets
                 mount-corner-post)]
    (apply union
@@ -252,8 +252,8 @@
 
 (defn thumb-walls [getopt]
   (let [walk (partial walk-and-wall
-                thumb?
-                (partial thumb-key-place getopt)
+                (getopt :key-clusters :thumb :derived :key-requested?)
+                (partial cluster-place getopt :thumb)
                 thumb-key-wall-offsets
                 mount-corner-post)]
    (apply union

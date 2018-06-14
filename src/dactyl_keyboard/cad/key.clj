@@ -46,10 +46,18 @@
 (def keyswitch-overhang-y alps-overhang-y)
 (def keyswitch-cutout-height alps-underhang-z)
 
+(defn resolve-flex [getopt cluster [column row]]
+  "Resolve supported keywords in a coordinate pair to names.
+  This allows for integers as well as the keywords :first and :last, meaning
+  first and last in the column or row."
+  (let [rows (getopt :key-clusters cluster :derived :row-range)
+        columns (getopt :key-clusters cluster :derived :column-range)
+        resolve (fn [r v] (case v :first (first r) :last (last r) v))]
+   (map resolve [columns rows] [column row])))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Definitions — Fingers ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn match-flex [getopt cluster & coords]
+  "Check if two coordinate pairs are the same, with keyword support."
+  (apply = (map resolve-flex coords)))
 
 (defn most-specific-getter [getopt end-path]
   "Return a function that will find the most specific configuration value
@@ -163,26 +171,6 @@
     (doseq [row (reverse (prop :row-range)) column (prop :column-range)]
       (if ((prop :key-requested?) [column row]) (print "□") (print "·"))
       (if (= column (prop :last-column)) (println)))))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Definitions — Thumbs ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def all-thumb-columns [-1 0])
-(def all-thumb-rows [-2 -1 0])
-
-(def thumb-cluster-midpoint
-  [(/ (+ (* 2 mount-width) thumb-mount-separation) 2)
-   (/ (+ (* 3 mount-width) (* 2 thumb-mount-separation)) 2)
-   0])
-
-(defn thumb? [[column row]]
-  "True if specified thumb key has been requested."
-  (and (<= -1 column 0) (<= -2 row 0)))
-
-;; Where to connect to finger cluster.
-(def thumb-connection-column 1)
 
 
 ;;;;;;;;;;;;;;;;;;;
@@ -300,130 +288,99 @@
    (curver :column 0 :roll #(- %2 %1) (= style :orthographic)
            translate-fn rotate-fn getopt cluster coord obj)))
 
+(declare cluster-position)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Key Placement Functions — Fingers ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn finger-placement [translate-fn rotate-x-fn rotate-y-fn getopt coord subject]
-  "Place and tilt passed ‘subject’ as if it were a key or coordinate vector."
+(defn cluster-placement [translate-fn [rot-x rot-y rot-z]
+                         getopt cluster coord subject]
+  "Place and tilt passed ‘subject’ as if into a key cluster."
   (let [[column row] coord
-        most #(most-specific-option getopt % :finger coord)
-        center (most [:layout :matrix :neutral :row])]
+        most #(most-specific-option getopt % cluster coord)
+        center (most [:layout :matrix :neutral :row])
+        bridge
+          (if (= cluster :finger)
+            identity
+            (fn [obj]
+              (let [section (partial getopt :key-clusters cluster :position)
+                    finger-coord (section :key)
+                    finger-side (resolve-flex getopt :finger finger-coord)
+                    get-position #(cluster-position getopt %1 %2 [0 0 0])
+                    finger-pos (get-position :finger finger-side)
+                    final (vec (map + finger-pos (section :offset)))]
+               (translate-fn final obj))))]
     (->> subject
          (translate-fn (most [:layout :translation :early]))
-         (rotate-x-fn (most [:layout :pitch :intrinsic]))
-         (put-in-column translate-fn rotate-x-fn getopt :finger coord)
-         (put-in-row translate-fn rotate-y-fn getopt :finger coord)
+         (rot-x (most [:layout :pitch :intrinsic]))
+         (put-in-column translate-fn rot-x getopt cluster coord)
+         (put-in-row translate-fn rot-y getopt cluster coord)
          (translate-fn (most [:layout :translation :mid]))
-         (rotate-x-fn (most [:layout :pitch :base]))
-         (rotate-y-fn (most [:layout :roll :base]))
+         (rot-x (most [:layout :pitch :base]))
+         (rot-y (most [:layout :roll :base]))
+         (rot-z (most [:layout :yaw :base]))
          (translate-fn [0 (* mount-1u center) 0])
-         (translate-fn (most [:layout :translation :late])))))
+         (translate-fn (most [:layout :translation :late]))
+         (bridge))))
 
-(def finger-key-position
-  "A function that outputs coordinates for a key matrix position.
-  Using this wrapper, the ‘subject’ argument to finger-placement should be a
+(def cluster-place
+  "A function that puts a passed shape in a specified key matrix position."
+  (partial cluster-placement
+    translate
+    [(fn [angle obj] (rotate angle [1 0 0] obj))
+     (fn [angle obj] (rotate angle [0 1 0] obj))
+     (fn [angle obj] (rotate angle [0 0 1] obj))]))
+
+(def cluster-position
+  "Get coordinates for a key cluster position.
+  Using this wrapper, the ‘subject’ argument to cluster-placement should be a
   single point in 3-dimensional space, typically an offset in mm from the
   middle of the indicated key."
-  (partial finger-placement
+  (partial cluster-placement
     (partial map +)
-    (fn [angle position]
-      "Transform a set of coordinates as if in rotation around the X axis."
-      (clojure.core.matrix/mmul
-       [[1 0 0]
-        [0 (Math/cos angle) (- (Math/sin angle))]
-        [0 (Math/sin angle)    (Math/cos angle)]]
-       position))
-    (fn [angle position]
-      "Same for the Y axis."
-      (clojure.core.matrix/mmul
-       [[(Math/cos angle)     0 (Math/sin angle)]
-        [0                    1 0]
-        [(- (Math/sin angle)) 0 (Math/cos angle)]]
-       position))))
+    [(fn [angle position]
+       "Transform a set of coordinates as if in rotation around the X axis."
+       (clojure.core.matrix/mmul
+        [[1 0 0]
+         [0 (Math/cos angle) (- (Math/sin angle))]
+         [0 (Math/sin angle)    (Math/cos angle)]]
+        position))
+     (fn [angle position]
+       "Same for the Y axis."
+       (clojure.core.matrix/mmul
+        [[(Math/cos angle)     0 (Math/sin angle)]
+         [0                    1 0]
+         [(- (Math/sin angle)) 0 (Math/cos angle)]]
+        position))
+     (fn [angle position]
+       "Same for the Z axis."
+       (clojure.core.matrix/mmul
+        [[(Math/cos angle) (- (Math/sin angle)) 0]
+         [(Math/sin angle) (Math/cos angle)     0]
+         [0                0                    1]]
+        position))]))
 
-(def finger-key-place
-  "A function that puts a passed shape in a specified key matrix position."
-  (partial finger-placement
-    translate
-    (fn [angle obj] (rotate angle [1 0 0] obj))
-    (fn [angle obj] (rotate angle [0 1 0] obj))))
 
-(defn coordinate-pair-matcher [getopt cluster]
-  "Return a function that checks if two coordinates match.
-  This allows for integers as well as the keywords :first and :last, meaning
-  first and last in the column or row."
-  (let [rows (getopt :key-clusters cluster :derived :row-range)
-        columns (getopt :key-clusters cluster :derived :column-range)]
-    (fn [[config-column config-row] [subject-column subject-row]]
-      (and (or (= config-column subject-column)
-               (and (= config-column :first)
-                    (= subject-column (first columns)))
-               (and (= config-column :last)
-                    (= subject-column (last columns))))
-           (or (= config-row subject-row)
-               (and (= config-row :first)
-                    (= subject-row (first rows)))
-               (and (= config-row :last)
-                    (= subject-row (last))))))))
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Interface Functions ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn finger-plates [getopt]
-  (apply union (map #(finger-key-place getopt % single-switch-plate)
-                    (getopt :key-clusters :finger :derived :key-coordinates))))
+(defn cluster-plates [getopt cluster]
+  (apply union (map #(cluster-place getopt cluster % single-switch-plate)
+                    (getopt :key-clusters cluster :derived :key-coordinates))))
 
-(defn finger-cutouts [getopt]
-  (apply union (map #(finger-key-place getopt % single-switch-cutout)
-                    (getopt :key-clusters :finger :derived :key-coordinates))))
+(defn cluster-cutouts [getopt cluster]
+  (apply union (map #(cluster-place getopt cluster % single-switch-cutout)
+                    (getopt :key-clusters cluster :derived :key-coordinates))))
 
-(defn finger-channels [getopt]
+(defn cluster-channels [getopt cluster]
   (letfn [(modeller [coord]
             (letfn [(most [path]
-                      (most-specific-option getopt path :finger coord))]
+                      (most-specific-option getopt path cluster coord))]
               (negative-cap-shape getopt
                 {:top-width (most [:channel :top-width])
                  :height (most [:channel :height])
                  :margin (most [:channel :margin])})))]
-    (apply union (map #(finger-key-place getopt % (modeller %))
-                      (getopt :key-clusters :finger :derived :key-coordinates)))))
+    (apply union (map #(cluster-place getopt cluster % (modeller %))
+                      (getopt :key-clusters cluster :derived :key-coordinates)))))
 
-(defn finger-keycaps [getopt]
-  (apply union (map #(finger-key-place getopt % (keycap-model getopt 1))
-                    (getopt :key-clusters :finger :derived :key-coordinates))))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Key Placement Functions — Thumbs ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn thumb-origin [getopt]
-  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)]
-    (map + (finger-key-position
-             getopt
-             (first (by-col thumb-connection-column))
-             [(/ mount-width -2) (/ mount-depth -2) 0])
-           thumb-cluster-offset-from-fingers)))
-
-(defn thumb-key-place [getopt [column row] shape]
-  (let [offset (if (= -1 column) thumb-cluster-column-offset [0 0 0])]
-    (->> shape
-         (rotate (intrinsic-thumb-key-rotation [column row] [0 0 0]))
-         (translate [(* column (+ mount-1u thumb-mount-separation))
-                     (* row (+ mount-1u thumb-mount-separation))
-                     0])
-         (translate offset)
-         (translate (get intrinsic-thumb-key-translation [column row] [0 0 0]))
-         (rotate thumb-cluster-rotation)
-         (translate (thumb-origin getopt)))))
-
-
-(defn for-thumbs [getopt shape]
-  (apply union (for [column all-thumb-columns
-                     row all-thumb-rows]
-                 (thumb-key-place getopt [column row] shape))))
-
-(defn thumb-plates [getopt] (for-thumbs getopt single-switch-plate))
-
-(defn thumb-cutouts [getopt] (for-thumbs getopt single-switch-cutout))
-
-(defn thumb-keycaps [getopt] (for-thumbs getopt (keycap-model getopt 1)))
+(defn cluster-keycaps [getopt cluster]
+  (apply union (map #(cluster-place getopt cluster % (keycap-model getopt 1))
+                    (getopt :key-clusters cluster :derived :key-coordinates))))
