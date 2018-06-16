@@ -80,9 +80,9 @@
       mount-corner-post)))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Wall-Building Utilities ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;
+;; Wall-Building ;;
+;;;;;;;;;;;;;;;;;;;
 
 (defn wall-segment-offset [getopt cluster coord cardinal-direction segment]
   (let [most #(most-specific-option getopt (concat [:wall] %) cluster coord)
@@ -179,7 +179,7 @@
                     (cluster-place getopt cluster coord)))]
    (if-not (zero? last-upper-segment)
      (if upper
-       (map post (range last-upper-segment))
+       (map post (range (inc last-upper-segment)))
        (if (= extent :full)
          (map post [2 3 4]))))))
 
@@ -228,3 +228,49 @@
                                      :straight wall-straight-join
                                      :inner-corner wall-inner-corner)
                      place-and-direction))))))))
+
+
+;;;;;;;;;;;;;;;;;;;
+;; Tweak Plating ;;
+;;;;;;;;;;;;;;;;;;;
+
+(defn- tweak-posts [getopt key-alias directions first-segment last-segment]
+  "(The hull of) one or more corner posts from a single key mount."
+  (if (= first-segment last-segment)
+    (let [key (getopt :key-clusters :derived :aliases key-alias)
+          {cluster :cluster coordinates :coordinates} key
+          offset (wall-segment-offset getopt cluster coordinates
+                  (first directions) first-segment)]
+     (->> (mount-corner-post directions)
+          (translate offset)
+          (cluster-place getopt cluster coordinates)))
+    (apply hull (map #(tweak-posts getopt key-alias directions %1 %1)
+                     (range first-segment (inc last-segment))))))
+
+(declare tweak-plating)
+
+(defn- tweak-map [getopt node]
+  "Treat a map-type node in the configuration."
+  (let [parts (get node :chunk-size)
+        to-ground (get node :to-ground false)
+        combo (or to-ground parts)
+        prefix (if (get node :highlight) -# identity)
+        shapes (reduce (partial tweak-plating getopt) [] (:hull-around node))]
+   (prefix
+     (apply (if parts union (if to-ground bottom-hull hull))
+       (if parts
+         (map (partial apply (if to-ground bottom-hull hull))
+              (partition parts 1 shapes))
+         shapes)))))
+
+(defn- tweak-plating [getopt coll node]
+  "A reducer."
+  (conj coll
+    (if (map? node)
+      (tweak-map getopt node)
+      (apply (partial tweak-posts getopt) node))))
+
+(defn wall-tweaks [getopt]
+  "User-requested additional shapes."
+  (apply union
+    (reduce (partial tweak-plating getopt) [] (getopt :case :tweaks))))

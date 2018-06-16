@@ -11,7 +11,7 @@
             [scad-clj.model :exclude [use import] :refer :all]
             [dactyl-keyboard.generics :as generics]
             [dactyl-keyboard.params :as params]
-            [dactyl-keyboard.tweaks :as tweaks]
+            [dactyl-keyboard.sandbox :as sandbox]
             [dactyl-keyboard.cad.aux :as aux]
             [dactyl-keyboard.cad.key :as key]
             [dactyl-keyboard.cad.body :as body]
@@ -29,12 +29,10 @@
       (union
         (key/cluster-plates getopt :finger)
         (key/cluster-plates getopt :thumb)
-        (body/cluster-wall getopt :finger)
-        (body/cluster-wall getopt :thumb)
         (body/finger-web getopt)
         (body/thumb-web getopt)
-        #_(tweaks/key-cluster-bridge getopt)
-        tweaks/finger-case-tweaks
+        (body/cluster-wall getopt :finger)
+        (body/cluster-wall getopt :thumb)
         ; (if (getopt :wrist-rest :include)
         ;   (case (getopt :wrist-rest :style)
         ;     :solid (wrist/case-hook getopt)
@@ -42,7 +40,9 @@
         (aux/mcu-support getopt)
         (aux/rj9-positive getopt)
         (aux/foot-plates getopt)
-        (if params/include-backplate-block (aux/backplate-block getopt)))
+        (if params/include-backplate-block (aux/backplate-block getopt))
+        (body/wall-tweaks getopt)
+        (sandbox/positive getopt))
       (key/cluster-cutouts getopt :finger)
       (key/cluster-cutouts getopt :thumb)
       (key/cluster-channels getopt :finger)
@@ -54,7 +54,8 @@
       ; (if (getopt :wrist-rest :include)
       ;   (if (= (getopt :wrist-rest :style) :threaded)
       ;     (wrist/connecting-rods-and-nuts getopt)))
-      (translate [0 0 -500] (cube 1000 1000 1000)))
+      (translate [0 0 -500] (cube 1000 1000 1000))
+      (sandbox/negative getopt))
     ;; The remaining elements are visualizations for use in development.
     ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
     (if (getopt :keycaps :preview) (key/cluster-keycaps getopt :finger))

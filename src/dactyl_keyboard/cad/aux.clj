@@ -304,9 +304,9 @@
                (vec (map + base offset))))
            (plate [polygon-spec]
              (extrude-linear
-               {:height (getopt :foot-plates :height) :center false}
+               {:height (getopt :case :foot-plates :height) :center false}
                (polygon (map point (:points polygon-spec)))))]
-    (apply union (map plate (getopt :foot-plates :polygons)))))
+    (apply union (map plate (getopt :case :foot-plates :polygons)))))
 
 ;; USB female holder:
 ;; This is not needed if the MCU has a robust integrated USB connector and that

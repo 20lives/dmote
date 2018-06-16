@@ -27,7 +27,7 @@ key-clusters:
   thumb:
     position:
       key-alias: f1
-      offset: [-15, -20, 2]
+      offset: [-10, -20, 2]
     matrix-columns:
     - rows-above-home: 1
     - rows-above-home: 1
@@ -116,7 +116,7 @@ by-key:
                 mid: [0, 3, -4]
             wall:
               south:
-                extent: 0
+                extent: 1
               west:
                 extent: 0
           rows:
@@ -127,6 +127,9 @@ by-key:
                     intrinsic: -0.2
                   translation:
                     early: [0, -5, 4]
+                wall:
+                  east:
+                    extent: 4
             "-2":
               parameters:
                 layout:
@@ -193,7 +196,7 @@ by-key:
             base: 1
         wall:
           north:
-            extent: 0
+            extent: 1
           east:
             extent: 4
           south:
@@ -206,6 +209,9 @@ by-key:
             layout:
               translation:
                 mid: [0, -4, 0]
+            wall:
+              south:
+                extent: 1
           rows:
             "0":
               parameters:
@@ -225,6 +231,9 @@ by-key:
                 layout:
                   translation:
                     early: [0, 1, -4]
+                wall:
+                  east:
+                    extent: 1
             "1":
               parameters:
                 layout:
@@ -243,6 +252,124 @@ by-key:
                     early: [0, -2, 0]
                   pitch:
                     intrinsic: -0.25
+                wall:
+                  south:
+                    extent: 1
+case:
+  tweaks:
+  - # Where t2 looms over f0:
+    hull-around:
+    - [f0, SSW, 0, 3]
+    - [f0, WSW, 0, 3]
+    - [t1, ENE, 1]
+    - [t1, NNE, 1]
+    - [t2, NNW, 0]
+    - [t2, NNE, 0, 4]
+    - [t2, ENE, 0, 4]
+  - # Top plating:
+    chunk-size: 3
+    hull-around:
+    - [f0, SSE, 2]
+    - [f0, SSW, 2]
+    - [f1, WNW, 2]
+    - [t2, ENE, 4]
+    - [f1, WSW, 0, 3]
+    - [t2, ESE, 4]
+    - [f1, SSW, 0, 2]
+    - [t3, ENE, 4]
+    - hull-around:
+      - [f1, SSE, 2]
+      - [f2, NNW, 0]
+    - hull-around:
+      - [f2, WSW, 0, 1]
+      - [f2, SSW, 0, 1]
+    - [t3, NNE, 4]
+    - [f2, SSW, 1]
+    - hull-around:
+      - [t3, ESE, 4]
+      - [t3, SSE, 4]
+    - hull-around:
+      - [f2, ESE, 1, 4]
+      - [f2, SSE, 1, 4]
+    - [t4, ESE, 4]
+    - [f2, ENE, 3, 4]
+  - # Extra webbing between t3 and t4:
+    chunk-size: 4
+    hull-around:
+    - [t4, ENE, 0]
+    - [t4, ESE, 0]
+    - [t3, WSW, 0, 1]
+    - [t3, SSW, 0, 1]
+    - [t3, SSE, 0, 1]
+  - # A flattish plate between t3 and t4:
+    chunk-size: 2
+    hull-around:
+    - [t3, ESE, 0, 4]
+    - [t3, SSE, 0, 4]
+    - [t4, ESE, 0, 4]
+    - [t4, SSE, 0, 4]
+  - # A triangular plate on the lower right of the thumb cluster:
+    hull-around:
+    - [t5, SSE, 0, 1]
+    - [t4, WNW, 0, 1]
+    - [t4, WSW, 0, 1]
+  - # Extra webbing on the lower right of the thumb cluster:
+    hull-around:
+    - [t5, SSW, 0, 1]
+    - [t5, SSE, 0, 1]
+    - [t4, WSW, 0, 1]
+  - # A plate to ground beneath the entire thumb cluster:
+    to-ground: true
+    chunk-size: 2
+    hull-around:
+    - hull-around:
+      - [f0, WSW, 0, 3]
+      - [t1, NNE, 1]
+      - [t1, NNW, 1]
+      - [t1, WNW, 1]
+    - [t0, NNE, 0, 3]
+    - [t0, NNW, 0, 3]
+    - [t0, WNW, 0]
+    - [t0, WSW, 0]
+    - [t5, WNW, 0]
+    - [t5, WSW, 0, 1]
+    - [t5, SSW, 0, 3]
+    - [t4, WSW, 0, 4]
+    - [t4, SSW, 4]
+    - [t4, SSE, 4]
+    - [f2, ENE, 0, 4]
+  foot-plates:
+    include: true
+    height: 4
+    polygons:
+    - points:
+      - key-coordinates: [last, last]
+        key-corner: WNW
+        offset: [7, 0]
+      - key-coordinates: [last, last]
+        key-corner: NNE
+      - key-coordinates: [last, -1]
+        key-corner: ENE
+    - points:
+      - key-coordinates: [last, first]
+        key-corner: SSW
+        offset: [4, 1]
+      - key-coordinates: [last, first]
+        key-corner: NNE
+        offset: [1, -5]
+      - key-coordinates: [last, first]
+        key-corner: ESE
+    - points:
+      - key-coordinates: [2, -3]
+        key-corner: NNW
+      - key-coordinates: [2, -3]
+        key-corner: NNE
+      - key-coordinates: [3, -2]
+        key-corner: SSW
+        offset: [0, 2]
+      - key-coordinates: [2, -2]
+        key-corner: SSE
+        offset: [-3, -5]
 wrist-rest:
   include: false
   style: threaded
@@ -258,35 +385,3 @@ wrist-rest:
       below-lip: 6
     shape:
       grid-size: [4, 62]
-foot-plates:
-  include: true
-  height: 4
-  polygons:
-  - points:
-    - key-coordinates: [last, last]
-      key-corner: WNW
-      offset: [7, 0]
-    - key-coordinates: [last, last]
-      key-corner: NNE
-    - key-coordinates: [last, -1]
-      key-corner: ENE
-  - points:
-    - key-coordinates: [last, first]
-      key-corner: SSW
-      offset: [4, 1]
-    - key-coordinates: [last, first]
-      key-corner: NNE
-      offset: [1, -5]
-    - key-coordinates: [last, first]
-      key-corner: ESE
-  - points:
-    - key-coordinates: [2, -3]
-      key-corner: NNW
-    - key-coordinates: [2, -3]
-      key-corner: NNE
-    - key-coordinates: [3, -2]
-      key-corner: SSW
-      offset: [0, 2]
-    - key-coordinates: [2, -2]
-      key-corner: SSE
-      offset: [-3, -5]

@@ -171,6 +171,27 @@
         (catch java.lang.NumberFormatException _
           (keyword candidate))))))           ; Input like “:first” or “"first"”.
 
+(defn case-tweak-corner
+  "Parse notation for a range of wall segments off a specific key
+  corner."
+  ([alias corner s0] (case-tweak-corner alias corner s0 s0))
+  ([alias corner s0 s1]
+   [(keyword alias) (string-corner corner) (int s0) (int s1)]))
+
+(defn case-tweaks [candidate]
+  "Parse a tweak. This can be a lazy sequence describing a single
+  corner, a lazy sequence of such sequences, or a map. If it is a
+  map, it may contain a similar nested structure."
+  (if (string? (first candidate))
+    (apply case-tweak-corner candidate)
+    (if (map? candidate)
+      ((map-like {:chunk-size int
+                  :to-ground boolean
+                  :highlight boolean
+                  :hull-around case-tweaks})
+       candidate)
+      (map case-tweaks candidate))))
+
 (def key-based-polygons
   (tuple-of
     (map-like
@@ -194,7 +215,20 @@
 (spec/def ::key-coordinates ::2d-flexcoord)
 (spec/def ::point (spec/keys :req-un [::key-coordinates]))
 (spec/def ::points (spec/coll-of ::point))
-(spec/def ::wall-extent (spec/or :partial (set (range 5)) :full #{:full}))
+(spec/def ::wall-segment (spec/int-in 0 5))
+(spec/def ::wall-extent (spec/or :partial ::wall-segment :full #{:full}))
+
+(spec/def ::highlight boolean?)
+(spec/def ::to-ground boolean?)
+(spec/def ::chunk-size (spec/and int? #(> % 1)))
+(spec/def ::hull-around (spec/coll-of (spec/or :leaf ::tweak-plate-leaf
+                                               :map ::tweak-plate-map)))
+(spec/def ::tweak-plate-leaf
+  (spec/or :short (spec/tuple keyword? ::corner ::wall-segment)
+           :long (spec/tuple keyword? ::corner ::wall-segment ::wall-segment)))
+(spec/def ::tweak-plate-map
+  (spec/keys :req-un [::hull-around]
+             :opt-un [::highlight ::chunk-size ::to-ground]))
 (spec/def ::foot-plate (spec/keys :req-un [::points]))
 (spec/def ::foot-plate-polygons (spec/coll-of ::foot-plate))
 
@@ -402,7 +436,7 @@
                 "\n"
                 "This is actually the distance between some pairs of corner "
                 "posts, in the key mount’s frame of reference. It is therefore "
-                "inaccurate.")
+                "inaccurate as a measure of wall thickness on the x-y plane.")
      :default 0
      :parse-fn num}]
    [:parameter [:parameters :wall :bevel]
@@ -637,6 +671,92 @@
      :default {}
      :parse-fn parse-overrides
      :validate [::overrides]}]
+   [:section [:case]
+    "The most important part of the keyboard case is generated from the "
+    "`wall` parameters above. This section deals with lesser features of the "
+    "case."]
+   [:parameter [:case :tweaks]
+    {:help (str "Additional shapes. This is usually needed to bridge gaps "
+                "between the walls of the finger and key clusters.\n"
+                "\n"
+                "The expected value here is an arbitrarily nested structure, "
+                "starting with a list. Each item in the list can follow one of "
+                "the following patterns:\n"
+                "\n"
+                "* A leaf node. This is a 3- or 4-tuple list with contents "
+                "specified below.\n"
+                "* A map, representing an instruction to combine nested "
+                "items in a specific way.\n"
+                "* A list of any combination of the other two types. This type "
+                "exists at the top level, and as the immediate child of each "
+                "map node.\n"
+                "\n"
+                "Each leaf node identifies particular set of key mount corner "
+                "posts. These are identical to the posts used to build the "
+                "walls (see above), but this section gives you greater freedom "
+                "in how to combine them. A leaf node must contain:\n"
+                "\n"
+                "* A key alias defined under `key-clusters`.\n"
+                "* A key corner ID, such as `NNE` for north by north-east.\n"
+                "* A wall segment ID (0 to 4).\n"
+                "\n"
+                "Together, these identify a starting segment. Optionally, a "
+                "leaf node may contain a second segment ID trailing the first. "
+                "In that case, the leaf will represent the geometric hull of "
+                "the first and second indicated segments, plus all in "
+                "between.\n"
+                "\n"
+                "By default, a map node will create a geometric hull around "
+                "its child nodes. However, this behaviour can be modified. The "
+                "following keys are recognized:\n"
+                "\n"
+                "* `to-ground`: If `true`, child nodes will be extended "
+                "vertically down to the ground plane, as with a `full` wall.\n"
+                "* `chunk-size`: Any integer greater than 1. If this is set, "
+                "child nodes will not share a single geometric hull. Instead, "
+                "there will be a sequence of smaller hulls, each encompassing "
+                "this many items.\n"
+                "* `highlight`: If `true`, render the node in OpenSCAD’s "
+                "highlighting style. This is convenient while you work.\n"
+                "* `hull-around`: The list of child nodes. Required.\n"
+                "\n"
+                "In the following example, `A` and `B` are aliases that would "
+                "be defined elsewhere. The example is interpreted to mean that "
+                "a plate should be created stretching from the "
+                "south-by-southeast corner of `A` to the north-by-northeast "
+                "corner of `B`. Due to `chunk-size` 2, that first plate will "
+                "be joined, not hulled, with a second plate from `B` back to a "
+                "different corner of `A`, with a longer stretch of wall "
+                "segments down the corner of `A`.\n"
+                "\n"
+                "```case:\n"
+                "  tweaks:\n"
+                "    - chunk-size: 2\n"
+                "      hull-around:\n"
+                "      - [A, SSE, 0]\n"
+                "      - [B, NNE, 0]\n"
+                "      - [A, SSW, 0, 4]```\n")
+     :default []
+     :parse-fn case-tweaks
+     :validate [::hull-around]}]
+   [:section [:case :foot-plates]
+    "Optional flat surfaces at ground level for adding silicone rubber feet "
+    "or cork strips etc. to the bottom of the keyboard to increase friction "
+    "and/or improve feel, sound and ground clearance."]
+   [:parameter [:case :foot-plates :include]
+    {:help (str "If `true`, include foot plates.")
+     :default false
+     :parse-fn boolean}]
+   [:parameter [:case :foot-plates :height]
+    {:help (str "The height in mm of each mounting plate.")
+     :default 4
+     :parse-fn num}]
+   [:parameter [:case :foot-plates :polygons]
+    {:help (str "A list describing the horizontal shape, size and "
+                "position of each mounting plate as a polygon.")
+     :default []
+     :parse-fn key-based-polygons
+     :validate [::foot-plate-polygons]}]
    [:section [:wrist-rest]
     "An optional extension to support the user’s wrist."]
    [:parameter [:wrist-rest :include]
@@ -785,25 +905,7 @@
     {:help (str "The height in mm of the land bridge between the "
                 "case and the plinth.")
      :default 14
-     :parse-fn num}]
-   [:section [:foot-plates]
-    "Optional flat surfaces at ground level for adding silicone rubber feet "
-    "or cork strips etc. to the bottom of the keyboard to increase friction "
-    "and/or improve feel, sound and ground clearance."]
-   [:parameter [:foot-plates :include]
-    {:help (str "If `true`, include foot plates.")
-     :default false
-     :parse-fn boolean}]
-   [:parameter [:foot-plates :height]
-    {:help (str "The height in mm of each mounting plate.")
-     :default 4
-     :parse-fn num}]
-   [:parameter [:foot-plates :polygons]
-    {:help (str "A list describing the horizontal shape, size and "
-                "position of each mounting plate as a polygon.")
-     :default []
-     :parse-fn key-based-polygons
-     :validate [::foot-plate-polygons]}]])
+     :parse-fn num}]])
 
 (def master
   "Collected structural metadata for a user configuration."

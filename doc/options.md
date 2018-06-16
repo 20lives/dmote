@@ -51,6 +51,10 @@ A list of key columns. Columns are aligned with the user’s fingers. Each colum
 * `rows-above-home`: An integer specifying the amount of keys on the far side of the home row in the column. If this parameter is omitted, the effective value will be zero.
 * `rows-below-home`: An integer specifying the amount of keys on the near side of the home row in the column. If this parameter is omitted, the effective value will be zero.
 
+#### Parameter `aliases`
+
+A map of short names to specific keys by coordinate pair. Such aliases are for use elsewhere in the configuration.
+
 ### Section `thumb`
 
 A cluster of keys just for the thumb.
@@ -59,9 +63,9 @@ A cluster of keys just for the thumb.
 
 The thumb cluster is positioned in relation to the finger cluster.
 
-##### Parameter `key`
+##### Parameter `key-alias`
 
-A finger key coordinate pair.
+A finger key coordinate pair as named under `aliases` above.
 
 ##### Parameter `offset`
 
@@ -74,6 +78,10 @@ As for the finger cluster.
 #### Parameter `matrix-columns`
 
 As for the finger cluster.
+
+#### Parameter `aliases`
+
+As for the finger cluster. Note, however, that aliases must be unique even between clusters.
 
 ## Section `by-key`
 
@@ -125,7 +133,7 @@ An angle in radians. Set at a high level, this controls the general front-to-bac
 
 ###### Parameter `intrinsic`
 
-An angle in radians. Intrinsic pitching occurs early in key placement. It is typically intended to produce a tactile break between two rows of keys, as in the typewriter-like terracing common on flat keyboards with OEM-profile caps.
+An angle in radians. Intrinsic pitching occurs early in key placement. It is typically intended to produce a tactile break between two rows of keys, as in the typewriter-like terracing common on flat keyboards with OEM-profile or similarly angled caps.
 
 ###### Parameter `progressive`
 
@@ -195,7 +203,7 @@ There is one corner post at each actual corner of every key mount. More posts ar
 
 A distance in mm.
 
-This is actually the distance between some pairs of corner posts, in the key mount’s frame of reference. It is therefore inaccurate.
+This is actually the distance between some pairs of corner posts, in the key mount’s frame of reference. It is therefore inaccurate as a measure of wall thickness on the x-y plane.
 
 ##### Parameter `bevel`
 
@@ -295,6 +303,62 @@ In the following example, the parameter `P`, which is not really supported, will
             first:
               parameters:
                 P: false```
+
+## Section `case`
+
+The most important part of the keyboard case is generated from the `wall` parameters above. This section deals with lesser features of the case.
+
+### Parameter `tweaks`
+
+Additional shapes. This is usually needed to bridge gaps between the walls of the finger and key clusters.
+
+The expected value here is an arbitrarily nested structure, starting with a list. Each item in the list can follow one of the following patterns:
+
+* A leaf node. This is a 3- or 4-tuple list with contents specified below.
+* A map, representing an instruction to combine nested items in a specific way.
+* A list of any combination of the other two types. This type exists at the top level, and as the immediate child of each map node.
+
+Each leaf node identifies particular set of key mount corner posts. These are identical to the posts used to build the walls (see above), but this section gives you greater freedom in how to combine them. A leaf node must contain:
+
+* A key alias defined under `key-clusters`.
+* A key corner ID, such as `NNE` for north by north-east.
+* A wall segment ID (0 to 4).
+
+Together, these identify a starting segment. Optionally, a leaf node may contain a second segment ID trailing the first. In that case, the leaf will represent the geometric hull of the first and second indicated segments, plus all in between.
+
+By default, a map node will create a geometric hull around its child nodes. However, this behaviour can be modified. The following keys are recognized:
+
+* `to-ground`: If `true`, child nodes will be extended vertically down to the ground plane, as with a `full` wall.
+* `chunk-size`: Any integer greater than 1. If this is set, child nodes will not share a single geometric hull. Instead, there will be a sequence of smaller hulls, each encompassing this many items.
+* `highlight`: If `true`, render the node in OpenSCAD’s highlighting style. This is convenient while you work.
+* `hull-around`: The list of child nodes. Required.
+
+In the following example, `A` and `B` are aliases that would be defined elsewhere. The example is interpreted to mean that a plate should be created stretching from the south-by-southeast corner of `A` to the north-by-northeast corner of `B`. Due to `chunk-size` 2, that first plate will be joined, not hulled, with a second plate from `B` back to a different corner of `A`, with a longer stretch of wall segments down the corner of `A`.
+
+```case:
+  tweaks:
+    - chunk-size: 2
+      hull-around:
+      - [A, SSE, 0]
+      - [B, NNE, 0]
+      - [A, SSW, 0, 4]```
+
+
+### Section `foot-plates`
+
+Optional flat surfaces at ground level for adding silicone rubber feet or cork strips etc. to the bottom of the keyboard to increase friction and/or improve feel, sound and ground clearance.
+
+#### Parameter `include`
+
+If `true`, include foot plates.
+
+#### Parameter `height`
+
+The height in mm of each mounting plate.
+
+#### Parameter `polygons`
+
+A list describing the horizontal shape, size and position of each mounting plate as a polygon.
 
 ## Section `wrist-rest`
 
@@ -438,19 +502,3 @@ This is only relevant with the `solid` style of wrist rest.
 #### Parameter `height`
 
 The height in mm of the land bridge between the case and the plinth.
-
-## Section `foot-plates`
-
-Optional flat surfaces at ground level for adding silicone rubber feet or cork strips etc. to the bottom of the keyboard to increase friction and/or improve feel, sound and ground clearance.
-
-### Parameter `include`
-
-If `true`, include foot plates.
-
-### Parameter `height`
-
-The height in mm of each mounting plate.
-
-### Parameter `polygons`
-
-A list describing the horizontal shape, size and position of each mounting plate as a polygon.

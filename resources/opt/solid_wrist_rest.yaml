@@ -1,29 +1,30 @@
 # Configuration fragment for a solid bridge between the case and a wrist rest.
 
+case:
+  foot-plates:
+    include: true
+    polygons:
+    - points:
+      - key-coordinates: [5, 0]
+        key-corner: WNW
+        offset: [7, 0]
+      - key-coordinates: [5, 0]
+        key-corner: NNE
+      - key-coordinates: [5, -1]
+        key-corner: ENE
+    - points:
+      - key-coordinates: [2, -3]
+        key-corner: NNW
+      - key-coordinates: [2, -3]
+        key-corner: NNE
+      - key-coordinates: [3, -2]
+        key-corner: SSW
+        offset: [0, 2]
+      - key-coordinates: [2, -2]
+        key-corner: SSE
+        offset: [-3, -5]
 wrist-rest:
   include: true
   style: solid
   solid-bridge:
     height: 14
-foot-plates:
-  include: true
-  polygons:
-  - points:
-    - key-coordinates: [5, 0]
-      key-corner: WNW
-      offset: [7, 0]
-    - key-coordinates: [5, 0]
-      key-corner: NNE
-    - key-coordinates: [5, -1]
-      key-corner: ENE
-  - points:
-    - key-coordinates: [2, -3]
-      key-corner: NNW
-    - key-coordinates: [2, -3]
-      key-corner: NNE
-    - key-coordinates: [3, -2]
-      key-corner: SSW
-      offset: [0, 2]
-    - key-coordinates: [2, -2]
-      key-corner: SSE
-      offset: [-3, -5]
