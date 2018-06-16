@@ -46,18 +46,18 @@
 (def keyswitch-overhang-y alps-overhang-y)
 (def keyswitch-cutout-height alps-underhang-z)
 
-(defn resolve-flex [getopt cluster [column row]]
+(defn resolve-flex [getopt cluster [c0 r0]]
   "Resolve supported keywords in a coordinate pair to names.
   This allows for integers as well as the keywords :first and :last, meaning
   first and last in the column or row."
-  (let [rows (getopt :key-clusters cluster :derived :row-range)
-        columns (getopt :key-clusters cluster :derived :column-range)
-        resolve (fn [r v] (case v :first (first r) :last (last r) v))]
-   (map resolve [columns rows] [column row])))
+  (let [columns (getopt :key-clusters cluster :derived :column-range)
+        c1 (case c0 :first (first columns) :last (last columns) c0)
+        rows (getopt :key-clusters cluster :derived :row-indices-by-column c1)]
+   [c1 (case r0 :first (first rows) :last (last rows) r0)]))
 
 (defn match-flex [getopt cluster & coords]
-  "Check if two coordinate pairs are the same, with keyword support."
-  (apply = (map resolve-flex coords)))
+  "Check if coordinate pairs are the same, with keyword support."
+  (apply = (map (partial resolve-flex getopt cluster) coords)))
 
 (defn most-specific-getter [getopt end-path]
   "Return a function that will find the most specific configuration value
@@ -141,19 +141,7 @@
             (fn [r] [r (filter #(key-requested? [% r]) column-range)])
             row-range)
         coordinates-by-row
-          (M (fn [[r cols]] [r (for [c cols] [c r])]) column-indices-by-row)
-        resolve-coordinates
-          (fn [[column row]]
-            "Resolve the keywords :first and :last to absolute indices."
-            (let [rc (case column
-                       :first (first column-range)
-                       :last (last column-range)
-                       column)
-                  rr (case row
-                       :first (first (row-indices-by-column rc))
-                       :last (last (row-indices-by-column rc))
-                       row)]
-              [rc rr]))]
+          (M (fn [[r cols]] [r (for [c cols] [c r])]) column-indices-by-row)]
    {:last-column last-column
     :column-range column-range
     :row-range row-range
@@ -162,8 +150,22 @@
     :row-indices-by-column row-indices-by-column
     :coordinates-by-column coordinates-by-column
     :column-indices-by-row column-indices-by-row
-    :coordinates-by-row coordinates-by-row
-    :resolve-coordinates resolve-coordinates}))
+    :coordinates-by-row coordinates-by-row}))
+
+(defn resolve-aliases [getopt]
+  "Unify cluster-specific key aliases into a single global map that preserves
+  their cluster of origin and resolves symbolic coordinates to absolute values."
+  {:aliases
+    (into {}
+      (mapcat
+        (fn [cluster]
+          (into {}
+            (map
+              (fn [[alias flex]]
+                [alias {:cluster cluster
+                        :coordinates (resolve-flex getopt cluster flex)}]))
+            (getopt :key-clusters cluster :aliases)))
+        [:finger :thumb]))})
 
 (defn print-matrix [cluster getopt]
   "Print a schematic picture of a key cluster. For your REPL."
@@ -301,10 +303,9 @@
             identity
             (fn [obj]
               (let [section (partial getopt :key-clusters cluster :position)
-                    finger-coord (section :key)
-                    finger-side (resolve-flex getopt :finger finger-coord)
-                    get-position #(cluster-position getopt %1 %2 [0 0 0])
-                    finger-pos (get-position :finger finger-side)
+                    alias (getopt :key-clusters :derived :aliases (section :key-alias))
+                    finger-pos (cluster-position  getopt (:cluster alias)
+                                 (:coordinates alias) [0 0 0])
                     final (vec (map + finger-pos (section :offset)))]
                (translate-fn final obj))))]
     (->> subject

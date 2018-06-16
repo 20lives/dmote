@@ -20,15 +20,26 @@ key-clusters:
       rows-below-home: 2
     - rows-below-home: 2
     - rows-below-home: 2
+    aliases:
+      f0: [0, first]
+      f1: [1, first]
+      f2: [2, first]
   thumb:
     position:
-      key: [1, first]
-      offset: [-15, 0, -12]
+      key-alias: f1
+      offset: [-15, -20, 2]
     matrix-columns:
     - rows-above-home: 1
     - rows-above-home: 1
       rows-below-home: 1
     - rows-above-home: 1
+    aliases:
+      t0: [0, last]
+      t1: [1, last]
+      t2: [last, last]
+      t3: [last, first]
+      t4: [1, first]
+      t5: [0, first]
 by-key:
   parameters:
     channel:

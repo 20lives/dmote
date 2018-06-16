@@ -559,15 +559,20 @@
                 "parameter is omitted, the effective value will be zero.")
      :default [{}]
      :parse-fn vec}]
+   [:parameter [:key-clusters :finger :aliases]
+    {:help (str "A map of short names to specific keys by coordinate pair. "
+                "Such aliases are for use elsewhere in the configuration.")
+     :default {:origin [0 0]}
+     :parse-fn (map-of keyword (tuple-of keyword-or-integer))
+     :validate [(spec/map-of keyword? ::2d-flexcoord)]}]
    [:section [:key-clusters :thumb]
     "A cluster of keys just for the thumb."]
    [:section [:key-clusters :thumb :position]
     "The thumb cluster is positioned in relation to the finger cluster."]
-   [:parameter [:key-clusters :thumb :position :key]
-    {:help (str "A finger key coordinate pair.")
-     :default [0 0]
-     :parse-fn (tuple-of keyword-or-integer)
-     :validate [::2d-flexcoord]}]
+   [:parameter [:key-clusters :thumb :position :key-alias]
+    {:help (str "A finger key coordinate pair as named under `aliases` above.")
+     :default :origin
+     :parse-fn keyword}]
    [:parameter [:key-clusters :thumb :position :offset]
     {:help (str "A 3-dimensional offset in mm from the indicated key.")
      :default [0 0 0]
@@ -582,6 +587,12 @@
     {:help (str "As for the finger cluster.")
      :default [{}]
      :parse-fn vec}]
+   [:parameter [:key-clusters :thumb :aliases]
+    {:help (str "As for the finger cluster. Note, however, that aliases must "
+                "be unique even between clusters.")
+     :default {}
+     :parse-fn (map-of keyword (tuple-of keyword-or-integer))
+     :validate [(spec/map-of keyword? ::2d-flexcoord)]}]
    [:nest [:by-key] nested-raws
     "This section is special. It’s nested for all levels of specificity."]
    [:parameter [:by-key :clusters]

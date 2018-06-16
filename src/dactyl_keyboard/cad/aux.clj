@@ -298,7 +298,7 @@
   a two-dimensional offset for tweaking."
    (letfn [(point [{coord :key-coordinates directions :key-corner offset :offset
                     :or {offset [0 0]}}]
-             (let [res (getopt :key-clusters :finger :derived :resolve-coordinates)
+             (let [res (partial resolve-flex getopt :finger)
                    base (take 2 (wall-corner-position
                                   getopt :finger (res coord) directions))]
                (vec (map + base offset))))

@@ -98,6 +98,7 @@
     ;; Mind the order. One of these may depend upon earlier steps.
     [[[:key-clusters :finger] (partial key/cluster-properties :finger)]
      [[:key-clusters :thumb] (partial key/cluster-properties :thumb)]
+     [[:key-clusters] key/resolve-aliases]
      [[:keycaps] key/keycap-properties]
      [[:wrist-rest] wrist/derive-properties]]))
 
