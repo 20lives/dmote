@@ -16,15 +16,13 @@
             [dactyl-keyboard.cad.key :refer :all]
             [dactyl-keyboard.cad.body :refer :all]))
 
-
 (defn- post [key directions segment & segments]
   "A convenience function for specifying a wall segment."
-  (let [[getopt offsetter cluster coordinates] key
-        offsets (offsetter coordinates directions)]
+  (let [[getopt cluster coordinates] key]
    (if (empty? segments)
      (cluster-place getopt cluster coordinates
        (translate
-         (wall-segment-offset segment (first directions) offsets)
+         (wall-segment-offset getopt cluster coordinates (first directions segment))
          (mount-corner-post directions)))
      (apply hull (map (partial post key directions) (conj segments segment))))))
 
@@ -34,15 +32,15 @@
   difficult to parameterize."
   (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
         first-row (fn [column] (first (by-col column)))
-        f0 [getopt finger-key-wall-offsets :finger (first-row 0)]
-        f1 [getopt finger-key-wall-offsets :finger (first-row 1)]
-        f2 [getopt finger-key-wall-offsets :finger (first-row 2)]
-        t0 [getopt thumb-key-wall-offsets :thumb [-1 -2]]
-        t1 [getopt thumb-key-wall-offsets :thumb [-1 -1]]
-        t2 [getopt thumb-key-wall-offsets :thumb [-1 0]]
-        t3 [getopt thumb-key-wall-offsets :thumb [0 0]]
-        t4 [getopt thumb-key-wall-offsets :thumb [0 -1]]
-        t5 [getopt thumb-key-wall-offsets :thumb [0 -2]]]
+        f0 [getopt :finger (first-row 0)]
+        f1 [getopt :finger (first-row 1)]
+        f2 [getopt :finger (first-row 2)]
+        t0 [getopt :thumb [-1 -2]]
+        t1 [getopt :thumb [-1 -1]]
+        t2 [getopt :thumb [-1 0]]
+        t3 [getopt :thumb [0 0]]
+        t4 [getopt :thumb [0 -1]]
+        t5 [getopt :thumb [0 -2]]]
     (union
       ;; An extension of the wall of t0:
       (hull

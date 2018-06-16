@@ -44,63 +44,14 @@
 ;;; scad-clj. The ‘deg->rad’ function can be called to convert from degrees.
 
 
-;;;;;;;;;;;;;;;;
-;; Key Layout ;;
-;;;;;;;;;;;;;;;;
-
-;; Thumb key placement is similar to finger key placement:
-(def thumb-cluster-offset-from-fingers [10 1 6])
-(def thumb-cluster-column-offset [0 0 2])
-(def thumb-cluster-rotation [(/ π 3) 0 (/ π -12)])
-;; Where to connect to finger cluster.
-(def thumb-connection-column 1)
-
-
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Case Dimensions ;;
 ;;;;;;;;;;;;;;;;;;;;;
 
-;; The size of the keyboard case is determined primarily by the key layout,
-;; but there are other parameters for the thickness of the shell etc.
-
 ;; Switch mount plates and the webbing between them have configurable thickness.
 (def plate-thickness 3)
 (def web-thickness plate-thickness)
-
-;; Wall shape and size:
-;; These settings control the skirt of walling beneath each key mount on the
-;; edges of the board. These walls are made up of hulls wrapping sets of
-;; corner posts.
 (def corner-post-width 1.3)
-;; There is one corner post at each actual corner of every switch mount, and
-;; more posts displaced from it, going down the sides. These anchor the
-;; different parts of a wall relative to the switch mount. Their placement
-;; is affected by the way the mount is rotated for the curvature of the board.
-;; Offset are therefore in the mount’s frame of reference, not in the absolute
-;; coordinate system.
-(defn finger-key-wall-offsets [coordinates directions]
-  "Return horizontal and vertical offsets from a finger key mount.
-  These are needed for building a wall around the specific key mount."
-  (let [[column row] coordinates]
-   (if (>= row 2)
-     [0 -13]  ; Extra space for ease of soldering at the high far end.
-     (case coordinates
-       [1 -2] [2 4]
-       [2 -3] [0 (if (some #{:south} directions) -8 -16)]
-       [4 1] [0 -1]
-       [0 -10]))))
-
-(defn thumb-key-wall-offsets [coordinates corner]
-  (let [[column row] coordinates]
-   (case column
-     -1 [0 -8]
-     [0 -10])))
-
-;; Ultimately, from a set of posts placed by the offsets and the wall-thickness
-;; parameter, the wall drops down to the floor. The actual thickness of the
-;; wall at that point is a function of post size and the angle of the nearest
-;; switch mount, as well as the thickness parameter itself.
-(def wall-thickness 1)
 
 
 ;;;;;;;;;;;;;;;;
@@ -208,7 +159,7 @@
             [(key-parser key) (value-parser value)])]
     (fn [candidate] (into {} (map parse-item candidate)))))
 
-(defn flexcoord [candidate]
+(defn keyword-or-integer [candidate]
   "A parser that takes a number as an integer or a string as a keyword.
   This works around a peculiar facet of clj-yaml, wherein integer keys to
   maps are parsed as keywords."
@@ -225,7 +176,7 @@
     (map-like
       {:points (tuple-of
                  (map-like
-                   {:key-coordinates (tuple-of flexcoord)
+                   {:key-coordinates (tuple-of keyword-or-integer)
                     :key-corner string-corner
                     :offset vec}))})))
 
@@ -235,8 +186,7 @@
 (spec/def ::supported-cluster-style #{:standard :orthographic})
 (spec/def ::supported-wrist-rest-style #{:threaded :solid})
 
-(spec/def ::flexcoord (spec/or :absolute int?
-                               :extreme #{:first :last}))
+(spec/def ::flexcoord (spec/or :absolute int? :extreme #{:first :last}))
 (spec/def ::2d-flexcoord (spec/coll-of ::flexcoord :count 2))
 (spec/def ::3d-point (spec/coll-of number? :count 3))
 (spec/def ::corner (set (vals generics/keyword-to-directions)))
@@ -244,13 +194,15 @@
 (spec/def ::key-coordinates ::2d-flexcoord)
 (spec/def ::point (spec/keys :req-un [::key-coordinates]))
 (spec/def ::points (spec/coll-of ::point))
+(spec/def ::wall-extent (spec/or :partial (set (range 5)) :full #{:full}))
 (spec/def ::foot-plate (spec/keys :req-un [::points]))
 (spec/def ::foot-plate-polygons (spec/coll-of ::foot-plate))
 
 ;; Composition of parsing and validation:
 
 ;; Leaf metadata imitates clojure.tools.cli with extras.
-(spec/def ::parameter-descriptor #{:heading-template :help :default :parse-fn :validate})
+(spec/def ::parameter-descriptor
+  #{:heading-template :help :default :parse-fn :validate})
 (spec/def ::parameter-spec (spec/map-of ::parameter-descriptor some?))
 
 (defn parse-leaf [nominal candidate]
@@ -355,7 +307,8 @@
     {:help (str "An angle in radians. Intrinsic pitching occurs early in key "
                 "placement. It is typically intended to produce a tactile "
                 "break between two rows of keys, as in the typewriter-like "
-                "terracing common on flat keyboards with OEM-profile caps.")
+                "terracing common on flat keyboards with OEM-profile or "
+                "similarly angled caps.")
      :default 0
      :parse-fn num}]
    [:parameter [:parameters :layout :pitch :progressive]
@@ -431,7 +384,92 @@
     {:help (str "The width in mm of extra negative space around the edges of "
                 "a keycap, on all sides.")
      :default 0
-     :parse-fn num}]])
+     :parse-fn num}]
+   [:section [:parameters :wall]
+    "The walls of the keyboard case support the key mounts and protect the "
+    "electronics. They are generated by an algorithm that walks around each "
+    "key cluster.\n"
+    "\n"
+    "This section determines the shape of the case wall, specifically "
+    "the skirt around each key mount along the edges of the board. These skirts "
+    "are made up of geometric hulls wrapping sets of corner posts.\n"
+    "\n"
+    "There is one corner post at each actual corner of every key mount. "
+    "More posts are displaced from it, going down the sides. Their placement "
+    "is affected by the way the key mounts are rotated etc."]
+   [:parameter [:parameters :wall :thickness]
+    {:help (str "A distance in mm.\n"
+                "\n"
+                "This is actually the distance between some pairs of corner "
+                "posts, in the key mount’s frame of reference. It is therefore "
+                "inaccurate.")
+     :default 0
+     :parse-fn num}]
+   [:parameter [:parameters :wall :bevel]
+    {:help (str "A distance in mm.\n"
+                "\n"
+                "This is applied at the very top of a wall, making up the "
+                "difference between wall segments 0 and 1. It is applied again "
+                "at the bottom, making up the difference between segments "
+                "3 and 4.")
+     :default 0
+     :parse-fn num}]
+   [:section [:parameters :wall :north]
+    "Throughout the program, “north” refers to the side of a key "
+    "facing directly away from the user, barring yaw.\n"
+    "\n"
+    "This section describes the shape of the wall on the north "
+    "side of the keyboard. There are identical sections for the "
+    "other cardinal directions."]
+   [:parameter [:parameters :wall :north :extent]
+    {:help (str "Two types of values are permitted here:\n\n"
+                "* The keyword `full`. This means a complete "
+                "wall extending from the key mount all the way down to the "
+                "ground via segments numbered 0 through 4 and a vertical drop "
+                "thereafter.\n"
+                "* An integer corresponding to the last wall segment to be "
+                "included. A zero means there will be no wall. No matter the "
+                "number, there will be no vertical drop to the floor.")
+     :default :full
+     :parse-fn keyword-or-integer
+     :validate [::wall-extent]}]
+   [:parameter [:parameters :wall :north :parallel]
+    {:help (str "A distance in mm. The later wall segments extend this far "
+                "away from the corners of their key mount, on its plane.")
+     :default 0
+     :parse-fn num}]
+   [:parameter [:parameters :wall :north :perpendicular]
+    {:help (str "A distance in mm. The later wall segments extend this far "
+                "away from the corners of their key mount, away from its plane.")
+     :default 0
+     :parse-fn num}]
+   [:section [:parameters :wall :east] "See `north`."]
+   [:parameter [:parameters :wall :east :extent]
+    {:default :full :parse-fn keyword-or-integer :validate [::wall-extent]}]
+   [:parameter [:parameters :wall :east :parallel]
+    {:default 0 :parse-fn num}]
+   [:parameter [:parameters :wall :east :perpendicular]
+    {:default 0 :parse-fn num}]
+   [:section [:parameters :wall :south] "See `north`."]
+   [:parameter [:parameters :wall :south :extent]
+    {:default :full :parse-fn keyword-or-integer :validate [::wall-extent]}]
+   [:parameter [:parameters :wall :south :parallel]
+    {:default 0 :parse-fn num}]
+   [:parameter [:parameters :wall :south :perpendicular]
+    {:default 0 :parse-fn num}]
+   [:section [:parameters :wall :west] "See `north`."]
+   [:parameter [:parameters :wall :west :extent]
+    {:default :full :parse-fn keyword-or-integer :validate [::wall-extent]}]
+   [:parameter [:parameters :wall :west :parallel]
+    {:default 0 :parse-fn num}]
+   [:parameter [:parameters :wall :west :perpendicular]
+    {:default 0 :parse-fn num}]])
+
+
+;; Ultimately, from a set of posts placed by the offsets and the wall-thickness
+;; parameter, the wall drops down to the floor. The actual thickness of the
+;; wall at that point is a function of post size and the angle of the nearest
+;; switch mount, as well as the thickness parameter itself.
 
 (def nested-cooked (reduce coalesce (ordered-map) nested-raws))
 
@@ -444,12 +482,12 @@
         {:parameters iteration
          :columns
           (map-of
-            flexcoord
+            keyword-or-integer
             (map-like
               {:parameters iteration
                :rows
                  (map-of
-                   flexcoord
+                   keyword-or-integer
                    (map-like {:parameters iteration}))}))}))))
 
 ;; A predicate made from nested-cooked is applied in validation of nested appearances.
@@ -528,7 +566,7 @@
    [:parameter [:key-clusters :thumb :position :key]
     {:help (str "A finger key coordinate pair.")
      :default [0 0]
-     :parse-fn (tuple-of flexcoord)
+     :parse-fn (tuple-of keyword-or-integer)
      :validate [::2d-flexcoord]}]
    [:parameter [:key-clusters :thumb :position :offset]
     {:help (str "A 3-dimensional offset in mm from the indicated key.")

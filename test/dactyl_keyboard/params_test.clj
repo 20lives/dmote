@@ -6,13 +6,13 @@
 
 (deftest test-coordinate-parser
   (testing "single integer flexcoord"
-    (is (= (params/flexcoord 1) 1)))
+    (is (= (params/keyword-or-integer 1) 1)))
   (testing "single string flexcoord"
-    (is (= (params/flexcoord "abc") :abc)))
+    (is (= (params/keyword-or-integer "abc") :abc)))
   (testing "single nonsensical flexcoord"
-    (is (thrown? java.lang.ClassCastException (params/flexcoord {}))))
+    (is (thrown? java.lang.ClassCastException (params/keyword-or-integer {}))))
   (testing "string pair"
-    (is (= ((params/tuple-of params/flexcoord) '("a" "b")) [:a :b]))))
+    (is (= ((params/tuple-of params/keyword-or-integer) '("a" "b")) [:a :b]))))
 
 (deftest test-parameter-spec
   (testing "empty"

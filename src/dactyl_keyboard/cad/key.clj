@@ -108,6 +108,9 @@
             prio (reduce good-source [] (reverse sources))]
         (if-let [non-default (some try-get prio)] non-default (get-default))))))
 
+(defn most-specific-option [getopt end-path cluster coord]
+  ((most-specific-getter getopt end-path) cluster coord))
+
 (defn cluster-properties [cluster getopt]
   "Derive some properties about a specific key cluster from raw configuration info."
   (let [matrix (getopt :key-clusters cluster :matrix-columns)
@@ -161,9 +164,6 @@
     :column-indices-by-row column-indices-by-row
     :coordinates-by-row coordinates-by-row
     :resolve-coordinates resolve-coordinates}))
-
-(defn most-specific-option [getopt end-path cluster coord]
-  ((most-specific-getter getopt end-path) cluster coord))
 
 (defn print-matrix [cluster getopt]
   "Print a schematic picture of a key cluster. For your REPL."

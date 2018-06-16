@@ -22,8 +22,8 @@ key-clusters:
     - rows-below-home: 2
   thumb:
     position:
-      key: [first, first]
-      offset: [-5, -5, -25]
+      key: [1, first]
+      offset: [-15, 0, -12]
     matrix-columns:
     - rows-above-home: 1
     - rows-above-home: 1
@@ -31,14 +31,21 @@ key-clusters:
     - rows-above-home: 1
 by-key:
   parameters:
-    layout:
-      matrix:
-        neutral:
-          row: 0
     channel:
       height: 20
       top-width: 10
       margin: 0.5
+    wall:
+      thickness: 1
+      bevel: 1
+      north:
+        perpendicular: -8
+      east:
+        perpendicular: -8
+      south:
+        perpendicular: -8
+      west:
+        perpendicular: -8
   clusters:
     finger:
       parameters:
@@ -58,7 +65,23 @@ by-key:
           translation:
             late: [0, 0, 7]
       columns:
+        "0":
+          parameters:
+            wall:
+              south:
+                extent: 3
+                perpendicular: 8
         "1":
+          parameters:
+            wall:
+              south:
+                extent: 3
+                parallel: 3
+                perpendicular: 8
+              west:
+                extent: 3
+                parallel: 3
+                perpendicular: 8
           rows:
             first:
               parameters:
@@ -66,7 +89,7 @@ by-key:
                   pitch:
                     intrinsic: -0.1
                   translation:
-                    early: [-0.5, -2, 3]
+                    early: [-1, -2, 3]
                 channel:
                   top-width: 15
             "0":
@@ -80,6 +103,11 @@ by-key:
             layout:
               translation:
                 mid: [0, 3, -4]
+            wall:
+              south:
+                extent: 0
+              west:
+                extent: 0
           rows:
             "-3":
               parameters:
@@ -108,7 +136,7 @@ by-key:
                   pitch:
                     intrinsic: -0.1
                   translation:
-                    early: [0.5, -2, 3]
+                    early: [1, -2, 3]
             "0":
               parameters:
                 layout:
@@ -142,24 +170,68 @@ by-key:
           matrix:
             neutral:
               column: 1
+            separation:
+              column: 0.5
           roll:
-            base: -1
+            base: -1.1
             progressive: 0.3
           pitch:
+            base: -0.4
             progressive: 0.3
           yaw:
-            base: 1.04
+            base: 1
+        wall:
+          north:
+            extent: 0
+          east:
+            extent: 4
+          south:
+            extent: 4
+          west:
+            extent: 0
       columns:
         "0":
           parameters:
             layout:
               translation:
-                mid: [0, -10, 0]
+                mid: [0, -4, 0]
+          rows:
+            "0":
+              parameters:
+                layout:
+                  translation:
+                    early: [0, -2, 0]
+                  pitch:
+                    intrinsic: -0.25
+        "1":
+          parameters:
+            layout:
+              translation:
+                mid: [0, 3, 0]
+          rows:
+            "-1":
+              parameters:
+                layout:
+                  translation:
+                    early: [0, 1, -4]
+            "1":
+              parameters:
+                layout:
+                  translation:
+                    early: [0, 0, 4]
         "2":
           parameters:
             layout:
               translation:
-                mid: [0, -10, 0]
+                mid: [0, -4, 0]
+          rows:
+            "0":
+              parameters:
+                layout:
+                  translation:
+                    early: [0, -2, 0]
+                  pitch:
+                    intrinsic: -0.25
 wrist-rest:
   include: false
   style: threaded

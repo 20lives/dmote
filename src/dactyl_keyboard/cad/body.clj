@@ -84,72 +84,49 @@
 ;; Wall-Building Utilities ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn wall-segment-offset [segment cardinal-direction [xy-offset z-offset]]
-  (let [{dx :dx dy :dy} (cardinal-direction compass-to-grid)
-        one-or-negative-one (if (zero? z-offset) 1 (/ z-offset (abs z-offset)))]
+(defn wall-segment-offset [getopt cluster coord cardinal-direction segment]
+  (let [most #(most-specific-option getopt (concat [:wall] %) cluster coord)
+        thickness (most [:thickness])
+        bevel-factor (most [:bevel])
+        parallel (most [cardinal-direction :parallel])
+        perpendicular (most [cardinal-direction :perpendicular])
+        {dx :dx dy :dy} (cardinal-direction compass-to-grid)
+        bevel
+          (if (zero? perpendicular)
+            bevel-factor
+            (* bevel-factor
+               (/ perpendicular (abs perpendicular))))]
    (case segment
      0 [0 0 0]
-     1 [(* dx wall-thickness)
-        (* dy wall-thickness)
-        one-or-negative-one]
-     2 [(* dx xy-offset)
-        (* dy xy-offset)
-        z-offset]
-     3 [(* dx (+ xy-offset wall-thickness))
-        (* dy (+ xy-offset wall-thickness))
-        z-offset]
-     4 [(* dx (+ xy-offset))
-        (* dy (+ xy-offset))
-        (+ z-offset one-or-negative-one)])))
+     1 [(* dx thickness) (* dy thickness) bevel]
+     2 [(* dx parallel) (* dy parallel) perpendicular]
+     3 [(* dx (+ parallel thickness))
+        (* dy (+ parallel thickness))
+        perpendicular]
+     4 [(* dx (+ parallel))
+        (* dy (+ parallel))
+        (+ perpendicular bevel)])))
 
-
-(defn wall-element [segment [placer direction post offsets]]
-  (placer (translate (wall-segment-offset segment direction offsets) post)))
-
-(defn wall-combinations [elements points]
-  (for [e elements p points] (wall-element e p)))
-
-(defn dropping-bevel [& points]
-  "The bevelled portion of a wall at the very top."
-  (apply hull (wall-combinations [0 1] points)))
-
-(defn wall-skirt [& points]
-  "The portion of a wall that follows what it’s built around."
-  (apply hull (wall-combinations [0 1 2 3] points)))
-
-(defn wall-hem [& points]
-  "The hem of a wall’s skirt including a vertical section to the floor."
-  (apply bottom-hull (wall-combinations [2 3 4] points)))
-
-(defn bubble [& points]
-  "A hem like a bubble skirt, without a vertical section."
-  (apply hull (wall-combinations [3 4] points)))
-
-(defn wall-to-ground [point0 point1]
-  (union
-    (wall-skirt point0 point1)
-    (wall-hem point0 point1)))
-
-(defn finger-wall-corner-offset [coordinates directions]
+(defn wall-corner-offset [getopt cluster coordinates directions]
   "Combined [x y z] offset from the center of a switch mount.
   This goes to one corner of the hem of the mount’s skirt of walling
-  and is used mainly for finding the base of walls."
+  and is used mainly for finding the base of full walls."
   (vec
     (map +
-      (wall-segment-offset
-        3 (first directions) (finger-key-wall-offsets coordinates directions))
+      (wall-segment-offset getopt cluster coordinates (first directions) 3)
       (mount-corner-offset directions))))
 
-(defn finger-wall-corner-position [getopt coordinates directions]
+(defn wall-corner-position [getopt cluster coordinates directions]
   "Absolute position of the lower wall around a finger key."
-  (cluster-position getopt :finger coordinates
-    (finger-wall-corner-offset coordinates directions)))
+  (cluster-position getopt cluster coordinates
+    (wall-corner-offset getopt cluster coordinates directions)))
 
-(defn finger-wall-offset [coordinates direction]
-  "Combined [x y z] offset to the center of a wall.
+(defn wall-slab-center-offset [getopt cluster coordinates direction]
+  "Combined [x y z] offset to the center of a vertical wall.
   Computed as the arithmetic average of its two corners."
   (letfn [(c [turning-fn]
-            (finger-wall-corner-offset coordinates [direction (turning-fn direction)]))]
+            (wall-corner-offset getopt cluster coordinates
+              [direction (turning-fn direction)]))]
     (vec (map / (vec (map + (c turning-left) (c turning-right))) [2 2 2]))))
 
 ;; Functions for specifying parts of a perimeter wall. These all take the
@@ -160,18 +137,21 @@
   "The part of a case wall that runs along the side of a key mount on the
   edge of the board."
   (let [facing (turning-left direction)]
-    [[coordinates facing turning-right] [coordinates facing turning-left]]))
+    [[coordinates facing turning-right]
+     [coordinates facing turning-left]]))
 
 (defn wall-straight-join [[coordinates direction]]
   "The part of a case wall that runs between two key mounts in a straight line."
   (let [next-coord (walk-matrix coordinates direction)
         facing (turning-left direction)]
-    [[coordinates facing turning-right] [next-coord facing turning-left]]))
+    [[coordinates facing turning-right]
+     [next-coord facing turning-left]]))
 
 (defn wall-outer-corner [[coordinates direction]]
   "The part of a case wall that smooths out an outer, sharp corner."
   (let [original-facing (turning-left direction)]
-    [[coordinates original-facing turning-right] [coordinates direction turning-left]]))
+    [[coordinates original-facing turning-right]
+     [coordinates direction turning-left]]))
 
 (defn wall-inner-corner [[coordinates direction]]
   "The part of a case wall that covers any gap in an inner corner.
@@ -184,82 +164,67 @@
 
 ;; Edge walking.
 
-(defn walk-and-wall [occlusion-fn placer offsetter post-finder mason-fn start stop]
-  "Walk the edge of the populated key matrix clockwise. Wall it in.
-  Return a vector of shapes.
-  Assume the matrix doesn’t have any holes in it."
-  (letfn [(deref [[coordinates direction turning-fn]]
-            "Unpack notation identifying a specific post."
-            (let [corner [direction (turning-fn direction)]]
-              [(partial placer coordinates)
-               direction
-               (post-finder corner)
-               (offsetter coordinates corner)]))
-          (bracer [anchors]
-            "Produce a shape joining some anchoring posts."
-            (apply mason-fn (map deref anchors)))]
-    (loop [place-and-direction start
-           shapes []]
+(defn wall-edge [getopt cluster upper [coord direction turning-fn]]
+  "Produce a sequence of corner posts for the upper or lower part of the edge
+  of one wall slab."
+  (let [extent (most-specific-option getopt [:wall direction :extent]
+                 cluster coord)
+        last-upper-segment (case extent :full 4 :none 0 extent)
+        to-ground (= extent :full)
+        corner [direction (turning-fn direction)]
+        offsetter (partial wall-segment-offset getopt cluster coord direction)
+        post (fn [segment]
+               (->> (mount-corner-post corner)
+                    (translate (offsetter segment))
+                    (cluster-place getopt cluster coord)))]
+   (if-not (zero? last-upper-segment)
+     (if upper
+       (map post (range last-upper-segment))
+       (if (= extent :full)
+         (map post [2 3 4]))))))
+
+(defn wall-slab [getopt cluster edges]
+  "Produce a single shape joining some (two) edges."
+  (let [upper (map (partial wall-edge getopt cluster true) edges)
+        lower (map (partial wall-edge getopt cluster false) edges)]
+   (union
+     (apply hull upper)
+     (apply bottom-hull lower))))
+
+(defn cluster-wall [getopt cluster]
+  "Walk the edge of a key cluster clockwise. Wall it in."
+  (let [prop (partial getopt :key-clusters cluster :derived)
+        occlusion-fn (prop :key-requested?)
+        start [[0 0] :north]
+        mason (fn [edge-locator place-and-direction]
+                (wall-slab getopt cluster (edge-locator place-and-direction)))]
+    (assert (occlusion-fn (first start)))
+    (loop [place-and-direction start shapes []]
       (let [[coordinates direction] place-and-direction
             left (walk-matrix coordinates (turning-left direction))
             ahead (walk-matrix coordinates direction)
             ahead-left (walk-matrix coordinates direction (turning-left direction))
             landscape (vec (map occlusion-fn [left ahead-left ahead]))
             situation (case landscape
-                       [false false false] :outer-corner
-                       [false false true] :straight
-                       [false true true] :inner-corner
-                       (throw (Exception. (str "Unforeseen landscape at " place-and-direction ": " landscape))))]
-        (if (and (= place-and-direction stop) (not (empty? shapes)))
-          shapes
+                        [false false false] :outer-corner
+                        [false false true] :straight
+                        [false true true] :inner-corner
+                        (throw (Exception.
+                                 (format "Unforeseen landscape at %s: %s"
+                                   place-and-direction landscape))))]
+        (if (and (= place-and-direction start) (not (empty? shapes)))
+          (apply union shapes)
           (recur
             (case situation
-              :outer-corner  ; Turn right in place.
-                [coordinates (turning-right direction)]
-              :straight
-                [ahead direction]
-              :inner-corner  ; Jump diagonally ahead-left while also turning left.
-                [ahead-left (turning-left direction)])
+              ; In an outer corner, turn right in place.
+              ; In an inner corner, jump diagonally ahead-left, turning left.
+              :outer-corner [coordinates (turning-right direction)]
+              :straight     [ahead direction]
+              :inner-corner [ahead-left (turning-left direction)])
             (conj
               shapes
-              (bracer (wall-straight-body place-and-direction))
-              (case situation
-                :outer-corner
-                  (bracer (wall-outer-corner place-and-direction))
-                :straight
-                  (bracer (wall-straight-join place-and-direction))
-                :inner-corner
-                  (bracer (wall-inner-corner place-and-direction))))))))))
-
-
-;;;;;;;;;;;;;;;;
-;; Case Walls ;;
-;;;;;;;;;;;;;;;;
-
-;; Refer to tweaks.clj for the bridge between the finger and thumb clusters.
-
-(defn finger-walls [getopt]
-  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
-        first-row (fn [column] (first (by-col column)))
-        walk (partial walk-and-wall
-                (getopt :key-clusters :finger :derived :key-requested?)
-                (partial cluster-place getopt :finger)
-                finger-key-wall-offsets
-                mount-corner-post)]
-   (apply union
-     (walk wall-to-ground [(first-row 0) :north] [(first-row 2) :south])
-     (walk wall-skirt [(first-row 2) :south] [(first-row 2) :west]))))
-
-(defn thumb-walls [getopt]
-  (let [walk (partial walk-and-wall
-                (getopt :key-clusters :thumb :derived :key-requested?)
-                (partial cluster-place getopt :thumb)
-                thumb-key-wall-offsets
-                mount-corner-post)]
-   (apply union
-     ;; A bevel around the keys of the entire cluster.
-     (walk dropping-bevel [[-1 0] :east] [[-1 0] :east])
-     ;; Proper wall skirts just on the right-hand side.
-     (walk wall-skirt [[-1 0] :east] [[-1 -2] :north])
-     ;; A bevel on the bottom of part of the skirt.
-     (walk bubble [[-1 0] :east] [[0 -2] :south]))))
+              (mason wall-straight-body place-and-direction)
+              (mason (case situation :outer-corner wall-outer-corner
+                                     :straight wall-straight-join
+                                     :inner-corner wall-inner-corner)
+                     place-and-direction))))))))

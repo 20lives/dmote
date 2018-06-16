@@ -21,7 +21,7 @@
 (defn- case-south-wall-xy [getopt [column corner]]
   "An [x y] coordinate pair at the south wall of the keyboard case."
   (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)]
-   (take 2 (body/finger-wall-corner-position getopt (first (by-col column)) corner))))
+   (take 2 (body/wall-corner-position getopt :finger (first (by-col column)) corner))))
 
 (def node-size 2)
 (def wall-z-offset -1)
@@ -214,42 +214,43 @@
 (defn pad-shape [getopt]
   "A single function to determine the shape of the rubber pad.
   This outputs a map of two separate objects that need similar inputs."
-  (let [deropt (partial getopt :wrist-rest :derived)
-        [grid-x grid-y] (getopt :wrist-rest :rubber :shape :grid-size)
-        last-column (int (/ (deropt :base-x) grid-x))
-        last-row (int (/ (deropt :base-y) grid-y))
-        all-columns (range 0 (+ last-column 1))
-        all-rows (range 0 (+ last-row 1))
-        wrist? (square-matrix-checker [last-column last-row])
-        origin [(first (deropt :sw))
-                (second (deropt :sw))
-                (deropt :total-z)]
-        μ 0
-        σ params/wrist-rest-σ
-        θ params/wrist-rest-θ
-        z (* params/wrist-z-coefficient θ)
-        node-place
-          (fn [[column row] shape]
-            (let [M (- column (* 2 (/ last-column 3)))]  ; Placement of curvature.
-             (->> shape
-                  (rotate [0 (* θ (𝒩′ M μ σ)) 0])
-                  (translate [0 0 (- (* z (𝒩 M μ σ)))])
-                  (translate [(* column grid-x) (* row grid-y) 0])
-                  (translate origin))))]
-   {:top  (body/walk-and-web
-            all-columns
-            all-rows
-            wrist?
-            node-place
-            node-corner-post)
-    :edge (body/walk-and-wall
-            wrist?
-            node-place
-            (fn [_ _] [0 wall-z-offset])  ; Offsetter.
-            node-corner-post
-            body/dropping-bevel
-            [[0 0] :north]
-            [[0 0] :north])}))
+  nil)  ; FIXME
+  ; (let [deropt (partial getopt :wrist-rest :derived)
+  ;       [grid-x grid-y] (getopt :wrist-rest :rubber :shape :grid-size)
+  ;       last-column (int (/ (deropt :base-x) grid-x))
+  ;       last-row (int (/ (deropt :base-y) grid-y))
+  ;       all-columns (range 0 (+ last-column 1))
+  ;       all-rows (range 0 (+ last-row 1))
+  ;       wrist? (square-matrix-checker [last-column last-row])
+  ;       origin [(first (deropt :sw))
+  ;               (second (deropt :sw))
+  ;               (deropt :total-z)]
+  ;       μ 0
+  ;       σ params/wrist-rest-σ
+  ;       θ params/wrist-rest-θ
+  ;       z (* params/wrist-z-coefficient θ)
+  ;       node-place
+  ;         (fn [[column row] shape]
+  ;           (let [M (- column (* 2 (/ last-column 3)))]  ; Placement of curvature.
+  ;            (->> shape
+  ;                 (rotate [0 (* θ (𝒩′ M μ σ)) 0])
+  ;                 (translate [0 0 (- (* z (𝒩 M μ σ)))])
+  ;                 (translate [(* column grid-x) (* row grid-y) 0])
+  ;                 (translate origin))))]
+  ;  {:top  (body/walk-and-web
+  ;           all-columns
+  ;           all-rows
+  ;           wrist?
+  ;           node-place
+  ;           node-corner-post)
+  ;   :edge (body/walk-and-wall
+  ;           wrist?
+  ;           node-place
+  ;           (fn [_ _] [0 wall-z-offset])  ; Offsetter.
+  ;           node-corner-post
+  ;           body/dropping-bevel
+  ;           [[0 0] :north]
+  ;           [[0 0] :north])}))
 
 (defn bevel-3d-model [getopt]
   (apply union (:edge (pad-shape getopt))))
@@ -298,7 +299,7 @@
         :solid
           (union
             (case-hook getopt)
-            (body/finger-walls getopt))
+            (body/cluster-wall getopt :finger))
         :threaded
           (let [d (getopt :wrist-rest :fasteners :diameter)
                 nut (rotate [(/ π 2) 0 0] (misc/iso-hex-nut-model d))]
@@ -343,6 +344,6 @@
       (plinth-shape getopt)
       (union
         (case (getopt :wrist-rest :style)
-          :solid (union case-hook (body/finger-walls getopt))
+          :solid (union case-hook (body/cluster-wall getopt :finger))
           :threaded (connecting-rods-and-nuts getopt))))
     (translate [0 0 500] (cube 1000 1000 1000))))

@@ -90,7 +90,7 @@
                   getopt
                   :finger
                   (mcu-finger-coordinates getopt)
-                  (finger-wall-offset (mcu-finger-coordinates getopt) mcu-connector-direction)))]
+                  (wall-slab-center-offset getopt :finger (mcu-finger-coordinates getopt) mcu-connector-direction)))]
    (->>
      shape
      ;; Put the USB end of the PCB at [0, 0, 0].
@@ -154,7 +154,7 @@
 (defn backplate-place [getopt shape]
   (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
         coordinates (last (by-col backplate-column))
-        position (cluster-position getopt :finger coordinates (finger-wall-offset coordinates :north))]
+        position (cluster-position getopt :finger coordinates (wall-slab-center-offset getopt :finger coordinates :north))]
    (->>
      shape
      (rotate installation-angle [0 0 1])
@@ -206,8 +206,8 @@
 (defn west-wall-west-points [getopt]
   (for [row ((getopt :key-clusters :finger :derived :row-indices-by-column) 0)
         corner [generics/WSW generics/WNW]]
-   (let [[x y _] (finger-wall-corner-position getopt [0 row] corner)]
-    [(+ x wall-thickness) y])))
+   (let [[x y _] (wall-corner-position getopt :finger [0 row] corner)]
+    [(+ x (getopt :by-key :parameters :wall :thickness)) y])))
 
 (defn west-wall-east-points [getopt]
   (map (fn [[x y]] [(+ x 10) y]) (west-wall-west-points getopt)))
@@ -221,7 +221,7 @@
 (defn led-hole-position [getopt ordinal]
   (let [by-col (getopt :key-clusters :finger :derived :row-indices-by-column)
         row (first (by-col 0))
-        [x0 y0 _] (finger-wall-corner-position getopt [0 row] generics/WNW)]
+        [x0 y0 _] (wall-corner-position getopt :finger [0 row] generics/WNW)]
    [x0 (+ y0 (* led-pitch ordinal)) led-height]))
 
 (defn led-emitter-channel [getopt ordinal]
@@ -253,7 +253,7 @@
   (let [by-col (getopt :key-clusters :finger :derived :row-indices-by-column)
         c0 [0 (last (by-col 0))]
         c1 [1 (last (by-col 1))]
-        corner (fn [c] (finger-wall-corner-position getopt c generics/NNW))
+        corner (fn [c] (wall-corner-position getopt :finger c generics/NNW))
         [x0 y0] (take 2 (map + (corner c0) (corner c1)))]
    (map + [0 0 0] [(/ x0 2) (/ y0 2) 0])))
 
@@ -299,7 +299,8 @@
    (letfn [(point [{coord :key-coordinates directions :key-corner offset :offset
                     :or {offset [0 0]}}]
              (let [res (getopt :key-clusters :finger :derived :resolve-coordinates)
-                   base (take 2 (finger-wall-corner-position getopt (res coord) directions))]
+                   base (take 2 (wall-corner-position
+                                  getopt :finger (res coord) directions))]
                (vec (map + base offset))))
            (plate [polygon-spec]
              (extrude-linear
@@ -320,9 +321,7 @@
             getopt
             :finger
             coordinates
-            (map +
-              (wall-segment-offset 2 :north (finger-key-wall-offsets coordinates generics/WNW))
-              [0 (/ mount-depth 2) 0]))]
+            [0 (/ mount-depth 2) 0])]
     (translate [(first origin)
                 (second origin)
                 (/ (+ (last usb-holder-size) usb-holder-thickness) 2)]
