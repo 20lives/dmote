@@ -24,6 +24,8 @@ key-clusters:
       f0: [0, first]
       f1: [1, first]
       f2: [2, first]
+      far-right: [last, last]
+      near-right: [last, first]
   thumb:
     position:
       key-alias: f1
@@ -337,39 +339,29 @@ case:
     - [t4, WSW, 0, 4]
     - [t4, SSW, 4]
     - [t4, SSE, 4]
-    - [f2, ENE, 0, 4]
+    - [f2, ENE, 3, 4]
   foot-plates:
     include: true
     height: 4
     polygons:
     - points:
-      - key-coordinates: [last, last]
+      - key-alias: far-right
         key-corner: WNW
         offset: [7, 0]
-      - key-coordinates: [last, last]
+      - key-alias: far-right
         key-corner: NNE
-      - key-coordinates: [last, -1]
-        key-corner: ENE
+      - key-alias: far-right
+        key-corner: ESE
+        offset: [0, -2]
     - points:
-      - key-coordinates: [last, first]
+      - key-alias: near-right
         key-corner: SSW
         offset: [4, 1]
-      - key-coordinates: [last, first]
+      - key-alias: near-right
         key-corner: NNE
         offset: [1, -5]
-      - key-coordinates: [last, first]
+      - key-alias: near-right
         key-corner: ESE
-    - points:
-      - key-coordinates: [2, -3]
-        key-corner: NNW
-      - key-coordinates: [2, -3]
-        key-corner: NNE
-      - key-coordinates: [3, -2]
-        key-corner: SSW
-        offset: [0, 2]
-      - key-coordinates: [2, -2]
-        key-corner: SSE
-        offset: [-3, -5]
 wrist-rest:
   include: false
   style: threaded

@@ -1,25 +1,5 @@
 # Configuration fragment for threaded rods between the case and a wrist rest.
 
-case:
-  foot-plates:
-    polygons:
-    - points:
-      - key-coordinates: [5, 0]
-        key-corner: WNW
-        offset: [7, 0]
-      - key-coordinates: [5, 0]
-        key-corner: NNE
-      - key-coordinates: [5, -1]
-        key-corner: ENE
-    - points:
-      - key-coordinates: [5, -2]
-        key-corner: SSW
-        offset: [4, 1]
-      - key-coordinates: [5, -2]
-        key-corner: NNE
-        offset: [1, -5]
-      - key-coordinates: [5, -2]
-        key-corner: ESE
 wrist-rest:
   include: true
   style: threaded

@@ -197,39 +197,42 @@
     (map-like
       {:points (tuple-of
                  (map-like
-                   {:key-coordinates (tuple-of keyword-or-integer)
+                   {:key-alias keyword
                     :key-corner string-corner
                     :offset vec}))})))
 
 ;; Validators:
 
-(spec/def ::supported-key-cluster #{:finger :thumb})
-(spec/def ::supported-cluster-style #{:standard :orthographic})
-(spec/def ::supported-wrist-rest-style #{:threaded :solid})
-
-(spec/def ::flexcoord (spec/or :absolute int? :extreme #{:first :last}))
-(spec/def ::2d-flexcoord (spec/coll-of ::flexcoord :count 2))
-(spec/def ::3d-point (spec/coll-of number? :count 3))
-(spec/def ::corner (set (vals generics/keyword-to-directions)))
-
-(spec/def ::key-coordinates ::2d-flexcoord)
-(spec/def ::point (spec/keys :req-un [::key-coordinates]))
-(spec/def ::points (spec/coll-of ::point))
-(spec/def ::wall-segment (spec/int-in 0 5))
-(spec/def ::wall-extent (spec/or :partial ::wall-segment :full #{:full}))
-
+;; Used with spec/keys, making the names sensitive:
+(spec/def ::key-alias keyword)
+(spec/def ::points (spec/coll-of ::foot-plate-point))
 (spec/def ::highlight boolean?)
 (spec/def ::to-ground boolean?)
 (spec/def ::chunk-size (spec/and int? #(> % 1)))
 (spec/def ::hull-around (spec/coll-of (spec/or :leaf ::tweak-plate-leaf
                                                :map ::tweak-plate-map)))
-(spec/def ::tweak-plate-leaf
-  (spec/or :short (spec/tuple keyword? ::corner ::wall-segment)
-           :long (spec/tuple keyword? ::corner ::wall-segment ::wall-segment)))
+
+;; Users thereof:
+(spec/def ::foot-plate (spec/keys :req-un [::points]))
+(spec/def ::foot-plate-point (spec/keys :req-un [::key-alias]))
 (spec/def ::tweak-plate-map
   (spec/keys :req-un [::hull-around]
              :opt-un [::highlight ::chunk-size ::to-ground]))
-(spec/def ::foot-plate (spec/keys :req-un [::points]))
+
+;; Other:
+(spec/def ::supported-key-cluster #{:finger :thumb})
+(spec/def ::supported-cluster-style #{:standard :orthographic})
+(spec/def ::supported-wrist-rest-style #{:threaded :solid})
+(spec/def ::flexcoord (spec/or :absolute int? :extreme #{:first :last}))
+(spec/def ::2d-flexcoord (spec/coll-of ::flexcoord :count 2))
+(spec/def ::key-coordinates ::2d-flexcoord)  ; Exposed for unit testing.
+(spec/def ::3d-point (spec/coll-of number? :count 3))
+(spec/def ::corner (set (vals generics/keyword-to-directions)))
+(spec/def ::wall-segment (spec/int-in 0 5))
+(spec/def ::wall-extent (spec/or :partial ::wall-segment :full #{:full}))
+(spec/def ::tweak-plate-leaf
+  (spec/or :short (spec/tuple keyword? ::corner ::wall-segment)
+           :long (spec/tuple keyword? ::corner ::wall-segment ::wall-segment)))
 (spec/def ::foot-plate-polygons (spec/coll-of ::foot-plate))
 
 ;; Composition of parsing and validation:

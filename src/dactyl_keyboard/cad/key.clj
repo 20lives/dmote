@@ -49,7 +49,7 @@
 (defn resolve-flex [getopt cluster [c0 r0]]
   "Resolve supported keywords in a coordinate pair to names.
   This allows for integers as well as the keywords :first and :last, meaning
-  first and last in the column or row."
+  first and last in the column or row. Columns have priority."
   (let [columns (getopt :key-clusters cluster :derived :column-range)
         c1 (case c0 :first (first columns) :last (last columns) c0)
         rows (getopt :key-clusters cluster :derived :row-indices-by-column c1)]

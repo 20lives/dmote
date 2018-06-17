@@ -293,14 +293,15 @@
 
 (defn foot-plates [getopt]
   "Model plates from polygons.
-  Each vector specifying a point in a polygon must have finger key coordinates
-  and a mount corner identified by a direction tuple. These can be followed by
+  Each vector specifying a point in a polygon must have a key and a mount
+  corner identified by a direction tuple. These can be followed by
   a two-dimensional offset for tweaking."
-   (letfn [(point [{coord :key-coordinates directions :key-corner offset :offset
+   (letfn [(point [{key-alias :key-alias directions :key-corner offset :offset
                     :or {offset [0 0]}}]
-             (let [res (partial resolve-flex getopt :finger)
+             (let [key (getopt :key-clusters :derived :aliases key-alias)
+                   {cluster :cluster coordinates :coordinates} key
                    base (take 2 (wall-corner-position
-                                  getopt :finger (res coord) directions))]
+                                  getopt cluster coordinates directions))]
                (vec (map + base offset))))
            (plate [polygon-spec]
              (extrude-linear
