@@ -23,14 +23,6 @@
   (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)]
    (take 2 (body/wall-corner-position getopt :finger (first (by-col column)) corner))))
 
-(def node-size 2)
-(def wall-z-offset -1)
-
-(defn square-matrix-checker [[max-x max-y]]
-  "Construct a function that will return true if a specified node is part of
-  a simple matrix extending from [0, 0] to [max-x max-y]."
-  (fn [[x y]] (and (<= 0 x max-x) (<= 0 y max-y))))
-
 (defn derive-properties [getopt]
   "Derive certain properties from the base configuration."
   (let [pivot
@@ -38,11 +30,15 @@
                               [(getopt :wrist-rest :position :finger-key-column)
                                (getopt :wrist-rest :position :key-corner)])
         offset (getopt :wrist-rest :position :offset)
-        [base-x base-y base-z] (getopt :wrist-rest :plinth-base-size)
-        lip (getopt :wrist-rest :lip-height)
-        pad (getopt :wrist-rest :rubber :height)
-        pad-above (:above-lip pad)
-        pad-below (:below-lip pad)
+        [base-x base-y z1] (getopt :wrist-rest :shape :plinth-base-size)
+        lip (getopt :wrist-rest :shape :lip-height)
+        z2 (+ z1 lip)
+        getpad (partial getopt :wrist-rest :shape :pad :height)
+        pad-middle (getpad :lip-to-surface)
+        z3 (+ z2 pad-middle)
+        pad-above (getpad :surface-range)
+        z4 (+ z3 pad-above)
+        pad-below (getpad :below-lip)
         corner-nw (vec (map + pivot offset))
         corner-ne (vec (map + corner-nw [base-x 0]))
         corner-sw (vec (map - corner-nw [0 base-y]))
@@ -50,9 +46,10 @@
    {:offset offset
     :base-x base-x
     :base-y base-y
-    :base-z base-z
-    :mtz-z (+ base-z lip)  ; Plastic-silicone material transition zone.
-    :total-z (+ base-z lip pad-above)
+    :z1 z1  ; Top of base, bottom of lip.
+    :z2 z2  ; Top of lip. Plastic-silicone material transition zone.
+    :z3 z3  ; Silicone-to-silicone transition at base of heightmap.
+    :z4 z4  ; Absolute peak of the entire plinth; top of silcone pad.
     :nw corner-nw
     :ne corner-ne
     :sw corner-sw
@@ -175,7 +172,7 @@
 
 
 (defn case-hook [getopt]
-  "A model hook. In the solid style, this holds the wrest in place."
+  "A model hook. In the solid style, this holds the rest in place."
   (let [last-col (getopt :key-clusters :finger :derived :last-column)
         rows (getopt :key-clusters :finger :derived :coordinates-by-column)
         [x4 y2 _] (key/cluster-position
@@ -201,88 +198,66 @@
 ;; Main Model Basics ;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- node-corner-offset [directions]
-  "Produce a translator for getting to one corner of a wrist rest node."
-  (matrix/general-corner
-    node-size node-size params/web-thickness params/plate-thickness directions))
+(defn place-horizontally [getopt obj]
+  "Put passed object where the wrist rest should be."
+  (let [prop (partial getopt :wrist-rest :derived)]
+   (translate [(first (prop :sw)) (second (prop :sw)) 0] obj)))
 
-(defn- node-corner-post [directions]
-  "A truncated post shape that comes offset for one corner of a wrist rest node."
-  (translate (node-corner-offset directions)
-    (cube params/corner-post-width params/corner-post-width 0.01)))
+(defn plinth-outline [getopt]
+  "A 2D outline, centered."
+  (let [prop (partial getopt :wrist-rest :derived)
+        chamfer (getopt :wrist-rest :shape :chamfer)]
+   (->> (square (prop :base-x) (prop :base-y))
+        (offset {:delta (- chamfer)})
+        (offset {:delta chamfer :chamfer true}))))
 
-(defn pad-shape [getopt]
-  "A single function to determine the shape of the rubber pad.
-  This outputs a map of two separate objects that need similar inputs."
-  nil)  ; FIXME
-  ; (let [deropt (partial getopt :wrist-rest :derived)
-  ;       [grid-x grid-y] (getopt :wrist-rest :rubber :shape :grid-size)
-  ;       last-column (int (/ (deropt :base-x) grid-x))
-  ;       last-row (int (/ (deropt :base-y) grid-y))
-  ;       all-columns (range 0 (+ last-column 1))
-  ;       all-rows (range 0 (+ last-row 1))
-  ;       wrist? (square-matrix-checker [last-column last-row])
-  ;       origin [(first (deropt :sw))
-  ;               (second (deropt :sw))
-  ;               (deropt :total-z)]
-  ;       μ 0
-  ;       σ params/wrist-rest-σ
-  ;       θ params/wrist-rest-θ
-  ;       z (* params/wrist-z-coefficient θ)
-  ;       node-place
-  ;         (fn [[column row] shape]
-  ;           (let [M (- column (* 2 (/ last-column 3)))]  ; Placement of curvature.
-  ;            (->> shape
-  ;                 (rotate [0 (* θ (𝒩′ M μ σ)) 0])
-  ;                 (translate [0 0 (- (* z (𝒩 M μ σ)))])
-  ;                 (translate [(* column grid-x) (* row grid-y) 0])
-  ;                 (translate origin))))]
-  ;  {:top  (body/walk-and-web
-  ;           all-columns
-  ;           all-rows
-  ;           wrist?
-  ;           node-place
-  ;           node-corner-post)
-  ;   :edge (body/walk-and-wall
-  ;           wrist?
-  ;           node-place
-  ;           (fn [_ _] [0 wall-z-offset])  ; Offsetter.
-  ;           node-corner-post
-  ;           body/dropping-bevel
-  ;           [[0 0] :north]
-  ;           [[0 0] :north])}))
+(defn soft-zone [getopt]
+  "A 3D mask capturing what would be rubber material, with wide margins."
+  (let [height 100
+        depth (getopt :wrist-rest :shape :pad :height :below-lip)
+        z2 (getopt :wrist-rest :derived :z2)]
+   (place-horizontally getopt
+     (union
+       (translate [0 0 (+ z2 (/ height 2))]
+         (cube 500 500 height))
+       (translate [0 0 (- z2 depth)]
+         (extrude-linear {:height depth :center false}
+           (offset -2
+             (plinth-outline getopt))))))))
 
-(defn bevel-3d-model [getopt]
-  (apply union (:edge (pad-shape getopt))))
-
-(defn bevel-2d-outline [getopt]
-  (hull (project (bevel-3d-model getopt))))
-
-(defn plinth-zone-rubber [getopt]
-  (let [depth (getopt :wrist-rest :rubber :height :below-lip)]
-   (union
-     (translate [0 0 (+ 50 (getopt :wrist-rest :derived :mtz-z))]
-       (cube 500 500 100))
-     (translate [0 0 (- (getopt :wrist-rest :derived :mtz-z) (/ depth 2))]
-       (extrude-linear {:height depth}
-         (offset -2 (bevel-2d-outline getopt)))))))
-
-(defn plinth-shape [getopt]
-  "The overall shape of rubber and plastic as one object."
-  (let [{top :top edge :edge} (pad-shape getopt)]
-   (letfn [(shadow [shape]
-             (translate [0 0 (getopt :wrist-rest :derived :base-z)]
-               (extrude-linear {:height 0.01}
-                 (offset 1 (project shape)))))
-           (hull-to-base [shape]
-             (hull shape (shadow shape)))]
+(defn plinth-maquette [getopt]
+  "The overall shape of rubber and plastic as one object in place.
+  This does not have all the details."
+  (let [prop (partial getopt :wrist-rest :derived)
+        z3 (prop :z3)
+        margin 0.4
+        filepath (getopt :wrist-rest :shape :pad :surface-heightmap)
+        surface-size [(prop :base-x)
+                      (prop :base-y)
+                      (getopt :wrist-rest :shape :pad :height :surface-range)]]
     (union
-      (apply union (map hull-to-base top))
-      (apply union (map hull-to-base edge))
-      (misc/bottom-hull (shadow (bevel-3d-model getopt)))
+      (place-horizontally getopt
+        (intersection
+          (union  ; A squarish block of marble.
+            (translate [0 0 z3]
+              (resize surface-size
+                (surface filepath :convexity 3)))
+            (translate [0 0 (/ z3 2)]
+              (cube (prop :base-x) (prop :base-y) z3)))
+          (misc/pairwise-hulls  ; A chamfered, gently tapering envelope.
+            (translate [0 0 (prop :z4)]
+              (extrude-linear {:height 1}
+                (offset (- margin)
+                  (plinth-outline getopt))))
+            (translate [0 0 (prop :z2)]
+              (extrude-linear {:height 0.01}
+                (offset (- margin)
+                  (plinth-outline getopt))))
+            (extrude-linear {:height (prop :z1) :center false}
+              (plinth-outline getopt)))))
       (case (getopt :wrist-rest :style)
         :threaded (plinth-plate getopt)
-        :solid (solid-connector getopt))))))
+        :solid (solid-connector getopt)))))
 
 
 ;;;;;;;;;;;;;
@@ -293,8 +268,8 @@
   "The lower portion of a wrist rest, to be printed in a rigid material."
   (intersection
     (difference
-      (plinth-shape getopt)
-      (plinth-zone-rubber getopt)
+      (plinth-maquette getopt)
+      (soft-zone getopt)
       (case (getopt :wrist-rest :style)
         :solid
           (union
@@ -319,21 +294,26 @@
 (defn rubber-insert [getopt]
   "The upper portion of a wrist rest, to be cast or printed in a soft material."
   (color [0.5 0.5 1 1]
-    (intersection (plinth-zone-rubber getopt) (plinth-shape getopt))))
+    (intersection
+      (soft-zone getopt)
+      (plinth-maquette getopt))))
 
 (defn rubber-casting-mould [getopt]
   "A thin shell that goes on top of a wrist plinth temporarily.
-  This is for casting silicone into, “in place”. As long as the
-  wrist rest has 180° rotational symmetry around the z axis, one mould should
+  This is for casting silicone into, “in place”. If the wrist rest has
+  180° rotational symmetry around the z axis, one mould should
   be enough for both halves’ wrist rests, with tape to prevent leaks."
-  (let [derived (partial getopt :wrist-rest :derived)
-        dz (- (derived :total-z) (derived :base-z))]
-   (rotate [π 0 0]  ;; Print bottom-up.
+  (let [prop (partial getopt :wrist-rest :derived)
+        thickness 2
+        height (+ (- (prop :z4) (prop :z1)) thickness)]
+   (rotate [π 0 0]  ; Print bottom-up.
      (difference
-       (translate [0 0 (+ (derived :base-z) (/ dz 2))]
-         (extrude-linear {:height (+ dz 4)}
-           (offset 2 (bevel-2d-outline getopt))))
-       (plinth-shape getopt)))))
+       (place-horizontally getopt
+         (translate [0 0 (prop :z1)]
+           (extrude-linear {:height height :center false}
+             (offset thickness
+               (plinth-outline getopt)))))
+       (plinth-maquette getopt)))))
 
 (defn unified-preview [getopt]
   "A merged view of a wrist rest. This might be printed in hard plastic for a
@@ -341,9 +321,10 @@
   hard for ergonomy and does not have a nut pocket for threaded rods."
   (intersection
     (difference
-      (plinth-shape getopt)
+      (plinth-maquette getopt)
       (union
         (case (getopt :wrist-rest :style)
           :solid (union case-hook (body/cluster-wall getopt :finger))
           :threaded (connecting-rods-and-nuts getopt))))
-    (translate [0 0 500] (cube 1000 1000 1000))))
+    (translate [0 0 500]
+      (cube 1000 1000 1000))))

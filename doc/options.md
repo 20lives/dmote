@@ -395,37 +395,47 @@ A corner for the first key in the column.
 
 An offset in mm from the selected key.
 
-### Parameter `plinth-base-size`
+### Section `shape`
+
+The wrist rest needs to fit the user’s hand.
+
+#### Parameter `plinth-base-size`
 
 The size of the plinth up to but not including the narrowing upper lip and rubber parts.
 
-### Parameter `lip-height`
+#### Parameter `chamfer`
+
+A distance in mm. The plinth is shrunk and then regrown by this much to chamfer its corners.
+
+#### Parameter `lip-height`
 
 The height of a narrowing, printed lip between the base of the plinth and the rubber part.
 
-### Section `rubber`
+#### Section `pad`
 
 The top of the wrist rest should be printed or cast in a soft material, such as silicone rubber.
 
-#### Section `height`
+##### Parameter `surface-heightmap`
 
-The piece of rubber extends a certain distance up into the air and down into the plinth.
+A filepath. The path, and file, will be interpreted by OpenScad, using its [`surface()` function(https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#Surface).
 
-##### Parameter `above-lip`
+The file should contain a heightmap to describe the surface of the rubber pad.
 
-The height of the rubber wrist support, measured from the top of the lip.
+##### Section `height`
 
-##### Parameter `below-lip`
+The piece of rubber extends a certain distance up into the air and down into the plinth. All measurements in mm.
 
-The depth of the rubber wrist support, measured from the top of the lip.
+###### Parameter `surface-range`
 
-#### Section `shape`
+The vertical range of the heightmap. Whatever values are in the heightmap will be normalized to this scale.
 
-The piece of rubber should fit the user’s hand.
+###### Parameter `lip-to-surface`
 
-##### Parameter `grid-size`
+The part of the rubber pad between the top of the lip and the point where the heightmap comes into effect. This is useful if your heightmap itself has very low values at the edges, such that moulding and casting it without a base would be difficult.
 
-Undocumented.
+###### Parameter `below-lip`
+
+The depth of the rubber wrist support, measured from the top of the lip, going down into the plinth. This part of the pad just keeps it in place.
 
 ### Section `fasteners`
 

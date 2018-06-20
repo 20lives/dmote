@@ -37,16 +37,6 @@
   "The absolute of n."
   (max n (- n)))
 
-(defn 𝒩 [x ￼￼μ σ]
-  "The normal distribution’s probability density function with unicode-math."
-  (let [v (ⁿ σ 2)]
-    (* (/ 1 (√ (* 2 π v)))
-       (ⁿ e (- (/ (ⁿ (- x ￼￼μ) 2) (* 2 v)))))))
-
-(defn 𝒩′ [x ￼￼μ σ]
-  "The first derivative of 𝒩."
-  (* (/ (- x) (ⁿ σ 2)) (𝒩 x ￼￼μ σ)))
-
 (defn soft-merge [& maps]
   "Take mappings. Merge them depth-first so as to retain all leaves
   from a mapping except where specifically overridden by the next."

@@ -4,7 +4,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (ns dactyl-keyboard.cad.key
-  (:require [scad-clj.model :exclude [use import] :refer :all]
+  (:require [clojure.core.matrix :as matrixmath]
+            [scad-clj.model :exclude [use import] :refer :all]
             [unicode-math.core :refer :all]
             [dactyl-keyboard.generics :refer :all]
             [dactyl-keyboard.params :refer :all]
@@ -338,21 +339,21 @@
     (partial map +)
     [(fn [angle position]
        "Transform a set of coordinates as if in rotation around the X axis."
-       (clojure.core.matrix/mmul
+       (matrixmath/mmul
         [[1 0 0]
          [0 (Math/cos angle) (- (Math/sin angle))]
          [0 (Math/sin angle)    (Math/cos angle)]]
         position))
      (fn [angle position]
        "Same for the Y axis."
-       (clojure.core.matrix/mmul
+       (matrixmath/mmul
         [[(Math/cos angle)     0 (Math/sin angle)]
          [0                    1 0]
          [(- (Math/sin angle)) 0 (Math/cos angle)]]
         position))
      (fn [angle position]
        "Same for the Z axis."
-       (clojure.core.matrix/mmul
+       (matrixmath/mmul
         [[(Math/cos angle) (- (Math/sin angle)) 0]
          [(Math/sin angle) (Math/cos angle)     0]
          [0                0                    1]]

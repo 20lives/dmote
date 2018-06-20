@@ -798,37 +798,58 @@
     {:help "An offset in mm from the selected key."
      :default [0 0]
      :parse-fn vec}]
-   [:parameter [:wrist-rest :plinth-base-size]
+   [:section [:wrist-rest :shape]
+    "The wrist rest needs to fit the user’s hand."]
+   [:parameter [:wrist-rest :shape :plinth-base-size]
     {:help (str "The size of the plinth up to but not including the "
                 "narrowing upper lip and rubber parts.")
      :default [1 1 1]
      :parse-fn vec
      :validate [::3d-point]}]
-   [:parameter [:wrist-rest :lip-height]
+   [:parameter [:wrist-rest :shape :chamfer]
+    {:help (str "A distance in mm. The plinth is shrunk and then regrown by "
+                "this much to chamfer its corners.")
+     :default 1
+     :parse-fn num}]
+   [:parameter [:wrist-rest :shape :lip-height]
     {:help (str "The height of a narrowing, printed lip between "
                 "the base of the plinth and the rubber part.")
      :default 1
      :parse-fn num}]
-   [:section [:wrist-rest :rubber]
+   [:section [:wrist-rest :shape :pad]
     "The top of the wrist rest should be printed or cast in a soft material, "
     "such as silicone rubber."]
-   [:section [:wrist-rest :rubber :height]
+   [:parameter [:wrist-rest :shape :pad :surface-heightmap]
+    {:help (str "A filepath. The path, and file, will be interpreted by "
+                "OpenScad, using its [`surface()` function("
+                "https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/"
+                "Other_Language_Features#Surface).\n"
+                "\n"
+                "The file should contain a heightmap to describe the surface "
+                "of the rubber pad.")
+     :default "resources/heightmap/default.dat"}]
+   [:section [:wrist-rest :shape :pad :height]
     "The piece of rubber extends a certain distance up into the air and down "
-    "into the plinth."]
-   [:parameter [:wrist-rest :rubber :height :above-lip]
-    {:help (str "The height of the rubber wrist support, measured from the "
-                "top of the lip.")
+    "into the plinth. All measurements in mm."]
+   [:parameter [:wrist-rest :shape :pad :height :surface-range]
+    {:help (str "The vertical range of the heightmap. Whatever values are in "
+                "the heightmap will be normalized to this scale.")
      :default 1
      :parse-fn num}]
-   [:parameter [:wrist-rest :rubber :height :below-lip]
-    {:help (str "The depth of the rubber wrist support, "
-                "measured from the top of the lip.")
+   [:parameter [:wrist-rest :shape :pad :height :lip-to-surface]
+    {:help (str "The part of the rubber pad between the top of the lip and "
+                "the point where the heightmap comes into effect. This is "
+                "useful if your heightmap itself has very low values at the "
+                "edges, such that moulding and casting it without a base "
+                "would be difficult.")
      :default 1
      :parse-fn num}]
-   [:section [:wrist-rest :rubber :shape]
-    "The piece of rubber should fit the user’s hand."]
-   [:parameter [:wrist-rest :rubber :shape :grid-size]
-    {:default [1 1]}]
+   [:parameter [:wrist-rest :shape :pad :height :below-lip]
+    {:help (str "The depth of the rubber wrist support, measured from the top "
+                "of the lip, going down into the plinth. This part of the pad "
+                "just keeps it in place.")
+     :default 1
+     :parse-fn num}]
    [:section [:wrist-rest :fasteners]
     "This is only relevant with the `threaded` style of wrist rest."]
    [:parameter [:wrist-rest :fasteners :amount]

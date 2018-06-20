@@ -369,11 +369,13 @@ wrist-rest:
     finger-key-column: 4
     key-corner: SSE
     offset: [0, -40]
-  plinth-base-size: [35, 62, 44]
-  lip-height: 2
-  rubber:
-    height:
-      above-lip: 10
-      below-lip: 6
-    shape:
-      grid-size: [4, 62]
+  shape:
+    plinth-base-size: [70, 70, 44]
+    chamfer: 2
+    lip-height: 2
+    pad:
+      surface-heightmap: ../resources/heightmap/default.dat
+      height:
+        surface-range: 10
+        lip-to-surface: 2
+        below-lip: 5
