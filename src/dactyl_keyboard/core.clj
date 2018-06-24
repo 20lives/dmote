@@ -64,9 +64,6 @@
     (if (and (getopt :wrist-rest :include) (getopt :wrist-rest :preview))
       (wrist/unified-preview getopt))))
 
-(defn author-scad [filename model]
-  (spit (str "things/" filename) (write-scad model)))
-
 (defn build-option-accessor [build-options]
   "Close over a user configuration."
   (letfn [(value-at [path] (get-in build-options path ::none))
@@ -91,7 +88,7 @@
 
 (defn enrich-option-metadata [build-options]
   "Derive certain properties that are implicit in the user configuration.
-  Store these results under the ”:derived” key in each section."
+  Store these results under the “:derived” key in each section."
   (reduce
     (fn [coll [path callable]]
       (assoc-in coll (conj path :derived) (callable (build-option-accessor coll))))
@@ -104,23 +101,19 @@
      [[:wrist-rest] wrist/derive-properties]]))
 
 (defn build-all [build-options]
-  (let [getopt (build-option-accessor (enrich-option-metadata build-options))]
-   (author-scad "right-hand.scad" (build-keyboard-right getopt))
-   (author-scad "left-hand.scad"
-     (mirror [-1 0 0] (build-keyboard-right getopt)))
-
+  "Make an option accessor function and write OpenSCAD files with it."
+  (let [getopt (build-option-accessor (enrich-option-metadata build-options))
+        scad-file (fn [filename model]
+                    (spit (str "things/" filename ".scad") (write-scad model)))
+        pair (fn [basename model]
+               (scad-file (str "right-hand-" basename) model)
+               (scad-file (str "left-hand-" basename) (mirror [-1 0 0] model)))]
+   (pair "case" (build-keyboard-right getopt))
    (if (getopt :wrist-rest :include)
      (do
-       ;; Items that can be used for either side.
-       (author-scad "ambilateral-wrist-mould.scad"
-         (wrist/rubber-casting-mould getopt))
-       (author-scad "ambilateral-wrist-insert.scad"
-         (wrist/rubber-insert getopt))
-
-       ;; Items that cannot.
-       (author-scad "right-wrist-base.scad" (wrist/plinth-plastic getopt))
-       (author-scad "left-wrist-base.scad"
-         (mirror [-1 0 0] (wrist/plinth-plastic getopt)))))))
+       (pair "pad-mould" (wrist/rubber-casting-mould getopt))
+       (pair "pad-shape" (wrist/rubber-insert getopt))
+       (pair "plinth" (wrist/plinth-plastic getopt))))))
 
 (def cli-options
   "Define command-line interface."
