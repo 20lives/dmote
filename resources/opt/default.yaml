@@ -84,6 +84,12 @@ by-key:
               south:
                 extent: 3
                 perpendicular: 8
+          rows:
+            last:
+              parameters:
+                wall:
+                  north:
+                    extent: 0
         "1":
           parameters:
             wall:
@@ -110,7 +116,11 @@ by-key:
                 layout:
                   translation:
                     early: [0, 0, -1]
-
+            last:
+              parameters:
+                wall:
+                  north:
+                    extent: 0
         "2":
           parameters:
             layout:
@@ -144,6 +154,11 @@ by-key:
                 layout:
                   translation:
                     early: [0, 0, -1]
+            last:
+              parameters:
+                wall:
+                  north:
+                    extent: 0
         "3":
           rows:
             first:
@@ -158,6 +173,11 @@ by-key:
                 layout:
                   translation:
                     early: [0, 0, -1]
+            last:
+              parameters:
+                wall:
+                  north:
+                    extent: 0
         "4":
           parameters:
             layout:
@@ -258,6 +278,13 @@ by-key:
                   south:
                     extent: 1
 case:
+  rear-housing:
+    include: true
+    distance: 5
+    height: 40
+    offsets:
+      north: 15
+      east: -2
   tweaks:
   - # Where t2 looms over f0:
     hull-around:

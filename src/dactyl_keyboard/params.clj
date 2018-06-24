@@ -678,6 +678,38 @@
     "The most important part of the keyboard case is generated from the "
     "`wall` parameters above. This section deals with lesser features of the "
     "case."]
+   [:section [:case :rear-housing]
+    "The furthest row of the key cluster can be extended into a rear housing "
+    "for the MCU and various other features."]
+   [:parameter [:case :rear-housing :include]
+    {:help (str "If `true`, add a rear housing. Please arrange case "
+                "walls so as not to interfere, by removing them along the "
+                "far side of the last row.")
+     :default false
+     :parse-fn boolean}]
+   [:parameter [:case :rear-housing :distance]
+    {:help (str "The horizontal distance in mm between the furtest key in "
+                "the row and the roof of the rear housing.")
+     :default 0
+     :parse-fn num}]
+   [:parameter [:case :rear-housing :height]
+    {:help (str "The height in mm of the roof, over the floor.")
+     :default 0
+     :parse-fn num}]
+   [:section [:case :rear-housing :offsets]
+    "Modifiers for the size of the roof. All are in mm."]
+   [:parameter [:case :rear-housing :offsets :north]
+    {:help (str "The y axis.")
+     :default 0
+     :parse-fn num}]
+   [:parameter [:case :rear-housing :offsets :west]
+    {:help (str "The extent past the first key in the row.")
+     :default 0
+     :parse-fn num}]
+   [:parameter [:case :rear-housing :offsets :east]
+    {:help (str "The extent past the last key in the row.")
+     :default 0
+     :parse-fn num}]
    [:parameter [:case :tweaks]
     {:help (str "Additional shapes. This is usually needed to bridge gaps "
                 "between the walls of the finger and key clusters.\n"

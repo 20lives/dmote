@@ -29,18 +29,19 @@
       (union
         (key/cluster-plates getopt :finger)
         (key/cluster-plates getopt :thumb)
-        (body/finger-web getopt)
-        (body/thumb-web getopt)
+        (body/cluster-web getopt :finger)
+        (body/cluster-web getopt :thumb)
         (body/cluster-wall getopt :finger)
         (body/cluster-wall getopt :thumb)
         (if (getopt :wrist-rest :include)
           (case (getopt :wrist-rest :style)
             :solid (wrist/case-hook getopt)
             :threaded (wrist/case-plate getopt)))
-        (aux/mcu-support getopt)
+        #_(aux/mcu-support getopt)
         (aux/rj9-positive getopt)
         (aux/foot-plates getopt)
         (if params/include-backplate-block (aux/backplate-block getopt))
+        (if (getopt :case :rear-housing :include) (body/rear-housing getopt))
         (body/wall-tweaks getopt)
         (sandbox/positive getopt))
       (key/cluster-cutouts getopt :finger)
@@ -48,7 +49,7 @@
       (key/cluster-channels getopt :finger)
       (key/cluster-channels getopt :thumb)
       (aux/rj9-negative getopt)
-      (aux/mcu-negative getopt)
+      #_(aux/mcu-negative getopt)
       (if params/include-led-housings (aux/led-holes getopt))
       (if params/include-backplate-block (aux/backplate-fastener-holes getopt))
       (if (getopt :wrist-rest :include)
@@ -98,6 +99,7 @@
      [[:key-clusters :thumb] (partial key/cluster-properties :thumb)]
      [[:key-clusters] key/resolve-aliases]
      [[:keycaps] key/keycap-properties]
+     [[:case :rear-housing] body/housing-properties]
      [[:wrist-rest] wrist/derive-properties]]))
 
 (defn build-all [build-options]
