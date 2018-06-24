@@ -607,7 +607,7 @@
    [:section [:key-clusters :thumb :position]
     "The thumb cluster is positioned in relation to the finger cluster."]
    [:parameter [:key-clusters :thumb :position :key-alias]
-    {:help (str "A finger key coordinate pair as named under `aliases` above.")
+    {:help (str "A finger key as named under `aliases` above.")
      :default :origin
      :parse-fn keyword}]
    [:parameter [:key-clusters :thumb :position :offset]
@@ -783,19 +783,17 @@
      :default false
      :parse-fn boolean}]
    [:section [:wrist-rest :position]
-    "The wrist rest is positioned in relation to a specific key."]
-   [:parameter [:wrist-rest :position :finger-key-column]
-    {:help (str "A finger key column ID. The wrist rest will be "
-                "attached to the first key in that column.")
-     :default 0
-     :parse-fn int}]
-   [:parameter [:wrist-rest :position :key-corner]
-    {:help (str "A corner for the first key in the column.")
-     :default "SSE"
-     :parse-fn string-corner
-     :validate [::corner]}]
+    "The wrist rest is positioned in relation to a key mount."]
+   [:parameter [:wrist-rest :position :key-alias]
+    {:help (str "A named key where the wrist rest will attach. "
+                "The vertical component of its position is ignored.")
+     :default :origin
+     :parse-fn keyword}]
    [:parameter [:wrist-rest :position :offset]
-    {:help "An offset in mm from the selected key."
+    {:help (str "An offset in mm from the selected key to one corner of the "
+                "base of the wrist rest. Specifically, it is the corner close "
+                "to the keyboard case, on the right-hand side of the "
+                "right-hand half.")
      :default [0 0]
      :parse-fn vec}]
    [:section [:wrist-rest :shape]
@@ -886,20 +884,13 @@
      :parse-fn num}]
    [:section [:wrist-rest :fasteners :mounts :case-side]
     "The side of the keyboard case."]
-   [:parameter [:wrist-rest :fasteners :mounts :case-side :finger-key-column]
-    {:help (str "A finger key column ID. On the case side, fastener mounts "
-                "will be attached at ground level near the first key in that "
-                "column.")
-     :default 0
-     :parse-fn int}]
-   [:parameter [:wrist-rest :fasteners :mounts :case-side :key-corner]
-    {:help "A corner of the key identified by `finger-key-column`."
-     :default "SSE"
-     :parse-fn string-corner
-     :validate [::corner]}]
+   [:parameter [:wrist-rest :fasteners :mounts :case-side :key-alias]
+    {:help (str "A named key. A mount point on the case side "
+                "will be placed near this key.")
+     :default :origin
+     :parse-fn keyword}]
    [:parameter [:wrist-rest :fasteners :mounts :case-side :offset]
-    {:help (str "An offset in mm from the corner of "
-                "the finger key to the mount.")
+    {:help (str "An offset in mm from the key to the mount.")
      :default [0 0]
      :parse-fn vec}]
    [:parameter [:wrist-rest :fasteners :mounts :case-side :depth]
@@ -910,11 +901,9 @@
    [:section [:wrist-rest :fasteners :mounts :plinth-side]
     "The side of the wrist rest."]
    [:parameter [:wrist-rest :fasteners :mounts :plinth-side :offset]
-    {:help (str "The offset in mm from the nearest "
-                "corner of the plinth to the "
-                "fastener mount attached to the "
-                "plinth.")
-     :default [1 1]
+    {:help (str "The offset in mm from the corner of the plinth to "
+                "the fastener mount point attached to the plinth.")
+     :default [0 0]
      :parse-fn vec}]
    [:parameter [:wrist-rest :fasteners :mounts :plinth-side :depth]
     {:help (str "The thickness of the mount in mm "
@@ -925,10 +914,21 @@
      :parse-fn num}]
    [:section [:wrist-rest :solid-bridge]
     "This is only relevant with the `solid` style of wrist rest."]
+   [:parameter [:wrist-rest :solid-bridge :width]
+    {:help (str "The width in mm of the land bridge between the case and the "
+                "plinth. On the right-hand side of the keyboard, the bridge "
+                "starts from the wrist rest `key-alias` and extends this many "
+                "mm to the left.\n"
+                "\n"
+                "The value of this parameter, and the shape of the keyboard "
+                "case, should be arranged in a such a way that the land bridge "
+                "is wedged in place by a vertical wall on that left side.")
+     :default 1
+     :parse-fn num}]
    [:parameter [:wrist-rest :solid-bridge :height]
     {:help (str "The height in mm of the land bridge between the "
                 "case and the plinth.")
-     :default 14
+     :default 1
      :parse-fn num}]])
 
 (def master

@@ -119,7 +119,9 @@
 (defn wall-corner-position [getopt cluster coordinates directions]
   "Absolute position of the lower wall around a finger key."
   (cluster-position getopt cluster coordinates
-    (wall-corner-offset getopt cluster coordinates directions)))
+    (if (nil? directions)
+      [0 0 0]
+      (wall-corner-offset getopt cluster coordinates directions))))
 
 (defn wall-slab-center-offset [getopt cluster coordinates direction]
   "Combined [x y z] offset to the center of a vertical wall.

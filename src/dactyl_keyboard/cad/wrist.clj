@@ -18,17 +18,12 @@
 ;; Generics ;;
 ;;;;;;;;;;;;;;
 
-(defn- case-south-wall-xy [getopt [column corner]]
-  "An [x y] coordinate pair at the south wall of the keyboard case."
-  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)]
-   (take 2 (body/wall-corner-position getopt :finger (first (by-col column)) corner))))
-
 (defn derive-properties [getopt]
   "Derive certain properties from the base configuration."
-  (let [pivot
-          (case-south-wall-xy getopt
-                              [(getopt :wrist-rest :position :finger-key-column)
-                               (getopt :wrist-rest :position :key-corner)])
+  (let [key-alias (getopt :wrist-rest :position :key-alias)
+        cluster (getopt :key-clusters :derived :aliases key-alias :cluster)
+        coord (getopt :key-clusters :derived :aliases key-alias :coordinates)
+        pivot (body/wall-corner-position getopt cluster coord nil)
         offset (getopt :wrist-rest :position :offset)
         [base-x base-y z1] (getopt :wrist-rest :shape :plinth-base-size)
         lip (getopt :wrist-rest :shape :lip-height)
@@ -39,10 +34,11 @@
         pad-above (getpad :surface-range)
         z4 (+ z3 pad-above)
         pad-below (getpad :below-lip)
-        corner-nw (vec (map + pivot offset))
+        corner-nw (vec (map + (take 2 pivot) offset))
         corner-ne (vec (map + corner-nw [base-x 0]))
         corner-sw (vec (map - corner-nw [0 base-y]))
-        corner-se (vec (map - corner-ne [0 base-y]))]
+        corner-se (vec (map - corner-ne [0 base-y]))
+        center (conj (vec (map - corner-ne (map #(/ % 2) [base-x base-y]))))]
    {:offset offset
     :base-x base-x
     :base-y base-y
@@ -50,10 +46,13 @@
     :z2 z2  ; Top of lip. Plastic-silicone material transition zone.
     :z3 z3  ; Silicone-to-silicone transition at base of heightmap.
     :z4 z4  ; Absolute peak of the entire plinth; top of silcone pad.
+    :key-cluster cluster
+    :key-coord coord
     :nw corner-nw
     :ne corner-ne
     :sw corner-sw
-    :se corner-se}))
+    :se corner-se
+    :center center}))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -66,10 +65,12 @@
 
 (defn threaded-position-keyboard [getopt]
   (let [position (getopt :wrist-rest :fasteners :mounts :case-side)
-        {column :finger-key-column corner :key-corner offset :offset} position
-        base (case-south-wall-xy getopt [column corner])
+        {alias :key-alias offset :offset} position
+        key (getopt :key-clusters :derived :aliases alias)
+        {cluster :cluster coordinates :coordinates} key
+        base (body/wall-corner-position getopt cluster coordinates nil)
         height (threaded-center-height getopt)]
-   (conj (vec (map + base offset)) height)))
+   (conj (vec (map + (take 2 base) offset)) height)))
 
 (defn threaded-position-plinth [getopt]
   (let [corner (getopt :wrist-rest :derived :nw)
@@ -80,7 +81,8 @@
 (defn threaded-midpoint [getopt]
   "The X, Y and Z coordinates of the middle of the threaded rod."
   (vec (map #(/ % 2)
-            (map + (threaded-position-keyboard getopt) (threaded-position-plinth getopt)))))
+            (map + (threaded-position-keyboard getopt)
+                   (threaded-position-plinth getopt)))))
 
 (defn rod-angle [getopt]
   "The angle (from the y axis) of the threaded rod."
@@ -148,35 +150,49 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn solid-connector [getopt]
-  (let [basecol (getopt :wrist-rest :position :finger-key-column)
-        cols (getopt :key-clusters :finger :derived :column-range)
-        lastcol (last cols)
-        xy-west (getopt :wrist-rest :derived :nw)
-        xy-east (vec (map + (case-south-wall-xy getopt [lastcol SSE])
-                            (getopt :wrist-rest :derived :offset)))
-        bevel 10
-        p0 (case-south-wall-xy getopt [(- basecol 1) SSE])]
+  (let [cluster (getopt :wrist-rest :derived :key-cluster)
+        case-east-coord (getopt :wrist-rest :derived :key-coord)
+        width (getopt :wrist-rest :solid-bridge :width)
+        ne (take 2 (key/cluster-position getopt cluster case-east-coord
+                            (key/mount-corner-offset SSE)))
+        x-west (- (first ne) width)
+        plinth-west (getopt :wrist-rest :derived :nw)
+        plinth-east (getopt :wrist-rest :derived :ne)
+        by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
+        south-wall
+          (fn [[coord corner]]
+            (take 2 (body/wall-corner-position getopt cluster coord corner)))
+        case-points
+          (filter #(>= (first %) x-west)
+            (map south-wall
+              (for [column (range (first case-east-coord))  ; Exclusive!
+                    corner [SSW SSE]]
+                [(first (by-col column)) corner])))
+        constrain-x (fn [limit p0 p1]
+                      [(limit (first p0) (first p1)) (second p0)])
+        nw [x-west (second (first case-points))]
+        sw (constrain-x max plinth-west nw)
+        se (constrain-x min plinth-east ne)
+        bevel 10]
    (extrude-linear
      {:height (getopt :wrist-rest :solid-bridge :height)}
      (polygon
        (concat
-         [p0]
-         (map (partial case-south-wall-xy getopt)
-           (for [column (filter (partial <= basecol) cols)
-                 corner [SSW SSE]]
-             [column corner]))
-         [[(first xy-east) (second xy-west)]
-          xy-west
-          [(first xy-west) (- (second p0) bevel)]
-          [(- (first xy-west) bevel) (second p0)]])))))
-
+         [nw]
+         case-points
+         [(vec (map - ne [3 0]))
+          (vec (map - se [3 0]))
+          (vec (map + sw [3 0]))]
+         (if (< (first nw) (first sw))
+           ; Case-side connection extends beyond the wrist rest.
+           ; Add an intermediate point for aesthetics.
+           [[(first sw) (+ (second sw) bevel)]]))))))
 
 (defn case-hook [getopt]
   "A model hook. In the solid style, this holds the rest in place."
-  (let [last-col (getopt :key-clusters :finger :derived :last-column)
-        rows (getopt :key-clusters :finger :derived :coordinates-by-column)
-        [x4 y2 _] (key/cluster-position
-                    getopt :finger (first (rows last-col))
+  (let [cluster (getopt :wrist-rest :derived :key-cluster)
+        coord (getopt :wrist-rest :derived :key-coord)
+        [x4 y2 _] (key/cluster-position getopt cluster coord
                     (key/mount-corner-offset ESE))
         x3 (- x4 2)
         x2 (- x3 6)
@@ -198,11 +214,6 @@
 ;; Main Model Basics ;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn place-horizontally [getopt obj]
-  "Put passed object where the wrist rest should be."
-  (let [prop (partial getopt :wrist-rest :derived)]
-   (translate [(first (prop :sw)) (second (prop :sw)) 0] obj)))
-
 (defn plinth-outline [getopt]
   "A 2D outline, centered."
   (let [prop (partial getopt :wrist-rest :derived)
@@ -216,7 +227,7 @@
   (let [height 100
         depth (getopt :wrist-rest :shape :pad :height :below-lip)
         z2 (getopt :wrist-rest :derived :z2)]
-   (place-horizontally getopt
+   (translate (getopt :wrist-rest :derived :center)
      (union
        (translate [0 0 (+ z2 (/ height 2))]
          (cube 500 500 height))
@@ -236,7 +247,7 @@
                       (prop :base-y)
                       (getopt :wrist-rest :shape :pad :height :surface-range)]]
     (union
-      (place-horizontally getopt
+      (translate (getopt :wrist-rest :derived :center)
         (intersection
           (union  ; A squarish block of marble.
             (translate [0 0 z3]
@@ -285,10 +296,10 @@
                (rotate [0 0 (rod-angle getopt)]
                  (hull nut (translate [0 0 100] nut)))))))
       ;; Two square holes for pouring silicone:
-      (translate (vec (map + (getopt :wrist-rest :derived :ne) [-10 -10]))
-        (extrude-linear {:height 200} (square 10 10)))
-      (translate (vec (map + (getopt :wrist-rest :derived :sw) [10 10]))
-        (extrude-linear {:height 200} (square 10 10))))
+      (translate (vec (map + (getopt :wrist-rest :derived :ne) [-20 -20]))
+        (cube 12 12 200))
+      (translate (vec (map + (getopt :wrist-rest :derived :sw) [20 20]))
+        (cube 12 12 200)))
     (translate [0 0 500] (cube 1000 1000 1000))))
 
 (defn rubber-insert [getopt]
@@ -308,7 +319,7 @@
         height (+ (- (prop :z4) (prop :z1)) thickness)]
    (rotate [π 0 0]  ; Print bottom-up.
      (difference
-       (place-horizontally getopt
+       (translate (getopt :wrist-rest :derived :center)
          (translate [0 0 (prop :z1)]
            (extrude-linear {:height height :center false}
              (offset thickness

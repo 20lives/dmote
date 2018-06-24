@@ -9,15 +9,13 @@ wrist-rest:
     length: 110
     height:
       first: 6
-      increment: 20
+      increment: 16
     mounts:
       width: 15
       case-side:
-        finger-key-column: 2
-        key-corner: SSE
-        offset: [-13, -10]
+        key-alias: f2
+        offset: [-2, -20]
         depth: 8
       plinth-side:
-        # Offset from corner of plinth (closest to case) to mount:
-        offset: [6, -20]
-        depth: 42
+        offset: [-1, -32]
+        depth: 60

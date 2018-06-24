@@ -65,7 +65,7 @@ The thumb cluster is positioned in relation to the finger cluster.
 
 ##### Parameter `key-alias`
 
-A finger key coordinate pair as named under `aliases` above.
+A finger key as named under `aliases` above.
 
 ##### Parameter `offset`
 
@@ -381,19 +381,15 @@ Preview mode. If `true`, this puts a model of the wrist rest in the same OpenSCA
 
 ### Section `position`
 
-The wrist rest is positioned in relation to a specific key.
+The wrist rest is positioned in relation to a key mount.
 
-#### Parameter `finger-key-column`
+#### Parameter `key-alias`
 
-A finger key column ID. The wrist rest will be attached to the first key in that column.
-
-#### Parameter `key-corner`
-
-A corner for the first key in the column.
+A named key where the wrist rest will attach. The vertical component of its position is ignored.
 
 #### Parameter `offset`
 
-An offset in mm from the selected key.
+An offset in mm from the selected key to one corner of the base of the wrist rest. Specifically, it is the corner close to the keyboard case, on the right-hand side of the right-hand half.
 
 ### Section `shape`
 
@@ -477,17 +473,13 @@ The width in mm of the face or front bezel on each connecting block that will an
 
 The side of the keyboard case.
 
-###### Parameter `finger-key-column`
+###### Parameter `key-alias`
 
-A finger key column ID. On the case side, fastener mounts will be attached at ground level near the first key in that column.
-
-###### Parameter `key-corner`
-
-A corner of the key identified by `finger-key-column`.
+A named key. A mount point on the case side will be placed near this key.
 
 ###### Parameter `offset`
 
-An offset in mm from the corner of the finger key to the mount.
+An offset in mm from the key to the mount.
 
 ###### Parameter `depth`
 
@@ -499,7 +491,7 @@ The side of the wrist rest.
 
 ###### Parameter `offset`
 
-The offset in mm from the nearest corner of the plinth to the fastener mount attached to the plinth.
+The offset in mm from the corner of the plinth to the fastener mount point attached to the plinth.
 
 ###### Parameter `depth`
 
@@ -508,6 +500,12 @@ The thickness of the mount in mm along the axis of the fastener(s). This is typi
 ### Section `solid-bridge`
 
 This is only relevant with the `solid` style of wrist rest.
+
+#### Parameter `width`
+
+The width in mm of the land bridge between the case and the plinth. On the right-hand side of the keyboard, the bridge starts from the wrist rest `key-alias` and extends this many mm to the left.
+
+The value of this parameter, and the shape of the keyboard case, should be arranged in a such a way that the land bridge is wedged in place by a vertical wall on that left side.
 
 #### Parameter `height`
 

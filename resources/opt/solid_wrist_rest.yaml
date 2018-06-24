@@ -17,4 +17,5 @@ wrist-rest:
   include: true
   style: solid
   solid-bridge:
+    width: 42
     height: 14

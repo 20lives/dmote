@@ -366,11 +366,10 @@ wrist-rest:
   include: false
   style: threaded
   position:
-    finger-key-column: 4
-    key-corner: SSE
-    offset: [0, -40]
+    key-alias: near-right
+    offset: [-40, -50]
   shape:
-    plinth-base-size: [70, 70, 44]
+    plinth-base-size: [70, 80, 44]
     chamfer: 2
     lip-height: 2
     pad:
