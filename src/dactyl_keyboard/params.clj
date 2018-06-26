@@ -3,46 +3,14 @@
 ;; Shape Parameters                                                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; This file is dedicated to variables you can use to personalize the models.
-;;; You can’t control everything from here, but you can change a number of
-;;; things without having to adjust more complex code.
+;;; This file describes the interpretation of configuration files for the
+;;; application.
 
 (ns dactyl-keyboard.params
   (:require [clojure.string :as string]
             [clojure.spec.alpha :as spec]
-            [scad-clj.model :refer [deg->rad]]
             [flatland.ordered.map :refer [ordered-map]]
-            [unicode-math.core :refer :all]
             [dactyl-keyboard.generics :as generics]))
-
-;;; If you get creative and the bridge between the thumb and finger clusters
-;;; is broken beyond what you can fix from here, you may want to look at
-;;; tweaks.clj before touching more central code in the ‘cad’ folder.
-
-;;; Throughout this program, the word ‘finger’ is used in its secondary sense
-;;; to exclude the thumb.
-
-;;; The fingers have their keys in a roughly rectangular matrix.
-;;; The matrix follows the geometric coordinate system on the right-hand side
-;;; of the keyboard.
-
-;;; The key in the far left column, middle row (Caps Lock in ISO QWERTY)
-;;; has the matrix coordinates (0, 0). Above it (e.g. Tab) is (0, 1), below it
-;;; (e.g. left Shift) is (0, -1) and so on.
-
-;;; The thumbs have their own 2 × 3 matrix where the top right is (0, 0),
-;;; likewise aligned with the right-hand-side coordinate system.
-
-;;; In touch typing terms, the majority of keys on finger row 0 will be on the
-;;; home row, but the matrix in this program has no necessary relationship with
-;;; the matrix in your MCU firmware (TMK/QMK etc.).
-
-;;; All measurements of distance are in millimetres.
-;;; This includes the size of threaded fasteners, which should be ISO metric.
-
-;;; All angles must be specified in radians, and that is the default unit in
-;;; scad-clj. The ‘deg->rad’ function can be called to convert from degrees.
-
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Case Dimensions ;;
@@ -52,16 +20,6 @@
 (def plate-thickness 3)
 (def web-thickness plate-thickness)
 (def corner-post-width 1.3)
-
-
-;;;;;;;;;;;;;;;;
-;; Wrist Rest ;;
-;;;;;;;;;;;;;;;;
-
-;; Shape of the top.
-(def wrist-rest-σ 2.5)       ; Softness of curvature.
-(def wrist-rest-θ 12)        ; Surface angle coefficient.
-(def wrist-z-coefficient 3)  ; Relationship of wrist-rest-θ to height.
 
 
 ;;;;;;;;;;;;;;;;
@@ -90,10 +48,6 @@
 
 ;; The back plate block can optionally contain nut bosses for the fasteners.
 (def include-backplate-boss true)
-
-;; The ‘installation-angle’ is the angle of each half of the keyboard relative
-;; to the lateral beam.
-(def installation-angle (deg->rad -6))
 
 
 ;;;;;;;;;;;;;;;;;;;;
@@ -587,13 +541,39 @@
     {:help (str "A list of key columns. Columns are aligned with the user’s "
                 "fingers. Each column will be known by its index in this "
                 "list, starting at zero for the first item. Each item may "
-                "contain:\n\n"
+                "contain:\n"
+                "\n"
                 "* `rows-above-home`: An integer specifying the amount of keys "
                 "on the far side of the home row in the column. If "
                 "this parameter is omitted, the effective value will be zero.\n"
                 "* `rows-below-home`: An integer specifying the amount of keys "
                 "on the near side of the home row in the column. If this "
-                "parameter is omitted, the effective value will be zero.")
+                "parameter is omitted, the effective value will be zero.\n"
+                "\n"
+                "For example, on a normal QWERTY keyboard, H is on the home "
+                "row for purposes of touch typing, and you would probably want "
+                "to use it as such here too, even though the matrix in this "
+                "program has no necessary relationship with touch typing, "
+                "nor with the matrix in your MCU firmware (TMK/QMK etc.). "
+                "Your H key will then get the coordinates "
+                "[0, 0] as the home-row key in the far left column on the "
+                "right-hand side of the keyboard.\n"
+                "\n"
+                "In that first column, to continue the QWERTY pattern, you "
+                "will want `rows-above-home` set to 1, to make a Y key, or 2 "
+                "to make a 6 key, or 3 to make a function key above the 6. "
+                "Your Y key will have the coordinates [0, 1]. Your 6 key will "
+                "have the coordinates [0, 2], etc.\n"
+                "\n"
+                "Still in that first column, to finish the QWERTY pattern, "
+                "you will want `rows-below-home` set to 2, where the two "
+                "keys below H are N (coordinates [0, -1]) and Space "
+                "(coordinates [0, -2]).\n"
+                "\n"
+                "The next item in the list will be column 1, with J as [1, 0] "
+                "and so on. On the left-hand side of a DMOTE, everything is "
+                "mirrored so that [0, 0] will be G instead of H, [1, 0] will "
+                "be F instead of J, and so on.")
      :default [{}]
      :parse-fn vec}]
    [:parameter [:key-clusters :finger :aliases]
@@ -699,15 +679,15 @@
    [:section [:case :rear-housing :offsets]
     "Modifiers for the size of the roof. All are in mm."]
    [:parameter [:case :rear-housing :offsets :north]
-    {:help (str "The y axis.")
+    {:help (str "The total extent on the y axis.")
      :default 0
      :parse-fn num}]
    [:parameter [:case :rear-housing :offsets :west]
-    {:help (str "The extent past the first key in the row.")
+    {:help (str "The extent on the x axis past the first key in the row.")
      :default 0
      :parse-fn num}]
    [:parameter [:case :rear-housing :offsets :east]
-    {:help (str "The extent past the last key in the row.")
+    {:help (str "The extent on the x axis past the last key in the row.")
      :default 0
      :parse-fn num}]
    [:parameter [:case :tweaks]

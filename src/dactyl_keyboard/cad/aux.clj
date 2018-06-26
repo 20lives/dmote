@@ -157,7 +157,6 @@
         position (cluster-position getopt :finger coordinates (wall-slab-center-offset getopt :finger coordinates :north))]
    (->>
      shape
-     (rotate installation-angle [0 0 1])
      (translate position)
      (translate [0 0 (/ backplate-beam-height -2)])
      (translate backplate-offset))))

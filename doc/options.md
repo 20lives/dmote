@@ -51,6 +51,14 @@ A list of key columns. Columns are aligned with the user’s fingers. Each colum
 * `rows-above-home`: An integer specifying the amount of keys on the far side of the home row in the column. If this parameter is omitted, the effective value will be zero.
 * `rows-below-home`: An integer specifying the amount of keys on the near side of the home row in the column. If this parameter is omitted, the effective value will be zero.
 
+For example, on a normal QWERTY keyboard, H is on the home row for purposes of touch typing, and you would probably want to use it as such here too, even though the matrix in this program has no necessary relationship with touch typing, nor with the matrix in your MCU firmware (TMK/QMK etc.). Your H key will then get the coordinates [0, 0] as the home-row key in the far left column on the right-hand side of the keyboard.
+
+In that first column, to continue the QWERTY pattern, you will want `rows-above-home` set to 1, to make a Y key, or 2 to make a 6 key, or 3 to make a function key above the 6. Your Y key will have the coordinates [0, 1]. Your 6 key will have the coordinates [0, 2], etc.
+
+Still in that first column, to finish the QWERTY pattern, you will want `rows-below-home` set to 2, where the two keys below H are N (coordinates [0, -1]) and Space (coordinates [0, -2]).
+
+The next item in the list will be column 1, with J as [1, 0] and so on. On the left-hand side of a DMOTE, everything is mirrored so that [0, 0] will be G instead of H, [1, 0] will be F instead of J, and so on.
+
 #### Parameter `aliases`
 
 A map of short names to specific keys by coordinate pair. Such aliases are for use elsewhere in the configuration.
@@ -307,6 +315,38 @@ In the following example, the parameter `P`, which is not really supported, will
 ## Section `case`
 
 The most important part of the keyboard case is generated from the `wall` parameters above. This section deals with lesser features of the case.
+
+### Section `rear-housing`
+
+The furthest row of the key cluster can be extended into a rear housing for the MCU and various other features.
+
+#### Parameter `include`
+
+If `true`, add a rear housing. Please arrange case walls so as not to interfere, by removing them along the far side of the last row.
+
+#### Parameter `distance`
+
+The horizontal distance in mm between the furtest key in the row and the roof of the rear housing.
+
+#### Parameter `height`
+
+The height in mm of the roof, over the floor.
+
+#### Section `offsets`
+
+Modifiers for the size of the roof. All are in mm.
+
+##### Parameter `north`
+
+The total extent on the y axis.
+
+##### Parameter `west`
+
+The extent on the x axis past the first key in the row.
+
+##### Parameter `east`
+
+The extent on the x axis past the last key in the row.
 
 ### Parameter `tweaks`
 
