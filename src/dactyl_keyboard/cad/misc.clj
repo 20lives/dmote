@@ -55,8 +55,7 @@
 
 (defn bottom-extrusion [height p]
   (->> (project p)
-       (extrude-linear {:height height :twist 0 :convexity 0})
-       (translate [0 0 (- (/ height 2) 10)])))
+       (extrude-linear {:height height :twist 0 :convexity 0 :center false})))
 
 (defn bottom-hull [& p]
   (hull p (bottom-extrusion 0.001 p)))
