@@ -68,7 +68,7 @@
       (getopt :key-clusters cluster :derived :row-range)
       (getopt :key-clusters cluster :derived :key-requested?)
       (partial key/cluster-place getopt cluster)
-      key/mount-corner-post)))
+      (partial key/mount-corner-post getopt))))
 
 
 ;;;;;;;;;;;;;;;;;;;
@@ -105,7 +105,7 @@
   (vec
     (map +
       (wall-segment-offset getopt cluster coordinates (first directions) 3)
-      (key/mount-corner-offset directions))))
+      (key/mount-corner-offset getopt directions))))
 
 (defn wall-corner-position [getopt cluster coordinates directions]
   "Absolute position of the lower wall around a finger key."
@@ -167,7 +167,7 @@
         corner [direction (turning-fn direction)]
         offsetter (partial wall-segment-offset getopt cluster coord direction)
         post (fn [segment]
-               (->> (key/mount-corner-post corner)
+               (->> (key/mount-corner-post getopt corner)
                     (translate (offsetter segment))
                     (key/cluster-place getopt cluster coord)))]
    (if-not (zero? last-upper-segment)
@@ -228,7 +228,8 @@
 ;;;;;;;;;;;;;;;;;;
 
 (defn- housing-cube [getopt]
-  (cube plate-thickness plate-thickness plate-thickness))
+  (let [t (getopt :case :web-thickness)]
+   (cube t t t)))
 
 (defn housing-properties [getopt]
   "Derive characteristics from parameters for the rear housing."
@@ -237,7 +238,7 @@
         pairs (into [] (for [coord coords corner [NNW NNE]] [coord corner]))
         getpos (fn [[coord corner]]
                  (key/cluster-position getopt :finger coord
-                   (key/mount-corner-offset corner)))
+                   (key/mount-corner-offset getopt corner)))
         y-max (apply max (map #(second (getpos %)) pairs))
         getoffset (partial getopt :case :rear-housing :offsets)
         y-roof-s (+ y-max (getopt :case :rear-housing :distance))
@@ -320,7 +321,7 @@
   rear housing."
   (let [pos-corner (fn [coord corner]
                      (key/cluster-position getopt :finger coord
-                       (key/mount-corner-offset corner)))
+                       (key/mount-corner-offset getopt corner)))
         sw (getopt :case :rear-housing :derived :sw)
         se (getopt :case :rear-housing :derived :se)
         x (fn [coord corner]
@@ -334,7 +335,7 @@
        (fn [coll [coord corner]]
          (conj coll
            (hull (key/cluster-place getopt :finger coord
-                   (key/mount-corner-post corner))
+                   (key/mount-corner-post getopt corner))
                  (translate [(x coord corner) y z]
                    (housing-cube getopt)))))
        []
@@ -359,7 +360,7 @@
           {cluster :cluster coordinates :coordinates} keyinfo
           offset (wall-segment-offset getopt cluster coordinates
                   (first directions) first-segment)]
-     (->> (key/mount-corner-post directions)
+     (->> (key/mount-corner-post getopt directions)
           (translate offset)
           (key/cluster-place getopt cluster coordinates)))
     (apply hull (map #(tweak-posts getopt key-alias directions %1 %1)

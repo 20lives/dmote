@@ -154,7 +154,7 @@
         case-east-coord (getopt :wrist-rest :derived :key-coord)
         width (getopt :wrist-rest :solid-bridge :width)
         ne (take 2 (key/cluster-position getopt cluster case-east-coord
-                            (key/mount-corner-offset SSE)))
+                            (key/mount-corner-offset getopt SSE)))
         x-west (- (first ne) width)
         plinth-west (getopt :wrist-rest :derived :nw)
         plinth-east (getopt :wrist-rest :derived :ne)
@@ -193,7 +193,7 @@
   (let [cluster (getopt :wrist-rest :derived :key-cluster)
         coord (getopt :wrist-rest :derived :key-coord)
         [x4 y2 _] (key/cluster-position getopt cluster coord
-                    (key/mount-corner-offset ESE))
+                    (key/mount-corner-offset getopt ESE))
         x3 (- x4 2)
         x2 (- x3 6)
         x1 (- x2 2)

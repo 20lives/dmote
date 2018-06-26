@@ -59,9 +59,3 @@
     (let [direction (first directions)]
       (apply (partial walk-matrix [(next-column column direction) (next-row row direction)])
         (rest directions)))))
-
-(defn general-corner [area-x area-y area-z neighbour-z directions]
-  "Produce a translator for getting to one corner of a switch mount."
-  [(* (apply compass-dx directions) (- (/ area-x 2) (/ corner-post-width 2)))
-   (* (apply compass-dy directions) (- (/ area-y 2) (/ corner-post-width 2)))
-   (+ (/ area-z -2) neighbour-z)])

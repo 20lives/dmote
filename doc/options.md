@@ -211,7 +211,7 @@ There is one corner post at each actual corner of every key mount. More posts ar
 
 A distance in mm.
 
-This is actually the distance between some pairs of corner posts, in the key mount’s frame of reference. It is therefore inaccurate as a measure of wall thickness on the x-y plane.
+This is actually the distance between some pairs of corner posts (cf. `key-mount-corner-margin`), in the key mount’s frame of reference. It is therefore inaccurate as a measure of wall thickness on the x-y plane.
 
 ##### Parameter `bevel`
 
@@ -314,7 +314,21 @@ In the following example, the parameter `P`, which is not really supported, will
 
 ## Section `case`
 
-The most important part of the keyboard case is generated from the `wall` parameters above. This section deals with lesser features of the case.
+Much of the keyboard case is generated from the `wall` parameters above. This section deals with lesser features of the case.
+
+### Parameter `key-mount-thickness`
+
+The thickness in mm of each switch key mounting plate.
+
+### Parameter `key-mount-corner-margin`
+
+The thickness in mm of an imaginary “post” at each corner of each key mount. Copies of such posts project from the key mounts to form the main walls of the case.
+
+`key-mount-thickness` is similarly the height of each post.
+
+### Parameter `web-thickness`
+
+The thickness in mm of the webbing between switch key mounting plates and of the rear housing’s walls and roof.
 
 ### Section `rear-housing`
 
@@ -326,7 +340,7 @@ If `true`, add a rear housing. Please arrange case walls so as not to interfere,
 
 #### Parameter `distance`
 
-The horizontal distance in mm between the furtest key in the row and the roof of the rear housing.
+The horizontal distance in mm between the furthest key in the row and the roof of the rear housing.
 
 #### Parameter `height`
 

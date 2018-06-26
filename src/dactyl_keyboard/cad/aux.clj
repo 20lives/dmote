@@ -140,9 +140,9 @@
             [0 (- (/ promicro-length -2) grip-to-base) 0]
             (cube (/ promicro-width 2) grip-to-base plinth-width)))
         (cluster-place getopt :finger cervix-coordinates
-          (mount-corner-post [mcu-connector-direction (turning-left rev-dir)]))
+          (mount-corner-post getopt [mcu-connector-direction (turning-left rev-dir)]))
         (cluster-place getopt :finger cervix-coordinates
-          (mount-corner-post [mcu-connector-direction (turning-right rev-dir)]))))))
+          (mount-corner-post getopt [mcu-connector-direction (turning-right rev-dir)]))))))
 
 
 ;;;;;;;;;;;;;;;;

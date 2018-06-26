@@ -278,6 +278,8 @@ by-key:
                   south:
                     extent: 1
 case:
+  key-mount-thickness: 2.5
+  web-thickness: 2.5
   rear-housing:
     include: true
     distance: 5

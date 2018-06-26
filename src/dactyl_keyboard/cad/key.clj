@@ -17,10 +17,6 @@
 ;; Core Definitions — All Switches ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def web-post
-  "A shape for attaching things to a corner of a switch mount."
-   (cube corner-post-width corner-post-width web-thickness))
-
 ;; Mounts for neighbouring 1U keys are about 0.75” apart.
 (def mount-1u 19.05)
 
@@ -184,7 +180,7 @@
   (let [height (getopt :keycaps :body-height)
         travel (getopt :switches :travel)
         resting-clearance (getopt :keycaps :resting-clearance)
-        plate plate-thickness
+        plate (getopt :case :key-mount-thickness)
         coll {:pressed-cap-bottom (- resting-clearance travel)
               :resting-cap-bottom resting-clearance}]
    {:from-plate-top coll
@@ -197,7 +193,7 @@
         w1 (+ key-width-1u m)
         h2 (getopt :keycaps :derived :from-plate-top :resting-cap-bottom)]
    (color [0.75 0.75 1 1]
-     (translate [0 0 plate-thickness]
+     (translate [0 0 (getopt :case :key-mount-thickness)]
        (pairwise-hulls
          ;; A bottom plate for ease of mounting a switch:
          (step 0.5 (max keyswitch-hole-x keyswitch-hole-y))
@@ -226,33 +222,47 @@
 ;; Key Placement Functions — General ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def single-switch-plate
-  (translate [0 0 (/ plate-thickness 2)]
-    (cube mount-width mount-depth plate-thickness)))
+(defn single-switch-plate [getopt]
+  (let [t (getopt :case :key-mount-thickness)]
+   (translate [0 0 (/ t 2)]
+     (cube mount-width mount-depth t))))
 
-(def single-switch-cutout
+(defn single-switch-cutout [getopt]
   "Negative space for the insertion of a key switch through a mounting plate."
-  (let [h (- (* 2 keyswitch-cutout-height) plate-thickness)
+  (let [t (getopt :case :key-mount-thickness)
+        h (- (* 2 keyswitch-cutout-height) t)
         trench-scale 2.5]
-   (translate [0 0 (/ plate-thickness 2)]
+   (translate [0 0 (/ t 2)]
      (union
        ;; Space for the part of a switch above the mounting hole.
-       (translate [0 0 plate-thickness]
-         (cube keyswitch-overhang-x keyswitch-overhang-y plate-thickness))
+       (translate [0 0 t]
+         (cube keyswitch-overhang-x keyswitch-overhang-y t))
        ;; The hole through the plate.
        (cube keyswitch-hole-x keyswitch-hole-y h)
        ;; ALPS-specific space for wings to flare out.
        (translate [0 0 -1.5]
-         (cube (+ keyswitch-hole-x 1) keyswitch-hole-y plate-thickness))))))
+         (cube (+ keyswitch-hole-x 1) keyswitch-hole-y t))))))
 
-(defn mount-corner-offset [directions]
-  "Produce a translator for getting to one corner of a switch mount."
-  (general-corner
-    mount-width mount-depth web-thickness plate-thickness directions))
+(defn mount-corner-offset [getopt directions]
+  "Produce a mm coordinate offset for a corner of a switch mount."
+  (let [subject-x mount-width
+        subject-y mount-depth
+        neighbour-z (getopt :case :key-mount-thickness)
+        area-z (getopt :case :web-thickness)
+        m (getopt :case :key-mount-corner-margin)]
+    [(* (apply compass-dx directions) (- (/ subject-x 2) (/ m 2)))
+     (* (apply compass-dy directions) (- (/ subject-y 2) (/ m 2)))
+     (+ (/ area-z -2) neighbour-z)]))
 
-(defn mount-corner-post [directions]
+(defn web-post [getopt]
+  "A shape for attaching things to a corner of a switch mount."
+  (cube (getopt :case :key-mount-corner-margin)
+        (getopt :case :key-mount-corner-margin)
+        (getopt :case :web-thickness)))
+
+(defn mount-corner-post [getopt directions]
   "A post shape that comes offset for one corner of a key mount."
-  (translate (mount-corner-offset directions) web-post))
+  (translate (mount-corner-offset getopt directions) (web-post getopt)))
 
 (defn curver [subject dimension-n rotate-type delta-fn orthographic
               translate-fn rotate-fn getopt cluster coord obj]
@@ -365,11 +375,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn cluster-plates [getopt cluster]
-  (apply union (map #(cluster-place getopt cluster % single-switch-plate)
+  (apply union (map #(cluster-place getopt cluster % (single-switch-plate getopt))
                     (getopt :key-clusters cluster :derived :key-coordinates))))
 
 (defn cluster-cutouts [getopt cluster]
-  (apply union (map #(cluster-place getopt cluster % single-switch-cutout)
+  (apply union (map #(cluster-place getopt cluster % (single-switch-cutout getopt))
                     (getopt :key-clusters cluster :derived :key-coordinates))))
 
 (defn cluster-channels [getopt cluster]

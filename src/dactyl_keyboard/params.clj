@@ -12,15 +12,6 @@
             [flatland.ordered.map :refer [ordered-map]]
             [dactyl-keyboard.generics :as generics]))
 
-;;;;;;;;;;;;;;;;;;;;;
-;; Case Dimensions ;;
-;;;;;;;;;;;;;;;;;;;;;
-
-;; Switch mount plates and the webbing between them have configurable thickness.
-(def plate-thickness 3)
-(def web-thickness plate-thickness)
-(def corner-post-width 1.3)
-
 
 ;;;;;;;;;;;;;;;;
 ;; Back Plate ;;
@@ -392,7 +383,8 @@
     {:help (str "A distance in mm.\n"
                 "\n"
                 "This is actually the distance between some pairs of corner "
-                "posts, in the key mount’s frame of reference. It is therefore "
+                "posts (cf. `key-mount-corner-margin`), in the key mount’s "
+                "frame of reference. It is therefore "
                 "inaccurate as a measure of wall thickness on the x-y plane.")
      :default 0
      :parse-fn num}]
@@ -655,9 +647,25 @@
      :parse-fn parse-overrides
      :validate [::overrides]}]
    [:section [:case]
-    "The most important part of the keyboard case is generated from the "
-    "`wall` parameters above. This section deals with lesser features of the "
-    "case."]
+    "Much of the keyboard case is generated from the `wall` parameters above. "
+    "This section deals with lesser features of the case."]
+   [:parameter [:case :key-mount-thickness]
+    {:help (str "The thickness in mm of each switch key mounting plate.")
+     :default 1
+     :parse-fn num}]
+   [:parameter [:case :key-mount-corner-margin]
+    {:help (str "The thickness in mm of an imaginary “post” at each corner "
+                "of each key mount. Copies of such posts project from the "
+                "key mounts to form the main walls of the case.\n"
+                "\n"
+                "`key-mount-thickness` is similarly the height of each post.")
+     :default 1
+     :parse-fn num}]
+   [:parameter [:case :web-thickness]
+    {:help (str "The thickness in mm of the webbing between switch key "
+                "mounting plates and of the rear housing’s walls and roof.")
+     :default 1
+     :parse-fn num}]
    [:section [:case :rear-housing]
     "The furthest row of the key cluster can be extended into a rear housing "
     "for the MCU and various other features."]
@@ -668,7 +676,7 @@
      :default false
      :parse-fn boolean}]
    [:parameter [:case :rear-housing :distance]
-    {:help (str "The horizontal distance in mm between the furtest key in "
+    {:help (str "The horizontal distance in mm between the furthest key in "
                 "the row and the roof of the rear housing.")
      :default 0
      :parse-fn num}]
