@@ -152,19 +152,21 @@
 ;; Plate for a connecting beam, rod etc.
 
 (defn backplate-place [getopt shape]
-  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
-        coordinates (last (by-col backplate-column))
-        position (cluster-position getopt :finger coordinates (wall-slab-center-offset getopt :finger coordinates :north))]
+  (let [position (getopt :case :back-plate :position)
+        {alias :key-alias offset :offset} position
+        keyinfo (getopt :key-clusters :derived :aliases alias)
+        {cluster :cluster coordinates :coordinates} keyinfo]
    (->>
      shape
-     (translate position)
-     (translate [0 0 (/ backplate-beam-height -2)])
-     (translate backplate-offset))))
+     (translate (cluster-position getopt cluster coordinates
+                  (wall-slab-center-offset getopt cluster coordinates :north)))
+     (translate [0 0 (/ (getopt :case :back-plate :beam-height) -2)])
+     (translate offset))))
 
-(def backplate-shape
+(defn backplate-shape [getopt]
   "A mounting plate for a connecting beam."
-  (let [height backplate-beam-height
-        width (+ backplate-fastener-distance height)
+  (let [height (getopt :case :back-plate :beam-height)
+        width (+ (getopt :case :back-plate :fasteners :distance) height)
         depth 3
         interior-protrusion 8
         exterior-bevel 1
@@ -178,22 +180,24 @@
 
 (defn backplate-fastener-holes [getopt]
   "Two holes for screws through the back plate."
-  (letfn [(hole [x-offset]
-            (->>
-              (union
-                (cylinder (/ backplate-fastener-diameter 2) 25)
-                (if include-backplate-boss
-                  (translate [0 0 10]
-                    (iso-hex-nut-model backplate-fastener-diameter 10))))
-              (rotate [(/ π 2) 0 0])
-              (translate [x-offset 0 0])
-              (backplate-place getopt)))]
+  (let [d (getopt :case :back-plate :fasteners :diameter)
+        D (getopt :case :back-plate :fasteners :distance)
+        hole (fn [x-offset]
+               (->>
+                 (union
+                   (cylinder (/ d 2) 25)
+                   (if (getopt :case :back-plate :fasteners :bosses)
+                     (translate [0 0 10]
+                       (iso-hex-nut-model d 10))))
+                 (rotate [(/ π 2) 0 0])
+                 (translate [x-offset 0 0])
+                 (backplate-place getopt)))]
    (union
-     (hole (/ backplate-fastener-distance 2))
-     (hole (/ backplate-fastener-distance -2)))))
+     (hole (/ D 2))
+     (hole (/ D -2)))))
 
 (defn backplate-block [getopt]
-  (bottom-hull (backplate-place getopt backplate-shape)))
+  (bottom-hull (backplate-place getopt (backplate-shape getopt))))
 
 
 ;;;;;;;;;;;;;;;

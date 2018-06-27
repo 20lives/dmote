@@ -362,6 +362,48 @@ The extent on the x axis past the first key in the row.
 
 The extent on the x axis past the last key in the row.
 
+### Section `back-plate`
+
+Given that independent movement of each half of the keyboard is not useful, each half can include a mounting plate for a stabilizing ‘beam’. That is a straight piece of wood, aluminium, rigid plastic etc. to connect the two halves mechanically and possibly carry the wire that connects them electrically.
+
+This option is similar to rear housing, but the back plate block provides no interior space for an MCU etc. It is solid, with holes for threaded fasteners and the option of nut bosses.
+
+#### Parameter `include`
+
+If `true`, include a back plate block.
+
+#### Parameter `beam-height`
+
+The nominal vertical extent of the back plate in mm. Because the plate is bottom-hulled to the floor, the effect of this setting is on the area of the plate above its holes.
+
+#### Section `fasteners`
+
+Two threaded fasteners run through the back plate.
+
+##### Parameter `diameter`
+
+The ISO metric diameter of each fastener.
+
+##### Parameter `distance`
+
+The horizontal distance between the fasteners.
+
+##### Parameter `bosses`
+
+If `true`, cut nut bosses into the inside wall of the block.
+
+#### Section `position`
+
+The block is positioned in relation to a key mount.
+
+##### Parameter `key-alias`
+
+A named key where the block will attach. The vertical component of its position is ignored.
+
+##### Parameter `offset`
+
+An offset in mm from the middle of the north wall of the selected key, at ground level, to the middle of the base of the back plate block.
+
 ### Parameter `tweaks`
 
 Additional shapes. This is usually needed to bridge gaps between the walls of the finger and key clusters.

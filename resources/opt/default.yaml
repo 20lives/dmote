@@ -24,6 +24,7 @@ key-clusters:
       f0: [0, first]
       f1: [1, first]
       f2: [2, first]
+      back: [1, last]
       far-right: [last, last]
       near-right: [last, first]
   thumb:
@@ -287,6 +288,15 @@ case:
     offsets:
       north: 15
       east: -2
+  back-plate:
+    include: false
+    beam-height: 20
+    fasteners:
+      diameter: 6
+      distance: 30
+    position:
+      key-alias: back
+      offset: [0, 0, 0]
   tweaks:
   - # Where t2 looms over f0:
     hull-around:

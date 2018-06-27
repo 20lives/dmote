@@ -13,34 +13,6 @@
             [dactyl-keyboard.generics :as generics]))
 
 
-;;;;;;;;;;;;;;;;
-;; Back Plate ;;
-;;;;;;;;;;;;;;;;
-
-;; Given that independent movement of each half of the keyboard is not useful,
-;; each half can include a mounting plate for a ‘beam’ (a straight piece of
-;; wood, aluminium, rigid plastic etc.) to connect the two halves mechanically.
-(def include-backplate-block true)
-
-;; The plate will center along a finger column.
-(def backplate-column 2)
-(def backplate-offset [2 0.5 -11])
-
-(def backplate-beam-height
-  "The nominal height (vertical extent) of the plate itself.
-  Because the plate is bottom-hulled to the floor and its vertical position
-  is determined by the backplate-column and backplate-offset settings, this
-  setting’s only real effect is on the area of the plate above its holes."
-  20)
-
-;; The backplate will have two holes for threaded fasteners.
-(def backplate-fastener-distance 30)  ; Distance between fastener centers.
-(def backplate-fastener-diameter 6)
-
-;; The back plate block can optionally contain nut bosses for the fasteners.
-(def include-backplate-boss true)
-
-
 ;;;;;;;;;;;;;;;;;;;;
 ;; Minor Features ;;
 ;;;;;;;;;;;;;;;;;;;;
@@ -698,6 +670,53 @@
     {:help (str "The extent on the x axis past the last key in the row.")
      :default 0
      :parse-fn num}]
+   [:section [:case :back-plate]
+    "Given that independent movement of each half of the keyboard is not "
+    "useful, each half can include a mounting plate for a stabilizing ‘beam’. "
+    "That is a straight piece of wood, aluminium, rigid plastic etc. to "
+    "connect the two halves mechanically and possibly carry the wire that "
+    "connects them electrically.\n"
+    "\n"
+    "This option is similar to rear housing, but the back plate block "
+    "provides no interior space for an MCU etc. It is solid, with holes "
+    "for threaded fasteners and the option of nut bosses."]
+   [:parameter [:case :back-plate :include]
+    {:help (str "If `true`, include a back plate block.")
+     :default false
+     :parse-fn boolean}]
+   [:parameter [:case :back-plate :beam-height]
+    {:help (str "The nominal vertical extent of the back plate in mm. "
+                "Because the plate is bottom-hulled to the floor, the effect "
+                "of this setting is on the area of the plate above its holes.")
+     :default 1
+     :parse-fn num}]
+   [:section [:case :back-plate :fasteners]
+    "Two threaded fasteners run through the back plate."]
+   [:parameter [:case :back-plate :fasteners :diameter]
+    {:help (str "The ISO metric diameter of each fastener.")
+     :default 1
+     :parse-fn int}]
+   [:parameter [:case :back-plate :fasteners :distance]
+    {:help (str "The horizontal distance between the fasteners.")
+     :default 1
+     :parse-fn num}]
+   [:parameter [:case :back-plate :fasteners :bosses]
+    {:help (str "If `true`, cut nut bosses into the inside wall of the block.")
+     :default false
+     :parse-fn boolean}]
+   [:section [:case :back-plate :position]
+    "The block is positioned in relation to a key mount."]
+   [:parameter [:case :back-plate :position :key-alias]
+    {:help (str "A named key where the block will attach. "
+                "The vertical component of its position is ignored.")
+     :default :origin
+     :parse-fn keyword}]
+   [:parameter [:case :back-plate :position :offset]
+    {:help (str "An offset in mm from the middle of the north wall of the "
+                "selected key, at ground level, to the middle of the base of "
+                "the back plate block.")
+     :default [0 0 0]
+     :parse-fn vec}]
    [:parameter [:case :tweaks]
     {:help (str "Additional shapes. This is usually needed to bridge gaps "
                 "between the walls of the finger and key clusters.\n"
