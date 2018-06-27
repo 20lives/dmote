@@ -25,13 +25,6 @@
 ;; Placement of the RJ9 port for interfacing the two halves.
 (def rj9-translation [-1.7 -7.5 0])
 
-;; LED holes along the inner wall. Defaults are for WS2818 at 17 mm intervals.
-(def include-led-housings true)
-(def led-housing-size 5.5)  ; Exaggerated for printing inaccuracy; really 5 mm.
-(def led-emitter-diameter 4)
-(def led-pitch 16.8)  ; Allowance for slight wall curvature.
-(def led-amount 3)
-
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Serialized Data ;;
@@ -717,6 +710,37 @@
                 "the back plate block.")
      :default [0 0 0]
      :parse-fn vec}]
+   [:section [:case :leds]
+    "Support for light-emitting diodes in the case walls."]
+   [:parameter [:case :leds :include]
+    {:help (str "If `true`, cut slots for LEDs out of the case wall, facing "
+                "the space between the two halves.")
+     :default false
+     :parse-fn boolean}]
+   [:parameter [:case :leds :amount]
+    {:help (str "The number of LEDs.")
+     :default 1
+     :parse-fn int}]
+   [:parameter [:case :leds :housing-size]
+    {:help (str "The length of the side on a square profile used to create "
+                "negative space for the housings on a LED strip. This assumes "
+                "the housings are squarish, as on a WS2818. The negative "
+                "space is not supposed to penetrate the wall, just make it "
+                "easier to hold the LED strip in place and direct its light. "
+                "With that in mind, feel free to exaggerate by 10%.")
+     :default 1
+     :parse-fn num}]
+   [:parameter [:case :leds :emitter-diameter]
+    {:help (str "The diameter of a round hole for the light of an LED.")
+     :default 1
+     :parse-fn num}]
+   [:parameter [:case :leds :interval]
+    {:help (str "The distance between LEDs on the LED strip. "
+                "You may want to apply a setting slightly shorter than the "
+                "real distance, since the algorithm carving the holes does "
+                "not account for wall curvature.")
+     :default 1
+     :parse-fn num}]
    [:parameter [:case :tweaks]
     {:help (str "Additional shapes. This is usually needed to bridge gaps "
                 "between the walls of the finger and key clusters.\n"

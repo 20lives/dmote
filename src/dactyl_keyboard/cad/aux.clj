@@ -204,8 +204,6 @@
 ;; LED Strip ;;
 ;;;;;;;;;;;;;;;
 
-(def led-height (+ (/ led-housing-size 2) 5))
-
 (defn west-wall-west-points [getopt]
   (for [row ((getopt :key-clusters :finger :derived :row-indices-by-column) 0)
         corner [generics/WSW generics/WNW]]
@@ -224,20 +222,22 @@
 (defn led-hole-position [getopt ordinal]
   (let [by-col (getopt :key-clusters :finger :derived :row-indices-by-column)
         row (first (by-col 0))
-        [x0 y0 _] (wall-corner-position getopt :finger [0 row] generics/WNW)]
-   [x0 (+ y0 (* led-pitch ordinal)) led-height]))
+        [x0 y0 _] (wall-corner-position getopt :finger [0 row] generics/WNW)
+        h (+ 5 (/ (getopt :case :leds :housing-size) 2))]
+   [x0 (+ y0 (* (getopt :case :leds :interval) ordinal)) h]))
 
 (defn led-emitter-channel [getopt ordinal]
-  (->> (cylinder (/ led-emitter-diameter 2) 50)
+  (->> (cylinder (/ (getopt :case :leds :emitter-diameter) 2) 50)
        (rotatev (/ π 2) [0 1 0])
        (translate (led-hole-position getopt ordinal))))
 
 (defn led-housing-channel [getopt ordinal]
-  (->> (cube 50 led-housing-size led-housing-size)
-       (translate (led-hole-position getopt ordinal))))
+  (let [h (getopt :case :leds :housing-size)]
+   (->> (cube 50 h h)
+        (translate (led-hole-position getopt ordinal)))))
 
 (defn led-holes [getopt]
-  (let [holes (range led-amount)
+  (let [holes (range (getopt :case :leds :amount))
         housings (apply union (map (partial led-housing-channel getopt) holes))
         emitters (apply union (map (partial led-emitter-channel getopt) holes))]
    (union

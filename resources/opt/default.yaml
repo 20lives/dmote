@@ -297,6 +297,13 @@ case:
     position:
       key-alias: back
       offset: [0, 0, 0]
+  leds:
+    include: true
+    amount: 3
+    # Settings here are for WS2818 diodes at 17 mm intervals.
+    housing-size: 5.5  # Real size: 5 mm.
+    emitter-diameter: 4
+    interval: 16.8
   tweaks:
   - # Where t2 looms over f0:
     hull-around:

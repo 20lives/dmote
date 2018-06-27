@@ -50,7 +50,7 @@
       (key/cluster-channels getopt :thumb)
       (aux/rj9-negative getopt)
       #_(aux/mcu-negative getopt)
-      (if params/include-led-housings (aux/led-holes getopt))
+      (if (getopt :case :leds :include) (aux/led-holes getopt))
       (if (getopt :case :back-plate :include)
         (aux/backplate-fastener-holes getopt))
       (if (getopt :wrist-rest :include)

@@ -404,6 +404,30 @@ A named key where the block will attach. The vertical component of its position 
 
 An offset in mm from the middle of the north wall of the selected key, at ground level, to the middle of the base of the back plate block.
 
+### Section `leds`
+
+Support for light-emitting diodes in the case walls.
+
+#### Parameter `include`
+
+If `true`, cut slots for LEDs out of the case wall, facing the space between the two halves.
+
+#### Parameter `amount`
+
+The number of LEDs.
+
+#### Parameter `housing-size`
+
+The length of the side on a square profile used to create negative space for the housings on a LED strip. This assumes the housings are squarish, as on a WS2818. The negative space is not supposed to penetrate the wall, just make it easier to hold the LED strip in place and direct its light. With that in mind, feel free to exaggerate by 10%.
+
+#### Parameter `emitter-diameter`
+
+The diameter of a round hole for the light of an LED.
+
+#### Parameter `interval`
+
+The distance between LEDs on the LED strip. You may want to apply a setting slightly shorter than the real distance, since the algorithm carving the holes does not account for wall curvature.
+
 ### Parameter `tweaks`
 
 Additional shapes. This is usually needed to bridge gaps between the walls of the finger and key clusters.
