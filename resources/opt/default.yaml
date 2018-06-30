@@ -408,6 +408,12 @@ case:
         offset: [1, -5]
       - key-alias: near-right
         key-corner: ESE
+connection:
+  socket-size: [10, 11, 17.7]  # 616E minus the vertical bar is 10 mm wide.
+  position:
+    prefer-rear-housing: true
+    key-alias: back
+    corner: ENE
 wrist-rest:
   include: false
   style: threaded

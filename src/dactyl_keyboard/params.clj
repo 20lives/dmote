@@ -22,9 +22,6 @@
 (def mcu-offset [-0.5 3.5 0.5])
 (def mcu-connector-direction :east)
 
-;; Placement of the RJ9 port for interfacing the two halves.
-(def rj9-translation [-1.7 -7.5 0])
-
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Serialized Data ;;
@@ -823,6 +820,46 @@
      :default []
      :parse-fn key-based-polygons
      :validate [::foot-plate-polygons]}]
+   [:section [:connection]
+    "Because the DMOTE is split, there must be a signalling connection "
+    "between its two halves. This section adds a socket for that purpose. "
+    "For example, this might be a type 616E female for a 4P4C “RJ9” plug."]
+   [:parameter [:connection :socket-size]
+    {:help (str "The size of a hole in the case, for the female to fit into.")
+     :default [1 1 1]
+     :parse-fn vec
+     :validate [::3d-point]}]
+   [:section [:connection :position]
+    "Where to place the socket."]
+   [:parameter [:connection :position :prefer-rear-housing]
+    {:help (str "If `true` and `rear-housing` is included, place the socket "
+                "in relation to the rear housing. Otherwise, place the "
+                "socket in relation to a key mount identified by `key-alias`.")
+     :default true
+     :parse-fn boolean}]
+   [:parameter [:connection :position :key-alias]
+    {:help (str "The name of a key at which to place the socket if "
+                "`prefer-rear-housing` is `false` or rear housing is not "
+                "included.")
+     :default :origin
+     :parse-fn keyword}]
+   [:parameter [:connection :position :corner]
+    {:help (str "A code for a corner of the rear housing or of `key-alias`. "
+                "This determines both the location and facing of the socket.")
+     :default "ENE"
+     :parse-fn string-corner
+     :validate [::corner]}]
+   [:parameter [:connection :position :offset]
+    {:help (str "A 3D offset in mm, measuring from the `corner`.")
+     :default [0 0 0]
+     :parse-fn vec
+     :validate [::3d-point]}]
+   [:parameter [:connection :position :rotation]
+    {:help (str "A vector of 3 angles in radians. This parameter governs "
+                "rotation of the socket around its own center.")
+     :default [0 0 0]
+     :parse-fn vec
+     :validate [::3d-point]}]
    [:section [:wrist-rest]
     "An optional extension to support the user’s wrist."]
    [:parameter [:wrist-rest :include]

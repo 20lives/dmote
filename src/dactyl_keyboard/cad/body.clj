@@ -101,14 +101,14 @@
 (defn wall-corner-offset [getopt cluster coordinates directions]
   "Combined [x y z] offset from the center of a switch mount.
   This goes to one corner of the hem of the mount’s skirt of walling
-  and is used mainly for finding the base of full walls."
+  and therefore finds the base of full walls."
   (vec
     (map +
       (wall-segment-offset getopt cluster coordinates (first directions) 3)
       (key/mount-corner-offset getopt directions))))
 
 (defn wall-corner-position [getopt cluster coordinates directions]
-  "Absolute position of the lower wall around a finger key."
+  "Absolute position of the lower wall around a key mount."
   (key/cluster-position getopt cluster coordinates
     (if (nil? directions)
       [0 0 0]
@@ -273,15 +273,20 @@
      :east (wall (key :east-end-coord) cardinal-direction segment)
      :north (if (= segment 0) [0 0 0] [0 1 -1]))))
 
-(defn- place-housing [getopt corner segment shape]
+(defn- housing-placement [translate-fn getopt corner segment subject]
   "Place passed shape in relation to a corner of the rear housing’s roof."
-  (let [code (case corner [:west :south] :sw
-                          ([:west :north] [:north :west]) :nw
-                          ([:north :east] [:east :north]) :ne
-                          [:east :south] :se)]
-   (->> shape
-        (translate (getopt :case :rear-housing :derived code))
-        (translate (housing-segment-offset getopt (first corner) segment)))))
+  (->> subject
+       (translate-fn (getopt :case :rear-housing :derived
+                       (directions-to-unordered-corner corner)))
+       (translate-fn (housing-segment-offset getopt (first corner) segment))))
+
+(def housing-place
+  "Akin to cluster-place but with a wall segment."
+  (partial housing-placement translate))
+
+(def housing-position
+  "Akin to cluster-position but with a wall segment."
+  (partial housing-placement (partial map +)))
 
 (defn- housing-outer-wall [getopt]
   "The west, north and east walls of the rear housing. These are mostly
@@ -295,24 +300,24 @@
          (fn [coll shapes] (conj coll (apply hull shapes)))
          []
          [(wall-edge getopt :finger true [wec :west turning-right])
-          (map #(place-housing getopt WSW % c) (range 2))
-          (map #(place-housing getopt WNW % c) (range 2))
-          (map #(place-housing getopt NNW % c) (range 2))
-          (map #(place-housing getopt NNE % c) (range 2))
-          (map #(place-housing getopt ENE % c) (range 2))
-          (map #(place-housing getopt ESE % c) (range 2))
+          (map #(housing-place getopt WSW % c) (range 2))
+          (map #(housing-place getopt WNW % c) (range 2))
+          (map #(housing-place getopt NNW % c) (range 2))
+          (map #(housing-place getopt NNE % c) (range 2))
+          (map #(housing-place getopt ENE % c) (range 2))
+          (map #(housing-place getopt ESE % c) (range 2))
           (wall-edge getopt :finger true [eec :east turning-left])]))
      (apply pairwise-hulls
        (reduce
          (fn [coll shapes] (conj coll (apply bottom-hull shapes)))
          []
          [(wall-edge getopt :finger false [wec :west turning-right])
-          (place-housing getopt WSW 1 c)
-          (place-housing getopt WNW 1 c)
-          (place-housing getopt NNW 1 c)
-          (place-housing getopt NNE 1 c)
-          (place-housing getopt ENE 1 c)
-          (place-housing getopt ESE 1 c)
+          (housing-place getopt WSW 1 c)
+          (housing-place getopt WNW 1 c)
+          (housing-place getopt NNW 1 c)
+          (housing-place getopt NNE 1 c)
+          (housing-place getopt ENE 1 c)
+          (housing-place getopt ESE 1 c)
           (wall-edge getopt :finger false [eec :east turning-left])])))))
 
 

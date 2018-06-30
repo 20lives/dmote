@@ -33,6 +33,15 @@
    :NNW NNW
    :WNW WNW})
 
+(defn directions-to-unordered-corner [tuple]
+  "Reduce directional corner code to non-directional corner code, as
+  used for rear housing."
+  (cond
+    (#{NNE ENE} tuple) :ne
+    (#{SSE ESE} tuple) :se
+    (#{SSW WSW} tuple) :sw
+    (#{NNW WNW} tuple) :nw))
+
 (defn abs [n]
   "The absolute of n."
   (max n (- n)))

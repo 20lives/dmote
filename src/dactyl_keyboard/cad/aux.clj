@@ -251,43 +251,72 @@
 ;; Signalling ;;
 ;;;;;;;;;;;;;;;;
 
-;; 4P4C connector holder:
-(defn rj9-origin [getopt]
-  (let [by-col (getopt :key-clusters :finger :derived :row-indices-by-column)
-        c0 [0 (last (by-col 0))]
-        c1 [1 (last (by-col 1))]
-        corner (fn [c] (wall-corner-position getopt :finger c generics/NNW))
-        [x0 y0] (take 2 (map + (corner c0) (corner c1)))]
-   (map + [0 0 0] [(/ x0 2) (/ y0 2) 0])))
 
-(defn rj9-position [getopt shape]
-  (let [origin (rj9-origin getopt)]
+(defn connection-nook [getopt]
+  "Produce coordinates for translation into requested corner."
+  (let [socket-size (getopt :connection :socket-size)
+        thickness (getopt :case :web-thickness)
+        corner (getopt :connection :position :corner)
+        use-housing (and (getopt :case :rear-housing :include)
+                         (getopt :connection :position :prefer-rear-housing))
+        general
+          (if use-housing
+            (housing-position getopt corner 3 [0 0 0])
+            (let [alias (getopt :connection :position :key-alias)
+                  keyinfo (getopt :key-clusters :derived :aliases alias)
+                  {cluster :cluster coordinates :coordinates} keyinfo]
+             (wall-corner-position getopt cluster coordinates corner)))
+        to-nook
+          (if use-housing
+            (let [{dxs :dx dys :dy} (compass-to-grid (second corner))
+                  distance (* 0.5 (+ thickness (first socket-size)))]
+             [(* -1 dxs distance) (* -1 dys distance) 0])
+            ;; Else don’t bother.
+            [0 0 0])]
+   (vec (map + (conj (vec (take 2 general)) 0) to-nook))))
+
+(defn connection-position [getopt shape]
+  (let [socket-size (getopt :connection :socket-size)
+        thickness (getopt :case :web-thickness)
+        corner (getopt :connection :position :corner)]
    (->> shape
-        (translate rj9-translation)
-        (rotate (deg->rad 36) [0 0 1])
-        (translate [(first origin) (second origin) 10.5]))))
+        (rotate (getopt :connection :position :rotation))
+        ;; Line up with the (rear housing) wall and a metasocket base plate.
+        (translate [0 (/ thickness 2) thickness])
+        ;; Imagine the outside of the wall as the x axis line, ground level
+        ;; as the y axis line.
+        (translate (vec (map * [0 -0.5 0.5] socket-size)))
+        ;; Rotate around that origin to face the corner’s main direction.
+        (rotate [0 0 (- (compass-radians (first corner)))])
+        ;; Bring snugly to the requested corner.
+        (translate (connection-nook getopt))
+        ;; Tweak.
+        (translate (getopt :connection :position :offset)))))
 
-(def rj9-metasocket
-  (hull
-    (translate [0 1 18] (cube 6 4 1))
-    (cube 13.8 12 21)))
+(defn connection-metasocket [getopt]
+  "The shape of a socket in the case to receive a signalling socket component.
+  Here, the shape nominally faces north."
+  (let [socket-size (getopt :connection :socket-size)
+        thickness (getopt :case :web-thickness)
+        double (* thickness 2)]
+   (translate [0 (/ thickness -2) 0]
+     (apply cube (vec (map + socket-size [double thickness double]))))))
 
-(def rj9-socket-tshort (union (translate [0 2 0] (cube 10.78  9 18.38))
-                              (translate [0 0 5] (cube 10.78 13  5))))
+(defn connection-socket [getopt]
+  "Negative space for a port, with a hole for wires leading out of the port and
+  into the interior of the keyboard."
+  (let [socket-size (getopt :connection :socket-size)
+        thickness (getopt :case :web-thickness)]
+   (union
+     (apply cube socket-size)
+     (translate [0 (* -2 thickness) 0]
+       (apply cube (map dec socket-size))))))
 
-(def rj9-socket-616e
-  "The shape of a 4P4C female connector for use as a negative.
-  An actual 616E socket is not symmetric along the x axis. This model of it,
-  being intended for mirroring, is deliberately imprecise. It includes a
-  channel for the 4 wires entering the case and excludes the vertical bar."
-  (translate [0 1 0]
-    (union
-     (cube 10 11 17.7)
-     (translate [0 0 -5] (cube 8 20 7.7)))))
+(defn connection-positive [getopt]
+  (connection-position getopt (connection-metasocket getopt)))
 
-(defn rj9-positive [getopt] (rj9-position getopt rj9-metasocket))
-
-(defn rj9-negative [getopt] (rj9-position getopt rj9-socket-616e))
+(defn connection-negative [getopt]
+  (connection-position getopt (connection-socket getopt)))
 
 
 ;;;;;;;;;;;;;;;;;;;;
