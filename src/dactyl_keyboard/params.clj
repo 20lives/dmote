@@ -268,6 +268,14 @@
                 "tilt of each half of the keyboard.")
      :default 0
      :parse-fn num}]
+   [:parameter [:parameters :layout :roll :intrinsic]
+    {:help (str "An angle in radians, analogous to intrinsic pitching. Where "
+                "more than one column of keys is devoted to a single finger "
+                "at the edge of the keyboard, this can help make the edge "
+                "column easier to reach, reducing the need to bend the finger "
+                "sideways.")
+     :default 0
+     :parse-fn num}]
    [:parameter [:parameters :layout :roll :progressive]
     {:help (str "An angle in radians. This progressive roll factor bends rows "
                 "lengthwise, which also gives the columns a lateral curvature.")
@@ -276,7 +284,14 @@
    [:section [:parameters :layout :yaw]
     "Tait-Bryan yaw, meaning the rotation of keys around the z axis."]
    [:parameter [:parameters :layout :yaw :base]
-    {:help (str "An angle in radians.")
+    {:help (str "An angle in radians. Applied to the finger key cluster, this "
+                "serves the purpose of allowing the user to keep their wrists "
+                "straight even if the two halves of the keyboard are closer "
+                "together than the user’s shoulders.")
+     :default 0
+     :parse-fn num}]
+   [:parameter [:parameters :layout :yaw :intrinsic]
+    {:help (str "An angle in radians, analogous to intrinsic pitching.")
      :default 0
      :parse-fn num}]
    [:section [:parameters :layout :translation]

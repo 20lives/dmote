@@ -322,6 +322,8 @@
     (->> subject
          (translate-fn (most [:layout :translation :early]))
          (rot-x (most [:layout :pitch :intrinsic]))
+         (rot-y (most [:layout :roll :intrinsic]))
+         (rot-z (most [:layout :yaw :intrinsic]))
          (put-in-column translate-fn rot-x getopt cluster coord)
          (put-in-row translate-fn rot-y getopt cluster coord)
          (translate-fn (most [:layout :translation :mid]))
@@ -333,12 +335,17 @@
          (bridge))))
 
 (def cluster-place
-  "A function that puts a passed shape in a specified key matrix position."
-  (partial cluster-placement
-    translate
-    [(fn [angle obj] (rotate angle [1 0 0] obj))
-     (fn [angle obj] (rotate angle [0 1 0] obj))
-     (fn [angle obj] (rotate angle [0 0 1] obj))]))
+  "A function that puts a passed shape in a specified key matrix position.
+  The auxiliary functions supplied here are designed to reduce the size of
+  the resulting OpenSCAD files."
+  (letfn [(rot-or-not [matrix]
+            (fn [angle obj] (if (zero? angle) obj (rotate angle matrix obj))))]
+   (partial cluster-placement
+     (fn [coordinates obj]
+       (if (every? zero? coordinates) obj (translate coordinates obj)))
+     [(rot-or-not [1 0 0])
+      (rot-or-not [0 1 0])
+      (rot-or-not [0 0 1])])))
 
 (def cluster-position
   "Get coordinates for a key cluster position.
