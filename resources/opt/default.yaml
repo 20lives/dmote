@@ -30,7 +30,7 @@ key-clusters:
   thumb:
     position:
       key-alias: f1
-      offset: [-10, -20, 2]
+      offset: [-12, -16, 5]
     matrix-columns:
     - rows-above-home: 1
     - rows-above-home: 1
@@ -68,20 +68,28 @@ by-key:
             neutral:
               column: 2
             separation:
-              row: -0.4
-              column: 0.3
+              row: -1
+              column: 0.6
           pitch:
             base: 0.26
             progressive: 0.45
           roll:
-            base: 0.26
-            progressive: 0.06
+            base: 0.22
+            progressive: 0.1
+          yaw:
+            base: 0.03
           translation:
-            late: [0, 0, 7]
+            late: [0, 0, 9]
       columns:
         "0":
           parameters:
+            layout:
+              translation:
+                early: [0, -2, -2]
+              roll:
+                progressive: 0.18
             wall:
+              thickness: 2
               south:
                 extent: 3
                 perpendicular: 8
@@ -126,7 +134,7 @@ by-key:
           parameters:
             layout:
               translation:
-                mid: [0, 3, -4]
+                mid: [0, 3, -3]
             wall:
               south:
                 extent: 1
@@ -185,8 +193,13 @@ by-key:
               matrix:
                 neutral:
                   row: -1
+              pitch:
+                base: 0.16
+                progressive: 0.6
+              roll:
+                base: 0.17
               translation:
-                mid: [0, 4, 5]
+                mid: [1, 4, 2]
           rows:
             "-1":
               parameters:
@@ -199,8 +212,13 @@ by-key:
               matrix:
                 neutral:
                   row: -1
+              pitch:
+                base: 0.16
+                progressive: 0.6
+              roll:
+                base: 0.17
               translation:
-                mid: [0, 4, 5]
+                mid: [1, 4, 2]
     thumb:
       parameters:
         layout:
@@ -210,7 +228,7 @@ by-key:
             separation:
               column: 0.5
           roll:
-            base: -1.1
+            base: -1.3
             progressive: 0.3
           pitch:
             base: -0.4
@@ -243,6 +261,11 @@ by-key:
                     early: [0, -2, 0]
                   pitch:
                     intrinsic: -0.25
+            "1":
+              parameters:
+                layout:
+                  translation:
+                    early: [-1, 0, 0]
         "1":
           parameters:
             layout:
@@ -278,15 +301,20 @@ by-key:
                 wall:
                   south:
                     extent: 1
+            "1":
+              parameters:
+                layout:
+                  translation:
+                    early: [1, 0, 0]
 case:
   key-mount-thickness: 2.5
   web-thickness: 2.5
   rear-housing:
     include: true
-    distance: 5
-    height: 40
+    distance: 3
+    height: 45
     offsets:
-      north: 15
+      north: 13
       east: -2
   back-plate:
     include: false
@@ -421,7 +449,7 @@ wrist-rest:
     key-alias: near-right
     offset: [-40, -50]
   shape:
-    plinth-base-size: [70, 80, 44]
+    plinth-base-size: [66, 80, 42]
     chamfer: 2
     lip-height: 2
     pad:
