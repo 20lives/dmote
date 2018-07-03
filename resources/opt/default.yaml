@@ -341,7 +341,7 @@ case:
   rear-housing:
     include: true
     distance: 3
-    height: 45
+    height: 43
     offsets:
       north: 13
       east: -2
@@ -471,12 +471,40 @@ case:
         offset: [1, -5]
       - key-alias: near-right
         key-corner: ESE
+mcu:
+  type: promicro
+  position:
+    prefer-rear-housing: true
+    key-alias: back
+    corner: ENE
+    offset: [0, 0, 2]
+  support:
+    style: stop
+    height-factor: 0.5
+    lateral-spacing: 2.5
+    lock:
+      fastener-diameter: 6
+      socket:
+        thickness: 1.5
+      bolt:
+        clearance: 2.1
+        overshoot: 1
+        mount-length: 14
+        mount-thickness: 6
+    stop:
+      key-alias: back
+      direction: east
+      gripper:
+        notch-depth: 0.4
+        total-depth: 5
+        grip-width: 0.6
 connection:
   socket-size: [10, 11, 17.7]  # 616E minus the vertical bar is 10 mm wide.
   position:
     prefer-rear-housing: true
     key-alias: back
     corner: ENE
+    raise: true
 wrist-rest:
   include: false
   style: threaded

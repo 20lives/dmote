@@ -3,5 +3,9 @@
 
 keycaps:
   preview: true
+mcu:
+  preview: true
+  support:
+    preview: true
 wrist-rest:
   preview: true

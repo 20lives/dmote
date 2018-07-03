@@ -50,6 +50,16 @@
      (with-fn 6
        (cylinder (/ (iso-hex-nut-diameter iso-size) 2) height)))))
 
+(defn countersink [d length]
+  "A negative for a flat-head screw of diameter d."
+  (let [r (/ d 2)]
+    (union
+      (cylinder d 1)
+      (translate [0 0 (/ r -2)]
+        (cylinder [r d] r))
+      (translate [0 0 (/ length -2)]
+        (cylinder r length)))))
+
 (defn pairwise-hulls [& shapes]
   (apply union (map (partial apply hull) (partition 2 1 shapes))))
 

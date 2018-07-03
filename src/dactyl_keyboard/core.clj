@@ -37,7 +37,8 @@
           (case (getopt :wrist-rest :style)
             :solid (wrist/case-hook getopt)
             :threaded (wrist/case-plate getopt)))
-        #_(aux/mcu-support getopt)
+        (if (= (getopt :mcu :support :style) :stop)
+          (aux/mcu-stop getopt))
         (aux/connection-positive getopt)
         (aux/foot-plates getopt)
         (if (getopt :case :back-plate :include) (aux/backplate-block getopt))
@@ -49,7 +50,10 @@
       (key/cluster-channels getopt :finger)
       (key/cluster-channels getopt :thumb)
       (aux/connection-negative getopt)
-      #_(aux/mcu-negative getopt)
+      (aux/mcu-negative getopt)
+      (aux/mcu-alcove getopt)
+      (if (= (getopt :mcu :support :style) :lock)
+        (aux/mcu-lock-sink getopt))
       (if (getopt :case :leds :include) (aux/led-holes getopt))
       (if (getopt :case :back-plate :include)
         (aux/backplate-fastener-holes getopt))
@@ -58,11 +62,15 @@
           (wrist/connecting-rods-and-nuts getopt)))
       (translate [0 0 -500] (cube 1000 1000 1000))
       (sandbox/negative getopt))
+    (if (= (getopt :mcu :support :style) :lock) ; Outside the alcove.
+      (aux/mcu-lock-fixture-composite getopt))
     ;; The remaining elements are visualizations for use in development.
-    ;; Do not render these to STL. Use the ‘#_’ macro or ‘;’ to hide them.
     (if (getopt :keycaps :preview) (key/cluster-keycaps getopt :finger))
     (if (getopt :keycaps :preview) (key/cluster-keycaps getopt :thumb))
-    #_(aux/mcu-visualization getopt)
+    (if (getopt :mcu :preview) (aux/mcu-visualization getopt))
+    (if (and (= (getopt :mcu :support :style) :lock)
+             (getopt :mcu :support :preview))
+      (aux/mcu-lock-bolt getopt))
     (if (and (getopt :wrist-rest :include) (getopt :wrist-rest :preview))
       (wrist/unified-preview getopt))))
 
@@ -101,6 +109,7 @@
      [[:key-clusters] key/resolve-aliases]
      [[:keycaps] key/keycap-properties]
      [[:case :rear-housing] body/housing-properties]
+     [[:mcu] aux/derive-mcu-properties]
      [[:wrist-rest] wrist/derive-properties]]))
 
 (defn build-all [build-options]
@@ -112,6 +121,8 @@
                (scad-file (str "right-hand-" basename) model)
                (scad-file (str "left-hand-" basename) (mirror [-1 0 0] model)))]
    (pair "case" (build-keyboard-right getopt))
+   (if (= (getopt :mcu :support :style) :lock)
+     (scad-file "mcu-lock-bolt" (aux/mcu-lock-bolt getopt)))
    (if (getopt :wrist-rest :include)
      (do
        (pair "pad-mould" (wrist/rubber-casting-mould getopt))

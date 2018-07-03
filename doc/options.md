@@ -53,11 +53,11 @@ A list of key columns. Columns are aligned with the user’s fingers. Each colum
 
 For example, on a normal QWERTY keyboard, H is on the home row for purposes of touch typing, and you would probably want to use it as such here too, even though the matrix in this program has no necessary relationship with touch typing, nor with the matrix in your MCU firmware (TMK/QMK etc.). Your H key will then get the coordinates [0, 0] as the home-row key in the far left column on the right-hand side of the keyboard.
 
-In that first column, to continue the QWERTY pattern, you will want `rows-above-home` set to 1, to make a Y key, or 2 to make a 6 key, or 3 to make a function key above the 6. Your Y key will have the coordinates [0, 1]. Your 6 key will have the coordinates [0, 2], etc.
+In that first column, to continue the QWERTY pattern, you will want `rows-above-home` set to 1, to make a Y key, or 2 to make a 6-and-^ key, or 3 to make a function key above the 6-and-^. Your Y key will have the coordinates [0, 1]. Your 6-and-^ key will have the coordinates [0, 2], etc.
 
 Still in that first column, to finish the QWERTY pattern, you will want `rows-below-home` set to 2, where the two keys below H are N (coordinates [0, -1]) and Space (coordinates [0, -2]).
 
-The next item in the list will be column 1, with J as [1, 0] and so on. On the left-hand side of a DMOTE, everything is mirrored so that [0, 0] will be G instead of H, [1, 0] will be F instead of J, and so on.
+The next item in the list will be column 1, with J as [1, 0] and so on. On the left-hand side of a DMOTE, everything is mirrored so that [0, 0] will be G instead of H in QWERTY, [1, 0] will be F instead of J, and so on.
 
 #### Parameter `aliases`
 
@@ -155,6 +155,10 @@ Tait-Bryan roll, meaning the rotation of keys around the y axis.
 
 An angle in radians. This is the “tenting” angle. Applied to the finger cluster, it controls the overall left-to-right tilt of each half of the keyboard.
 
+###### Parameter `intrinsic`
+
+An angle in radians, analogous to intrinsic pitching. Where more than one column of keys is devoted to a single finger at the edge of the keyboard, this can help make the edge column easier to reach, reducing the need to bend the finger (or thumb) sideways.
+
 ###### Parameter `progressive`
 
 An angle in radians. This progressive roll factor bends rows lengthwise, which also gives the columns a lateral curvature.
@@ -165,23 +169,27 @@ Tait-Bryan yaw, meaning the rotation of keys around the z axis.
 
 ###### Parameter `base`
 
-An angle in radians.
+An angle in radians. Applied to the finger key cluster, this serves the purpose of allowing the user to keep their wrists straight even if the two halves of the keyboard are closer together than the user’s shoulders.
+
+###### Parameter `intrinsic`
+
+An angle in radians, analogous to intrinsic pitching.
 
 ##### Section `translation`
 
-Translation in the geometric sense, displacing keys in relation to each other. Depending on when this translation takes places, it may have a a cascading effect on other aspects of key placement. All measurements are in mm.
+Translation in the geometric sense, displacing keys in relation to each other. Depending on when this translation takes places, it may have a a cascading effect on other aspects of key placement. All measurements are three-dimensional vectors in mm.
 
 ###### Parameter `early`
 
-A 3-dimensional vector. ”Early” translation happens before other operations in key placement and therefore has the biggest knock-on effects.
+”Early” translation happens before other operations in key placement and therefore has the biggest knock-on effects.
 
 ###### Parameter `mid`
 
-A 3-dimensional vector. This happens after columns are styled but before base pitch and roll. As such it is a good place to adjust whole columns for relative finger length.
+This happens after columns are styled but before base pitch and roll. As such it is a good place to adjust whole columns for relative finger length.
 
 ###### Parameter `late`
 
-A 3-dimensional vector. “Late” translation is the last step in key placement and therefore interacts very little with other steps. As a result, the z-coordinate, which is the last number in this vector, serves as a general vertical offset of the finger key cluster from the ground plane. If set at a high level, this controls the overall height of the keyboard, including the height of the case walls.
+“Late” translation is the last step in key placement and therefore interacts very little with other steps. As a result, the z-coordinate, which is the last number in this vector, serves as a general vertical offset of the finger key cluster from the ground plane. If set at a high level, this controls the overall height of the keyboard, including the height of the case walls.
 
 #### Section `channel`
 
@@ -193,7 +201,7 @@ The height in mm of the negative space, starting from the bottom edge of each ke
 
 ##### Parameter `top-width`
 
-The width in mm of the negative space at its top. Its width at the bottom is defined by the keycap.
+The width in mm of the negative space at its top. Its width at the bottom is defined by keycap geometry.
 
 ##### Parameter `margin`
 
@@ -246,15 +254,15 @@ See `north`.
 
 ###### Parameter `extent`
 
-Undocumented.
+
 
 ###### Parameter `parallel`
 
-Undocumented.
+
 
 ###### Parameter `perpendicular`
 
-Undocumented.
+
 
 ##### Section `south`
 
@@ -262,15 +270,15 @@ See `north`.
 
 ###### Parameter `extent`
 
-Undocumented.
+
 
 ###### Parameter `parallel`
 
-Undocumented.
+
 
 ###### Parameter `perpendicular`
 
-Undocumented.
+
 
 ##### Section `west`
 
@@ -278,15 +286,15 @@ See `north`.
 
 ###### Parameter `extent`
 
-Undocumented.
+
 
 ###### Parameter `parallel`
 
-Undocumented.
+
 
 ###### Parameter `perpendicular`
 
-Undocumented.
+
 
 ### Section `clusters` ← overrides go in here
 
@@ -298,7 +306,7 @@ A column can have its own `parameters` and its own `rows`, which are indexed in 
 
 WARNING: Due to a peculiarity of the YAML parser, take care to quote your numeric column and row indices as strings.
 
-In the following example, the parameter `P`, which is not really supported, will have the value “true” for all keys except the one closest to the user (“first” row) in the second column from the left on the right-hand side of the keyboard (column 1; this is the second from the right on the left-hand side of the keyboard).
+In the following example, the parameter `P`, which is not really supported, will have the value “true” for all keys except the one closest to the user (“first” row) in the second column from the left on the right-hand side of the keyboard (column 1; this is the second from the right on the left-hand side of the keyboard; note quotation marks).
 
 ```by-key:
   parameters:
@@ -336,7 +344,7 @@ The furthest row of the key cluster can be extended into a rear housing for the 
 
 #### Parameter `include`
 
-If `true`, add a rear housing. Please arrange case walls so as not to interfere, by removing them along the far side of the last row.
+If `true`, add a rear housing. Please arrange case walls so as not to interfere, by removing them along the far side of the last row of key mounts in the finger cluster.
 
 #### Parameter `distance`
 
@@ -352,7 +360,7 @@ Modifiers for the size of the roof. All are in mm.
 
 ##### Parameter `north`
 
-The total extent on the y axis.
+The extent of the roof on the y axis; its horizontal depth.
 
 ##### Parameter `west`
 
@@ -398,7 +406,7 @@ The block is positioned in relation to a key mount.
 
 ##### Parameter `key-alias`
 
-A named key where the block will attach. The vertical component of its position is ignored.
+A named key where the block will attach. The vertical component of its position will be ignored.
 
 ##### Parameter `offset`
 
@@ -418,7 +426,9 @@ The number of LEDs.
 
 #### Parameter `housing-size`
 
-The length of the side on a square profile used to create negative space for the housings on a LED strip. This assumes the housings are squarish, as on a WS2818. The negative space is not supposed to penetrate the wall, just make it easier to hold the LED strip in place and direct its light. With that in mind, feel free to exaggerate by 10%.
+The length of the side on a square profile used to create negative space for the housings on a LED strip. This assumes the housings are squarish, as on a WS2818.
+
+The negative space is not supposed to penetrate the wall, just make it easier to hold the LED strip in place with tape, and direct its light. With that in mind, feel free to exaggerate by 10%.
 
 #### Parameter `emitter-diameter`
 
@@ -426,23 +436,23 @@ The diameter of a round hole for the light of an LED.
 
 #### Parameter `interval`
 
-The distance between LEDs on the LED strip. You may want to apply a setting slightly shorter than the real distance, since the algorithm carving the holes does not account for wall curvature.
+The distance between LEDs on the strip. You may want to apply a setting slightly shorter than the real distance, since the algorithm carving the holes does not account for wall curvature.
 
 ### Parameter `tweaks`
 
 Additional shapes. This is usually needed to bridge gaps between the walls of the finger and key clusters.
 
-The expected value here is an arbitrarily nested structure, starting with a list. Each item in the list can follow one of the following patterns:
+The expected value here is an arbitrarily nested structure starting with a list. Each item in the list can follow one of the following patterns:
 
 * A leaf node. This is a 3- or 4-tuple list with contents specified below.
 * A map, representing an instruction to combine nested items in a specific way.
-* A list of any combination of the other two types. This type exists at the top level, and as the immediate child of each map node.
+* A list of any combination of the other two types. This type exists at the top level and as the immediate child of each map node.
 
 Each leaf node identifies particular set of key mount corner posts. These are identical to the posts used to build the walls (see above), but this section gives you greater freedom in how to combine them. A leaf node must contain:
 
 * A key alias defined under `key-clusters`.
 * A key corner ID, such as `NNE` for north by north-east.
-* A wall segment ID (0 to 4).
+* A wall segment ID, which is an integer from 0 to 4.
 
 Together, these identify a starting segment. Optionally, a leaf node may contain a second segment ID trailing the first. In that case, the leaf will represent the geometric hull of the first and second indicated segments, plus all in between.
 
@@ -480,6 +490,70 @@ The height in mm of each mounting plate.
 
 A list describing the horizontal shape, size and position of each mounting plate as a polygon.
 
+## Section `mcu`
+
+This is short for ”micro-controller unit”. Each half has one.
+
+### Parameter `type`
+
+A symbolic name for a commercial product. Currently, only `promicro` is supported, referring to any MCU with the form factor of a SparkFun Pro Micro.
+
+### Section `position`
+
+Where to place the MCU.
+
+#### Parameter `prefer-rear-housing`
+
+If `true` and `rear-housing` is included, place the MCU in relation to the rear housing. Otherwise, place the MCU in relation to a key mount identified by `key-alias`.
+
+#### Parameter `key-alias`
+
+The name of a key at which to place the MCU if `prefer-rear-housing` is `false` or rear housing is not included.
+
+#### Parameter `corner`
+
+A code for a corner of the rear housing or of `key-alias`. This determines both the location and facing of the socket.
+
+#### Parameter `offset`
+
+A 3D offset in mm, measuring from the `corner`.
+
+#### Parameter `rotation`
+
+A vector of 3 angles in radians. This parameter governs rotation of the socket around its own center.
+
+## Section `connection`
+
+Because the DMOTE is split, there must be a signalling connection between its two halves. This section adds a socket for that purpose. For example, this might be a type 616E female for a 4P4C “RJ9” plug.
+
+### Parameter `socket-size`
+
+The size of a hole in the case, for the female to fit into.
+
+### Section `position`
+
+Where to place the socket. Equivalent to `connection` → `mcu`.
+
+#### Parameter `prefer-rear-housing`
+
+
+
+#### Parameter `key-alias`
+
+
+
+#### Parameter `corner`
+
+
+
+#### Parameter `offset`
+
+
+
+#### Parameter `rotation`
+
+
+
 ## Section `wrist-rest`
 
 An optional extension to support the user’s wrist.
@@ -505,7 +579,7 @@ The wrist rest is positioned in relation to a key mount.
 
 #### Parameter `key-alias`
 
-A named key where the wrist rest will attach. The vertical component of its position is ignored.
+A named key where the wrist rest will attach. The vertical component of its position will be ignored.
 
 #### Parameter `offset`
 
@@ -533,7 +607,7 @@ The top of the wrist rest should be printed or cast in a soft material, such as 
 
 ##### Parameter `surface-heightmap`
 
-A filepath. The path, and file, will be interpreted by OpenScad, using its [`surface()` function(https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#Surface).
+A filepath. The path, and file, will be interpreted by OpenScad, using its [`surface()` function](https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#Surface).
 
 The file should contain a heightmap to describe the surface of the rubber pad.
 
@@ -599,7 +673,7 @@ A named key. A mount point on the case side will be placed near this key.
 
 ###### Parameter `offset`
 
-An offset in mm from the key to the mount.
+An two-dimensional vector offset in mm from the key to the mount.
 
 ###### Parameter `depth`
 
@@ -623,7 +697,9 @@ This is only relevant with the `solid` style of wrist rest.
 
 #### Parameter `width`
 
-The width in mm of the land bridge between the case and the plinth. On the right-hand side of the keyboard, the bridge starts from the wrist rest `key-alias` and extends this many mm to the left.
+The width in mm of the land bridge between the case and the plinth.
+
+On the right-hand side of the keyboard, the bridge starts from the wrist rest `key-alias` and extends this many mm to the left.
 
 The value of this parameter, and the shape of the keyboard case, should be arranged in a such a way that the land bridge is wedged in place by a vertical wall on that left side.
 

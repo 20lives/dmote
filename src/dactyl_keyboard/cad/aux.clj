@@ -14,135 +14,245 @@
             [dactyl-keyboard.cad.body :refer :all]))
 
 
+;;;;;;;;;;;;;;;;;;;
+;; Multiple Uses ;;
+;;;;;;;;;;;;;;;;;;;
+
+
+(def usb-a-female-dimensions
+  "This assumes the flat orientation common in laptops.
+  In a DMOTE, USB connector width would typically go on the z axis, etc."
+  {:full {:width 10.0 :length 13.6 :height 6.5}
+   :micro {:width 7.4 :length 5.3 :height 2.4}})
+
+(defn into-nook [getopt field lateral-shift]
+  "Produce coordinates for translation into requested corner.
+  This has strict expectations but can place a feature in relation either
+  to the rear housing or a key, as requested by the user."
+  (let [corner (getopt field :position :corner)
+        use-housing (and (getopt :case :rear-housing :include)
+                         (getopt field :position :prefer-rear-housing))
+        general
+          (if use-housing
+            (housing-position getopt corner 3 [0 0 0])
+            (let [alias (getopt field :position :key-alias)
+                  keyinfo (getopt :key-clusters :derived :aliases alias)
+                  {cluster :cluster coordinates :coordinates} keyinfo]
+             (wall-corner-position getopt cluster coordinates corner)))
+        to-nook
+          (if use-housing
+            (let [{dxs :dx dys :dy} (compass-to-grid (second corner))]
+             [(* -1 dxs lateral-shift) (* -1 dys lateral-shift) 0])
+            ;; Else don’t bother.
+            [0 0 0])
+        offset (getopt field :position :offset)]
+   (vec (map + (conj (vec (take 2 general)) 0) to-nook offset))))
+
+
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Microcontroller ;;
 ;;;;;;;;;;;;;;;;;;;;;
 
-;; MicroUSB female:
-(def micro-usb-width 7.5)
-(def micro-usb-length 5.3)
-(def micro-usb-height 2.8)
 
-(def micro-usb-receptacle
-  "A USB female."
-  (color [0.5 0.5 0.5 1]
-    (cube micro-usb-width micro-usb-length micro-usb-height)))
-(def micro-usb-channel (cube 7.8 10 micro-usb-height))
-
-;; Teensy MCU: Not fully supported at the moment. Pro Micro is hardcoded below.
-(def teensy-width 20)
-(def teensy-height 12)
-(def teensy-length 33)
-(def teensy2-length 53)
-
-;; Arduino Pro Micro MCU:
-(def promicro-width 18)
-(def promicro-length 33)
-(def promicro-thickness 1.65)
-
-(def mcu-thickness-tolerance 0.3)
-
-(def mcu-microusb-offset
-  "A millimetre offset between an MCU PCB and a micro-USB female."
-  [0
-   (+ (/ promicro-length 2) 1 (/ micro-usb-length -2))
-   (+ (/ promicro-thickness 2) (/ micro-usb-height 2))])
-
-(def promicro-pcb (cube promicro-width promicro-length promicro-thickness))
-(def mcu-model
-  (union
-    (translate mcu-microusb-offset micro-usb-receptacle)
-    (color [26/255, 90/255, 160/255 1] promicro-pcb)))
-
-(def mcu-space-requirements
-  "Negative space for an MCU in use, including USB connectors."
-  (let [alcove-width (+ micro-usb-height promicro-thickness mcu-thickness-tolerance 2)
-        alcove-height (+ promicro-width 1)]
-    (union
-      (translate mcu-microusb-offset
-        (union
-          ;; Female USB connector:
-          micro-usb-channel
-          ;; Male USB connector (enable in case of obstruction):
-          #_(hull
-             (translate [0 4 0] (cube 15 1 10))
-             (translate [0 9 0] (cube 17 1 12)))))
-      ;; An alcove in the inner wall, because a blind notch is hard to clean:
-      (translate [0
-                  (/ (- promicro-length alcove-height) 2)
-                  (- (/ alcove-width 2) promicro-thickness)]
-        (cube (+ promicro-width 5) alcove-height alcove-width))
-      ;; The negative of the PCB to put a notch in the spine:
-      (cube promicro-width promicro-length (+ promicro-thickness mcu-thickness-tolerance))
-      ;; Extra space for wiring running very near the MCU:
-      (translate [(/ promicro-width -2) 0 0]
-        (rotate [(+ (/ π 2) (/ π 14)) 0 (/ π -18)]
-          (cylinder 4 (- promicro-length 10)))))))
-
-(defn mcu-finger-coordinates [getopt]
-  (let [by-col (getopt :key-clusters :finger :derived :coordinates-by-column)]
-    (last (by-col mcu-finger-column))))
+(defn derive-mcu-properties [getopt]
+  (let [mcu-type (getopt :mcu :type)
+        pcb-base {:thickness 1.57 :connector-overshoot 2}
+        pcb (case mcu-type
+              :promicro (merge pcb-base {:width 18 :length 33})
+              :teensy (merge pcb-base {:width 17.78 :length 35.56})
+              :teensy++ (merge pcb-base {:width 17.78 :length 53}))]
+   {:pcb pcb
+    :connector (:micro usb-a-female-dimensions)
+    :support-height (* (getopt :mcu :support :height-factor) (:width pcb))}))
 
 (defn mcu-position [getopt shape]
   "Transform passed shape into the reference frame for an MCU holder."
-  (let [[x y] (take 2
-                (cluster-position
-                  getopt
-                  :finger
-                  (mcu-finger-coordinates getopt)
-                  (wall-slab-center-offset getopt :finger (mcu-finger-coordinates getopt) mcu-connector-direction)))]
+  (let [corner (getopt :mcu :position :corner)
+        z (getopt :mcu :derived :pcb :width)]
    (->>
      shape
-     ;; Put the USB end of the PCB at [0, 0, 0].
-     (translate [0 (/ promicro-length -2) 0])
-     ;; Flip it to stand on the long edge for soldering access.
-     ;; Have the components and silk face the interior of the housing.
-     (rotate (/ π 2) [0 1 0])
-     ;; Have the components and silk face the interior of the housing.
-     (translate [0 0 (/ promicro-width 2)])
-     ;; Turn it around the z axis to point USB in the ordered direction.
-     (rotate (- (compass-radians mcu-connector-direction)) [0 0 1])
-     ;; Move it to the ordered case wall.
-     (translate [x y 0])
-     ;; Tweak as ordered.
-     (translate mcu-offset))))
+     ;; Arbitrary rotation. Not very useful for the MCU.
+     (rotate (getopt :mcu :position :rotation))
+     ;; Face the corner’s main direction.
+     (rotate [0 0 (- (compass-radians (first corner)))])
+     ;; Move to the requested corner.
+     (translate (into-nook getopt :mcu (getopt :mcu :support :lateral-spacing)))
+     (translate [0 0 (/ z 2)]))))
 
-(defn mcu-visualization [getopt] (mcu-position getopt mcu-model))
-(defn mcu-negative [getopt] (mcu-position getopt mcu-space-requirements))
+(defn mcu-model [getopt include-margin connector-elongation]
+  "A model of an MCU: PCB and integrated USB connector (if any).
+  The orientation of the model is standing on the long edge, with the connector
+  side of the PCB facing “north” and centering at the origin of the local
+  cordinate system. The connector itself is placed on the “east” (positive x)
+  side."
+  (let [data (partial getopt :mcu :derived)
+        {pcb-x :thickness pcb-y :length pcb-z :width overshoot :connector-overshoot} (data :pcb)
+        {usb-x :height usb-y-base :length usb-z :width} (data :connector)
+        usb-y (+ usb-y-base connector-elongation)
+        margin (if include-margin (getopt :mcu :margin) 0)
+        mcube (fn [& dimensions] (apply cube (map #(+ % margin) dimensions)))]
+   (union
+     (translate [0 (/ pcb-y -2) 0]
+       (color [26/255, 90/255, 160/255 1]
+         (mcube pcb-x pcb-y pcb-z)))
+     (translate [(/ (+ pcb-x usb-x) 2)
+                 (+ (/ usb-y -2) (/ connector-elongation 2) overshoot)
+                 0]
+       (color [0.5 0.5 0.5 1]
+         (mcube usb-x usb-y usb-z))))))
 
-;; Holder for MCU:
-(defn mcu-support [getopt]
-  (let [plinth-width (+ promicro-thickness mcu-thickness-tolerance 1.2)
-        plinth-height (nth mcu-offset 2)
-        grip-depth 0.6
-        grip-to-base 5
-        rev-dir (turning-left (turning-left mcu-connector-direction))
-        cervix-coordinates (walk-matrix (mcu-finger-coordinates getopt) rev-dir rev-dir)]
+(defn mcu-visualization [getopt]
+  (mcu-position getopt (mcu-model getopt false 0)))
+
+(defn mcu-negative [getopt]
+  (mcu-position getopt (mcu-model getopt true 10)))
+
+(defn mcu-alcove [getopt]
+  "A block shape at the connector end of the MCU.
+  For use as a complement to mcu-negative, primarily with mcu-stop.
+  This is provided because a negative of the MCU model itself digging into the
+  inside of a wall would create only a narrow notch, which would require
+  high printing accuracy or difficult cleanup."
+  (let [prop (getopt :mcu :derived)
+        {pcb-x :thickness pcb-z :width} (prop :pcb)
+        {usb-x :height} (prop :connector)
+        margin (getopt :mcu :margin)
+        x (+ pcb-x usb-x margin)]
+   (mcu-position getopt
+     (translate [(/ x 2) (/ x -2) 0]
+       (cube x x (+ pcb-z margin))))))
+
+(defn- mcu-gripper [getopt depth-factor]
+  "The shape of the gripper in a stop-style MCU holder.
+  The notch in it will be created by its difference with the MCU model.
+  Positioned in the same local coordinate system as the MCU model."
+  (let [pcb (getopt :mcu :derived :pcb)
+        {pcb-x :thickness pcb-y :length pcb-z :width} pcb
+        margin (getopt :mcu :margin)
+        prop (partial getopt :mcu :support :stop :gripper)
+        notch-base (prop :notch-depth)
+        notch-y (- notch-base margin)
+        grip-x (prop :grip-width)
+        x (+ (* 2 grip-x) pcb-x margin)
+        y-base (prop :total-depth)
+        y (* depth-factor y-base)
+        gripper-y-center (/ (- (* 2 y-base) y) 2)
+        z (getopt :mcu :derived :support-height)]
+   (translate [0 (- notch-y pcb-y gripper-y-center) 0]
+     (cube x y z))))
+
+(defn mcu-stop [getopt]
+  "The stop style of MCU support, in place."
+  (let [prop (partial getopt :mcu :derived)
+        {pcb-x :thickness pcb-y :length pcb-z :width} (prop :pcb)
+        alias (getopt :mcu :support :stop :key-alias)
+        keyinfo (getopt :key-clusters :derived :aliases alias)
+        {cluster :cluster coordinates0 :coordinates} keyinfo
+        direction (getopt :mcu :support :stop :direction)
+        opposite (turning-left (turning-left direction))
+        coordinates1 (walk-matrix coordinates0 direction)
+        post (fn [coord corner]
+               (cluster-place getopt cluster coord
+                 (mount-corner-post getopt corner)))]
     (union
-      (mcu-position getopt
-        (union
-          ;; A little gripper to stabilize the PCB horizontally.
-          ;; This is intended to be just shallow enough that the outer wall
-          ;; will bend back far enough for the installation and is placed to
-          ;; avoid covering any of the through-holes.
-          (translate
-            [0 (+ (/ promicro-length -2) (/ grip-depth 2)) 0]
-            (cube (/ promicro-width 2) grip-depth plinth-width))
-          ;; A block to support the gripper.
-          (translate
-            [0 (- (/ promicro-length -2) (/ grip-to-base 2)) 0]
-            (cube (/ promicro-width 2) grip-to-base plinth-width))))
-      ;; The spine connects a sacrum, which is the main body of the plinth
-      ;; at ground level, with a cervix that helps support the finger web.
+      (mcu-position getopt (mcu-gripper getopt 1))
       (hull
-        (mcu-position getopt
-          (translate
-            [0 (- (/ promicro-length -2) grip-to-base) 0]
-            (cube (/ promicro-width 2) grip-to-base plinth-width)))
-        (cluster-place getopt :finger cervix-coordinates
-          (mount-corner-post getopt [mcu-connector-direction (turning-left rev-dir)]))
-        (cluster-place getopt :finger cervix-coordinates
-          (mount-corner-post getopt [mcu-connector-direction (turning-right rev-dir)]))))))
+        ;; Connect the back half of the gripper to two key mounts.
+        (mcu-position getopt (mcu-gripper getopt 0.5))
+        (post coordinates0 [direction (turning-left direction)])
+        (post coordinates0 [direction (turning-right direction)])
+        (post coordinates1 [opposite (turning-left direction)])
+        (post coordinates1 [opposite (turning-right direction)])))))
+
+(defn mcu-lock-fixture-positive [getopt]
+  "Parts of the lock-style MCU support that integrate with the case.
+  These comprise a bed for the bare side of the PCB to lay against and a socket
+  that encloses the USB connector on the MCU to stabilize it, since integrated
+  USB connectors are usually surface-mounted and therefore fragile."
+  (let [prop (partial getopt :mcu :derived)
+        {pcb-x :thickness pcb-y :length} (prop :pcb)
+        {usb-x :height usb-y :length usb-z :width} (prop :connector)
+        bed-x (getopt :mcu :support :lateral-spacing)
+        bed-y (+ pcb-y (getopt :mcu :support :lock :bolt :mount-length))
+        thickness (getopt :mcu :support :lock :socket :thickness)
+        socket-x-thickness (+ (/ usb-x 2) thickness)
+        socket-x-offset (+ (/ pcb-x 2) (* 3/4 usb-x) (/ thickness 2))
+        socket-z (+ usb-z (* 2 thickness))]
+   (mcu-position getopt
+     (union
+       (translate [(+ (/ bed-x -2) (/ pcb-x -2)) (/ bed-y -2) 0]
+         (cube bed-x bed-y (getopt :mcu :derived :support-height)))
+       (hull
+         ;; Purposely ignore connector overshoot in placing the socket.
+         ;; This has the advantages that the lock itself can also be stabilized
+         ;; by the socket, while the socket does not protrude outside the case.
+         (translate [socket-x-offset (/ usb-y -2) 0]
+           (cube socket-x-thickness usb-y socket-z))
+         (translate [10 0 0]  ; Lateral support for the socket.
+           (cube 1 1 socket-z)))))))
+
+(defn mcu-lock-countersink-model [getopt]
+  (let [d (getopt :mcu :support :lock :fastener-diameter)
+        l0 (getopt :mcu :support :lock :bolt :mount-thickness)
+        l1 (getopt :mcu :support :lateral-spacing)
+        l2 (getopt :case :web-thickness)
+        y0 (getopt :mcu :derived :pcb :length)
+        y1 (getopt :mcu :support :lock :bolt :mount-length)]
+   (rotate [0 (/ π -2) 0]
+     (translate [0 (- (+ y0 (/ y1 2))) (* 2 l1)]
+       (union
+         (countersink d (+ l0 l1 l2))
+         (translate [0 0 (- (+ l0 l1 l2))]
+           (iso-hex-nut-model
+             (getopt :mcu :support :lock :fastener-diameter))))))))
+
+(defn mcu-lock-sink [getopt]
+  (mcu-position getopt
+    (mcu-lock-countersink-model getopt)))
+
+(defn mcu-lock-bolt [getopt]
+  "Parts of the lock-style MCU support that don’t integrate with the case.
+  The bolt as such is supposed to clear PCB components and enter the socket to
+  butt up against the USB connector. There are some margins here, intended for
+  the user to file down the tip and finalize the fit."
+  (let [prop (partial getopt :mcu :derived)
+        margin (getopt :mcu :margin)
+        {pcb-x :thickness pcb-y :length usb-overshoot :connector-overshoot} (prop :pcb)
+        {usb-x :height usb-y :length usb-z :width} (prop :connector)
+        mount-x (getopt :mcu :support :lock :bolt :mount-thickness)
+        mount-overshoot (getopt :mcu :support :lock :bolt :overshoot)
+        mount-base (getopt :mcu :support :lock :bolt :mount-length)
+        clearance (getopt :mcu :support :lock :bolt :clearance)
+        shave (/ clearance 2)
+        contact-x (- usb-x shave)
+        bolt-x-mount (- mount-x clearance pcb-x)
+        mount-z (getopt :mcu :derived :support-height)
+        bolt-x0 (+ (/ pcb-x 2) clearance (/ bolt-x-mount 2))
+        bolt-x1 (+ (/ pcb-x 2) shave (/ contact-x 2))]
+   (mcu-position getopt
+     (color [222/255 184/255 135/255 1]
+       (difference
+         (union
+           (translate [(+ (/ pcb-x -2) (/ mount-x 2))
+                       (- (/ mount-overshoot 2) pcb-y (/ mount-base 2))
+                       0]
+             (cube mount-x (+ mount-overshoot mount-base) mount-z))
+           (pairwise-hulls
+             (translate [bolt-x0 (- pcb-y) 0]
+               (cube bolt-x-mount 10 mount-z))
+             (translate [bolt-x0 (/ pcb-y -4) 0]
+               (cube bolt-x-mount 1 usb-z))
+             (translate [bolt-x1 (- usb-overshoot usb-y) 0]
+               (cube contact-x 0.01 usb-z))))
+         (mcu-model getopt true 0)  ; Notch the mount.
+         (mcu-lock-countersink-model getopt))))))
+
+(defn mcu-lock-fixture-composite [getopt]
+  (difference
+    (mcu-lock-fixture-positive getopt)
+    (mcu-lock-bolt getopt)
+    (mcu-negative getopt)
+    (mcu-lock-sink getopt)))
 
 
 ;;;;;;;;;;;;;;;;
@@ -251,51 +361,40 @@
 ;; Signalling ;;
 ;;;;;;;;;;;;;;;;
 
-
-(defn connection-nook [getopt]
-  "Produce coordinates for translation into requested corner."
-  (let [socket-size (getopt :connection :socket-size)
-        thickness (getopt :case :web-thickness)
-        corner (getopt :connection :position :corner)
-        use-housing (and (getopt :case :rear-housing :include)
-                         (getopt :connection :position :prefer-rear-housing))
-        general
-          (if use-housing
-            (housing-position getopt corner 3 [0 0 0])
-            (let [alias (getopt :connection :position :key-alias)
-                  keyinfo (getopt :key-clusters :derived :aliases alias)
-                  {cluster :cluster coordinates :coordinates} keyinfo]
-             (wall-corner-position getopt cluster coordinates corner)))
-        to-nook
-          (if use-housing
-            (let [{dxs :dx dys :dy} (compass-to-grid (second corner))
-                  distance (* 0.5 (+ thickness (first socket-size)))]
-             [(* -1 dxs distance) (* -1 dys distance) 0])
-            ;; Else don’t bother.
-            [0 0 0])]
-   (vec (map + (conj (vec (take 2 general)) 0) to-nook))))
-
 (defn connection-position [getopt shape]
-  (let [socket-size (getopt :connection :socket-size)
+  (let [use-housing (and (getopt :case :rear-housing :include)
+                         (getopt :connection :position :prefer-rear-housing))
+        socket-size (getopt :connection :socket-size)
         thickness (getopt :case :web-thickness)
+        alignment
+          ;; Line up with the (rear housing) wall and a metasocket base plate.
+          (case (getopt :connection :position :raise)
+            true
+              (vec (map +
+                     [0 (/ thickness 2) (- thickness)]
+                     (vec (map * [0 -0.5 -0.5] socket-size))
+                     [0 0 (getopt :case :rear-housing :height)]))
+            false
+              (vec (map +
+                     [0 (/ thickness 2) thickness]
+                     (vec (map * [0 -0.5 0.5] socket-size)))))
         corner (getopt :connection :position :corner)]
    (->> shape
         (rotate (getopt :connection :position :rotation))
-        ;; Line up with the (rear housing) wall and a metasocket base plate.
-        (translate [0 (/ thickness 2) thickness])
-        ;; Imagine the outside of the wall as the x axis line, ground level
-        ;; as the y axis line.
-        (translate (vec (map * [0 -0.5 0.5] socket-size)))
-        ;; Rotate around that origin to face the corner’s main direction.
+        ;; Align with the wall (and perhaps the roof).
+        (translate alignment)
+        ;; Rotate to face the corner’s main direction.
         (rotate [0 0 (- (compass-radians (first corner)))])
         ;; Bring snugly to the requested corner.
-        (translate (connection-nook getopt))
-        ;; Tweak.
-        (translate (getopt :connection :position :offset)))))
+        (translate (into-nook getopt :connection
+                     (* 0.5 (+ thickness (first socket-size))))))))
 
 (defn connection-metasocket [getopt]
-  "The shape of a socket in the case to receive a signalling socket component.
+  "The shape of a holder in the case to receive a signalling socket component.
   Here, the shape nominally faces north."
+  ;; TODO: Generalize this a bit to also provide a full-size USB socket
+  ;; as a less fragile alternative or complement to a USB connector built into
+  ;; the MCU.
   (let [socket-size (getopt :connection :socket-size)
         thickness (getopt :case :web-thickness)
         double (* thickness 2)]
@@ -340,32 +439,3 @@
                {:height (getopt :case :foot-plates :height) :center false}
                (polygon (map point (:points polygon-spec)))))]
     (apply union (map plate (getopt :case :foot-plates :polygons)))))
-
-;; USB female holder:
-;; This is not needed if the MCU has a robust integrated USB connector and that
-;; connector is directly exposed through the case.
-(def usb-holder-size [6.5 10.0 13.6])
-(def usb-holder-thickness 4)
-
-(defn usb-holder-placement [getopt shape]
-  (let [coordinates [0 0]
-        origin
-          (cluster-position
-            getopt
-            :finger
-            coordinates
-            [0 (/ mount-depth 2) 0])]
-    (translate [(first origin)
-                (second origin)
-                (/ (+ (last usb-holder-size) usb-holder-thickness) 2)]
-               shape)))
-
-(defn usb-holder-positive [getopt]
-  (usb-holder-placement
-    getopt
-    (cube (+ (first usb-holder-size) usb-holder-thickness)
-          (second usb-holder-size)
-          (+ (last usb-holder-size) usb-holder-thickness))))
-
-(defn usb-holder-negative [getopt]
-  (usb-holder-placement getopt (apply cube usb-holder-size)))
