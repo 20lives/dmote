@@ -568,7 +568,7 @@
     "          rows:\n"
     "            first:\n"
     "              parameters:\n"
-    "                P: false```"]
+    "                P: false\n```"]
    [:section [:case]
     "Much of the keyboard case is generated from the `wall` parameters above. "
     "This section deals with lesser features of the case."]
@@ -730,7 +730,7 @@
     "      hull-around:\n"
     "      - [A, SSE, 0]\n"
     "      - [B, NNE, 0]\n"
-    "      - [A, SSW, 0, 4]```\n"]
+    "      - [A, SSW, 0, 4]\n```"]
    [:section [:case :foot-plates]
     "Optional flat surfaces at ground level for adding silicone rubber feet "
     "or cork strips etc. to the bottom of the keyboard to increase friction "
@@ -1026,14 +1026,21 @@
   (reduce coalesce (ordered-map) configuration-raws))
 
 (defn- print-markdown-fragment [node level]
-  (let [h (string/join "" (repeat level "#"))]
+  (let [heading-style
+          (fn [text]
+            (if (< level 7)  ; Markdown only supports up to h6 tags.
+              (str (string/join "" (repeat level "#")) " " text)
+              (str "###### " text " at level " level)))]
     (doseq [key (remove #(= :metadata %) (keys node))]
       (println)
       (if (spec/valid? ::parameter-spec (key node))
-        (do (println h (format (get-in node [key :heading-template] "Parameter `%s`") (name key)))
+        (do (println
+              (heading-style
+                (format (get-in node [key :heading-template] "Parameter `%s`")
+                        (name key))))
             (println)
             (println (get-in node [key :help] "Undocumented.")))
-        (do (println h (format "Section `%s`" (name key)))
+        (do (println (heading-style (format "Section `%s`" (name key))))
             (println)
             (println (get-in node [key :metadata :help] "Undocumented."))
             (print-markdown-fragment (key node) (inc level)))))))

@@ -111,11 +111,11 @@ Roughly how keys are spaced out to form a matrix.
 
 The neutral point in a column or row is where any progressive curvature both starts and has no effect.
 
-####### Parameter `column`
+###### Parameter `column` at level 7
 
 An integer column ID.
 
-####### Parameter `row`
+###### Parameter `row` at level 7
 
 An integer row ID.
 
@@ -123,11 +123,11 @@ An integer row ID.
 
 Tweaks to control the systematic separation of keys. The parameters in this section will be multiplied by the difference between each affected key’s coordinates and the neutral column and row.
 
-####### Parameter `column`
+###### Parameter `column` at level 7
 
 A distance in mm.
 
-####### Parameter `row`
+###### Parameter `row` at level 7
 
 A distance in mm.
 
@@ -318,7 +318,8 @@ In the following example, the parameter `P`, which is not really supported, will
           rows:
             first:
               parameters:
-                P: false```
+                P: false
+```
 
 ## Section `case`
 
@@ -471,8 +472,8 @@ In the following example, `A` and `B` are aliases that would be defined elsewher
       hull-around:
       - [A, SSE, 0]
       - [B, NNE, 0]
-      - [A, SSW, 0, 4]```
-
+      - [A, SSW, 0, 4]
+```
 
 ### Section `foot-plates`
 
