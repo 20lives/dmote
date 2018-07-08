@@ -899,7 +899,7 @@
      :parse-fn keyword
      :validate [::supported-wrist-rest-style]}
     "The style of the wrist rest. Available styles are:\n\n"
-    "* `threaded`: threaded d(s) connect the case and wrist rest.\n"
+    "* `threaded`: threaded fastener(s) connect the case and wrist rest.\n"
     "* `solid`: a printed plastic bridge along the ground as part of the model."]
    [:parameter [:wrist-rest :preview]
     {:default false :parse-fn boolean}

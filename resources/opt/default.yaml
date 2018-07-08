@@ -479,7 +479,7 @@ mcu:
     corner: ENE
     offset: [0, 0, 2]
   support:
-    style: stop
+    style: lock
     height-factor: 0.5
     lateral-spacing: 2.5
     lock:

@@ -12,7 +12,6 @@ adjust the following to taste:
 
 * The size and shape of the key matrix
 * Row and column curvature
-* Wrist rest curvature
 * Row tilt (tenting)
 * Column tilt
 * Height
