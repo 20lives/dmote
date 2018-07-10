@@ -808,3 +808,15 @@ The value of this parameter, and the shape of the keyboard case, should be arran
 #### Parameter `height`
 
 The height in mm of the land bridge between the case and the plinth.
+
+## Section `mask`
+
+A box limits the entire shape, cutting off any projecting byproducts of the algorithms. By resizing and moving this box, you can select a subsection for printing. You might want this while you are printing prototypes for a new style of switch, MCU support etc.
+
+### Parameter `size`
+
+The size of the mask in mm. By default, `[1000, 1000, 1000]`.
+
+### Parameter `center`
+
+The position of the center point of the mask. By default, `[0, 0, 500]`, which is supposed to mask out everything below ground level.

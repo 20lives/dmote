@@ -13,6 +13,17 @@
             [dactyl-keyboard.cad.key :as key]))
 
 
+;;;;;;;;;;;;;
+;; Masking ;;
+;;;;;;;;;;;;;
+
+(defn mask [getopt & shapes]
+  """Implement overall limits on passed shapes."""
+  (intersection
+    (translate (getopt :mask :center) (apply cube (getopt :mask :size)))
+    (apply union shapes)))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Key Mount Webbing ;;
 ;;;;;;;;;;;;;;;;;;;;;;;

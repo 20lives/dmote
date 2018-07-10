@@ -229,8 +229,8 @@
         z2 (getopt :wrist-rest :derived :z2)]
    (translate (getopt :wrist-rest :derived :center)
      (union
-       (translate [0 0 (+ z2 (/ height 2))]
-         (cube 500 500 height))
+       (translate (assoc (getopt :mask :center) 2 (+ z2 (/ height 2)))
+         (apply cube (assoc (getopt :mask :size) 2 height)))
        (translate [0 0 (- z2 depth)]
          (extrude-linear {:height depth :center false}
            (offset -2
@@ -277,7 +277,7 @@
 
 (defn plinth-plastic [getopt]
   "The lower portion of a wrist rest, to be printed in a rigid material."
-  (intersection
+  (body/mask getopt
     (difference
       (plinth-maquette getopt)
       (soft-zone getopt)
@@ -299,8 +299,7 @@
       (translate (vec (map + (getopt :wrist-rest :derived :ne) [-20 -20]))
         (cube 12 12 200))
       (translate (vec (map + (getopt :wrist-rest :derived :sw) [20 20]))
-        (cube 12 12 200)))
-    (translate [0 0 500] (cube 1000 1000 1000))))
+        (cube 12 12 200)))))
 
 (defn rubber-insert [getopt]
   "The upper portion of a wrist rest, to be cast or printed in a soft material."
@@ -330,12 +329,10 @@
   "A merged view of a wrist rest. This might be printed in hard plastic for a
   prototype but is not suitable for long-term use: It would typically be too
   hard for ergonomy and does not have a nut pocket for threaded rods."
-  (intersection
+  (body/mask getopt
     (difference
       (plinth-maquette getopt)
       (union
         (case (getopt :wrist-rest :style)
           :solid (union case-hook (body/cluster-wall getopt :finger))
-          :threaded (connecting-rods-and-nuts getopt))))
-    (translate [0 0 500]
-      (cube 1000 1000 1000))))
+          :threaded (connecting-rods-and-nuts getopt))))))

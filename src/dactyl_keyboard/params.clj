@@ -1002,7 +1002,19 @@
     "vertical wall on that left side."]
    [:parameter [:wrist-rest :solid-bridge :height]
     {:default 1 :parse-fn num}
-    "The height in mm of the land bridge between the case and the plinth."]])
+    "The height in mm of the land bridge between the case and the plinth."]
+   [:section [:mask]
+    "A box limits the entire shape, cutting off any projecting byproducts of "
+    "the algorithms. By resizing and moving this box, you can select a "
+    "subsection for printing. You might want this while you are printing "
+    "prototypes for a new style of switch, MCU support etc."]
+   [:parameter [:mask :size]
+    {:default [1000 1000 1000] :parse-fn vec :validate [::3d-point]}
+    "The size of the mask in mm. By default, `[1000, 1000, 1000]`."]
+   [:parameter [:mask :center]
+    {:default [0 0 500] :parse-fn vec :validate [::3d-point]}
+    "The position of the center point of the mask. By default, `[0, 0, 500]`, "
+    "which is supposed to mask out everything below ground level."]])
 
 (def master
   "Collected structural metadata for a user configuration."
