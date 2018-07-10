@@ -4,30 +4,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; This file describes the interpretation of configuration files for the
-;;; application.
+;;; application. It parses and validates serialized data.
 
 (ns dactyl-keyboard.params
   (:require [clojure.string :as string]
             [clojure.spec.alpha :as spec]
             [flatland.ordered.map :refer [ordered-map]]
             [dactyl-keyboard.generics :as generics]))
-
-
-;;;;;;;;;;;;;;;;;;;;
-;; Minor Features ;;
-;;;;;;;;;;;;;;;;;;;;
-
-;; Placement of the microcontroller unit.
-(def mcu-finger-column 4)  ; DOOMED
-(def mcu-offset [-0.5 3.5 0.5])  ; DOOMED
-(def mcu-connector-direction :east)  ; DOOMED
-
-
-;;;;;;;;;;;;;;;;;;;;;
-;; Serialized Data ;;
-;;;;;;;;;;;;;;;;;;;;;
-
-;; This section loads, parses and validates a user configuration from YAML.
 
 (defn- coalesce [coll [type path & metadata]]
   "Recursively assemble a tree structure from flat specifications."
