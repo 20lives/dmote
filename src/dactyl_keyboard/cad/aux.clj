@@ -191,8 +191,9 @@
          (translate [10 0 0]  ; Lateral support for the socket.
            (cube 1 1 socket-z)))))))
 
-(defn mcu-lock-countersink-model [getopt]
-  (let [d (getopt :mcu :support :lock :fastener-diameter)
+(defn mcu-lock-fasteners-model [getopt]
+  (let [style (getopt :mcu :support :lock :fastener :style)
+        d (getopt :mcu :support :lock :fastener :diameter)
         l0 (getopt :mcu :support :lock :bolt :mount-thickness)
         l1 (getopt :mcu :support :lateral-spacing)
         l2 (getopt :case :web-thickness)
@@ -201,14 +202,13 @@
    (rotate [0 (/ π -2) 0]
      (translate [0 (- (+ y0 (/ y1 2))) (* 2 l1)]
        (union
-         (countersink d (+ l0 l1 l2))
-         (translate [0 0 (- (+ l0 l1 l2))]
-           (iso-hex-nut-model
-             (getopt :mcu :support :lock :fastener-diameter))))))))
+         (iso-bolt-model style d (+ l0 l1 l2))
+         (translate [0 0 (- (+ l0 l1 l2 -1))]
+           (iso-hex-nut-model d)))))))
 
 (defn mcu-lock-sink [getopt]
   (mcu-position getopt
-    (mcu-lock-countersink-model getopt)))
+    (mcu-lock-fasteners-model getopt)))
 
 (defn mcu-lock-bolt [getopt]
   "Parts of the lock-style MCU support that don’t integrate with the case.
@@ -245,7 +245,7 @@
              (translate [bolt-x1 (- usb-overshoot usb-y) 0]
                (cube contact-x 0.01 usb-z))))
          (mcu-model getopt true 0)  ; Notch the mount.
-         (mcu-lock-countersink-model getopt))))))
+         (mcu-lock-fasteners-model getopt))))))
 
 (defn mcu-lock-fixture-composite [getopt]
   (difference

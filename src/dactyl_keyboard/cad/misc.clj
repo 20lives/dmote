@@ -17,8 +17,16 @@
             (System/exit 1))
         value))))
 
+(def iso-socket-cap-diameter
+  "A map of ISO bolt diameter to socket cap width in mm."
+  {3 5.5
+   4 7
+   5 8.5
+   6 10
+   8 13})
+
 (def iso-hex-nut-flat-to-flat
-  "A map of ISO screw diameter to hex nut width in mm.
+  "A map of ISO bolt diameter to hex nut width in mm.
   This is measuring flat to flat (i.e. short diagonal).
   Actual nuts tend to be a little smaller, in which case these standard
   sizes are good for a very tight fit in 3D printing, after accounting for
@@ -30,7 +38,7 @@
                                 8 13}))
 
 (def iso-hex-nut-height
-  "A map of ISO screw diameter to (maximum) hex nut height."
+  "A map of ISO bolt diameter to (maximum) hex nut height."
   (supported-threaded-fastener {3 2.4
                                 4 3.2
                                 5 4.7
@@ -50,13 +58,32 @@
      (with-fn 6
        (cylinder (/ (iso-hex-nut-diameter iso-size) 2) height)))))
 
-(defn countersink [d length]
-  "A negative for a flat-head screw of diameter d."
-  (let [r (/ d 2)]
+(defn iso-bolt-model
+  "A model of an ISO metric bolt modelled for printing inaccuracy.
+  This is strictly for use as a negative. The model is not threaded.
+  The top of the cap sits at [0 0 0] with the bolt pointing down.
+  This supports a variety of cap styles."
+  [style nominal-d length]
+  (let [d (+ nominal-d 0.4)
+        r (/ d 2)]
     (union
-      (cylinder d 1)
-      (translate [0 0 (/ r -2)]
-        (cylinder [r d] r))
+      (case style
+        :flat
+          (let [edge (Math/log d)]
+            (hull
+              (cylinder d edge)
+              (translate [0 0 (- r)]
+                (cylinder r edge))))
+        :socket
+          (let [nominal-cap-d (iso-socket-cap-diameter nominal-d)
+                cap-d (+ nominal-cap-d 0.4)]
+            (translate [0 0 (- r)]
+              (cylinder (/ cap-d 2) d)))
+        :button
+          (let [h (* 0.55 d)
+                w (* 1.75 d)]
+            (translate [0 0 (/ h -2)]
+              (cylinder (/ w 2) h))))
       (translate [0 0 (/ length -2)]
         (cylinder r length)))))
 

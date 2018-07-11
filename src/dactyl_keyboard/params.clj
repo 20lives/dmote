@@ -116,6 +116,7 @@
 ;; Other:
 (spec/def ::supported-key-cluster #{:finger :thumb})
 (spec/def ::supported-cluster-style #{:standard :orthographic})
+(spec/def ::supported-cap-style #{:flat :socket :button})
 (spec/def ::supported-mcu-type #{:promicro})
 (spec/def ::supported-mcu-support-style #{:lock :stop})
 (spec/def ::supported-wrist-rest-style #{:threaded :solid})
@@ -797,9 +798,13 @@
     "housing, it isn’t so useful but it does work analogously."]
    [:section [:mcu :support :lock]
     "Parameters relevant only with a `lock`-style support."]
-   [:parameter [:mcu :support :lock :fastener-diameter]
-    {:default 1 :parse-fn num}
-    "The diameter in mm of the flat-head fastener closing the lock."]
+   [:section [:mcu :support :lock :fastener]
+    "Threaded fasteners—a nut and a bolt—connect the lock to the case."]
+   [:parameter [:mcu :support :lock :fastener :style]
+    {:default :button :parse-fn keyword :validate [::supported-cap-style]}
+    "A supported bolt cap style."]
+   [:parameter [:mcu :support :lock :fastener :diameter]
+    {:default 1 :parse-fn num} "The ISO metric diameter of the fastener."]
    [:section [:mcu :support :lock :socket]
     "A housing around the USB connector on the MCU."]
    [:parameter [:mcu :support :lock :socket :thickness]

@@ -483,13 +483,15 @@ mcu:
     height-factor: 0.5
     lateral-spacing: 2.5
     lock:
-      fastener-diameter: 6
+      fastener:
+        style: button
+        diameter: 3
       socket:
         thickness: 1.5
       bolt:
         clearance: 2.1
         overshoot: 1
-        mount-length: 14
+        mount-length: 10
         mount-thickness: 6
     stop:
       key-alias: back

@@ -558,9 +558,17 @@ A lateral 1D offset in mm. With rear housing, this creates space between the rea
 
 Parameters relevant only with a `lock`-style support.
 
-##### Parameter `fastener-diameter`
+##### Section `fastener`
 
-The diameter in mm of the flat-head fastener closing the lock.
+Threaded fasteners—a nut and a bolt—connect the lock to the case.
+
+###### Parameter `style`
+
+A supported bolt cap style.
+
+###### Parameter `diameter`
+
+The ISO metric diameter of the fastener.
 
 ##### Section `socket`
 
