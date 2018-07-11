@@ -375,7 +375,7 @@ The extent on the x axis past the last key in the row.
 
 Given that independent movement of each half of the keyboard is not useful, each half can include a mounting plate for a stabilizing ‘beam’. That is a straight piece of wood, aluminium, rigid plastic etc. to connect the two halves mechanically and possibly carry the wire that connects them electrically.
 
-This option is similar to rear housing, but the back plate block provides no interior space for an MCU etc. It is solid, with holes for threaded fasteners and the option of nut bosses.
+This option is similar to rear housing, but the back plate block provides no interior space for an MCU etc. It is solid, with holes for threaded fasteners including the option of nut bosses.
 
 #### Parameter `include`
 
@@ -387,7 +387,7 @@ The nominal vertical extent of the back plate in mm. Because the plate is bottom
 
 #### Section `fasteners`
 
-Two threaded fasteners run through the back plate.
+Two threaded bolts run through the back plate.
 
 ##### Parameter `diameter`
 
@@ -539,8 +539,8 @@ The support structure that holds the MCU PCBA in place.
 
 The style of the support. Available styles are:
 
-* `lock`: A separate physical object that is screwed in place over the MCU. This style is appropriate only with a rear housing, and then only when the PCB aligns with a long wall of that housing. It has the that it can hug the connector on the PCB tightly.
-* `stop`: A gripper that holds the MCU in place at its rear end. This gripper, in turn, is held up by key mount webbing and is thus integral to the keyboard, not printed separately like the lock.
+* `lock`: A separate physical object that is bolted in place over the MCU. This style is appropriate only with a rear housing, and then only when the PCB aligns with a long wall of that housing. It has the advantage that it can hug the connector on the PCB tightly, thus preventing a fragile surface-mounted connector from breaking off.
+* `stop`: A gripper that holds the MCU in place at its rear end. This gripper, in turn, is held up by key mount webbing and is thus integral to the keyboard, not printed separately like the lock. This style does not require rear housing.
 
 #### Parameter `preview`
 
@@ -572,7 +572,7 @@ The wall thickness of the socket.
 
 ##### Section `bolt`
 
-The part of a `lock`-style support that does not print as part of the keyboard case.
+The part of a `lock`-style support that does not print as part of the keyboard case. This bolt, named by analogy with a lock, is not to be confused with the threaded fasteners holding it in place.
 
 ###### Parameter `clearance`
 
@@ -584,11 +584,11 @@ The distance across which the bolt will touch the PCB at the mount end. Take car
 
 ###### Parameter `mount-length`
 
-The length of the part of the bolt that is screwed into place against the case. This is in addition to `overshoot` and goes in the opposite direction.
+The length of the base that contains the threaded fasteners used to secure the bolt over the MCU. This is in addition to `overshoot` and goes in the opposite direction, away from the PCB.
 
 ###### Parameter `mount-thickness`
 
-The thickness of the mount. This is the major determinant of the length of d you will need.
+The thickness of the mount. You will need a threaded fastener slightly longer than this.
 
 #### Section `stop`
 
@@ -668,7 +668,7 @@ If `true`, include a wrist rest with the keyboard.
 
 The style of the wrist rest. Available styles are:
 
-* `threaded`: threaded fastener(s) connect the case and wrist rest.
+* `threaded`: threaded fasteners connect the case and wrist rest.
 * `solid`: a printed plastic bridge along the ground as part of the model.
 
 ### Parameter `preview`

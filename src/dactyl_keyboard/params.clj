@@ -604,7 +604,7 @@
     "\n"
     "This option is similar to rear housing, but the back plate block "
     "provides no interior space for an MCU etc. It is solid, with holes "
-    "for threaded fasteners and the option of nut bosses."]
+    "for threaded fasteners including the option of nut bosses."]
    [:parameter [:case :back-plate :include]
     {:default false :parse-fn boolean}
     "If `true`, include a back plate block."]
@@ -614,7 +614,7 @@
     "Because the plate is bottom-hulled to the floor, the effect "
     "of this setting is on the area of the plate above its holes."]
    [:section [:case :back-plate :fasteners]
-    "Two threaded fasteners run through the back plate."]
+    "Two threaded bolts run through the back plate."]
    [:parameter [:case :back-plate :fasteners :diameter]
     {:default 1 :parse-fn int}
     "The ISO metric diameter of each fastener."]
@@ -772,13 +772,15 @@
    [:parameter [:mcu :support :style]
     {:default :lock :parse-fn keyword :validate [::supported-mcu-support-style]}
     "The style of the support. Available styles are:\n\n"
-    "* `lock`: A separate physical object that is screwed in place over the "
+    "* `lock`: A separate physical object that is bolted in place over the "
     "MCU. This style is appropriate only with a rear housing, and then only "
     "when the PCB aligns with a long wall of that housing. It has the "
-    "that it can hug the connector on the PCB tightly.\n"
+    "advantage that it can hug the connector on the PCB tightly, thus "
+    "preventing a fragile surface-mounted connector from breaking off.\n"
     "* `stop`: A gripper that holds the MCU in place at its rear end. "
     "This gripper, in turn, is held up by key mount webbing and is thus "
-    "integral to the keyboard, not printed separately like the lock."]
+    "integral to the keyboard, not printed separately like the lock. "
+    "This style does not require rear housing."]
    [:parameter [:mcu :support :preview]
     {:default false :parse-fn boolean}
     "If `true`, render a visualization of the support in place. This applies "
@@ -805,7 +807,8 @@
     "The wall thickness of the socket."]
    [:section [:mcu :support :lock :bolt]
     "The part of a `lock`-style support that does not print as part of the "
-    "keyboard case."]
+    "keyboard case. This bolt, named by analogy with a lock, is not to be "
+    "confused with the threaded fasteners holding it in place."]
    [:parameter [:mcu :support :lock :bolt :clearance]
     {:default 1 :parse-fn num}
     "The distance of the bolt from the populated side of the PCB. "
@@ -817,13 +820,13 @@
     "Take care that this distance is free of components on the PCB."]
    [:parameter [:mcu :support :lock :bolt :mount-length]
     {:default 1 :parse-fn num}
-    "The length of the part of the bolt that is screwed into place against "
-    "the case. This is in addition to `overshoot` and goes in the opposite "
-    "direction."]
+    "The length of the base that contains the threaded fasteners used to "
+    "secure the bolt over the MCU. This is in addition to `overshoot` and "
+    "goes in the opposite direction, away from the PCB."]
    [:parameter [:mcu :support :lock :bolt :mount-thickness]
     {:default 1 :parse-fn num}
-    "The thickness of the mount. This is the major determinant of the length "
-    "of d you will need."]
+    "The thickness of the mount. You will need a threaded fastener slightly "
+    "longer than this."]
    [:section [:mcu :support :stop]
     "Parameters relevant only with a `stop`-style support."]
    [:parameter [:mcu :support :stop :key-alias]
@@ -882,7 +885,7 @@
      :parse-fn keyword
      :validate [::supported-wrist-rest-style]}
     "The style of the wrist rest. Available styles are:\n\n"
-    "* `threaded`: threaded fastener(s) connect the case and wrist rest.\n"
+    "* `threaded`: threaded fasteners connect the case and wrist rest.\n"
     "* `solid`: a printed plastic bridge along the ground as part of the model."]
    [:parameter [:wrist-rest :preview]
     {:default false :parse-fn boolean}
