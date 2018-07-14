@@ -238,7 +238,11 @@
     "An angle in radians. Intrinsic pitching occurs early in key placement. "
     "It is typically intended to produce a tactile break between two rows of "
     "keys, as in the typewriter-like terracing common on flat keyboards with "
-    "OEM-profile or similarly angled caps."]
+    "OEM-profile or similarly angled caps.\n\n"
+    "The term “intrinsic” is used here because the key spins roughly around "
+    "its own center. The term should not be confused with intrinsic rotations "
+    "in the sense that each step is performed on a coordinate system "
+    "resulting from previous operations."]
    [:parameter [:parameters :layout :pitch :progressive]
     {:default 0 :parse-fn num}
     "An angle in radians. This progressive pitch factor bends columns "

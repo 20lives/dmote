@@ -143,6 +143,8 @@ An angle in radians. Set at a high level, this controls the general front-to-bac
 
 An angle in radians. Intrinsic pitching occurs early in key placement. It is typically intended to produce a tactile break between two rows of keys, as in the typewriter-like terracing common on flat keyboards with OEM-profile or similarly angled caps.
 
+The term “intrinsic” is used here because the key spins roughly around its own center. The term should not be confused with intrinsic rotations in the sense that each step is performed on a coordinate system resulting from previous operations.
+
 ###### Parameter `progressive`
 
 An angle in radians. This progressive pitch factor bends columns lengthwise. If set to zero, columns are flat.

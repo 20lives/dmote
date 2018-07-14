@@ -265,7 +265,7 @@
   (translate (mount-corner-offset getopt directions) (web-post getopt)))
 
 (defn curver [subject dimension-n rotate-type delta-fn orthographic
-              translate-fn rotate-fn getopt cluster coord obj]
+              translate-fn rot-ax-fn getopt cluster coord obj]
   "Given an angle for progressive curvature, apply it. Else lay keys out flat."
   (let [index (nth coord dimension-n)
         most #(most-specific-option getopt % cluster coord)
@@ -286,66 +286,81 @@
      (translate-fn (assoc [0 0 0] dimension-n flat-distance) obj)
      (if orthographic
        (->> obj
-            (rotate-fn angle-product)
+            (rot-ax-fn angle-product)
             (translate-fn [ortho-x 0 ortho-z]))
-       (swing-callables translate-fn radius (partial rotate-fn angle-product) obj)))))
+       (swing-callables translate-fn radius (partial rot-ax-fn angle-product) obj)))))
 
-(defn put-in-column [translate-fn rotate-fn getopt cluster coord obj]
+(defn put-in-column [translate-fn rot-ax-fn getopt cluster coord obj]
   "Place a key in relation to its column."
   (curver :row 1 :pitch #(- %1 %2) false
-          translate-fn rotate-fn getopt cluster coord obj))
+          translate-fn rot-ax-fn getopt cluster coord obj))
 
-(defn put-in-row [translate-fn rotate-fn getopt cluster coord obj]
+(defn put-in-row [translate-fn rot-ax-fn getopt cluster coord obj]
   "Place a key in relation to its row."
   (let [style (getopt :key-clusters cluster :style)]
    (curver :column 0 :roll #(- %2 %1) (= style :orthographic)
-           translate-fn rotate-fn getopt cluster coord obj)))
+           translate-fn rot-ax-fn getopt cluster coord obj)))
 
 (declare cluster-position)
 
-(defn cluster-placement [translate-fn [rot-x rot-y rot-z]
-                         getopt cluster coord subject]
+(defn cluster-placement [translate-fn rot-fn getopt cluster coord subject]
   "Place and tilt passed ‘subject’ as if into a key cluster."
   (let [[column row] coord
-        most #(most-specific-option getopt % cluster coord)
-        center (most [:layout :matrix :neutral :row])
+        most #(most-specific-option getopt (concat [:layout] %) cluster coord)
+        center (most [:matrix :neutral :row])
         bridge
           (if (= cluster :finger)
             identity
             (fn [obj]
               (let [section (partial getopt :key-clusters cluster :position)
                     alias (getopt :key-clusters :derived :aliases (section :key-alias))
-                    finger-pos (cluster-position  getopt (:cluster alias)
+                    finger-pos (cluster-position getopt (:cluster alias)
                                  (:coordinates alias) [0 0 0])
                     final (vec (map + finger-pos (section :offset)))]
                (translate-fn final obj))))]
     (->> subject
-         (translate-fn (most [:layout :translation :early]))
-         (rot-x (most [:layout :pitch :intrinsic]))
-         (rot-y (most [:layout :roll :intrinsic]))
-         (rot-z (most [:layout :yaw :intrinsic]))
-         (put-in-column translate-fn rot-x getopt cluster coord)
-         (put-in-row translate-fn rot-y getopt cluster coord)
-         (translate-fn (most [:layout :translation :mid]))
-         (rot-x (most [:layout :pitch :base]))
-         (rot-y (most [:layout :roll :base]))
-         (rot-z (most [:layout :yaw :base]))
+         (translate-fn (most [:translation :early]))
+         (rot-fn [(most [:pitch :intrinsic])
+                  (most [:roll :intrinsic])
+                  (most [:yaw :intrinsic])])
+         (put-in-column translate-fn #(rot-fn [%1 0 0] %2) getopt cluster coord)
+         (put-in-row translate-fn #(rot-fn [0 %1 0] %2) getopt cluster coord)
+         (translate-fn (most [:translation :mid]))
+         (rot-fn [(most [:pitch :base])
+                  (most [:roll :base])
+                  (most [:yaw :base])])
          (translate-fn [0 (* mount-1u center) 0])
-         (translate-fn (most [:layout :translation :late]))
+         (translate-fn (most [:translation :late]))
          (bridge))))
 
 (def cluster-place
-  "A function that puts a passed shape in a specified key matrix position.
-  The auxiliary functions supplied here are designed to reduce the size of
-  the resulting OpenSCAD files."
-  (letfn [(rot-or-not [matrix]
-            (fn [angle obj] (if (zero? angle) obj (rotate angle matrix obj))))]
-   (partial cluster-placement
-     (fn [coordinates obj]
-       (if (every? zero? coordinates) obj (translate coordinates obj)))
-     [(rot-or-not [1 0 0])
-      (rot-or-not [0 1 0])
-      (rot-or-not [0 0 1])])))
+  "A function that puts a passed shape in a specified key matrix position."
+  (partial cluster-placement
+    (fn [coordinates obj]
+      (if (every? zero? coordinates) obj (translate coordinates obj)))
+    rotate))
+
+(defn- roimitate [[α β γ] position]
+  "Transform a set of coordinates as in rotation.
+  The call signature imitates one form of scad-clj’s rotate. The matrices used
+  here are selected to imitate the compound effect of OpenSCAD’s rotate, which
+  uses the Eigen library’s Euler-style rotation under the hood. A unified
+  matrix would save a couple of CPU cycles but would not affect SCAD or STL
+  files. In effect, this function is used in the Clojure layer to reason about
+  the keyboard model, not to define it."
+  (->> position
+       (matrixmath/mmul
+        [[1 0            0]
+         [0 (Math/cos α) (- (Math/sin α))]
+         [0 (Math/sin α) (Math/cos α)]])
+       (matrixmath/mmul
+        [[(Math/cos β)     0 (Math/sin β)]
+         [0                1 0]
+         [(- (Math/sin β)) 0 (Math/cos β)]])
+       (matrixmath/mmul
+        [[(Math/cos γ) (- (Math/sin γ)) 0]
+         [(Math/sin γ) (Math/cos γ)     0]
+         [0            0                1]])))
 
 (def cluster-position
   "Get coordinates for a key cluster position.
@@ -354,27 +369,7 @@
   middle of the indicated key."
   (partial cluster-placement
     (partial map +)
-    [(fn [angle position]
-       "Transform a set of coordinates as if in rotation around the X axis."
-       (matrixmath/mmul
-        [[1 0 0]
-         [0 (Math/cos angle) (- (Math/sin angle))]
-         [0 (Math/sin angle)    (Math/cos angle)]]
-        position))
-     (fn [angle position]
-       "Same for the Y axis."
-       (matrixmath/mmul
-        [[(Math/cos angle)     0 (Math/sin angle)]
-         [0                    1 0]
-         [(- (Math/sin angle)) 0 (Math/cos angle)]]
-        position))
-     (fn [angle position]
-       "Same for the Z axis."
-       (matrixmath/mmul
-        [[(Math/cos angle) (- (Math/sin angle)) 0]
-         [(Math/sin angle) (Math/cos angle)     0]
-         [0                0                    1]]
-        position))]))
+    roimitate))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
