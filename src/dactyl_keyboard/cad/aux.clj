@@ -23,7 +23,7 @@
   "This assumes the flat orientation common in laptops.
   In a DMOTE, USB connector width would typically go on the z axis, etc."
   {:full {:width 10.0 :length 13.6 :height 6.5}
-   :micro {:width 7.4 :length 5.3 :height 2.4}})
+   :micro {:width 7.5 :length 5.9 :height 2.55}})
 
 (defn into-nook [getopt field lateral-shift]
   "Produce coordinates for translation into requested corner.
@@ -56,7 +56,7 @@
 
 (defn derive-mcu-properties [getopt]
   (let [mcu-type (getopt :mcu :type)
-        pcb-base {:thickness 1.57 :connector-overshoot 2}
+        pcb-base {:thickness 1.57 :connector-overshoot 1.9}
         pcb (case mcu-type
               :promicro (merge pcb-base {:width 18 :length 33})
               :teensy (merge pcb-base {:width 17.78 :length 35.56})
@@ -188,8 +188,11 @@
          ;; by the socket, while the socket does not protrude outside the case.
          (translate [socket-x-offset (/ usb-y -2) 0]
            (cube socket-x-thickness usb-y socket-z))
-         (translate [10 0 0]  ; Lateral support for the socket.
-           (cube 1 1 socket-z)))))))
+         ;; Stabilizers for the socket:
+         (translate [10 0 0]
+           (cube 1 1 socket-z))
+         (translate [socket-x-offset 0 0]
+           (cube 1 1 (+ socket-z 6))))))))
 
 (defn mcu-lock-fasteners-model [getopt]
   (let [style (getopt :mcu :support :lock :fastener :style)

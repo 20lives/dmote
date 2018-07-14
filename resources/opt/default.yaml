@@ -473,11 +473,12 @@ case:
         key-corner: ESE
 mcu:
   type: promicro
+  margin: 0.3
   position:
     prefer-rear-housing: true
     key-alias: back
     corner: ENE
-    offset: [0, 0, 2]
+    offset: [-1, 0, 2]
   support:
     style: lock
     height-factor: 0.5
