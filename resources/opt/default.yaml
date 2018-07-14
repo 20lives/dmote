@@ -343,8 +343,17 @@ case:
     distance: 3
     height: 43
     offsets:
-      north: 13
+      north: 14
       east: -2
+    fasteners:
+      diameter: 6
+      bosses: true
+      west:
+        include: true
+        offset: 0
+      east:
+        include: true
+        offset: -15
   back-plate:
     include: false
     beam-height: 20

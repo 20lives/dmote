@@ -373,6 +373,42 @@ The extent on the x axis past the first key in the row.
 
 The extent on the x axis past the last key in the row.
 
+#### Section `fasteners`
+
+Threaded bolts can run through the roof of the rear housing, making it a hardpoint for attachments like a stabilizer to connect the two halves of the keyboard.
+
+##### Parameter `diameter`
+
+The ISO metric diameter of each fastener.
+
+##### Parameter `bosses`
+
+If `true`, add nut bosses to the ceiling of the rear housing for each fastener. Space permitting, these bosses will have some play on the north-south axis, to permit adjustment of the angle of the keyboard halves under a stabilizer.
+
+##### Section `west`
+
+A fastener on the inward-facing end of the rear housing.
+
+###### Parameter `include`
+
+If `true`, include this fastener.
+
+###### Parameter `offset`
+
+A one-dimensional offset in mm from the inward edge of the rear housing to the fastener. You probably want a negative number if any.
+
+##### Section `east`
+
+A fastener on the outward-facing end of the rear housing. All parameters are analogous to those for `west`.
+
+###### Parameter `include`
+
+
+
+###### Parameter `offset`
+
+
+
 ### Section `back-plate`
 
 Given that independent movement of each half of the keyboard is not useful, each half can include a mounting plate for a stabilizing ‘beam’. That is a straight piece of wood, aluminium, rigid plastic etc. to connect the two halves mechanically and possibly carry the wire that connects them electrically.

@@ -331,7 +331,6 @@
           (housing-place getopt ESE 1 c)
           (wall-edge getopt :finger false [eec :east turning-left])])))))
 
-
 (defn- housing-web [getopt]
   "An extension of the finger key cluster’s webbing onto the roof of the
   rear housing."
@@ -357,12 +356,51 @@
        []
        (getopt :case :rear-housing :derived :coordinate-corner-pairs)))))
 
+(defn- housing-mount-place [getopt side shape]
+  (let [d (getopt :case :rear-housing :fasteners :diameter)
+        offset (getopt :case :rear-housing :fasteners side :offset)
+        n (getopt :case :rear-housing :offsets :north)
+        t (getopt :case :web-thickness)
+        h (iso-hex-nut-height d)
+        [sign base] (case side
+                      :west [+ (getopt :case :rear-housing :derived :sw)]
+                      :east [- (getopt :case :rear-housing :derived :se)])
+        near (vec (map + base [(+ (- (sign offset)) (sign d)) d (/ (+ t h) -2)]))
+        far (vec (map + near [0 (- n d d) 0]))]
+   (hull
+     (translate near shape)
+     (translate far shape))))
+
+(defn- housing-mount-positive [getopt side]
+  (let [d (getopt :case :rear-housing :fasteners :diameter)
+        w (* 2.2 d)]
+   (housing-mount-place getopt side
+     (cube w w (iso-hex-nut-height d)))))
+
+(defn- housing-mount-negative [getopt side]
+  (let [d (getopt :case :rear-housing :fasteners :diameter)
+        mount-side (* 2.2 d)]
+   (union
+     (housing-mount-place getopt side
+       (cylinder (/ d 2) 20))
+     (if (getopt :case :rear-housing :fasteners :bosses)
+       (housing-mount-place getopt side
+         (iso-hex-nut-model d))))))
+
 (defn rear-housing [getopt]
   "A squarish box at the far end of the finger key cluster."
-  (union
-    (housing-roof getopt)
-    (housing-web getopt)
-    (housing-outer-wall getopt)))
+  (let [prop (partial getopt :case :rear-housing :fasteners)
+        pair (fn [function]
+               (union
+                 (if (prop :west :include) (function getopt :west))
+                 (if (prop :east :include) (function getopt :east))))]
+   (difference
+     (union
+       (housing-roof getopt)
+       (housing-web getopt)
+       (housing-outer-wall getopt)
+       (if (prop :bosses) (pair housing-mount-positive)))
+     (pair housing-mount-negative))))
 
 
 ;;;;;;;;;;;;;;;;;;;

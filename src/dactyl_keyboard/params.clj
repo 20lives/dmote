@@ -600,6 +600,35 @@
    [:parameter [:case :rear-housing :offsets :east]
     {:default 0 :parse-fn num}
     "The extent on the x axis past the last key in the row."]
+   [:section [:case :rear-housing :fasteners]
+    "Threaded bolts can run through the roof of the rear housing, making it a "
+    "hardpoint for attachments like a stabilizer to connect the two halves of "
+    "the keyboard."]
+   [:parameter [:case :rear-housing :fasteners :diameter]
+    {:default 1 :parse-fn int}
+    "The ISO metric diameter of each fastener."]
+   [:parameter [:case :rear-housing :fasteners :bosses]
+    {:default false :parse-fn boolean}
+    "If `true`, add nut bosses to the ceiling of the rear housing for each "
+    "fastener. Space permitting, these bosses will have some play on the "
+    "north-south axis, to permit adjustment of the angle of the keyboard "
+    "halves under a stabilizer."]
+   [:section [:case :rear-housing :fasteners :west]
+    "A fastener on the inward-facing end of the rear housing."]
+   [:parameter [:case :rear-housing :fasteners :west :include]
+    {:default false :parse-fn boolean}
+    "If `true`, include this fastener."]
+   [:parameter [:case :rear-housing :fasteners :west :offset]
+    {:default 0 :parse-fn num}
+    "A one-dimensional offset in mm from the inward edge of the rear "
+    "housing to the fastener. You probably want a negative number if any."]
+   [:section [:case :rear-housing :fasteners :east]
+    "A fastener on the outward-facing end of the rear housing. All parameters "
+    "are analogous to those for `west`."]
+   [:parameter [:case :rear-housing :fasteners :east :include]
+    {:default false :parse-fn boolean}]
+   [:parameter [:case :rear-housing :fasteners :east :offset]
+    {:default 0 :parse-fn num}]
    [:section [:case :back-plate]
     "Given that independent movement of each half of the keyboard is not "
     "useful, each half can include a mounting plate for a stabilizing ‘beam’. "
