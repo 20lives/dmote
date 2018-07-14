@@ -340,6 +340,7 @@ case:
   web-thickness: 2.5
   rear-housing:
     include: true
+    west-foot: true
     distance: 3
     height: 43
     offsets:
@@ -448,8 +449,10 @@ case:
     chunk-size: 2
     hull-around:
     - [f0, WSW, 2, 3]
-    - [t1, NNW, 0, 4]
-    - [t0, NNW, 0, 3]
+    - hull-around:
+      - [t1, NNW, 0, 4]
+      - [t0, NNE, 0, 1]
+      - [t0, NNW, 0, 3]
     - [t0, WNW, 0, 1]
     - [t0, WSW, 0, 1]
     - [t5, WNW, 0, 1]
