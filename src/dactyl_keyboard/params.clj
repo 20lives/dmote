@@ -340,9 +340,8 @@
     "between wall segments 0 and 1. It is applied again at the bottom, making "
     "up the difference between segments 3 and 4."]
    [:section [:parameters :wall :north]
-    "Throughout the program, “north” refers to the side of a key facing "
-    "directly away from the user, barring yaw.\n"
-    "\n"
+    "As explained [elsewhere](intro.md), “north” refers to the side facing "
+    "away from the user, barring yaw.\n\n"
     "This section describes the shape of the wall on the north side of the "
     "keyboard. There are identical sections for the other cardinal directions."]
    [:parameter [:parameters :wall :north :extent]
@@ -639,8 +638,7 @@
     "useful, each half can include a mounting plate for a stabilizing ‘beam’. "
     "That is a straight piece of wood, aluminium, rigid plastic etc. to "
     "connect the two halves mechanically and possibly carry the wire that "
-    "connects them electrically.\n"
-    "\n"
+    "connects them electrically.\n\n"
     "This option is similar to rear housing, but the back plate block "
     "provides no interior space for an MCU etc. It is solid, with holes "
     "for threaded fasteners including the option of nut bosses."]
@@ -928,8 +926,15 @@
      :parse-fn keyword
      :validate [::supported-wrist-rest-style]}
     "The style of the wrist rest. Available styles are:\n\n"
-    "* `threaded`: threaded fasteners connect the case and wrist rest.\n"
-    "* `solid`: a printed plastic bridge along the ground as part of the model."]
+    "* `threaded`: threaded fasteners connect the case and wrist rest. "
+    "This works with a great variety of keyboard shapes and will allow "
+    "adjusting the position of the wrist rest for different hands.\n"
+    "* `solid`: a printed plastic bridge along the ground as part of the "
+    "model. This has more limitations, both in manufacture and in use. "
+    "It includes a hook on the near outward side of the case, which will only "
+    "be useful if the case wall at that point is short and finger column 2 "
+    "is positioned and walled in such a way that the solid bridge can be "
+    "wedged between the hook and the column."]
    [:parameter [:wrist-rest :preview]
     {:default false :parse-fn boolean}
     "Preview mode. If `true`, this puts a model of the wrist rest in the same "
@@ -967,8 +972,7 @@
     {:default "resources/heightmap/default.dat"}
     "A filepath. The path, and file, will be interpreted by OpenScad, using "
     "its [`surface()` function](https://en.wikibooks.org/wiki/"
-    "OpenSCAD_User_Manual/Other_Language_Features#Surface).\n"
-    "\n"
+    "OpenSCAD_User_Manual/Other_Language_Features#Surface).\n\n"
     "The file should contain a heightmap to describe the surface of the "
     "rubber pad."]
    [:section [:wrist-rest :shape :pad :height]

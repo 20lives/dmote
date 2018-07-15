@@ -27,6 +27,9 @@ threaded-visualization: target/dmote.jar
 solid: target/dmote.jar
 	java -jar target/dmote.jar -c resources/opt/solid_wrist_rest.yaml
 
+solid-visualization: target/dmote.jar
+	java -jar target/dmote.jar -c resources/opt/solid_wrist_rest.yaml -c resources/opt/visualization.yaml
+
 doc/options.md: target/dmote.jar
 	java -jar target/dmote.jar --describe-parameters > doc/options.md
 

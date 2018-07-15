@@ -231,7 +231,7 @@ This is applied at the very top of a wall, making up the difference between wall
 
 ##### Section `north`
 
-Throughout the program, “north” refers to the side of a key facing directly away from the user, barring yaw.
+As explained [elsewhere](intro.md), “north” refers to the side facing away from the user, barring yaw.
 
 This section describes the shape of the wall on the north side of the keyboard. There are identical sections for the other cardinal directions.
 
@@ -718,8 +718,8 @@ If `true`, include a wrist rest with the keyboard.
 
 The style of the wrist rest. Available styles are:
 
-* `threaded`: threaded fasteners connect the case and wrist rest.
-* `solid`: a printed plastic bridge along the ground as part of the model.
+* `threaded`: threaded fasteners connect the case and wrist rest. This works with a great variety of keyboard shapes and will allow adjusting the position of the wrist rest for different hands.
+* `solid`: a printed plastic bridge along the ground as part of the model. This has more limitations, both in manufacture and in use. It includes a hook on the near outward side of the case, which will only be useful if the case wall at that point is short and finger column 2 is positioned and walled in such a way that the solid bridge can be wedged between the hook and the column.
 
 ### Parameter `preview`
 

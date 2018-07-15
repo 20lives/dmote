@@ -334,5 +334,5 @@
       (plinth-maquette getopt)
       (union
         (case (getopt :wrist-rest :style)
-          :solid (union case-hook (body/cluster-wall getopt :finger))
+          :solid (union (case-hook getopt) (body/cluster-wall getopt :finger))
           :threaded (connecting-rods-and-nuts getopt))))))
