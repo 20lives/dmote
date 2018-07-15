@@ -349,6 +349,10 @@ The furthest row of the key cluster can be extended into a rear housing for the 
 
 If `true`, add a rear housing. Please arrange case walls so as not to interfere, by removing them along the far side of the last row of key mounts in the finger cluster.
 
+#### Parameter `west-foot`
+
+If `true`, add a foot plate at ground level by the far inward corner of the rear housing. The height of the plate is controlled by the `foot-plates` section below.
+
 #### Parameter `distance`
 
 The horizontal distance in mm between the furthest key in the row and the roof of the rear housing.

@@ -356,6 +356,14 @@
        []
        (getopt :case :rear-housing :derived :coordinate-corner-pairs)))))
 
+(defn- housing-foot [getopt]
+  "A simple ground-level plate at one corner of the housing."
+  (let [base (take 2 (getopt :case :rear-housing :derived :nw))
+        w (min 10 (getopt :case :rear-housing :offsets :north))]
+   (extrude-linear
+     {:height (getopt :case :foot-plates :height) :center false}
+     (polygon [base (map + base [0 (- w)]) (map + base [w 0])]))))
+
 (defn- housing-mount-place [getopt side shape]
   (let [d (getopt :case :rear-housing :fasteners :diameter)
         offset (getopt :case :rear-housing :fasteners side :offset)
@@ -398,6 +406,8 @@
      (union
        (housing-roof getopt)
        (housing-web getopt)
+       (if (getopt :case :rear-housing :west-foot)
+         (housing-foot getopt))
        (housing-outer-wall getopt)
        (if (prop :bosses) (pair housing-mount-positive)))
      (pair housing-mount-negative))))

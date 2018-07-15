@@ -582,6 +582,11 @@
     "If `true`, add a rear housing. Please arrange case walls so as not to "
     "interfere, by removing them along the far side of the last row of key "
     "mounts in the finger cluster."]
+   [:parameter [:case :rear-housing :west-foot]
+    {:default false :parse-fn boolean}
+    "If `true`, add a foot plate at ground level by the far inward corner "
+    "of the rear housing. The height of the plate is controlled by the "
+    "`foot-plates` section below."]
    [:parameter [:case :rear-housing :distance]
     {:default 0 :parse-fn num}
     "The horizontal distance in mm between the furthest key in the row and "
