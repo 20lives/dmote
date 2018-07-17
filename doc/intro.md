@@ -5,16 +5,17 @@ The larger project is presented [here](http://viktor.eikman.se/article/the-dmote
 
 ## From code to printable STL
 
-This repository is source code for a Clojure application. Clojure compiles like
-Java. The application produces an OpenSCAD program which, in turn, can be
-rendered to a portable geometric description like STL. STL can be sliced
-to G-code and the G-code can steer a 3D printer.
+This repository is source code for a Clojure application. Clojure can be
+packaged like Java to run on the JVM, on any platform. The application produces
+an OpenSCAD program which, in turn, can be rendered to a portable geometric
+description like STL. STL can be sliced to G-code and the G-code can steer a
+3D printer.
 
 OpenSCAD can represent the model visually, but there is no step in this process
 where you point and click with a mouse to change the design. The shape of the
 keyboard is determined by your written parameters to the Clojure application.
 
-> parameters → Clojure app → JVM bytecode → OpenSCAD → STL → G-code → printer FW + filament → tangible keyboard
+> parameters → this app → JVM → OpenSCAD → STL → G-code → printer → tangible keyboard
 
 If this repository includes STL files you will find them in the
 [things/](../things/) directory. They should be ready to print. Otherwise,
@@ -48,7 +49,7 @@ tail your changes with `inotify` if you have that.
 ## Customization
 
 You probably want to customize the design for your own hands. You won’t need
-to do any coding if all you want is a personal fit.
+to do any coding if all you want is a personal fit or additional keys.
 
 ### Parameters in YAML
 
@@ -97,6 +98,10 @@ and test to make sure you have not damaged other styles.
 For printing prototypes and any printing with PLA-like materials that stiffen
 quickly, build support from the base plate only. This simplifies the process
 of removing the supports.
+
+If you are including wrist rests, consider printing the plinths without a
+bottom plate and with sparse or gradual infill. This makes it easy to pour
+plaster or some other dense material into the plinths to add mass.
 
 ## After printing
 

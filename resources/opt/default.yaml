@@ -485,7 +485,7 @@ case:
         key-corner: ESE
 mcu:
   type: promicro
-  margin: 0.3
+  margin: 0.25
   position:
     prefer-rear-housing: true
     key-alias: back
@@ -497,12 +497,12 @@ mcu:
     lateral-spacing: 2.5
     lock:
       fastener:
-        style: button
+        style: flat
         diameter: 3
       socket:
         thickness: 1.5
       bolt:
-        clearance: 2.1
+        clearance: 2.5
         overshoot: 1
         mount-length: 10
         mount-thickness: 6

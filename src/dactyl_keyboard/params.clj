@@ -434,7 +434,10 @@
     "in a resting state."]
    [:section [:switches]
     "Electrical switches close a circuit when pressed. They cannot be "
-    "printed. This section specifies how much space they need to be mounted."]
+    "printed. This section specifies how much space they need to be "
+    "mounted.\n\n"
+    "There is currently no parameter for style. Only ALPS-compatible switches "
+    "are supported in this version. This includes Matias."]
    [:parameter [:switches :travel]
     {:default 1 :parse-fn num}
     "The distance in mm that a keycap can travel vertically when "
@@ -448,8 +451,7 @@
     {:default :standard
      :parse-fn keyword
      :validate [::supported-cluster-style]}
-    "Cluster layout style. One of:\n"
-    "\n"
+    "Cluster layout style. One of:\n\n"
     "* `standard`: Both columns and rows have the same type of curvature "
     "applied in a logically consistent manner."
     "* `orthographic`: Rows are curved somewhat differently. This creates "

@@ -26,6 +26,8 @@ The height in mm of the air gap between keycap and switch mount, in a resting st
 
 Electrical switches close a circuit when pressed. They cannot be printed. This section specifies how much space they need to be mounted.
 
+There is currently no parameter for style. Only ALPS-compatible switches are supported in this version. This includes Matias.
+
 ### Parameter `travel`
 
 The distance in mm that a keycap can travel vertically when mounted on a switch.
