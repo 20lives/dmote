@@ -1040,6 +1040,16 @@
     {:default 1 :parse-fn num}
     "The thickness of the mount in mm along the axis of the fastener(s). "
     "This is typically larger than the case-side depth to allow adjustment."]
+   [:parameter [:wrist-rest :fasteners :mounts :plinth-side :pocket-height]
+    {:default 0 :parse-fn num}
+    "The height of the nut pocket inside the mounting plate, in mm.\n\n"
+    "With a large positive value, this will provide a chute for the nut(s) "
+    "to go in from the top of the plinth, which allows you to hide the hole "
+    "beneath the pad. With a large negative value, the pocket will "
+    "instead open from the bottom, which is convenient if `depth` is small. "
+    "With a small value or the default value of zero, it will be necessary to "
+    "pause printing in order to insert the nut(s); this last option is "
+    "therefore recommended for advanced users only."]
    [:section [:wrist-rest :solid-bridge]
     "This is only relevant with the `solid` style of wrist rest."]
    [:parameter [:wrist-rest :solid-bridge :width]
