@@ -120,6 +120,7 @@
         pair (fn [basename model]
                (scad-file (str "right-hand-" basename) model)
                (scad-file (str "left-hand-" basename) (mirror [-1 0 0] model)))]
+   (scad-file "preview-keycap" (key/all-keycaps getopt))
    (pair "case" (build-keyboard-right getopt))
    (if (= (getopt :mcu :support :style) :lock)
      (scad-file "mcu-lock-bolt" (aux/mcu-lock-bolt getopt)))

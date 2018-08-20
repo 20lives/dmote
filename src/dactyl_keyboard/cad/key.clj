@@ -398,3 +398,8 @@
 (defn cluster-keycaps [getopt cluster]
   (apply union (map #(cluster-place getopt cluster % (keycap-model getopt 1))
                     (getopt :key-clusters cluster :derived :key-coordinates))))
+
+(defn all-keycaps [getopt]
+  (union
+    (cluster-keycaps getopt :finger)
+    (cluster-keycaps getopt :thumb)))

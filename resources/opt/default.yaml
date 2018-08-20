@@ -213,29 +213,29 @@ by-key:
         "4":
           parameters:
             layout:
+              matrix:
+                separation:
+                  row: -0.8
               pitch:
-                base: 0.36
-                progressive: 0.6
+                base: 0.4
+                progressive: 0.4
               yaw:
-                base: 0.1
+                base: 0.09
               translation:
-                mid: [0, 0, 4]
-          rows:
-            "-1":
-              parameters:
-                layout:
-                  translation:
-                    early: [0, 0, -1]
+                mid: [-0.5, 4, 4.5]
         "5":
           parameters:
             layout:
+              matrix:
+                separation:
+                  row: -0.8
               pitch:
-                base: 0.36
-                progressive: 0.6
+                base: 0.4
+                progressive: 0.4
               yaw:
-                base: 0.13
+                base: 0.11
               translation:
-                mid: [0.5, -3, 4.5]
+                mid: [-0.5, 2, 5.5]
     thumb:
       parameters:
         layout:
@@ -336,7 +336,7 @@ case:
     include: true
     west-foot: true
     distance: 3
-    height: 43
+    height: 43.5
     offsets:
       north: 14
       east: -2
@@ -460,7 +460,7 @@ case:
     - [f3, SSW, 3, 4]
   foot-plates:
     include: true
-    height: 4
+    height: 3
     polygons:
     - points:
       - key-alias: far-right
@@ -522,7 +522,7 @@ wrist-rest:
   style: threaded
   position:
     key-alias: near-right
-    offset: [-50, -34]
+    offset: [-50, -37.1]
   shape:
     plinth-base-size: [66, 78, 42]
     chamfer: 2
