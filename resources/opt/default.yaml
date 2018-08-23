@@ -31,7 +31,7 @@ key-clusters:
   thumb:
     position:
       key-alias: f1
-      offset: [-10, -18, 0]
+      offset: [-10, -18, 2]
     matrix-columns:
     - rows-above-home: 1
     - rows-above-home: 1
@@ -115,8 +115,8 @@ by-key:
                 perpendicular: 4
               west:
                 extent: 3
-                parallel: 3
-                perpendicular: 4
+                parallel: 2
+                perpendicular: 2
           rows:
             first:
               parameters:
@@ -245,13 +245,13 @@ by-key:
             separation:
               column: 0
           roll:
-            base: -1.3
+            base: -1.2
             progressive: 0.3
           pitch:
-            base: -0.4
+            base: -0.6
             progressive: 0.3
           yaw:
-            base: 1
+            base: 1.2
         wall:
           north:
             extent: 1
@@ -297,9 +297,9 @@ by-key:
               parameters:
                 layout:
                   translation:
-                    early: [0, 0.5, -3]
+                    early: [0, -5, 0]
                   pitch:
-                    intrinsic: -0.1
+                    intrinsic: -0.5
                 wall:
                   east:
                     extent: 1
@@ -336,7 +336,7 @@ case:
     include: true
     west-foot: true
     distance: 3
-    height: 43.5
+    height: 43.35
     offsets:
       north: 14
       east: -2
@@ -368,10 +368,6 @@ case:
   tweaks:
   # First, a bunch of extra webbing at the four corners of the thumb cluster:
   - hull-around:
-    - [t0, NNW, 0, 1]
-    - [t0, NNE, 0, 1]
-    - [t1, NNW, 0, 1]
-  - hull-around:
     - [t2, NNW, 0, 1]
     - [t2, NNE, 0, 1]
     - [t1, NNE, 0, 1]
@@ -379,14 +375,21 @@ case:
     hull-around:
     - [t4, ENE, 0]
     - hull-around:
-      - [t4, ESE, 0, 4]
-      - [t4, SSE, 0, 4]
+      - [t4, ESE, 0, 1]
+      - [t4, SSE, 0, 1]
     - hull-around:
       - [t3, WSW, 0, 1]
       - [t3, SSW, 0, 1]
     - hull-around:
-      - [t3, SSE, 0, 4]
-      - [t3, ESE, 0, 4]
+      - [t3, SSE, 0, 1]
+      - [t3, ESE, 0, 1]
+  - hull-around:
+    - hull-around:
+      - [t3, SSE, 1, 4]
+      - [t3, ESE, 1, 4]
+    - hull-around:
+      - [t4, ESE, 1, 4]
+      - [t4, SSE, 1, 4]
   - chunk-size: 3
     hull-around:
     - [t4, WNW, 0, 1]
@@ -398,46 +401,62 @@ case:
       - [t4, SSW, 0, 1]
     - [t5, SSW, 0, 1]
   # Plating over the cluster gap:
+  - chunk-size: 2
+    hull-around:
+    - [t1, NNE, 0, 4]
+    - [t2, NNE, 0, 4]
+    - [t2, ENE, 0, 4]
   - chunk-size: 3
     hull-around:
     - [t1, NNW, 3, 4]
-    - hull-around:
-      - [t1, ENE, 0, 4]
-      - [t1, NNE, 0, 4]
-    - hull-around:
-      - [f0, SSW, 0, 3]
-      - [f0, WSW, 0, 3]
-    - [t2, NNE, 0, 4]
-    - [t2, ENE, 0, 4]
+    - [f0, SSW, 0, 3]
+    - [t1, NNE, 3, 4]
+    - [t2, NNE, 3, 4]
   - chunk-size: 3
     hull-around:
     - [f0, SSW, 0, 3]
     - hull-around:
       - [t2, NNE, 3, 4]
       - [t2, ENE, 3, 4]
-    - [f0, SSE, 0, 3]
+    - hull-around:
+      - [f0, SSE, 2, 3]
+      - [f1, WNW, 2, 3]
     - [t2, ESE, 4]
-    - hull-around:
-      - [f1, WNW, 0, 3]
-      - [f1, WSW, 0, 3]
-      - [f1, SSW, 0, 2]
+    - [f1, WSW, 2, 3]
+    - [f1, SSW, 2, 3]
+  # The middle topside plate:
+  - chunk-size: 3
+    hull-around:
+    - [f1, SSW, 2, 3]
+    - [t2, ESE, 4]
+    - [f1, SSE, 2, 3]
+    - [f2, WSW, 0]
+    - [t2, ESE, 4]
     - [t3, ENE, 4]
-    - hull-around:
-      - [f1, SSE, 2]
-      - [f2, NNW, 0]
-    - hull-around:
-      - [f2, WSW, 0, 1]
-      - [f2, SSW, 0, 1]
+  # The west side of f2:
+  - hull-around:
+    - [f1, SSE, 0, 3]
+    - [f2, WNW, 0]
+    - [f2, WSW, 0]
+  # The eastern topside plate:
+  - chunk-size: 3
+    hull-around:
+    - [f2, WSW, 0, 1]
     - [t3, NNE, 4]
-    - [f2, SSW, 1]
+    - [f2, SSW, 0, 1]
     - hull-around:
       - [t3, ESE, 4]
       - [t3, SSE, 4]
     - hull-around:
-      - [f2, ESE, 1, 4]
-      - [f2, SSE, 1, 4]
+      - [f2, ESE, 3, 4]
+      - [f2, SSE, 3, 4]
     - [t4, ESE, 4]
     - [f2, ENE, 3, 4]
+  # A triangular southern wall of f2:
+  - hull-around:
+    - [f2, SSW, 0, 1]
+    - [f2, SSE, 0, 3]
+    - [f2, ESE, 0, 3]
   # A plate to ground beneath the entire thumb cluster:
   - to-ground: true
     chunk-size: 2
