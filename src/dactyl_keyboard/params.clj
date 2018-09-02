@@ -418,8 +418,7 @@
     "help determine the spacing between key mounts if the keyboard is curved. "
     "Negative space is also reserved for the caps."]
    [:parameter [:keycaps :preview]
-    {:default false
-     :parse-fn boolean}
+    {:default false :parse-fn boolean}
     "If `true`, include models of the keycaps. This is intended for "
     "illustration in development. The models are not good enough for "
     "printing."]
@@ -1030,6 +1029,15 @@
    [:parameter [:wrist-rest :fasteners :mounts :case-side :depth]
     {:default 1 :parse-fn num}
     "The thickness of the mount in mm along the axis of the fastener(s)."]
+   [:section [:wrist-rest :fasteners :mounts :case-side :nuts]
+    "Extra features for threaded nuts on the case side."]
+   [:section [:wrist-rest :fasteners :mounts :case-side :nuts :bosses]
+    "Nut bosses on the rear (interior) of the mount. You may want this if the "
+    "distance between case and plinth is big enough for a nut. If that "
+    "distance is too small, bosses can be counterproductive."]
+   [:parameter [:wrist-rest :fasteners :mounts :case-side :nuts :bosses :include]
+    {:default false :parse-fn boolean}
+    "If `true`, include bosses."]
    [:section [:wrist-rest :fasteners :mounts :plinth-side]
     "The side of the wrist rest."]
    [:parameter [:wrist-rest :fasteners :mounts :plinth-side :offset]

@@ -34,6 +34,7 @@ key-clusters:
       offset: [-10, -18, 2]
     matrix-columns:
     - rows-above-home: 1
+      rows-below-home: 1
     - rows-above-home: 1
       rows-below-home: 1
     - rows-above-home: 1
@@ -44,6 +45,7 @@ key-clusters:
       t3: [last, first]
       t4: [1, first]
       t5: [0, first]
+      t6: [0, 0]
 by-key:
   parameters:
     channel:
@@ -271,6 +273,20 @@ by-key:
               south:
                 extent: 1
           rows:
+            "-1":
+              parameters:
+                layout:
+                  translation:
+                    early: [-10, -2, -5]
+                  pitch:
+                    intrinsic: 1.3
+                  roll:
+                    intrinsic: -0.4
+                  yaw:
+                    intrinsic: -0.3
+                wall:
+                  east:
+                    extent: 1
             "0":
               parameters:
                 layout:
@@ -303,6 +319,9 @@ by-key:
                 wall:
                   east:
                     extent: 1
+                    perpendicular: -13
+                  south:
+                    perpendicular: -13
             "1":
               parameters:
                 layout:
@@ -390,16 +409,6 @@ case:
     - hull-around:
       - [t4, ESE, 1, 4]
       - [t4, SSE, 1, 4]
-  - chunk-size: 3
-    hull-around:
-    - [t4, WNW, 0, 1]
-    - hull-around:
-      - [t5, ESE, 0, 1]
-      - [t5, SSE, 0, 1]
-    - hull-around:
-      - [t4, WSW, 0, 1]
-      - [t4, SSW, 0, 1]
-    - [t5, SSW, 0, 1]
   # Plating over the cluster gap:
   - chunk-size: 2
     hull-around:
@@ -451,7 +460,18 @@ case:
       - [f2, ESE, 3, 4]
       - [f2, SSE, 3, 4]
     - [t4, ESE, 4]
+    - [f2, ESE, 3, 4]
+    - [t4, SSW, 4]
     - [f2, ENE, 3, 4]
+    - [t5, SSE, 1]
+    - [f2, ENE, 3, 4]
+    - [t5, SSW, 1]
+  # Cleanup where the wall of f4 meets the webbing between f4 and f5:
+  - hull-around:
+    - [t4, SSW, 0, 1]
+    - [t4, WSW, 0, 1]
+    - [t5, ENE, 0]
+    - [t5, ESE, 0]
   # A triangular southern wall of f2:
   - hull-around:
     - [f2, SSW, 0, 1]
@@ -468,11 +488,11 @@ case:
       - [t0, NNW, 0, 3]
     - [t0, WNW, 0, 1]
     - [t0, WSW, 0, 1]
+    - [t6, WNW, 0, 1]
+    - [t6, WSW, 0, 1]
     - [t5, WNW, 0, 1]
     - [t5, WSW, 0, 1]
     - [t5, SSW, 0, 1]
-    - [t4, SSW, 0, 4]
-    - [t4, SSE, 4]
     - [f2, ENE, 3, 4]
     - [f2, NNE, 3, 4]
     - [f3, WSW, 3, 4]

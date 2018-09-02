@@ -6,7 +6,7 @@ wrist-rest:
   fasteners:
     amount: 2
     diameter: 6
-    length: 80
+    length: 50
     height:
       first: 4
       increment: 16
@@ -14,7 +14,7 @@ wrist-rest:
       width: 15
       case-side:
         key-alias: f2
-        offset: [-4, -20]
+        offset: [-2, -22]
         depth: 6
       plinth-side:
         offset: [4, -4]

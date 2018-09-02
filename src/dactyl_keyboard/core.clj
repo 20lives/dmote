@@ -60,7 +60,7 @@
           (aux/backplate-fastener-holes getopt))
         (if (getopt :wrist-rest :include)
           (if (= (getopt :wrist-rest :style) :threaded)
-            (wrist/connecting-rods-and-nuts getopt)))
+            (wrist/threaded-fasteners getopt)))
         (sandbox/negative getopt))
       (if (= (getopt :mcu :support :style) :lock) ; Outside the alcove.
         (aux/mcu-lock-fixture-composite getopt)))

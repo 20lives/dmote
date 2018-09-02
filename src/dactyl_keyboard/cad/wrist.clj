@@ -103,7 +103,7 @@
   ([getopt] (rod-offset getopt (dec (getopt :wrist-rest :fasteners :amount))))
   ([getopt index] (vec (map #(* index %) [0 0 (getopt :wrist-rest :fasteners :height :increment)]))))
 
-(defn connecting-rods-and-nuts [getopt]
+(defn threaded-fasteners [getopt]
   "The full set of connecting threaded rods with nuts for case-side nut bosses."
   (let [nut
           (->> (misc/iso-hex-nut-model (getopt :wrist-rest :fasteners :diameter))
@@ -116,7 +116,8 @@
       (translate (rod-offset getopt i)
         (union
           (threaded-rod getopt)
-          nut))))))
+          (if (getopt :wrist-rest :fasteners :mounts :case-side :nuts :bosses :include)
+            nut)))))))
 
 (defn- plinth-nut-pockets [getopt]
   "Nut(s) in the plinth-side plate, with pocket(s)."
@@ -299,9 +300,9 @@
             (case-hook getopt)
             (body/cluster-wall getopt :finger))
         :threaded
-           (union
-             (connecting-rods-and-nuts getopt)
-             (plinth-nut-pockets getopt)))
+          (union
+            (threaded-fasteners getopt)
+            (plinth-nut-pockets getopt)))
       ;; Two square holes for pouring silicone:
       (translate (vec (map + (getopt :wrist-rest :derived :ne) [-20 -20]))
         (cube 12 12 200))
@@ -342,4 +343,4 @@
       (union
         (case (getopt :wrist-rest :style)
           :solid (union (case-hook getopt) (body/cluster-wall getopt :finger))
-          :threaded (connecting-rods-and-nuts getopt))))))
+          :threaded (threaded-fasteners getopt))))))
