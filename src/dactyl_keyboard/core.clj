@@ -22,18 +22,19 @@
   "Reload this namespace with any changed dependencies. Redraw .scad files."
   (clojure.core/use 'dactyl-keyboard.core :reload-all))
 
+(defn metacluster [function getopt]
+  "Apply passed function to all key clusters."
+  (apply union (map (partial function getopt) key/clusters)))
+
 (defn build-keyboard-right [getopt]
   "Right-hand-side keyboard model."
   (union
     (body/mask getopt
       (difference
         (union
-          (key/cluster-plates getopt :finger)
-          (key/cluster-plates getopt :thumb)
-          (body/cluster-web getopt :finger)
-          (body/cluster-web getopt :thumb)
-          (body/cluster-wall getopt :finger)
-          (body/cluster-wall getopt :thumb)
+          (metacluster key/cluster-plates getopt)
+          (metacluster body/cluster-web getopt)
+          (metacluster body/cluster-wall getopt)
           (if (getopt :wrist-rest :include)
             (case (getopt :wrist-rest :style)
               :solid (wrist/case-hook getopt)
@@ -46,10 +47,8 @@
           (if (getopt :case :rear-housing :include) (body/rear-housing getopt))
           (body/wall-tweaks getopt)
           (sandbox/positive getopt))
-        (key/cluster-cutouts getopt :finger)
-        (key/cluster-cutouts getopt :thumb)
-        (key/cluster-channels getopt :finger)
-        (key/cluster-channels getopt :thumb)
+        (metacluster key/cluster-cutouts getopt)
+        (metacluster key/cluster-channels getopt)
         (aux/connection-negative getopt)
         (aux/mcu-negative getopt)
         (aux/mcu-alcove getopt)
@@ -65,8 +64,7 @@
       (if (= (getopt :mcu :support :style) :lock) ; Outside the alcove.
         (aux/mcu-lock-fixture-composite getopt)))
     ;; The remaining elements are visualizations for use in development.
-    (if (getopt :keycaps :preview) (key/cluster-keycaps getopt :finger))
-    (if (getopt :keycaps :preview) (key/cluster-keycaps getopt :thumb))
+    (if (getopt :keycaps :preview) (metacluster key/cluster-keycaps getopt))
     (if (getopt :mcu :preview) (aux/mcu-visualization getopt))
     (if (and (= (getopt :mcu :support :style) :lock)
              (getopt :mcu :support :preview))
@@ -106,6 +104,7 @@
     ;; Mind the order. One of these may depend upon earlier steps.
     [[[:key-clusters :finger] (partial key/cluster-properties :finger)]
      [[:key-clusters :thumb] (partial key/cluster-properties :thumb)]
+     [[:key-clusters :aux0] (partial key/cluster-properties :aux0)]
      [[:key-clusters] key/resolve-aliases]
      [[:keycaps] key/keycap-properties]
      [[:case :rear-housing] body/housing-properties]

@@ -34,7 +34,6 @@ key-clusters:
       offset: [-10, -18, 2]
     matrix-columns:
     - rows-above-home: 1
-      rows-below-home: 1
     - rows-above-home: 1
       rows-below-home: 1
     - rows-above-home: 1
@@ -45,7 +44,14 @@ key-clusters:
       t3: [last, first]
       t4: [1, first]
       t5: [0, first]
-      t6: [0, 0]
+  aux0:
+    position:
+      key-alias: f2
+      offset: [-18, -38, -26]
+    matrix-columns:
+    - rows-above-home: 0
+    aliases:
+      a0: [0, 0]
 by-key:
   parameters:
     channel:
@@ -224,7 +230,7 @@ by-key:
               yaw:
                 base: 0.09
               translation:
-                mid: [-0.5, 4, 4.5]
+                mid: [-0.5, 1, 4.5]
         "5":
           parameters:
             layout:
@@ -237,7 +243,7 @@ by-key:
               yaw:
                 base: 0.11
               translation:
-                mid: [-0.5, 2, 5.5]
+                mid: [-0.5, 0.3, 5.5]
     thumb:
       parameters:
         layout:
@@ -273,25 +279,11 @@ by-key:
               south:
                 extent: 1
           rows:
-            "-1":
-              parameters:
-                layout:
-                  translation:
-                    early: [-10, -2, -5]
-                  pitch:
-                    intrinsic: 1.3
-                  roll:
-                    intrinsic: -0.4
-                  yaw:
-                    intrinsic: -0.3
-                wall:
-                  east:
-                    extent: 1
             "0":
               parameters:
                 layout:
                   translation:
-                    early: [0.3, -3, 0]
+                    early: [-0.2, -3, 0]
                   pitch:
                     intrinsic: -0.35
             "1":
@@ -319,9 +311,9 @@ by-key:
                 wall:
                   east:
                     extent: 1
-                    perpendicular: -13
+                    perpendicular: -16
                   south:
-                    perpendicular: -13
+                    perpendicular: -16
             "1":
               parameters:
                 layout:
@@ -337,7 +329,7 @@ by-key:
               parameters:
                 layout:
                   translation:
-                    early: [-0.3, -3, 0]
+                    early: [0.2, -3, 0]
                   pitch:
                     intrinsic: -0.35
                 wall:
@@ -348,6 +340,24 @@ by-key:
                 layout:
                   translation:
                     early: [1, 0, 0]
+    aux0:
+      parameters:
+        layout:
+          roll:
+            base: 0
+          pitch:
+            base: 1.55
+          yaw:
+            base: 0
+        wall:
+          north:
+            extent: 0
+          east:
+            extent: 0
+          south:
+            extent: 0
+          west:
+            extent: 0
 case:
   key-mount-thickness: 2.5
   web-thickness: 2.5
@@ -463,20 +473,28 @@ case:
     - [f2, ESE, 3, 4]
     - [t4, SSW, 4]
     - [f2, ENE, 3, 4]
-    - [t5, SSE, 1]
+    - [a0, ENE, 0, 1]
     - [f2, ENE, 3, 4]
-    - [t5, SSW, 1]
-  # Cleanup where the wall of f4 meets the webbing between f4 and f5:
-  - hull-around:
-    - [t4, SSW, 0, 1]
-    - [t4, WSW, 0, 1]
-    - [t5, ENE, 0]
-    - [t5, ESE, 0]
+    - [a0, ESE, 0, 1]
   # A triangular southern wall of f2:
   - hull-around:
     - [f2, SSW, 0, 1]
     - [f2, SSE, 0, 3]
     - [f2, ESE, 0, 3]
+  # Webbing at the lower near corner of the thumb cluster:
+  - hull-around:
+    - [t5, SSW, 0]
+    - [t5, SSE, 0]
+    - [t4, WNW, 0]
+    - [t4, WSW, 0]
+  # Webbing between the thumb and aux0 clusters:
+  - chunk-size: 3
+    hull-around:
+    - [t5, SSW, 0, 1]
+    - [t4, SSW, 0, 1]
+    - [a0, NNW, 0]
+    - [t4, SSW, 3, 4]
+    - [a0, NNE, 0, 1]
   # A plate to ground beneath the entire thumb cluster:
   - to-ground: true
     chunk-size: 2
@@ -488,11 +506,10 @@ case:
       - [t0, NNW, 0, 3]
     - [t0, WNW, 0, 1]
     - [t0, WSW, 0, 1]
-    - [t6, WNW, 0, 1]
-    - [t6, WSW, 0, 1]
     - [t5, WNW, 0, 1]
     - [t5, WSW, 0, 1]
-    - [t5, SSW, 0, 1]
+    - [a0, WNW, 0]
+    - [a0, ESE, 0, 1]
     - [f2, ENE, 3, 4]
     - [f2, NNE, 3, 4]
     - [f3, WSW, 3, 4]
@@ -561,7 +578,7 @@ wrist-rest:
   style: threaded
   position:
     key-alias: near-right
-    offset: [-50, -37.1]
+    offset: [-45, -39.1]
   shape:
     plinth-base-size: [66, 78, 42]
     chamfer: 2
@@ -569,6 +586,6 @@ wrist-rest:
     pad:
       surface-heightmap: ../resources/heightmap/default.dat
       height:
-        surface-range: 13
+        surface-range: 23
         lip-to-surface: 3
         below-lip: 4

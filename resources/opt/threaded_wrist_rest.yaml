@@ -14,7 +14,7 @@ wrist-rest:
       width: 15
       case-side:
         key-alias: f2
-        offset: [-2, -22]
+        offset: [-1, -23.5]
         depth: 6
       plinth-side:
         offset: [4, -4]

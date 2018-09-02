@@ -93,6 +93,34 @@ As for the finger cluster.
 
 As for the finger cluster. Note, however, that aliases must be unique even between clusters.
 
+### Section `aux0`
+
+A cluster of keys not easily reachable by fingers or thumbs. This could be used for keys that shut down the computer, switch keyboard layout, modify backlighting, run large macros etc.
+
+#### Section `position`
+
+The aux0 cluster is positioned in relation to the finger cluster.
+
+##### Parameter `key-alias`
+
+As for the thumb cluster. Note this cannot be a thumb cluster alias.
+
+##### Parameter `offset`
+
+As for the thumb cluster.
+
+#### Parameter `style`
+
+As for the finger cluster.
+
+#### Parameter `matrix-columns`
+
+As for the finger cluster.
+
+#### Parameter `aliases`
+
+As for the finger cluster. Note, again, that aliases must be unique even between clusters.
+
 ## Section `by-key`
 
 This section is special. It’s nested for all levels of specificity.
@@ -832,6 +860,18 @@ An two-dimensional vector offset in mm from the key to the mount.
 ###### Parameter `depth`
 
 The thickness of the mount in mm along the axis of the fastener(s).
+
+###### Section `nuts`
+
+Extra features for threaded nuts on the case side.
+
+###### Section `bosses` at level 7
+
+Nut bosses on the rear (interior) of the mount. You may want this if the distance between case and plinth is big enough for a nut. If that distance is too small, bosses can be counterproductive.
+
+###### Parameter `include` at level 8
+
+If `true`, include bosses.
 
 ##### Section `plinth-side`
 

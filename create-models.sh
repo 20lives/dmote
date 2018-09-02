@@ -15,7 +15,7 @@ fi
 make "$@"
 for F in things/*.scad
 do
-  $OPENSCAD -o ${F/scad/stl} $F >/dev/null 2>&1 &
+  { $OPENSCAD -o ${F/scad/stl} $F >/dev/null 2>&1 && echo "Finished $F." ;} &
 done
 
 wait

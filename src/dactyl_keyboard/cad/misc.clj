@@ -90,6 +90,9 @@
 (defn pairwise-hulls [& shapes]
   (apply union (map (partial apply hull) (partition 2 1 shapes))))
 
+(defn triangle-hulls [& shapes]
+  (apply union (map (partial apply hull) (partition 3 1 shapes))))
+
 (defn bottom-extrusion [height p]
   (->> (project p)
        (extrude-linear {:height height :twist 0 :convexity 0 :center false})))

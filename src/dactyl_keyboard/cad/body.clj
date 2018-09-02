@@ -50,20 +50,20 @@
            shapes
            ;; Connecting columns.
            (if (and fill-here fill-east)
-             (hull
+             (triangle-hulls
               (placer coord-here (corner-finder ENE))
-              (placer coord-here (corner-finder ESE))
               (placer coord-east (corner-finder WNW))
+              (placer coord-here (corner-finder ESE))
               (placer coord-east (corner-finder WSW))))
            ;; Connecting rows.
            (if (and fill-here fill-north)
-             (hull
+             (triangle-hulls
               (placer coord-here (corner-finder WNW))
-              (placer coord-here (corner-finder ENE))
               (placer coord-north (corner-finder WSW))
+              (placer coord-here (corner-finder ENE))
               (placer coord-north (corner-finder ESE))))
            ;; Selectively filling the area between all four possible mounts.
-           (hull
+           (triangle-hulls
              (if fill-here (placer coord-here (corner-finder ENE)))
              (if fill-north (placer coord-north (corner-finder ESE)))
              (if fill-east (placer coord-east (corner-finder WNW)))

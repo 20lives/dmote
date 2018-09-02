@@ -114,7 +114,7 @@
              :opt-un [::highlight ::chunk-size ::to-ground]))
 
 ;; Other:
-(spec/def ::supported-key-cluster #{:finger :thumb})
+(spec/def ::supported-key-cluster #{:finger :thumb :aux0})
 (spec/def ::supported-cluster-style #{:standard :orthographic})
 (spec/def ::supported-cap-style #{:flat :socket :button})
 (spec/def ::supported-mcu-type #{:promicro})
@@ -516,6 +516,30 @@
      :parse-fn (map-of keyword (tuple-of keyword-or-integer))
      :validate [(spec/map-of keyword? ::2d-flexcoord)]}
     "As for the finger cluster. Note, however, that aliases must be unique "
+    "even between clusters."]
+   [:section [:key-clusters :aux0]
+    "A cluster of keys not easily reachable by fingers or thumbs. "
+    "This could be used for keys that shut down the computer, switch keyboard "
+    "layout, modify backlighting, run large macros etc."]
+   [:section [:key-clusters :aux0 :position]
+    "The aux0 cluster is positioned in relation to the finger cluster."]
+   [:parameter [:key-clusters :aux0 :position :key-alias]
+    {:default :origin :parse-fn keyword}
+    "As for the thumb cluster. Note this cannot be a thumb cluster alias."]
+   [:parameter [:key-clusters :aux0 :position :offset]
+    {:default [0 0 0] :parse-fn (tuple-of num) :validate [::3d-point]}
+    "As for the thumb cluster."]
+   [:parameter [:key-clusters :aux0 :style]
+    {:default :standard :parse-fn keyword :validate [::supported-cluster-style]}
+    "As for the finger cluster."]
+   [:parameter [:key-clusters :aux0 :matrix-columns]
+    {:default [{}] :parse-fn vec}
+    "As for the finger cluster."]
+   [:parameter [:key-clusters :aux0 :aliases]
+    {:default {}
+     :parse-fn (map-of keyword (tuple-of keyword-or-integer))
+     :validate [(spec/map-of keyword? ::2d-flexcoord)]}
+    "As for the finger cluster. Note, again, that aliases must be unique "
     "even between clusters."]
    [:nest [:by-key] nested-raws
     "This section is special. It’s nested for all levels of specificity."]

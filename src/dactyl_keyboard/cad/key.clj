@@ -17,6 +17,9 @@
 ;; Core Definitions — All Switches ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Supported key clusters.
+(def clusters [:finger :thumb :aux0])
+
 ;; Mounts for neighbouring 1U keys are about 0.75” apart.
 (def mount-1u 19.05)
 
@@ -162,7 +165,7 @@
                 [alias {:cluster cluster
                         :coordinates (resolve-flex getopt cluster flex)}]))
             (getopt :key-clusters cluster :aliases)))
-        [:finger :thumb]))})
+        clusters))})
 
 (defn print-matrix [cluster getopt]
   "Print a schematic picture of a key cluster. For your REPL."
