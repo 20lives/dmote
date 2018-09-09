@@ -110,6 +110,9 @@ by-key:
                 wall:
                   north:
                     extent: 0
+                layout:
+                  translation:
+                    mid: [0, 0, 3]
         "1":
           parameters:
             layout:
@@ -144,6 +147,9 @@ by-key:
                     early: [0, 0, -1]
             last:
               parameters:
+                layout:
+                  translation:
+                    mid: [0, 0, 2]
                 wall:
                   north:
                     extent: 0
@@ -231,6 +237,14 @@ by-key:
                 base: 0.09
               translation:
                 mid: [-0.5, 1, 4.5]
+          rows:
+            last:
+              parameters:
+                layout:
+                  pitch:
+                    intrinsic: 0.5
+                  translation:
+                    early: [0, 8, 2.5]
         "5":
           parameters:
             layout:
@@ -244,6 +258,14 @@ by-key:
                 base: 0.11
               translation:
                 mid: [-0.5, 0.3, 5.5]
+          rows:
+            last:
+              parameters:
+                layout:
+                  pitch:
+                    intrinsic: 0.5
+                  translation:
+                    early: [0, 8, 2.5]
     thumb:
       parameters:
         layout:
@@ -305,15 +327,15 @@ by-key:
               parameters:
                 layout:
                   translation:
-                    early: [0, -5, 0]
+                    early: [0, -1.5, -2]
                   pitch:
-                    intrinsic: -0.5
+                    intrinsic: -0.3
                 wall:
                   east:
                     extent: 1
-                    perpendicular: -16
+                    perpendicular: -14
                   south:
-                    perpendicular: -16
+                    perpendicular: -14
             "1":
               parameters:
                 layout:
@@ -365,9 +387,9 @@ case:
     include: true
     west-foot: true
     distance: 3
-    height: 43.35
+    height: 46.1
     offsets:
-      north: 14
+      north: 15
       east: -2
     fasteners:
       diameter: 6
