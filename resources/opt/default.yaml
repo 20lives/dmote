@@ -38,6 +38,7 @@ key-clusters:
       rows-below-home: 1
     - rows-above-home: 1
     aliases:
+      tc: [1, 0]
       t0: [0, last]
       t1: [1, last]
       t2: [last, last]
@@ -288,7 +289,7 @@ by-key:
           east:
             extent: 4
           south:
-            extent: 4
+            extent: 0
           west:
             extent: 0
       columns:
@@ -297,9 +298,6 @@ by-key:
             layout:
               translation:
                 mid: [0, -7, 0]
-            wall:
-              south:
-                extent: 1
           rows:
             "0":
               parameters:
@@ -332,9 +330,10 @@ by-key:
                     intrinsic: -0.3
                 wall:
                   east:
-                    extent: 1
+                    extent: 0
                     perpendicular: -14
                   south:
+                    extent: 4
                     perpendicular: -14
             "1":
               parameters:
@@ -354,9 +353,6 @@ by-key:
                     early: [0.2, -3, 0]
                   pitch:
                     intrinsic: -0.35
-                wall:
-                  south:
-                    extent: 1
             "1":
               parameters:
                 layout:
@@ -422,15 +418,15 @@ case:
     - [t2, NNW, 0, 1]
     - [t2, NNE, 0, 1]
     - [t1, NNE, 0, 1]
+  - hull-around:
+    - [tc, SSE, 0]
+    - [t3, WSW, 0]
+    - [t4, ENE, 0]
   - chunk-size: 3
     hull-around:
     - [t4, ENE, 0]
-    - hull-around:
-      - [t4, ESE, 0, 1]
-      - [t4, SSE, 0, 1]
-    - hull-around:
-      - [t3, WSW, 0, 1]
-      - [t3, SSW, 0, 1]
+    - [t4, SSE, 0]
+    - [t3, WSW, 0]
     - hull-around:
       - [t3, SSE, 0, 1]
       - [t3, ESE, 0, 1]
@@ -440,7 +436,7 @@ case:
       - [t3, ESE, 1, 4]
     - hull-around:
       - [t4, ESE, 1, 4]
-      - [t4, SSE, 1, 4]
+      - [t4, SSE, 0, 4]
   # Plating over the cluster gap:
   - chunk-size: 2
     hull-around:
@@ -504,11 +500,12 @@ case:
     - [f2, SSE, 0, 3]
     - [f2, ESE, 0, 3]
   # Webbing at the lower near corner of the thumb cluster:
-  - hull-around:
+  - chunk-size: 3
+    hull-around:
     - [t5, SSW, 0]
+    - [t4, WSW, 0]
     - [t5, SSE, 0]
     - [t4, WNW, 0]
-    - [t4, WSW, 0]
   # Webbing between the thumb and aux0 clusters:
   - chunk-size: 3
     hull-around:
@@ -517,6 +514,10 @@ case:
     - [a0, NNW, 0]
     - [t4, SSW, 3, 4]
     - [a0, NNE, 0, 1]
+  - hull-around:
+    - [a0, WNW, 0]
+    - [a0, WSW, 0]
+    - [t5, WSW, 0, 1]
   # A plate to ground beneath the entire thumb cluster:
   - to-ground: true
     chunk-size: 2
@@ -530,7 +531,7 @@ case:
     - [t0, WSW, 0, 1]
     - [t5, WNW, 0, 1]
     - [t5, WSW, 0, 1]
-    - [a0, WNW, 0]
+    - [a0, WSW, 0]
     - [a0, ESE, 0, 1]
     - [f2, ENE, 3, 4]
     - [f2, NNE, 3, 4]
