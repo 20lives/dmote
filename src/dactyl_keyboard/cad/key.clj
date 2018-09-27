@@ -47,13 +47,6 @@
 (def mx-overhang-z 1)  ; Estimated, dimension not included in datasheet.
 (def mx-underhang-z 5.004)
 
-;; ;; Hardcode ALPS as our switch type.
-;; (def keyswitch-hole-y alps-hole-y)
-;; (def keyswitch-hole-x alps-hole-x)
-;; (def keyswitch-overhang-x alps-overhang-x)
-;; (def keyswitch-overhang-y alps-overhang-y)
-;; (def keyswitch-cutout-height alps-underhang-z)
-
 (defn resolve-flex [getopt cluster [c0 r0]]
   "Resolve supported keywords in a coordinate pair to names.
   This allows for integers as well as the keywords :first and :last, meaning
