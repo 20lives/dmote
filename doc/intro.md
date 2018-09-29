@@ -27,11 +27,14 @@ here’s how to make your own.
 * Install the [Leiningen project manager](http://leiningen.org/)
 * Optional: Install [GNU make](https://www.gnu.org/software/make/)
 * Install [OpenSCAD](http://www.openscad.org/)
-* Install an updated [unicode-math](https://github.com/veikman/unicode-math)
 
 On Debian GNU+Linux, the first three are accomplished with `apt install clojure leiningen make`.
 
-unicode-math breaks under clojure 1.9 and later, so a local copy needs to be installed.
+Other dependencies will be pulled in by a `lein run`, with one possible
+exception. As of 2018-09, the requisite version of the [`unicode-math`
+library](https://github.com/adereth/unicode-math) is not yet available from
+the central Maven repository. Until this is corrected, you will have to build
+it from source (download and run `lein install`).
 
 ### Producing OpenSCAD and STL files
 

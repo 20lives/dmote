@@ -26,7 +26,12 @@ The height in mm of the air gap between keycap and switch mount, in a resting st
 
 Electrical switches close a circuit when pressed. They cannot be printed. This section specifies how much space they need to be mounted.
 
-There is currently no parameter for style. Only ALPS-compatible switches are supported in this version. This includes Matias.
+### Parameter `style`
+
+The switch type. One of:
+
+ * `alps`: ALPS style switches, including Matias.
+* `mx`: Cherry MX style switches.
 
 ### Parameter `travel`
 
@@ -38,13 +43,14 @@ This section describes where to put keys on the keyboard.
 
 ### Section `finger`
 
-The main cluster of keys, for “fingers” in a sense excluding the thumb.Everything else is placed in relation to the finger cluster.
+The main cluster of keys, for “fingers” in a sense excluding the thumb. Everything else is placed in relation to the finger cluster.
 
 #### Parameter `style`
 
 Cluster layout style. One of:
 
-* `standard`: Both columns and rows have the same type of curvature applied in a logically consistent manner.* `orthographic`: Rows are curved somewhat differently. This creates more space between columns and may prevent key mounts from fusing together if you have a broad matrix.
+* `standard`: Both columns and rows have the same type of curvature applied in a logically consistent manner.
+* `orthographic`: Rows are curved somewhat differently. This creates more space between columns and may prevent key mounts from fusing together if you have a broad matrix.
 
 #### Parameter `matrix-columns`
 
@@ -521,7 +527,7 @@ The expected value here is an arbitrarily nested structure starting with a list.
 * A map, representing an instruction to combine nested items in a specific way.
 * A list of any combination of the other two types. This type exists at the top level and as the immediate child of each map node.
 
-Each leaf node identifies particular set of key mount corner posts. These are identical to the posts used to build the walls (see above), but this section gives you greater freedom in how to combine them. A leaf node must contain:
+Each leaf node identifies a particular set of key mount corner posts. These are identical to the posts used to build the walls (see above), but this section gives you greater freedom in how to combine them. A leaf node must contain:
 
 * A key alias defined under `key-clusters`.
 * A key corner ID, such as `NNE` for north by north-east.
