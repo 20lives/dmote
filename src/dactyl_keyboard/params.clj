@@ -115,6 +115,7 @@
 
 ;; Other:
 (spec/def ::supported-key-cluster #{:finger :thumb :aux0})
+(spec/def ::supported-switch-style #{:alps :mx})
 (spec/def ::supported-cluster-style #{:standard :orthographic})
 (spec/def ::supported-cap-style #{:flat :socket :button})
 (spec/def ::supported-mcu-type #{:promicro})
@@ -434,9 +435,14 @@
    [:section [:switches]
     "Electrical switches close a circuit when pressed. They cannot be "
     "printed. This section specifies how much space they need to be "
-    "mounted.\n\n"
-    "There is currently no parameter for style. Only ALPS-compatible switches "
-    "are supported in this version. This includes Matias."]
+    "mounted."]
+   [:parameter [:switches :style]
+    {:default :alps
+     :parse-fn keyword
+     :validate [::supported-switch-style]}
+    "The switch type. One of:\n\n "
+    "* `alps`: ALPS or Matias style switches."
+    "* `mx`: Cherry MX style switches."]
    [:parameter [:switches :travel]
     {:default 1 :parse-fn num}
     "The distance in mm that a keycap can travel vertically when "

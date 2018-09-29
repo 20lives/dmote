@@ -61,6 +61,8 @@
           (if (= (getopt :wrist-rest :style) :threaded)
             (wrist/threaded-fasteners getopt)))
         (sandbox/negative getopt))
+      (if (= (getopt :switches :style) :mx)
+        (metacluster key/cluster-nubs getopt))
       (if (= (getopt :mcu :support :style) :lock) ; Outside the alcove.
         (aux/mcu-lock-fixture-composite getopt)))
     ;; The remaining elements are visualizations for use in development.
@@ -107,6 +109,7 @@
      [[:key-clusters :aux0] (partial key/cluster-properties :aux0)]
      [[:key-clusters] key/resolve-aliases]
      [[:keycaps] key/keycap-properties]
+     [[:switches] key/keyswitch-dimensions]
      [[:case :rear-housing] body/housing-properties]
      [[:mcu] aux/derive-mcu-properties]
      [[:wrist-rest] wrist/derive-properties]]))
