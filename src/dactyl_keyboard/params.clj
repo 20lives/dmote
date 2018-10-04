@@ -1078,6 +1078,12 @@
     {:default 1 :parse-fn num}
     "The thickness of the mount in mm along the axis of the fastener(s). "
     "This is typically larger than the case-side depth to allow adjustment."]
+   [:parameter [:wrist-rest :fasteners :mounts :plinth-side :pocket-scale]
+    {:default 1 :parse-fn num}
+    "A scale coefficient for the nut model used to carve out the pocket. "
+    "This defaults to 1. You would need to set it higher if your printing "
+    "material, in combination with your nozzle diameter, shrinks or expands "
+    "in such a way that the deep pocket would otherwise be too tight."]
    [:parameter [:wrist-rest :fasteners :mounts :plinth-side :pocket-height]
     {:default 0 :parse-fn num}
     "The height of the nut pocket inside the mounting plate, in mm.\n\n"

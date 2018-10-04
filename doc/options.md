@@ -891,6 +891,10 @@ The offset in mm from the corner of the plinth to the fastener mount point attac
 
 The thickness of the mount in mm along the axis of the fastener(s). This is typically larger than the case-side depth to allow adjustment.
 
+###### Parameter `pocket-scale`
+
+A scale coefficient for the nut model used to carve out the pocket. This defaults to 1. You would need to set it higher if your printing material, in combination with your nozzle diameter, shrinks or expands in such a way that the deep pocket would otherwise be too tight.
+
 ###### Parameter `pocket-height`
 
 The height of the nut pocket inside the mounting plate, in mm.

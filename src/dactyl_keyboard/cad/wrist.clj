@@ -122,8 +122,11 @@
 (defn- plinth-nut-pockets [getopt]
   "Nut(s) in the plinth-side plate, with pocket(s)."
   (let [d (getopt :wrist-rest :fasteners :diameter)
+        ps (getopt :wrist-rest :fasteners :mounts :plinth-side :pocket-scale)
         ph (getopt :wrist-rest :fasteners :mounts :plinth-side :pocket-height)
-        nut (rotate [(/ π 2) 0 0] (misc/iso-hex-nut-model d))]
+        nut (->> (misc/iso-hex-nut-model d)
+                 (scale [ps ps ps])
+                 (rotate [(/ π 2) 0 0]))]
    (translate (threaded-position-plinth getopt)
      (rotate [0 0 (rod-angle getopt)]
        (apply union
