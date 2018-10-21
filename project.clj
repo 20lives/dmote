@@ -1,4 +1,4 @@
-(defproject dactyl-keyboard "0.2.0-SNAPSHOT"
+(defproject dactyl-keyboard "0.2.0"
   :description "A parametrized, split-hand, concave, columnar, ergonomic keyboard"
   :url "http://viktor.eikman.se/article/the-dmote/"
   :license {:name "GNU Affero General Public License"
@@ -8,7 +8,7 @@
                  [org.flatland/ordered "1.5.2"]
                  [clj-yaml "0.4.0"]
                  [unicode-math "0.2.1"]
-                 [scad-clj "0.5.3-SNAPSHOT"]]
+                 [scad-clj "0.5.3"]]
   :main dactyl-keyboard.core
   :aot :all
   :uberjar-name "dmote.jar")
