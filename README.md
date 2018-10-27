@@ -5,7 +5,7 @@ This, the DMOTE, is a fork of the [Dactyl-ManuForm](https://github.com/tshort/da
 a parametrized, split-hand, concave, columnar, ergonomic keyboard. In this fork,
 the thumb cluster has been modified to minimize shearing forces.
 
-![Image of the second working DMOTE](http://viktor.eikman.se/image/dmote-2-top-down-view/display)
+[![Image of the second working DMOTE](http://viktor.eikman.se/image/dmote-2-top-down-view/display)](http://viktor.eikman.se/article/the-dmote/)
 
 By cloning this repository and editing fairly simple parameter files you can
 adjust the following to taste:
@@ -18,8 +18,6 @@ adjust the following to taste:
 * Whether to include minor features: LED strips, wrist rests etc.
 
 For documentation see [doc/](doc/).
-
-![Image of the first working DMOTE](http://viktor.eikman.se/image/dmote-1-glamour-shot/display)
 
 ## License
 

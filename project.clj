@@ -1,4 +1,4 @@
-(defproject dactyl-keyboard "0.2.0"
+(defproject dactyl-keyboard "0.3.0-SNAPSHOT"
   :description "A parametrized, split-hand, concave, columnar, ergonomic keyboard"
   :url "http://viktor.eikman.se/article/the-dmote/"
   :license {:name "GNU Affero General Public License"
