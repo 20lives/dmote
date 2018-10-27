@@ -31,11 +31,6 @@
   []
   (clojure.core/use 'dactyl-keyboard.core :reload-all))
 
-(defn metacluster
-  "Apply passed function to all key clusters."
-  [function getopt]
-  (apply union (map (partial function getopt) key/clusters)))
-
 (defn build-keyboard-right
   "Right-hand-side keyboard model."
   [getopt]
@@ -43,9 +38,9 @@
     (body/mask getopt
       (difference
         (union
-          (metacluster key/cluster-plates getopt)
-          (metacluster body/cluster-web getopt)
-          (metacluster body/cluster-wall getopt)
+          (key/metacluster key/cluster-plates getopt)
+          (key/metacluster body/cluster-web getopt)
+          (key/metacluster body/cluster-wall getopt)
           (if (getopt :wrist-rest :include)
             (case (getopt :wrist-rest :style)
               :solid (wrist/case-hook getopt)
@@ -58,8 +53,8 @@
           (if (getopt :case :rear-housing :include) (body/rear-housing getopt))
           (body/wall-tweaks getopt)
           (sandbox/positive getopt))
-        (metacluster key/cluster-cutouts getopt)
-        (metacluster key/cluster-channels getopt)
+        (key/metacluster key/cluster-cutouts getopt)
+        (key/metacluster key/cluster-channels getopt)
         (aux/connection-negative getopt)
         (aux/mcu-negative getopt)
         (aux/mcu-alcove getopt)
@@ -73,11 +68,11 @@
             (wrist/threaded-fasteners getopt)))
         (sandbox/negative getopt))
       (if (= (getopt :switches :style) :mx)
-        (metacluster key/cluster-nubs getopt))
+        (key/metacluster key/cluster-nubs getopt))
       (if (= (getopt :mcu :support :style) :lock) ; Outside the alcove.
         (aux/mcu-lock-fixture-composite getopt)))
     ;; The remaining elements are visualizations for use in development.
-    (if (getopt :keycaps :preview) (metacluster key/cluster-keycaps getopt))
+    (if (getopt :keycaps :preview) (key/metacluster key/cluster-keycaps getopt))
     (if (getopt :mcu :preview) (aux/mcu-visualization getopt))
     (if (and (= (getopt :mcu :support :style) :lock)
              (getopt :mcu :support :preview))
@@ -189,7 +184,7 @@
      ;; into each. Some depend on special configuration values and some come
      ;; in pairs (left and right).
      [{:basename "preview-keycap"
-       :model-fn key/all-keycaps}
+       :model-fn (partial key/metacluster key/cluster-keycaps)}
       {:basename "case"
        :model-fn build-keyboard-right
        :pair true}

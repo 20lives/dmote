@@ -12,8 +12,9 @@
             [flatland.ordered.map :refer [ordered-map]]
             [dactyl-keyboard.generics :as generics]))
 
-(defn- coalesce [coll [type path & metadata]]
+(defn- coalesce
   "Recursively assemble a tree structure from flat specifications."
+  [coll [type path & metadata]]
   (case type
     :nest
       (assoc-in coll path
@@ -114,7 +115,7 @@
              :opt-un [::highlight ::chunk-size ::to-ground]))
 
 ;; Other:
-(spec/def ::supported-key-cluster #{:finger :thumb :aux0})
+(spec/def ::supported-key-cluster #(not (= :derived %)))
 (spec/def ::supported-switch-style #{:alps :mx})
 (spec/def ::supported-cluster-style #{:standard :orthographic})
 (spec/def ::supported-cap-style #{:flat :socket :button})
@@ -390,7 +391,7 @@
   "A function to parse input for the entire [:by-key :clusters] section."
   (let [iteration identity] ;#(validate-node nested-cooked % :parameters)
     (map-of
-      (partial spec/conform ::supported-key-cluster)
+      keyword
       (map-like
         {:parameters iteration
          :columns

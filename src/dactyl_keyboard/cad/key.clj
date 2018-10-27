@@ -17,8 +17,10 @@
 ;; Core Definitions — All Switches ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Supported key clusters.
-(def clusters [:finger :thumb :aux0])
+(defn all-clusters
+  "The identifiers of all defined key clusters."
+  [getopt]
+  (remove #(= :derived %) (keys (getopt :key-clusters))))
 
 ;; Mounts for neighbouring 1U keys are about 0.75” apart.
 (def mount-1u 19.05)
@@ -166,7 +168,7 @@
                 [alias {:cluster cluster
                         :coordinates (resolve-flex getopt cluster flex)}]))
             (getopt :key-clusters cluster :aliases)))
-        clusters))})
+        (all-clusters getopt)))})
 
 (defn print-matrix [cluster getopt]
   "Print a schematic picture of a key cluster. For your REPL."
@@ -450,7 +452,7 @@
   (apply union (map #(cluster-place getopt cluster % (keycap-model getopt 1))
                     (getopt :key-clusters cluster :derived :key-coordinates))))
 
-(defn all-keycaps [getopt]
-  (union
-    (cluster-keycaps getopt :finger)
-    (cluster-keycaps getopt :thumb)))
+(defn metacluster
+  "Apply passed modelling function to all key clusters."
+  [function getopt]
+  (apply union (map #(function getopt %) (all-clusters getopt))))
