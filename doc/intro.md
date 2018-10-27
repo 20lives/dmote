@@ -18,7 +18,7 @@ keyboard is determined by your written parameters to the Clojure application.
 > parameters → this app → JVM → OpenSCAD → STL → G-code → printer → tangible keyboard
 
 If this repository includes STL files you will find them in the
-[things/](../things/) directory. They should be ready to print. Otherwise,
+[`things/stl`](../things/) directory. They should be ready to print. Otherwise,
 here’s how to make your own.
 
 ### Setting up the build environment
@@ -28,7 +28,8 @@ here’s how to make your own.
 * Optional: Install [GNU make](https://www.gnu.org/software/make/)
 * Install [OpenSCAD](http://www.openscad.org/)
 
-On Debian GNU+Linux, the first three are accomplished with `apt install clojure leiningen make`.
+On Debian GNU+Linux, the first three are accomplished with
+`apt install clojure leiningen make`.
 
 Other dependencies will be pulled in by a `lein run`, with one possible
 exception. As of 2018-09, the requisite version of the [`unicode-math`
@@ -42,11 +43,10 @@ it from source (download and run `lein install`).
   * If you do not have `make`, run `lein run`.
   * To build a non-default, bundled configuration, run `make threaded` or name
     some other variant defined in the makefile.
-* In OpenSCAD, open one of the `things/*.scad` files for a preview.
+* In OpenSCAD, open one of the `things/scad/*.scad` files for a preview.
   * To render a complex model in OpenSCAD you may need to go to Edit >>
     Preferences >> Advanced and raise the ceiling for when to “Turn off rendering”.
-* When satisfied, use OpenSCAD to render and export to STL format.
-  * On Linux, you can run `create-models.sh` to export STL programmatically.
+* When satisfied, call `lein run --render` to render everything to STL.
 
 There are [other ways to evaluate](http://stackoverflow.com/a/28213489) the
 Clojure code, including the bundled `transpile.sh` shell script, which will
@@ -91,7 +91,8 @@ south to north, and the z axis from earth to sky.
 
 ### Deeper changes
 
-Advanced changes require editing the source code. Consider starting in `src/dactyl_keyboard/sandbox.clj` if you are not familiar with `scad-clj`.
+Advanced changes require editing the source code. Consider starting in
+`src/dactyl_keyboard/sandbox.clj` if you are not familiar with `scad-clj`.
 
 If you want your changes to the source code to be merged upstream, please do
 not remove or break existing features. There are already several `include` and

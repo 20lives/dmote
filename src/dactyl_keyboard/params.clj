@@ -1155,26 +1155,27 @@
   (println (str "This documentation was generated from the application CLI."))
   (print-markdown-fragment master 2))
 
-(defn validate-configuration [candidate]
+(defn validate-configuration
   "Attempt to describe any errors in the user configuration."
+  [candidate]
   (try
-     (validate-branch master candidate)
-     (catch clojure.lang.ExceptionInfo e
-       (let [data (ex-data e)]
-        (println "Validation error:" (.getMessage e))
-        (println "    At key(s):" (string/join " >> " (:keys data)))
-        (if (:accepted-keys data)
-          (println "    Accepted key(s) there:" (:accepted-keys data)))
-        (if (:raw-value data)
-          (println "    Value before parsing:" (:raw-value data)))
-        (if (:parsed-value data)
-          (println "    Value after parsing:" (:parsed-value data)))
-        (if (:spec-explanation data)
-          (println "    Validator output:" (:spec-explanation data)))
-        (if (:original-exception data)
-          (do (println "    Caused by:")
-              (print "      ")
-              (println
-                (string/join "\n      "
-                  (string/split-lines (pr-str (:original-exception data)))))))
-        (System/exit 1)))))
+    (validate-branch master candidate)
+    (catch clojure.lang.ExceptionInfo e
+      (let [data (ex-data e)]
+       (println "Validation error:" (.getMessage e))
+       (println "    At key(s):" (string/join " >> " (:keys data)))
+       (if (:accepted-keys data)
+         (println "    Accepted key(s) there:" (:accepted-keys data)))
+       (if (:raw-value data)
+         (println "    Value before parsing:" (:raw-value data)))
+       (if (:parsed-value data)
+         (println "    Value after parsing:" (:parsed-value data)))
+       (if (:spec-explanation data)
+         (println "    Validator output:" (:spec-explanation data)))
+       (if (:original-exception data)
+         (do (println "    Caused by:")
+             (print "      ")
+             (println
+               (string/join "\n      "
+                 (string/split-lines (pr-str (:original-exception data)))))))
+       (System/exit 1)))))
