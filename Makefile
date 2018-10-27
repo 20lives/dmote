@@ -30,8 +30,14 @@ solid: target/dmote.jar
 solid-visualization: target/dmote.jar
 	java -jar target/dmote.jar -c resources/opt/solid_wrist_rest.yaml -c resources/opt/visualization.yaml
 
-doc/options.md: target/dmote.jar
-	java -jar target/dmote.jar --describe-parameters > doc/options.md
+doc/options-main.md: target/dmote.jar
+	java -jar target/dmote.jar --describe-parameters main > doc/options-main.md
+
+doc/options-clusters.md: target/dmote.jar
+	java -jar target/dmote.jar --describe-parameters clusters > doc/options-clusters.md
+
+doc/options-nested.md: target/dmote.jar
+	java -jar target/dmote.jar --describe-parameters nested > doc/options-nested.md
 
 target/dmote.jar: $(OBJECTS)
 	lein uberjar
@@ -41,7 +47,7 @@ test:
 
 # “all” will overwrite its own outputs.
 # Intended for code sanity checking before pushing a commit.
-all: test default threaded-visualization orthographic flat threaded solid doc/options.md
+all: test default threaded-visualization orthographic flat threaded solid doc/options-main.md doc/options-clusters.md doc/options-nested.md
 
 clean:
 	-rm things/*.scad

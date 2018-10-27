@@ -83,7 +83,7 @@
       "Check, in order: Key-specific values favouring first/last row;
       column-specific values favouring first/last column;
       cluster-specific values; and finally the base section, where a
-      value is required to exist."
+      value is required to exist if we get there."
       (let [columns (getopt :key-clusters cluster :derived :column-range)
             by-col (getopt :key-clusters cluster :derived :row-indices-by-column)
             rows (by-col column)
@@ -92,17 +92,17 @@
             first-row (= (first rows) row)
             last-row (= (last rows) row)
             sources
-              [[[] []]
-               [[first-column] [:columns :first]]
-               [[last-column] [:columns :last]]
-               [[] [:columns column]]
+              [[[]                       []]
+               [[first-column]           [:columns :first]]
+               [[last-column]            [:columns :last]]
+               [[]                       [:columns column]]
                [[first-column first-row] [:columns :first :rows :first]]
-               [[first-column last-row] [:columns :first :rows :last]]
-               [[last-column first-row] [:columns :last :rows :first]]
-               [[last-column last-row] [:columns :last :rows :last]]
-               [[first-row] [:columns column :rows :first]]
-               [[last-row] [:columns column :rows :last]]
-               [[] [:columns column :rows row]]]
+               [[first-column last-row]  [:columns :first :rows :last]]
+               [[last-column first-row]  [:columns :last :rows :first]]
+               [[last-column last-row]   [:columns :last :rows :last]]
+               [[first-row]              [:columns column :rows :first]]
+               [[last-row]               [:columns column :rows :last]]
+               [[]                       [:columns column :rows row]]]
             good-source
               (fn [coll [requirements section-path]]
                 (if (every? boolean requirements)
@@ -115,8 +115,9 @@
   ((most-specific-getter getopt end-path) cluster coord))
 
 (defn cluster-properties [cluster getopt]
-  "Derive some properties about a specific key cluster from raw configuration info."
-  (let [matrix (getopt :key-clusters cluster :matrix-columns)
+  "Derive some properties about a key cluster from raw configuration info."
+  (let [raws (getopt :key-clusters cluster)
+        matrix (getopt :key-clusters cluster :matrix-columns)
         gather (fn [key default] (map #(get % key default) matrix))
         column-range (range 0 (count matrix))
         last-column (last column-range)
@@ -145,7 +146,8 @@
             row-range)
         coordinates-by-row
           (M (fn [[r cols]] [r (for [c cols] [c r])]) column-indices-by-row)]
-   {:last-column last-column
+   {:style (:style raws :standard)
+    :last-column last-column
     :column-range column-range
     :row-range row-range
     :key-requested? key-requested?
@@ -346,7 +348,7 @@
 
 (defn put-in-row [translate-fn rot-ax-fn getopt cluster coord obj]
   "Place a key in relation to its row."
-  (let [style (getopt :key-clusters cluster :style)]
+  (let [style (getopt :key-clusters cluster :derived :style)]
    (curver :column 0 :roll #(- %2 %1) (= style :orthographic)
            translate-fn rot-ax-fn getopt cluster coord obj)))
 

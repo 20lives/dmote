@@ -13,15 +13,9 @@
             [dactyl-keyboard.generics :as generics]))
 
 (defn- coalesce
-  "Recursively assemble a tree structure from flat specifications."
+  "Assemble one branch in a tree structure from flat specifications."
   [coll [type path & metadata]]
   (case type
-    :nest
-      (assoc-in coll path
-        (reduce
-          coalesce
-          (ordered-map :metadata {:help (apply str (rest metadata))})
-          (first metadata)))
     :section
       (assoc-in coll path
         (ordered-map :metadata {:help (apply str metadata)}))
@@ -30,18 +24,27 @@
         (assoc (first metadata) :help (apply str (rest metadata))))
     (throw (Exception. "Bad type in configuration master."))))
 
+(defn inflate
+  "Recursively assemble a tree from flat specifications.
+  Skip the first entry (an introduction)."
+  [flat]
+  (reduce coalesce (ordered-map) (rest flat)))
+
 ;; Parsers:
 
-(defn string-corner [string]
+(defn string-corner
   "For use with YAML, where string values are not automatically converted."
+  [string]
   ((keyword string) generics/keyword-to-directions))
 
-(defn tuple-of [item-parser]
+(defn tuple-of
   "A maker of parsers for vectors."
+  [item-parser]
   (fn [candidate] (into [] (map item-parser candidate))))
 
-(defn map-like [key-value-parsers]
+(defn map-like
   "Return a parser of a map where the exact keys are known."
+  [key-value-parsers]
   (letfn [(parse-item [[key value]]
             (if-let [value-parser (get key-value-parsers key)]
               [key (value-parser value)]
@@ -65,6 +68,39 @@
         (Integer/parseInt (name candidate))  ; Input like “:1” (clj-yaml key).
         (catch java.lang.NumberFormatException _
           (keyword candidate))))))           ; Input like “:first” or “"first"”.
+
+(def parse-key-clusters
+  "A function to parse input for the [:key-clusters] parameter."
+  (map-of
+    keyword
+    (map-like
+      {:matrix-columns
+         (tuple-of
+           (map-like
+             {:rows-below-home int
+              :rows-above-home int}))
+       :position
+         (map-like
+           {:key-alias keyword
+            :offset (tuple-of num)})
+       :style keyword
+       :aliases (map-of keyword (tuple-of keyword-or-integer))})))
+
+(def parse-by-key-overrides
+  "A function to parse input for the [:by-key :clusters] section."
+  (map-of
+    keyword
+    (map-like
+      {:parameters identity
+       :columns
+        (map-of
+          keyword-or-integer
+          (map-like
+            {:parameters identity
+             :rows
+               (map-of
+                 keyword-or-integer
+                 (map-like {:parameters identity}))}))})))
 
 (defn case-tweak-corner
   "Parse notation for a range of wall segments off a specific key
@@ -122,6 +158,8 @@
 (spec/def ::supported-mcu-type #{:promicro})
 (spec/def ::supported-mcu-support-style #{:lock :stop})
 (spec/def ::supported-wrist-rest-style #{:threaded :solid})
+(spec/def ::column-disposition
+  (spec/keys ::opt-un [::rows-below-home ::rows-above-home]))
 (spec/def ::flexcoord (spec/or :absolute int? :extreme #{:first :last}))
 (spec/def ::2d-flexcoord (spec/coll-of ::flexcoord :count 2))
 (spec/def ::key-coordinates ::2d-flexcoord)  ; Exposed for unit testing.
@@ -182,6 +220,11 @@
           (remove #(= :metadata %)
             (distinct (apply concat (map keys [nominal candidate]))))))
 
+(defn extract-defaults
+  "Fetch default values for a section of the configuration."
+  [flat]
+  (validate-branch (inflate flat) {}))
+
 (defn validate-leaf [nominal candidate]
   "Validate a specific parameter received through the UI."
   (assert (spec/valid? ::parameter-spec nominal))
@@ -199,15 +242,143 @@
 
 ;; Specification:
 
+(def cluster-raws
+  "A flat version of a special part of a user configuration.
+  Default values and parsers here are secondary. Validators are used."
+  [["This specific document describes options for the general outline "
+    "and position of any individual cluster of keys. One set of such "
+    "options will exist for each entry in `key-clusters`, a parameter "
+    "documented [here](options-main.md)."]
+   [:parameter [:matrix-columns]
+    {:default [{}]
+     :parse-fn vec
+     :validate [(spec/coll-of ::column-disposition)]}
+    "A list of key columns. Columns are aligned with the user’s fingers. "
+    "Each column will be known by its index in this list, starting at zero "
+    "for the first item. Each item may contain:\n"
+    "\n"
+    "* `rows-above-home`: An integer specifying the amount of keys "
+    "on the far side of the home row in the column. If "
+    "this parameter is omitted, the effective value will be zero.\n"
+    "* `rows-below-home`: An integer specifying the amount of keys "
+    "on the near side of the home row in the column. If this "
+    "parameter is omitted, the effective value will be zero.\n"
+    "\n"
+    "For example, on a normal QWERTY keyboard, H is on the home row for "
+    "purposes of touch typing, and you would probably want to use it as such "
+    "here too, even though the matrix in this program has no necessary "
+    "relationship with touch typing, nor with the matrix in your MCU firmware "
+    "(TMK/QMK etc.). Your H key will then get the coordinates [0, 0] as the "
+    "home-row key in the far left column on the right-hand side of the "
+    "keyboard.\n"
+    "\n"
+    "In that first column, to continue the QWERTY pattern, you will want "
+    "`rows-above-home` set to 1, to make a Y key, or 2 to make a 6-and-^ key, "
+    "or 3 to make a function key above the 6-and-^. Your Y key will have the "
+    "coordinates [0, 1]. Your 6-and-^ key will have the coordinates [0, 2], etc.\n"
+    "\n"
+    "Still in that first column, to finish the QWERTY pattern, you will want "
+    "`rows-below-home` set to 2, where the two keys below H are N "
+    "(coordinates [0, -1]) and Space (coordinates [0, -2]).\n"
+    "\n"
+    "The next item in the list will be column 1, with J as [1, 0] and so on. "
+    "On the left-hand side of a DMOTE, everything is mirrored so that [0, 0] "
+    "will be G instead of H in QWERTY, [1, 0] will be F instead of J, and so on."]
+   [:parameter [:style]
+    {:default :standard
+     :parse-fn keyword
+     :validate [::supported-cluster-style]}
+    "Cluster layout style. One of:\n\n"
+    "* `standard`: Both columns and rows have the same type of curvature "
+    "applied in a logically consistent manner.\n"
+    "* `orthographic`: Rows are curved somewhat differently. This creates "
+    "more space between columns and may prevent key mounts from fusing "
+    "together if you have a broad matrix."]
+   [:parameter [:aliases]
+    {:default {:origin [0 0]}
+     :parse-fn (map-of keyword (tuple-of keyword-or-integer))
+     :validate [(spec/map-of keyword? ::2d-flexcoord)]}
+    "A map of short names to specific keys by coordinate pair. "
+    "Such aliases are for use elsewhere in the configuration."]
+   [:section [:position]
+    "If this section is omitted, the key clusters will be positioned at the "
+    "origin of the coordinate system."]
+   [:parameter [:position :key-alias]
+    {:default :origin
+     :parse-fn keyword
+     :validate [::key-alias]}
+    "A key as named under any of the `aliases` sections described above. "
+    "Take care to name a key in a different cluster, and don’t create "
+    "circular dependencies between clusters."]
+   [:parameter [:position :offset]
+    {:default [0 0 0]
+     :parse-fn (tuple-of num)
+     :validate [::3d-point]}
+    "A 3-dimensional offset in mm from the indicated key or the origin."]])
+
 (def nested-raws
-  "A flat version of a special part of a user configuration."
-  [[:section [:parameters]
-    "This section, and everything in it, can be repeated at several levels: "
-    "Here at the global level, for each key cluster, for each column, and "
-    "at the row level. See below. Only the most specific option available "
-    "for each key will be applied to that key."]
+  "A flat version of another special part of a user configuration."
+  [["This document describes all those settings which can be made at "
+    "any level of specificity, from the entire keyboard down to an "
+    "individual key.\n"
+    "\n"
+    "## Conceptual overview\n"
+    "\n"
+    "Variable specificity is accomplished by nesting. The following "
+    "levels of specificity are currently available. Each one branches out, "
+    "containing the next:\n"
+    "\n"
+    "* The global level, at `by-key` (cf. the "
+    "[main document](options-main.md)).\n"
+    "* The key cluster level, at `by-key` → `clusters` → your cluster.\n"
+    "* The column level, nested still further under your cluster → "
+    "`columns` → column index.\n"
+    "* The row level, nested under column index → `rows` → row index.\n"
+    "\n"
+    "Each setting takes precedence over any copies of that specific setting "
+    "at less specific levels. For example, any parameter at the row level is "
+    "specific not only to a row but to the full combination of cluster, "
+    "column and row in the chain that leads down to the row. The same "
+    "setting made at any of those higher levels will be ignored in favour "
+    "of the most specific setting. Conversely, a setting made on a specific "
+    "row will not affect the same row in other columns.\n"
+    "\n"
+    "At each level, two subsections are permitted: `parameters`, where you "
+    "put the settings themselves, and a section for the next level of "
+    "nesting: `clusters`, then `columns`, then `rows`. In effect, the row "
+    "level is the key level and forms an exception, in that there are no "
+    "further levels below it.\n"
+    "\n"
+    "In the following hypothetical example, the parameter `P`, which is "
+    "not really supported, will have the value “true” for all keys "
+    "except the one closest to the user (“first” row) in the second "
+    "column from the left on the right-hand side of the keyboard "
+    "(column 1; this is the second from the right on the left-hand side "
+    "of the keyboard).\n"
+    "\n"
+    "```by-key:\n"
+    "  parameters:\n"
+    "    P: true\n"
+    "  clusters:\n"
+    "    finger:\n"
+    "      columns:\n"
+    "        \"1\":\n"
+    "          rows:\n"
+    "            first:\n"
+    "              parameters:\n"
+    "                P: false\n```"
+    "\n\n"
+    "Columns and rows are indexed by their ordinal integers "
+    "or the words “first” or “last”, which take priority.\n"
+    "\n"
+    "WARNING: Due to a peculiarity of the YAML parser, take care "
+    "to quote your numeric column and row indices as strings. This is why "
+    "there are quotation marks around column index 1 in the example."]
+   [:section [:parameters]
+    "This section, and everything in it, can be repeated at each level "
+    "of specificity."]
    [:section [:parameters :layout]
-    "How to place keys."]
+    "Settings for how to place keys."]
    [:section [:parameters :layout :matrix]
     "Roughly how keys are spaced out to form a matrix."]
    [:section [:parameters :layout :matrix :neutral]
@@ -383,39 +554,35 @@
    [:parameter [:parameters :wall :west :parallel]
     {:default 0 :parse-fn num}]
    [:parameter [:parameters :wall :west :perpendicular]
-    {:default 0 :parse-fn num}]])
+    {:default 0 :parse-fn num}]
+   [:parameter [:clusters]
+    {:heading-template "Parameter `%s` ← overrides go in here"
+     :default {}
+     :parse-fn parse-by-key-overrides
+     :validate [(spec/map-of ::supported-key-cluster
+                             ::individual-cluster-overrides)]}
+    "Starting here, you gradually descend from the global level "
+    "toward the key level."]])
 
-(def nested-cooked (reduce coalesce (ordered-map) nested-raws))
-
-(def parse-overrides
-  "A function to parse input for the entire [:by-key :clusters] section."
-  (let [iteration identity] ;#(validate-node nested-cooked % :parameters)
-    (map-of
-      keyword
-      (map-like
-        {:parameters iteration
-         :columns
-          (map-of
-            keyword-or-integer
-            (map-like
-              {:parameters iteration
-               :rows
-                 (map-of
-                   keyword-or-integer
-                   (map-like {:parameters iteration}))}))}))))
-
-;; A predicate made from nested-cooked is applied in validation of nested appearances.
-(spec/def ::parameters #(some? (validate-branch (:parameters nested-cooked) %)))
+;; A predicate made from nested-raws is applied for validation below.
+;; It is defined here because it uses nested-raws.
+(spec/def ::parameters
+  #(some? (validate-branch (:parameters (inflate nested-raws)) %)))
 (spec/def ::individual-row (spec/keys :opt-un [::parameters]))
 (spec/def ::rows (spec/map-of ::flexcoord ::individual-row))
 (spec/def ::individual-column (spec/keys :opt-un [::rows ::parameters]))
 (spec/def ::columns (spec/map-of ::flexcoord ::individual-column))
-(spec/def ::individual-cluster (spec/keys :opt-un [::columns ::parameters]))
-(spec/def ::overrides (spec/map-of ::supported-key-cluster ::individual-cluster))
+(spec/def ::individual-cluster-overrides
+  (spec/keys :opt-un [::columns ::parameters]))
+(spec/def ::clusters ::individual-cluster-overrides)
 
-(def configuration-raws
-  "A flat version of the specification for a user configuration."
-  [[:section [:keycaps]
+(def main-raws
+  "A flat version of the specification for a user configuration.
+  This excludes some major subsections."
+  [["This is the main body of available options. As such, it starts "
+    "from the top level of a YAML file. Other documents cover sections "
+    "of this one in more detail."]
+   [:section [:keycaps]
     "Keycaps are the plastic covers placed over the switches. Their shape will "
     "help determine the spacing between key mounts if the keyboard is curved. "
     "Negative space is also reserved for the caps."]
@@ -448,146 +615,27 @@
     {:default 1 :parse-fn num}
     "The distance in mm that a keycap can travel vertically when "
     "mounted on a switch."]
-   [:section [:key-clusters]
-    "This section describes where to put keys on the keyboard."]
-   [:section [:key-clusters :finger]
-    "The main cluster of keys, for “fingers” in a sense excluding the thumb. "
-    "Everything else is placed in relation to the finger cluster."]
-   [:parameter [:key-clusters :finger :style]
-    {:default :standard
-     :parse-fn keyword
-     :validate [::supported-cluster-style]}
-    "Cluster layout style. One of:\n\n"
-    "* `standard`: Both columns and rows have the same type of curvature "
-    "applied in a logically consistent manner.\n"
-    "* `orthographic`: Rows are curved somewhat differently. This creates "
-    "more space between columns and may prevent key mounts from fusing "
-    "together if you have a broad matrix."]
-   [:parameter [:key-clusters :finger :matrix-columns]
-    {:default [{}] :parse-fn vec}
-    "A list of key columns. Columns are aligned with the user’s fingers. "
-    "Each column will be known by its index in this list, starting at zero "
-    "for the first item. Each item may contain:\n"
-    "\n"
-    "* `rows-above-home`: An integer specifying the amount of keys "
-    "on the far side of the home row in the column. If "
-    "this parameter is omitted, the effective value will be zero.\n"
-    "* `rows-below-home`: An integer specifying the amount of keys "
-    "on the near side of the home row in the column. If this "
-    "parameter is omitted, the effective value will be zero.\n"
-    "\n"
-    "For example, on a normal QWERTY keyboard, H is on the home row for "
-    "purposes of touch typing, and you would probably want to use it as such "
-    "here too, even though the matrix in this program has no necessary "
-    "relationship with touch typing, nor with the matrix in your MCU firmware "
-    "(TMK/QMK etc.). Your H key will then get the coordinates [0, 0] as the "
-    "home-row key in the far left column on the right-hand side of the "
-    "keyboard.\n"
-    "\n"
-    "In that first column, to continue the QWERTY pattern, you will want "
-    "`rows-above-home` set to 1, to make a Y key, or 2 to make a 6-and-^ key, "
-    "or 3 to make a function key above the 6-and-^. Your Y key will have the "
-    "coordinates [0, 1]. Your 6-and-^ key will have the coordinates [0, 2], etc.\n"
-    "\n"
-    "Still in that first column, to finish the QWERTY pattern, you will want "
-    "`rows-below-home` set to 2, where the two keys below H are N "
-    "(coordinates [0, -1]) and Space (coordinates [0, -2]).\n"
-    "\n"
-    "The next item in the list will be column 1, with J as [1, 0] and so on. "
-    "On the left-hand side of a DMOTE, everything is mirrored so that [0, 0] "
-    "will be G instead of H in QWERTY, [1, 0] will be F instead of J, and so on."]
-   [:parameter [:key-clusters :finger :aliases]
-    {:default {:origin [0 0]}
-     :parse-fn (map-of keyword (tuple-of keyword-or-integer))
-     :validate [(spec/map-of keyword? ::2d-flexcoord)]}
-    "A map of short names to specific keys by coordinate pair. "
-    "Such aliases are for use elsewhere in the configuration."]
-   [:section [:key-clusters :thumb]
-    "A cluster of keys just for the thumb."]
-   [:section [:key-clusters :thumb :position]
-    "The thumb cluster is positioned in relation to the finger cluster."]
-   [:parameter [:key-clusters :thumb :position :key-alias]
-    {:default :origin :parse-fn keyword}
-    "A finger key as named under `aliases` above."]
-   [:parameter [:key-clusters :thumb :position :offset]
-    {:default [0 0 0] :parse-fn (tuple-of num) :validate [::3d-point]}
-    "A 3-dimensional offset in mm from the indicated key."]
-   [:parameter [:key-clusters :thumb :style]
-    {:default :standard :parse-fn keyword :validate [::supported-cluster-style]}
-    "As for the finger cluster."]
-   [:parameter [:key-clusters :thumb :matrix-columns]
-    {:default [{}] :parse-fn vec}
-    "As for the finger cluster."]
-   [:parameter [:key-clusters :thumb :aliases]
-    {:default {}
-     :parse-fn (map-of keyword (tuple-of keyword-or-integer))
-     :validate [(spec/map-of keyword? ::2d-flexcoord)]}
-    "As for the finger cluster. Note, however, that aliases must be unique "
-    "even between clusters."]
-   [:section [:key-clusters :aux0]
-    "A cluster of keys not easily reachable by fingers or thumbs. "
-    "This could be used for keys that shut down the computer, switch keyboard "
-    "layout, modify backlighting, run large macros etc."]
-   [:section [:key-clusters :aux0 :position]
-    "The aux0 cluster is positioned in relation to the finger cluster."]
-   [:parameter [:key-clusters :aux0 :position :key-alias]
-    {:default :origin :parse-fn keyword}
-    "As for the thumb cluster. Note this cannot be a thumb cluster alias."]
-   [:parameter [:key-clusters :aux0 :position :offset]
-    {:default [0 0 0] :parse-fn (tuple-of num) :validate [::3d-point]}
-    "As for the thumb cluster."]
-   [:parameter [:key-clusters :aux0 :style]
-    {:default :standard :parse-fn keyword :validate [::supported-cluster-style]}
-    "As for the finger cluster."]
-   [:parameter [:key-clusters :aux0 :matrix-columns]
-    {:default [{}] :parse-fn vec}
-    "As for the finger cluster."]
-   [:parameter [:key-clusters :aux0 :aliases]
-    {:default {}
-     :parse-fn (map-of keyword (tuple-of keyword-or-integer))
-     :validate [(spec/map-of keyword? ::2d-flexcoord)]}
-    "As for the finger cluster. Note, again, that aliases must be unique "
-    "even between clusters."]
-   [:nest [:by-key] nested-raws
-    "This section is special. It’s nested for all levels of specificity."]
-   [:parameter [:by-key :clusters]
-    {:heading-template "Section `%s` ← overrides go in here"
-     :default {}
-     :parse-fn parse-overrides
-     :validate [::overrides]}
-    "This is an anchor point for overrides of the `parameters` section "
-    "described above. Overrides start at the key cluster level. This section "
-    "therefore permits keys that identify specific key clusters.\n"
-    "\n"
-    "For each such key, two subsections are permitted: A new, more specific "
-    "`parameters` section and a `columns` section. Columns are indexed by "
-    "their ordinal integers or the words “first” or “last”, which take priority.\n"
-    "\n"
-    "A column can have its own `parameters` and its own `rows`, which are "
-    "indexed in relation to the home row or again with “first” or “last”. "
-    "Finally, each row can have its own `parameters`, which are specific to "
-    "the full combination of cluster, column and row.\n"
-    "\n"
-    "WARNING: Due to a peculiarity of the YAML parser, take care "
-    "to quote your numeric column and row indices as strings.\n"
-    "\n"
-    "In the following example, the parameter `P`, which is not really "
-    "supported, will have the value “true” for all keys except the one "
-    "closest to the user (“first” row) in the second column from the left on "
-    "the right-hand side of the keyboard (column 1; this is the second from "
-    "the right on the left-hand side of the keyboard; note quotation marks).\n"
-    "\n"
-    "```by-key:\n"
-    "  parameters:\n"
-    "    P: true\n"
-    "  clusters:\n"
-    "    finger:\n"
-    "      columns:\n"
-    "        \"1\":\n"
-    "          rows:\n"
-    "            first:\n"
-    "              parameters:\n"
-    "                P: false\n```"]
+   [:parameter [:key-clusters]
+    {:heading-template "Special section `%s`"
+     :default {:finger {:matrix-columns [{:rows-below-home 0}]
+                        :aliases {:origin [0 0]}}}
+     :parse-fn parse-key-clusters
+     :validate [(spec/map-of
+                  ::supported-key-cluster
+                  #(some? (validate-branch (inflate cluster-raws) %)))]}
+    "This section describes the general size, shape and position of "
+    "the clusters of keys on the keyboard, each in its own subsection. "
+    "It is documented in detail [here](options-clusters.md)."]
+   [:parameter [:by-key]
+    {:heading-template "Special nesting section `%s`"
+     :default (extract-defaults nested-raws)
+     :parse-fn (map-like {:parameters identity
+                          :clusters parse-by-key-overrides})
+     :validate [(spec/keys :opt-un [::parameters ::clusters])]}
+    "This section is built like an onion. Each layer of settings inside it "
+    "is more specific to a smaller part of the keyboard, eventually reaching "
+    "the level of individual keys. It’s all documented "
+    "[here](options-nested.md)."]
    [:section [:case]
     "Much of the keyboard case is generated from the `wall` parameters above. "
     "This section deals with lesser features of the case."]
@@ -1123,10 +1171,6 @@
     "The position of the center point of the mask. By default, `[0, 0, 500]`, "
     "which is supposed to mask out everything below ground level."]])
 
-(def master
-  "Collected structural metadata for a user configuration."
-  (reduce coalesce (ordered-map) configuration-raws))
-
 (defn- print-markdown-fragment [node level]
   (let [heading-style
           (fn [text]
@@ -1147,20 +1191,18 @@
             (println (get-in node [key :metadata :help] "Undocumented."))
             (print-markdown-fragment (key node) (inc level)))))))
 
-(defn print-markdown-documentation []
-  (println "# Configuration options")
-  (println)
-  (println (str "Each heading in this document represents a recognized "
-                "configuration key in YAML files for a DMOTE variant."))
-  (println)
-  (println (str "This documentation was generated from the application CLI."))
-  (print-markdown-fragment master 2))
+(defn print-markdown-section
+  "Print documentation for a section based on its flat specifications.
+  Use the first entry as an introduction."
+  [flat]
+  (println (apply str (first flat)))
+  (print-markdown-fragment (inflate flat) 2))
 
 (defn validate-configuration
   "Attempt to describe any errors in the user configuration."
   [candidate]
   (try
-    (validate-branch master candidate)
+    (validate-branch (inflate main-raws) candidate)
     (catch clojure.lang.ExceptionInfo e
       (let [data (ex-data e)]
        (println "Validation error:" (.getMessage e))

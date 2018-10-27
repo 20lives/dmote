@@ -61,7 +61,7 @@ to do any coding if all you want is a personal fit or additional keys.
 
 If you want to change what the default configuration looks like, edit
 `resources/opt/default.yaml`. It contains a nested structure of parameters
-[documented here](options.md).
+[documented here](options-main.md).
 
 You do not have to make all of your changes in `default.yaml`. As you can see
 in the makefile, you can call the generating program with one or more `-c`

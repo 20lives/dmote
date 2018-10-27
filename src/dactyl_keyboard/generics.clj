@@ -50,5 +50,5 @@
   "Take mappings. Merge them depth-first so as to retain all leaves
   from a mapping except where specifically overridden by the next."
   (apply (partial merge-with
-           (fn  [old new] (if (map? old) (soft-merge old new) new)))
+           (fn [old new] (if (map? old) (soft-merge old new) new)))
          maps))

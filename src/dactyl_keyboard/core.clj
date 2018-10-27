@@ -22,9 +22,27 @@
 
 (defn pprint-settings
   "Show settings as assembled from (possibly multiple) files."
-  [raws]
-  (println "Merged settings:")
-  (pprint raws))
+  [header raws]
+  (println header)
+  (pprint raws)
+  (println))
+
+(defn document-settings
+  "Show documentation for settings."
+  [{section :describe-parameters}]
+  (println "# Configuration options")
+  (println)
+  (println (str "Each heading in this document represents a recognized "
+                "configuration key in YAML files for a DMOTE variant. "
+                "The document was generated from the application CLI."))
+  (println)
+  (params/print-markdown-section
+    (case section
+      :main params/main-raws
+      :clusters params/cluster-raws
+      :nested params/nested-raws
+      (do (println "ERROR: Unknown section requested.")
+          (System/exit 1)))))
 
 (defn new-scad
   "Reload this namespace with any changed dependencies. Redraw .scad files."
@@ -133,13 +151,19 @@
 
 (defn- parse-build-opts
   "Parse model parameters. Return an accessor for them."
-  [options]
-  (let [raws (apply generics/soft-merge
+  [{:keys [debug] :as options}]
+  (let [deep-defaults (params/extract-defaults params/main-raws)
+        raws (apply generics/soft-merge
                (map from-file (:configuration-file options)))]
-   (if (:debug options) (pprint-settings raws))
-   (build-option-accessor
-     (enrich-option-metadata
-       (params/validate-configuration raws)))))
+   (if debug
+     (do (pprint-settings "Built-in default settings:" deep-defaults)
+         (pprint-settings "Received settings:" raws)))
+   (let [merged (generics/soft-merge deep-defaults raws)
+         validated (params/validate-configuration merged)]
+    (if debug
+      (do (pprint-settings "Merged settings:" merged)
+          (pprint-settings "Validated settings:" validated)))
+    (build-option-accessor (enrich-option-metadata validated)))))
 
 (defn- render-to-stl
   "Call OpenSCAD to render an SCAD file to STL."
@@ -164,7 +188,7 @@
 (defn collect-models
   "Make an option accessor function and assemble models with it.
   Return a vector of vectors suitable for calling the author function."
-  [{:keys [whitelist] :as options}]
+  [{:keys [debug whitelist] :as options}]
   (let [getopt (parse-build-opts options)
         single (fn [basename model] [basename model options])
         producer (fn [{:keys [condition pair basename model-fn]
@@ -177,6 +201,7 @@
                           (str "left-hand-" basename)
                           (mirror [-1 0 0] model))]
                        [(single basename model)]))))]
+   (if debug (pprint-settings "Enriched settings:" (getopt)))
    (reduce
      (fn [coll model-info] (concat coll (producer model-info)))
      []
@@ -209,8 +234,9 @@
   [["-c" "--configuration-file PATH" "Path to parameter file in YAML format"
     :default ["resources/opt/default.yaml"]
     :assoc-fn (fn [m k new] (update-in m [k] (fn [old] (conj old new))))]
-   [nil "--describe-parameters"
-    "Print a Markdown document specifying what a configuration file may contain"]
+   [nil "--describe-parameters SECTION"
+    "Print a Markdown document specifying what a configuration file may contain"
+    :default nil :parse-fn keyword]
    [nil "--render" "Produce STL in addition to SCAD files"]
    [nil "--renderer PATH" "Path to OpenSCAD" :default "openscad"]
    ["-w" "--whitelist RE"
@@ -229,7 +255,7 @@
                                 (println (:summary args))
                                 (System/exit 1))
      (:help options) (println (:summary args))
-     (:describe-parameters options) (params/print-markdown-documentation)
+     (:describe-parameters options) (document-settings options)
      :else
        (try
          (doall (pmap author (collect-models options)))
