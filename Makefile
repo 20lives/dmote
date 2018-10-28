@@ -39,10 +39,10 @@ doc/options-clusters.md: target/dmote.jar
 doc/options-nested.md: target/dmote.jar
 	java -jar target/dmote.jar --describe-parameters nested > doc/options-nested.md
 
-docs: doc/options-main.md doc/options-clusters.md doc/options-nested.md
-
 target/dmote.jar: $(OBJECTS)
 	lein uberjar
+
+docs: doc/options-main.md doc/options-clusters.md doc/options-nested.md
 
 test:
 	lein test
@@ -52,5 +52,6 @@ test:
 all: test docs default threaded-visualization orthographic flat threaded solid
 
 clean:
-	-rm things/*.scad
+	-rm things/scad/*.scad && rmdir things/scad/
+	-rm things/stl/*.stl && rmdir things/stl/
 	lein clean
