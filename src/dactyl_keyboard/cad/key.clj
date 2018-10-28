@@ -367,21 +367,30 @@
 
 (declare cluster-position)
 
-(defn cluster-placement [translate-fn rot-fn getopt cluster coord subject]
+(defn- cluster-origin-function
+  "Compute 3D coordinates for the middle of a key cluster.
+  Return a unary function: A partial translator or the identity function."
+  [translate-fn getopt subject-cluster]
+  (let [settings (getopt :key-clusters subject-cluster)
+        {:keys [key-alias offset], :or {offset [0 0 0]}} (:position settings {})
+        from-alias
+          (if key-alias
+            (let [properties (getopt :key-clusters :derived :aliases key-alias)
+                  {:keys [cluster coordinates]} properties]
+             (cluster-position getopt cluster coordinates [0 0 0]))
+            [0 0 0])
+        origin (vec (map + from-alias offset))]
+   (if (= origin [0 0 0])
+     identity
+     (partial translate-fn origin))))
+
+(defn cluster-placement
   "Place and tilt passed ‘subject’ as if into a key cluster."
+  [translate-fn rot-fn getopt cluster coord subject]
   (let [[column row] coord
         most #(most-specific-option getopt (concat [:layout] %) cluster coord)
         center (most [:matrix :neutral :row])
-        bridge
-          (if (= cluster :finger)
-            identity
-            (fn [obj]
-              (let [section (partial getopt :key-clusters cluster :position)
-                    alias (getopt :key-clusters :derived :aliases (section :key-alias))
-                    finger-pos (cluster-position getopt (:cluster alias)
-                                 (:coordinates alias) [0 0 0])
-                    final (vec (map + finger-pos (section :offset)))]
-               (translate-fn final obj))))]
+        bridge (cluster-origin-function translate-fn getopt cluster)]
     (->> subject
          (translate-fn (most [:translation :early]))
          (rot-fn [(most [:pitch :intrinsic])

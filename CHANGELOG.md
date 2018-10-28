@@ -25,6 +25,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       cluster.
     - Support for a `cluster` parameter to `case` → `leds` → `position`.
       LEDs would previously be attached to the finger cluster.
+    - Support for anchoring any cluster to any other, within logical limits.
 - Support for a filename whitelist in the CLI.
 
 ### Developer
