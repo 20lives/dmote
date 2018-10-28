@@ -30,7 +30,7 @@ In the following hypothetical example, the parameter `P`, which is not really su
             first:
               parameters:
                 P: false
-```            "3":
+            "3":
               parameters:
                 P: false
 ```

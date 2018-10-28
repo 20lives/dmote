@@ -9,6 +9,8 @@ switches:
   travel: 3.5
 key-clusters:
   main:
+    position:
+      offset: [0, 0, 12]
     matrix-columns:
     - rows-above-home: 1
       rows-below-home: 1
@@ -47,8 +49,8 @@ key-clusters:
       t5: [0, first]
   aux0:
     position:
-      key-alias: m2
-      offset: [-18, -38, -26]
+      key-alias: t5
+      offset: [13, -12, -6]
     matrix-columns:
     - rows-above-home: 0
     aliases:
@@ -88,8 +90,6 @@ by-key:
             progressive: 0.06
           yaw:
             base: 0.03
-          translation:
-            late: [0, 0, 12]
       columns:
         "0":
           parameters:
@@ -532,7 +532,11 @@ case:
     - [t0, WSW, 0, 1]
     - [t5, WNW, 0, 1]
     - [t5, WSW, 0, 1]
-    - [a0, WSW, 0]
+    - [t5, SSW, 0, 1]
+    - hull-around:
+      - [a0, WNW, 0]
+      - [a0, WSW, 0]
+    - [a0, SSW, 0]
     - [a0, ESE, 0, 1]
     - [m2, ENE, 3, 4]
     - [m2, NNE, 3, 4]

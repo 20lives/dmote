@@ -390,7 +390,7 @@
     "          rows:\n"
     "            first:\n"
     "              parameters:\n"
-    "                P: false\n```"
+    "                P: false\n"
     "            \"3\":\n"
     "              parameters:\n"
     "                P: false\n```"
