@@ -174,7 +174,7 @@
         x-west (- (first ne) width)
         plinth-west (getopt :wrist-rest :derived :nw)
         plinth-east (getopt :wrist-rest :derived :ne)
-        by-col (getopt :key-clusters :finger :derived :coordinates-by-column)
+        by-col (getopt :key-clusters :derived :by-cluster cluster :coordinates-by-column)
         south-wall
           (fn [[coord corner]]
             (take 2 (body/wall-corner-position getopt cluster coord corner)))
@@ -286,6 +286,13 @@
         :threaded (plinth-plate getopt)
         :solid (solid-connector getopt)))))
 
+(defn solid-negative
+  "A model of negative space for a solid hook."
+  [getopt]
+  (union
+    (case-hook getopt)
+    (body/cluster-wall getopt (getopt :wrist-rest :derived :key-cluster))))
+
 
 ;;;;;;;;;;;;;
 ;; Outputs ;;
@@ -298,10 +305,7 @@
       (plinth-maquette getopt)
       (soft-zone getopt)
       (case (getopt :wrist-rest :style)
-        :solid
-          (union
-            (case-hook getopt)
-            (body/cluster-wall getopt :finger))
+        :solid (solid-negative getopt)
         :threaded
           (union
             (threaded-fasteners getopt)
@@ -345,5 +349,5 @@
       (plinth-maquette getopt)
       (union
         (case (getopt :wrist-rest :style)
-          :solid (union (case-hook getopt) (body/cluster-wall getopt :finger))
+          :solid (solid-negative getopt)
           :threaded (threaded-fasteners getopt))))))
