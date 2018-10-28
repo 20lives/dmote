@@ -17,20 +17,25 @@ Each setting takes precedence over any copies of that specific setting at less s
 
 At each level, two subsections are permitted: `parameters`, where you put the settings themselves, and a section for the next level of nesting: `clusters`, then `columns`, then `rows`. In effect, the row level is the key level and forms an exception, in that there are no further levels below it.
 
-In the following hypothetical example, the parameter `P`, which is not really supported, will have the value “true” for all keys except the one closest to the user (“first” row) in the second column from the left on the right-hand side of the keyboard (column 1; this is the second from the right on the left-hand side of the keyboard).
+In the following hypothetical example, the parameter `P`, which is not really supported, is defined three times: Once at the global level and twice at the key level.
 
 ```by-key:
   parameters:
     P: true
   clusters:
-    finger:
+    C:
       columns:
         "1":
           rows:
             first:
               parameters:
                 P: false
+```            "3":
+              parameters:
+                P: false
 ```
+
+In this example, `P` will have the value “true” for all keys except two on each half of the keyboard. On the right-hand side, `P` will be false for the key closest to the user (“first” row) in the second column (column “1”) from the left in a cluster of keys here named `C`. `P` will also be false for the fourth key from the user (row “3”) in the same column.
 
 Columns and rows are indexed by their ordinal integers or the words “first” or “last”, which take priority.
 
@@ -96,7 +101,7 @@ Tait-Bryan roll, meaning the rotation of keys around the y axis.
 
 ##### Parameter `base`
 
-An angle in radians. This is the “tenting” angle. Applied to the finger cluster, it controls the overall left-to-right tilt of each half of the keyboard.
+An angle in radians. This is the “tenting” angle. Applied to your main cluster, it controls the overall left-to-right tilt of each half of the keyboard.
 
 ##### Parameter `intrinsic`
 
@@ -112,7 +117,7 @@ Tait-Bryan yaw, meaning the rotation of keys around the z axis.
 
 ##### Parameter `base`
 
-An angle in radians. Applied to the finger key cluster, this serves the purpose of allowing the user to keep their wrists straight even if the two halves of the keyboard are closer together than the user’s shoulders.
+An angle in radians. Applied to your main key cluster, this serves the purpose of allowing the user to keep their wrists straight even if the two halves of the keyboard are closer together than the user’s shoulders.
 
 ##### Parameter `intrinsic`
 
@@ -132,7 +137,7 @@ This happens after columns are styled but before base pitch and roll. As such it
 
 ##### Parameter `late`
 
-“Late” translation is the last step in key placement and therefore interacts very little with other steps. As a result, the z-coordinate, which is the last number in this vector, serves as a general vertical offset of the finger key cluster from the ground plane. If set at a high level, this controls the overall height of the keyboard, including the height of the case walls.
+“Late” translation is the last step in key placement and therefore interacts very little with other steps.
 
 ### Section `channel`
 

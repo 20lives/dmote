@@ -40,4 +40,6 @@ A key as named under any of the `aliases` sections described above. Take care to
 
 ### Parameter `offset`
 
-A 3-dimensional offset in mm from the indicated key or the origin.
+A 3-dimensional offset in mm from the indicated key or else from the origin of the coordinate system.
+
+The z-coordinate, which is the last number in this offset, is vertical adjustment of the key cluster. Set for your main cluster, it controls the overall height of the keyboard, including the height of its case.

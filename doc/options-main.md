@@ -457,7 +457,7 @@ If `true`, include a wrist rest with the keyboard.
 The style of the wrist rest. Available styles are:
 
 * `threaded`: threaded fasteners connect the case and wrist rest. This works with a great variety of keyboard shapes and will allow adjusting the position of the wrist rest for different hands.
-* `solid`: a printed plastic bridge along the ground as part of the model. This has more limitations, both in manufacture and in use. It includes a hook on the near outward side of the case, which will only be useful if the case wall at that point is short and finger column 2 is positioned and walled in such a way that the solid bridge can be wedged between the hook and the column.
+* `solid`: a printed plastic bridge along the ground as part of the model. This has more limitations, both in manufacture and in use. It includes a hook on the near outward side of the case, which will only be useful if the case wall at that point is short and the wrist rest is attached to a key cluster whose third column (column 2) is positioned and walled in such a way that the solid bridge can be wedged between the hook and the column.
 
 ### Parameter `preview`
 

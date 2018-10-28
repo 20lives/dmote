@@ -336,7 +336,12 @@
     {:default [0 0 0]
      :parse-fn (tuple-of num)
      :validate [::3d-point]}
-    "A 3-dimensional offset in mm from the indicated key or the origin."]])
+    "A 3-dimensional offset in mm from the indicated key or else from the "
+    "origin of the coordinate system.\n"
+    "\n"
+    "The z-coordinate, which is the last number in this offset, is vertical "
+    "adjustment of the key cluster. Set for your main cluster, it controls "
+    "the overall height of the keyboard, including the height of its case."]])
 
 (def nested-raws
   "A flat version of another special part of a user configuration."
@@ -372,24 +377,31 @@
     "further levels below it.\n"
     "\n"
     "In the following hypothetical example, the parameter `P`, which is "
-    "not really supported, will have the value “true” for all keys "
-    "except the one closest to the user (“first” row) in the second "
-    "column from the left on the right-hand side of the keyboard "
-    "(column 1; this is the second from the right on the left-hand side "
-    "of the keyboard).\n"
+    "not really supported, is defined three times: Once at the global level "
+    "and twice at the key level.\n"
     "\n"
     "```by-key:\n"
     "  parameters:\n"
     "    P: true\n"
     "  clusters:\n"
-    "    finger:\n"
+    "    C:\n"
     "      columns:\n"
     "        \"1\":\n"
     "          rows:\n"
     "            first:\n"
     "              parameters:\n"
     "                P: false\n```"
+    "            \"3\":\n"
+    "              parameters:\n"
+    "                P: false\n```"
     "\n\n"
+    "In this example, `P` will have the value “true” for all keys except two "
+    "on each half of the keyboard. On the right-hand side, `P` will be false "
+    "for the key closest to the user (“first” row) in the second column "
+    "(column “1”) from the left in a cluster of keys here named `C`. `P` will "
+    "also be false for the fourth key from the user (row “3”) in the same "
+    "column.\n"
+    "\n"
     "Columns and rows are indexed by their ordinal integers "
     "or the words “first” or “last”, which take priority.\n"
     "\n"
@@ -446,7 +458,7 @@
     "Tait-Bryan roll, meaning the rotation of keys around the y axis."]
    [:parameter [:parameters :layout :roll :base]
     {:default 0 :parse-fn num}
-    "An angle in radians. This is the “tenting” angle. Applied to the finger "
+    "An angle in radians. This is the “tenting” angle. Applied to your main "
     "cluster, it controls the overall left-to-right tilt of each half of the "
     "keyboard."]
    [:parameter [:parameters :layout :roll :intrinsic]
@@ -463,7 +475,7 @@
     "Tait-Bryan yaw, meaning the rotation of keys around the z axis."]
    [:parameter [:parameters :layout :yaw :base]
     {:default 0 :parse-fn num}
-    "An angle in radians. Applied to the finger key cluster, this serves the "
+    "An angle in radians. Applied to your main key cluster, this serves the "
     "purpose of allowing the user to keep their wrists straight even if the "
     "two halves of the keyboard are closer together than the user’s shoulders."]
    [:parameter [:parameters :layout :yaw :intrinsic]
@@ -486,11 +498,7 @@
    [:parameter [:parameters :layout :translation :late]
     {:default [0 0 0] :parse-fn vec :validate [::3d-point]}
     "“Late” translation is the last step in key placement and therefore "
-    "interacts very little with other steps. As a result, the z-coordinate, "
-    "which is the last number in this vector, serves as a general vertical "
-    "offset of the finger key cluster from the ground plane. If set at a "
-    "high level, this controls the overall height of the keyboard, "
-    "including the height of the case walls."]
+    "interacts very little with other steps."]
    [:section [:parameters :channel]
     "Above each switch mount, there is a channel of negative space for the "
     "user’s finger and the keycap to move inside. This is only useful in those "
@@ -1047,8 +1055,9 @@
     "* `solid`: a printed plastic bridge along the ground as part of the "
     "model. This has more limitations, both in manufacture and in use. "
     "It includes a hook on the near outward side of the case, which will only "
-    "be useful if the case wall at that point is short and finger column 2 "
-    "is positioned and walled in such a way that the solid bridge can be "
+    "be useful if the case wall at that point is short and the wrist rest is "
+    "attached to a key cluster whose third column (column 2) is positioned "
+    "and walled in such a way that the solid bridge can be "
     "wedged between the hook and the column."]
    [:parameter [:wrist-rest :preview]
     {:default false :parse-fn boolean}

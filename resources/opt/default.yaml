@@ -8,7 +8,7 @@ keycaps:
 switches:
   travel: 3.5
 key-clusters:
-  finger:
+  main:
     matrix-columns:
     - rows-above-home: 1
       rows-below-home: 1
@@ -21,16 +21,16 @@ key-clusters:
     - rows-below-home: 2
     - rows-below-home: 2
     aliases:
-      f0: [0, first]
-      f1: [1, first]
-      f2: [2, first]
-      f3: [3, first]
+      m0: [0, first]
+      m1: [1, first]
+      m2: [2, first]
+      m3: [3, first]
       back: [1, last]
       far-right: [last, last]
       near-right: [last, first]
   thumb:
     position:
-      key-alias: f1
+      key-alias: m1
       offset: [-10, -18, 2]
     matrix-columns:
     - rows-above-home: 1
@@ -47,7 +47,7 @@ key-clusters:
       t5: [0, first]
   aux0:
     position:
-      key-alias: f2
+      key-alias: m2
       offset: [-18, -38, -26]
     matrix-columns:
     - rows-above-home: 0
@@ -71,7 +71,7 @@ by-key:
       west:
         perpendicular: -8
   clusters:
-    finger:
+    main:
       parameters:
         layout:
           matrix:
@@ -382,7 +382,6 @@ case:
   rear-housing:
     include: true
     position:
-      cluster: finger
       offsets:
         north: 15
         east: -2
@@ -409,8 +408,6 @@ case:
       offset: [0, 0, 0]
   leds:
     include: true
-    position:
-      cluster: finger
     amount: 3
     # Settings here are for WS2818 diodes at 17 mm intervals.
     housing-size: 5.5  # Real size: 5 mm.
@@ -450,59 +447,59 @@ case:
   - chunk-size: 3
     hull-around:
     - [t1, NNW, 3, 4]
-    - [f0, SSW, 0, 3]
+    - [m0, SSW, 0, 3]
     - [t1, NNE, 3, 4]
     - [t2, NNE, 3, 4]
   - chunk-size: 3
     hull-around:
-    - [f0, SSW, 0, 3]
+    - [m0, SSW, 0, 3]
     - hull-around:
       - [t2, NNE, 3, 4]
       - [t2, ENE, 3, 4]
     - hull-around:
-      - [f0, SSE, 2, 3]
-      - [f1, WNW, 2, 3]
+      - [m0, SSE, 2, 3]
+      - [m1, WNW, 2, 3]
     - [t2, ESE, 4]
-    - [f1, WSW, 2, 3]
-    - [f1, SSW, 2, 3]
+    - [m1, WSW, 2, 3]
+    - [m1, SSW, 2, 3]
   # The middle topside plate:
   - chunk-size: 3
     hull-around:
-    - [f1, SSW, 2, 3]
+    - [m1, SSW, 2, 3]
     - [t2, ESE, 4]
-    - [f1, SSE, 2, 3]
-    - [f2, WSW, 0]
+    - [m1, SSE, 2, 3]
+    - [m2, WSW, 0]
     - [t2, ESE, 4]
     - [t3, ENE, 4]
-  # The west side of f2:
+  # The west side of m2:
   - hull-around:
-    - [f1, SSE, 0, 3]
-    - [f2, WNW, 0]
-    - [f2, WSW, 0]
+    - [m1, SSE, 0, 3]
+    - [m2, WNW, 0]
+    - [m2, WSW, 0]
   # The eastern topside plate:
   - chunk-size: 3
     hull-around:
-    - [f2, WSW, 0, 1]
+    - [m2, WSW, 0, 1]
     - [t3, NNE, 4]
-    - [f2, SSW, 0, 1]
+    - [m2, SSW, 0, 1]
     - hull-around:
       - [t3, ESE, 4]
       - [t3, SSE, 4]
     - hull-around:
-      - [f2, ESE, 3, 4]
-      - [f2, SSE, 3, 4]
+      - [m2, ESE, 3, 4]
+      - [m2, SSE, 3, 4]
     - [t4, ESE, 4]
-    - [f2, ESE, 3, 4]
+    - [m2, ESE, 3, 4]
     - [t4, SSW, 4]
-    - [f2, ENE, 3, 4]
+    - [m2, ENE, 3, 4]
     - [a0, ENE, 0, 1]
-    - [f2, ENE, 3, 4]
+    - [m2, ENE, 3, 4]
     - [a0, ESE, 0, 1]
-  # A triangular southern wall of f2:
+  # A triangular southern wall of m2:
   - hull-around:
-    - [f2, SSW, 0, 1]
-    - [f2, SSE, 0, 3]
-    - [f2, ESE, 0, 3]
+    - [m2, SSW, 0, 1]
+    - [m2, SSE, 0, 3]
+    - [m2, ESE, 0, 3]
   # Webbing at the lower near corner of the thumb cluster:
   - chunk-size: 3
     hull-around:
@@ -526,7 +523,7 @@ case:
   - to-ground: true
     chunk-size: 2
     hull-around:
-    - [f0, WSW, 2, 3]
+    - [m0, WSW, 2, 3]
     - hull-around:
       - [t1, NNW, 0, 4]
       - [t0, NNE, 0, 1]
@@ -537,10 +534,10 @@ case:
     - [t5, WSW, 0, 1]
     - [a0, WSW, 0]
     - [a0, ESE, 0, 1]
-    - [f2, ENE, 3, 4]
-    - [f2, NNE, 3, 4]
-    - [f3, WSW, 3, 4]
-    - [f3, SSW, 3, 4]
+    - [m2, ENE, 3, 4]
+    - [m2, NNE, 3, 4]
+    - [m3, WSW, 3, 4]
+    - [m3, SSW, 3, 4]
   foot-plates:
     include: true
     height: 3
