@@ -2,7 +2,7 @@
 # YAML configuration files into demonstration models of the DMOTE.
 # https://www.gnu.org/software/make/manual/make.html
 
-.PHONY: default visualization orthographic flat threaded threaded-visualization solid all test clean
+.PHONY: default visualization orthographic flat threaded threaded-visualization solid all docs test clean
 
 OBJECTS = $(shell find src/)
 
@@ -39,6 +39,8 @@ doc/options-clusters.md: target/dmote.jar
 doc/options-nested.md: target/dmote.jar
 	java -jar target/dmote.jar --describe-parameters nested > doc/options-nested.md
 
+docs: doc/options-main.md doc/options-clusters.md doc/options-nested.md
+
 target/dmote.jar: $(OBJECTS)
 	lein uberjar
 
@@ -47,7 +49,7 @@ test:
 
 # “all” will overwrite its own outputs.
 # Intended for code sanity checking before pushing a commit.
-all: test default threaded-visualization orthographic flat threaded solid doc/options-main.md doc/options-clusters.md doc/options-nested.md
+all: test docs default threaded-visualization orthographic flat threaded solid
 
 clean:
 	-rm things/*.scad

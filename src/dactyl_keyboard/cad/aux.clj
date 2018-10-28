@@ -318,10 +318,12 @@
 ;;;;;;;;;;;;;;;
 
 (defn west-wall-west-points [getopt]
-  (for [row ((getopt :key-clusters :finger :derived :row-indices-by-column) 0)
-        corner [generics/WSW generics/WNW]]
-   (let [[x y _] (wall-corner-position getopt :finger [0 row] corner)]
-    [(+ x (getopt :by-key :parameters :wall :thickness)) y])))
+  (let [cluster (getopt :case :leds :position :cluster)
+        by-cluster (partial (getopt :key-clusters :derived :by-cluster))]
+    (for [row ((by-cluster cluster :row-indices-by-column) 0)
+          corner [generics/WSW generics/WNW]]
+     (let [[x y _] (wall-corner-position getopt cluster [0 row] corner)]
+      [(+ x (getopt :by-key :parameters :wall :thickness)) y]))))
 
 (defn west-wall-east-points [getopt]
   (map (fn [[x y]] [(+ x 10) y]) (west-wall-west-points getopt)))
@@ -333,9 +335,10 @@
       (polygon (concat west-points (reverse east-points))))))
 
 (defn led-hole-position [getopt ordinal]
-  (let [by-col (getopt :key-clusters :finger :derived :row-indices-by-column)
+  (let [cluster (getopt :case :leds :position :cluster)
+        by-col (getopt :key-clusters :derived :by-cluster cluster :row-indices-by-column)
         row (first (by-col 0))
-        [x0 y0 _] (wall-corner-position getopt :finger [0 row] generics/WNW)
+        [x0 y0 _] (wall-corner-position getopt cluster [0 row] generics/WNW)
         h (+ 5 (/ (getopt :case :leds :housing-size) 2))]
    [x0 (+ y0 (* (getopt :case :leds :interval) ordinal)) h]))
 

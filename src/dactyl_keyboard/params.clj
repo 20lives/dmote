@@ -639,8 +639,8 @@
     "mounted on a switch."]
    [:parameter [:key-clusters]
     {:heading-template "Special section `%s`"
-     :default {:finger {:matrix-columns [{:rows-below-home 0}]
-                        :aliases {:origin [0 0]}}}
+     :default {:main {:matrix-columns [{:rows-below-home 0}]
+                      :aliases {:origin [0 0]}}}
      :parse-fn parse-key-clusters
      :validate [(spec/map-of
                   ::supported-key-cluster
@@ -676,38 +676,44 @@
    [:parameter [:case :web-thickness]
     {:default 1 :parse-fn num}
     "The thickness in mm of the webbing between switch key "
-    "mounting plates and of the rear housing’s walls and roof."]
+    "mounting plates, and of the rear housing’s walls and roof."]
    [:section [:case :rear-housing]
-    "The furthest row of the key cluster can be extended into a rear housing "
+    "The furthest row of a key cluster can be extended into a rear housing "
     "for the MCU and various other features."]
    [:parameter [:case :rear-housing :include]
     {:default false :parse-fn boolean}
     "If `true`, add a rear housing. Please arrange case walls so as not to "
     "interfere, by removing them along the far side of the last row of key "
-    "mounts in the finger cluster."]
+    "mounts in the indicated cluster."]
+   [:section [:case :rear-housing :position]
+    "Where to put the rear housing. By default, it sits all along the far "
+    "side of the `main` cluster but has no depth."]
+   [:parameter [:case :rear-housing :position :cluster]
+    {:default :main :parse-fn keyword :validate [::supported-key-cluster]}
+    "The key cluster at which to anchor the housing."]
+   [:section [:case :rear-housing :position :offsets]
+    "Modifiers for where to put the four sides of the roof. All are in mm."]
+   [:parameter [:case :rear-housing :position :offsets :north]
+    {:default 0 :parse-fn num}
+    "The extent of the roof on the y axis; its horizontal depth."]
+   [:parameter [:case :rear-housing :position :offsets :west]
+    {:default 0 :parse-fn num}
+    "The extent on the x axis past the first key in the row."]
+   [:parameter [:case :rear-housing :position :offsets :east]
+    {:default 0 :parse-fn num}
+    "The extent on the x axis past the last key in the row."]
+   [:parameter [:case :rear-housing :position :offsets :south]
+    {:default 0 :parse-fn num}
+    "The horizontal distance in mm, on the y axis, between the furthest key "
+    "in the row and the roof of the rear housing."]
    [:parameter [:case :rear-housing :west-foot]
     {:default false :parse-fn boolean}
     "If `true`, add a foot plate at ground level by the far inward corner "
     "of the rear housing. The height of the plate is controlled by the "
     "`foot-plates` section below."]
-   [:parameter [:case :rear-housing :distance]
-    {:default 0 :parse-fn num}
-    "The horizontal distance in mm between the furthest key in the row and "
-    "the roof of the rear housing."]
    [:parameter [:case :rear-housing :height]
     {:default 0 :parse-fn num}
     "The height in mm of the roof, over the floor."]
-   [:section [:case :rear-housing :offsets]
-    "Modifiers for the size of the roof. All are in mm."]
-   [:parameter [:case :rear-housing :offsets :north]
-    {:default 0 :parse-fn num}
-    "The extent of the roof on the y axis; its horizontal depth."]
-   [:parameter [:case :rear-housing :offsets :west]
-    {:default 0 :parse-fn num}
-    "The extent on the x axis past the first key in the row."]
-   [:parameter [:case :rear-housing :offsets :east]
-    {:default 0 :parse-fn num}
-    "The extent on the x axis past the last key in the row."]
    [:section [:case :rear-housing :fasteners]
     "Threaded bolts can run through the roof of the rear housing, making it a "
     "hardpoint for attachments like a stabilizer to connect the two halves of "
@@ -781,6 +787,11 @@
     {:default false :parse-fn boolean}
     "If `true`, cut slots for LEDs out of the case wall, facing "
     "the space between the two halves."]
+   [:section [:case :leds :position]
+    "Where to attach the LED strip."]
+   [:parameter [:case :leds :position :cluster]
+    {:default :main :parse-fn keyword :validate [::supported-key-cluster]}
+    "The key cluster at which to anchor the strip."]
    [:parameter [:case :leds :amount]
     {:default 1 :parse-fn int} "The number of LEDs."]
    [:parameter [:case :leds :housing-size]

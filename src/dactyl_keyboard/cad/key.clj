@@ -8,7 +8,7 @@
             [scad-clj.model :exclude [use import] :refer :all]
             [unicode-math.core :refer :all]
             [dactyl-keyboard.generics :refer :all]
-            [dactyl-keyboard.params :refer :all]
+            [dactyl-keyboard.params :as params]
             [dactyl-keyboard.cad.misc :refer :all]
             [dactyl-keyboard.cad.matrix :refer :all]))
 
@@ -21,6 +21,11 @@
   "The identifiers of all defined key clusters."
   [getopt]
   (remove #(= :derived %) (keys (getopt :key-clusters))))
+
+(defn- derived
+  "A shortcut to look up a cluster-specific derived configuration detail."
+  [getopt & keys]
+  (apply (partial getopt :key-clusters :derived :by-cluster) keys))
 
 ;; Mounts for neighbouring 1U keys are about 0.75” apart.
 (def mount-1u 19.05)
@@ -53,9 +58,9 @@
   "Resolve supported keywords in a coordinate pair to names.
   This allows for integers as well as the keywords :first and :last, meaning
   first and last in the column or row. Columns have priority."
-  (let [columns (getopt :key-clusters cluster :derived :column-range)
+  (let [columns (derived getopt cluster :column-range)
         c1 (case c0 :first (first columns) :last (last columns) c0)
-        rows (getopt :key-clusters cluster :derived :row-indices-by-column c1)]
+        rows (derived getopt cluster :row-indices-by-column c1)]
    [c1 (case r0 :first (first rows) :last (last rows) r0)]))
 
 (defn match-flex [getopt cluster & coords]
@@ -84,8 +89,8 @@
       column-specific values favouring first/last column;
       cluster-specific values; and finally the base section, where a
       value is required to exist if we get there."
-      (let [columns (getopt :key-clusters cluster :derived :column-range)
-            by-col (getopt :key-clusters cluster :derived :row-indices-by-column)
+      (let [columns (derived getopt cluster :column-range)
+            by-col (derived getopt cluster :row-indices-by-column)
             rows (by-col column)
             first-column (= (first columns) column)
             last-column (= (last columns) column)
@@ -114,7 +119,7 @@
 (defn most-specific-option [getopt end-path cluster coord]
   ((most-specific-getter getopt end-path) cluster coord))
 
-(defn cluster-properties [cluster getopt]
+(defn chart-cluster [cluster getopt]
   "Derive some properties about a key cluster from raw configuration info."
   (let [raws (getopt :key-clusters cluster)
         matrix (getopt :key-clusters cluster :matrix-columns)
@@ -157,9 +162,16 @@
     :column-indices-by-row column-indices-by-row
     :coordinates-by-row coordinates-by-row}))
 
-(defn resolve-aliases [getopt]
+(defn derive-cluster-properties
+  "Derive basic properties for each key cluster."
+  [getopt]
+  (let [by-cluster (fn [coll key] (assoc coll key (chart-cluster key getopt)))]
+   {:by-cluster (reduce by-cluster {} (all-clusters getopt))}))
+
+(defn derive-resolved-aliases
   "Unify cluster-specific key aliases into a single global map that preserves
   their cluster of origin and resolves symbolic coordinates to absolute values."
+  [getopt]
   {:aliases
     (into {}
       (mapcat
@@ -172,9 +184,10 @@
             (getopt :key-clusters cluster :aliases)))
         (all-clusters getopt)))})
 
-(defn print-matrix [cluster getopt]
+(defn print-matrix
   "Print a schematic picture of a key cluster. For your REPL."
-  (let [prop (partial getopt :key-clusters cluster :derived)]
+  [cluster getopt]
+  (let [prop (partial derived getopt cluster)]
     (doseq [row (reverse (prop :row-range)) column (prop :column-range)]
       (if ((prop :key-requested?) [column row]) (print "□") (print "·"))
       (if (= column (prop :last-column)) (println)))))
@@ -348,7 +361,7 @@
 
 (defn put-in-row [translate-fn rot-ax-fn getopt cluster coord obj]
   "Place a key in relation to its row."
-  (let [style (getopt :key-clusters cluster :derived :style)]
+  (let [style (derived getopt cluster :style)]
    (curver :column 0 :roll #(- %2 %1) (= style :orthographic)
            translate-fn rot-ax-fn getopt cluster coord obj)))
 
@@ -429,15 +442,15 @@
 
 (defn cluster-plates [getopt cluster]
   (apply union (map #(cluster-place getopt cluster % (single-switch-plate getopt))
-                    (getopt :key-clusters cluster :derived :key-coordinates))))
+                    (derived getopt cluster :key-coordinates))))
 
 (defn cluster-cutouts [getopt cluster]
   (apply union (map #(cluster-place getopt cluster % (single-switch-cutout getopt))
-                    (getopt :key-clusters cluster :derived :key-coordinates))))
+                    (derived getopt cluster :key-coordinates))))
 
 (defn cluster-nubs [getopt cluster]
   (apply union (map #(cluster-place getopt cluster % (single-switch-nubs getopt))
-                    (getopt :key-clusters cluster :derived :key-coordinates))))
+                    (derived getopt cluster :key-coordinates))))
 
 (defn cluster-channels [getopt cluster]
   (letfn [(modeller [coord]
@@ -448,11 +461,11 @@
                  :height (most [:channel :height])
                  :margin (most [:channel :margin])})))]
     (apply union (map #(cluster-place getopt cluster % (modeller %))
-                      (getopt :key-clusters cluster :derived :key-coordinates)))))
+                      (derived getopt cluster :key-coordinates)))))
 
 (defn cluster-keycaps [getopt cluster]
   (apply union (map #(cluster-place getopt cluster % (keycap-model getopt 1))
-                    (getopt :key-clusters cluster :derived :key-coordinates))))
+                    (derived getopt cluster :key-coordinates))))
 
 (defn metacluster
   "Apply passed modelling function to all key clusters."

@@ -4,12 +4,12 @@
 
 (deftest test-derivation
   (testing "single-key cluster"
-    (let [prop (key/cluster-properties
-                 :finger
+    (let [prop (key/chart-cluster
+                 :unittest-cluster
                  (fn [& keys]
                    (get-in
                      {:key-clusters
-                       {:finger
+                       {:unittest-cluster
                          {:matrix-columns
                            [{}]}}}
                      keys)))]
@@ -24,12 +24,12 @@
       (is (= (:row-indices-by-column prop) {0 '(0)}))
       (is (= (:column-indices-by-row prop) {0 '(0)}))))
   (testing "┗┓-shaped cluster"
-    (let [prop (key/cluster-properties
-                 :finger
+    (let [prop (key/chart-cluster
+                 :unittest-cluster
                  (fn [& keys]
                    (get-in
                      {:key-clusters
-                       {:finger
+                       {:unittest-cluster
                          {:matrix-columns
                            [{:rows-above-home 2}
                             {}

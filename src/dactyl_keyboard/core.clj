@@ -99,7 +99,7 @@
       (wrist/unified-preview getopt))))
 
 (defn build-option-accessor
-  "Close over a user configuration."
+  "Close over a—potentially incomplete—user configuration."
   [build-options]
   (letfn [(value-at [path] (get-in build-options path ::none))
           (path-exists? [path] (not (= ::none (value-at path))))
@@ -123,17 +123,19 @@
 
 (defn enrich-option-metadata
   "Derive certain properties that are implicit in the user configuration.
-  Store these results under the “:derived” key in each section."
+  Use a gradually expanding but temporary build option accessor.
+  Store the results under the “:derived” key in each section."
   [build-options]
   (reduce
     (fn [coll [path callable]]
-      (assoc-in coll (conj path :derived) (callable (build-option-accessor coll))))
+      (generics/soft-merge
+        coll
+        (assoc-in coll (conj path :derived)
+                       (callable (build-option-accessor coll)))))
     build-options
     ;; Mind the order. One of these may depend upon earlier steps.
-    [[[:key-clusters :finger] (partial key/cluster-properties :finger)]
-     [[:key-clusters :thumb] (partial key/cluster-properties :thumb)]
-     [[:key-clusters :aux0] (partial key/cluster-properties :aux0)]
-     [[:key-clusters] key/resolve-aliases]
+    [[[:key-clusters] key/derive-cluster-properties]
+     [[:key-clusters] key/derive-resolved-aliases]
      [[:keycaps] key/keycap-properties]
      [[:switches] key/keyswitch-dimensions]
      [[:case :rear-housing] body/housing-properties]

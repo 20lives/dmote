@@ -75,9 +75,9 @@
 (defn cluster-web [getopt cluster]
   (apply union
     (walk-and-web
-      (getopt :key-clusters cluster :derived :column-range)
-      (getopt :key-clusters cluster :derived :row-range)
-      (getopt :key-clusters cluster :derived :key-requested?)
+      (getopt :key-clusters :derived :by-cluster cluster :column-range)
+      (getopt :key-clusters :derived :by-cluster cluster :row-range)
+      (getopt :key-clusters :derived :by-cluster cluster :key-requested?)
       (partial key/cluster-place getopt cluster)
       (partial key/mount-corner-post getopt))))
 
@@ -197,7 +197,7 @@
 
 (defn cluster-wall [getopt cluster]
   "Walk the edge of a key cluster clockwise. Wall it in."
-  (let [prop (partial getopt :key-clusters cluster :derived)
+  (let [prop (partial getopt :key-clusters :derived :by-cluster cluster)
         occlusion-fn (prop :key-requested?)
         start [[0 0] :north]
         mason (fn [edge-locator place-and-direction]
@@ -244,15 +244,16 @@
 
 (defn housing-properties [getopt]
   "Derive characteristics from parameters for the rear housing."
-  (let [row (last (getopt :key-clusters :finger :derived :row-range))
-        coords (getopt :key-clusters :finger :derived :coordinates-by-row row)
+  (let [cluster (getopt :case :rear-housing :position :cluster)
+        row (last (getopt :key-clusters :derived :by-cluster cluster :row-range))
+        coords (getopt :key-clusters :derived :by-cluster cluster :coordinates-by-row row)
         pairs (into [] (for [coord coords corner [NNW NNE]] [coord corner]))
         getpos (fn [[coord corner]]
-                 (key/cluster-position getopt :finger coord
+                 (key/cluster-position getopt cluster coord
                    (key/mount-corner-offset getopt corner)))
         y-max (apply max (map #(second (getpos %)) pairs))
-        getoffset (partial getopt :case :rear-housing :offsets)
-        y-roof-s (+ y-max (getopt :case :rear-housing :distance))
+        getoffset (partial getopt :case :rear-housing :position :offsets)
+        y-roof-s (+ y-max (getoffset :south))
         y-roof-n (+ y-roof-s (getoffset :north))
         z (getopt :case :rear-housing :height)
         roof-sw [(- (first (getpos (first pairs))) (getoffset :west)) y-roof-s z]
@@ -277,8 +278,9 @@
 
 (defn- housing-segment-offset [getopt cardinal-direction segment]
   "Compute the [x y z] coordinate offset from a rear housing roof corner."
-  (let [key (partial getopt :case :rear-housing :derived)
-        wall (partial wall-segment-offset getopt :finger)]
+  (let [cluster (getopt :case :rear-housing :position :cluster)
+        key (partial getopt :case :rear-housing :derived)
+        wall (partial wall-segment-offset getopt cluster)]
    (case cardinal-direction
      :west (wall (key :west-end-coord) cardinal-direction segment)
      :east (wall (key :east-end-coord) cardinal-direction segment)
@@ -302,7 +304,8 @@
 (defn- housing-outer-wall [getopt]
   "The west, north and east walls of the rear housing. These are mostly
   vertical but they do connect to the key cluster’s main wall."
-  (let [wec (getopt :case :rear-housing :derived :west-end-coord)
+  (let [cluster (getopt :case :rear-housing :position :cluster)
+        wec (getopt :case :rear-housing :derived :west-end-coord)
         eec (getopt :case :rear-housing :derived :east-end-coord)
         c (housing-cube getopt)]
    (union
@@ -310,32 +313,33 @@
        (reduce
          (fn [coll shapes] (conj coll (apply hull shapes)))
          []
-         [(wall-edge getopt :finger true [wec :west turning-right])
+         [(wall-edge getopt cluster true [wec :west turning-right])
           (map #(housing-place getopt WSW % c) (range 2))
           (map #(housing-place getopt WNW % c) (range 2))
           (map #(housing-place getopt NNW % c) (range 2))
           (map #(housing-place getopt NNE % c) (range 2))
           (map #(housing-place getopt ENE % c) (range 2))
           (map #(housing-place getopt ESE % c) (range 2))
-          (wall-edge getopt :finger true [eec :east turning-left])]))
+          (wall-edge getopt cluster true [eec :east turning-left])]))
      (apply pairwise-hulls
        (reduce
          (fn [coll shapes] (conj coll (apply bottom-hull shapes)))
          []
-         [(wall-edge getopt :finger false [wec :west turning-right])
+         [(wall-edge getopt cluster false [wec :west turning-right])
           (housing-place getopt WSW 1 c)
           (housing-place getopt WNW 1 c)
           (housing-place getopt NNW 1 c)
           (housing-place getopt NNE 1 c)
           (housing-place getopt ENE 1 c)
           (housing-place getopt ESE 1 c)
-          (wall-edge getopt :finger false [eec :east turning-left])])))))
+          (wall-edge getopt cluster false [eec :east turning-left])])))))
 
 (defn- housing-web [getopt]
   "An extension of the finger key cluster’s webbing onto the roof of the
   rear housing."
-  (let [pos-corner (fn [coord corner]
-                     (key/cluster-position getopt :finger coord
+  (let [cluster (getopt :case :rear-housing :position :cluster)
+        pos-corner (fn [coord corner]
+                     (key/cluster-position getopt cluster coord
                        (key/mount-corner-offset getopt corner)))
         sw (getopt :case :rear-housing :derived :sw)
         se (getopt :case :rear-housing :derived :se)
@@ -349,7 +353,7 @@
      (reduce
        (fn [coll [coord corner]]
          (conj coll
-           (hull (key/cluster-place getopt :finger coord
+           (hull (key/cluster-place getopt cluster coord
                    (key/mount-corner-post getopt corner))
                  (translate [(x coord corner) y z]
                    (housing-cube getopt)))))
@@ -359,7 +363,7 @@
 (defn- housing-foot [getopt]
   "A simple ground-level plate at one corner of the housing."
   (let [base (take 2 (getopt :case :rear-housing :derived :nw))
-        w (min 10 (getopt :case :rear-housing :offsets :north))]
+        w (min 10 (getopt :case :rear-housing :position :offsets :north))]
    (extrude-linear
      {:height (getopt :case :foot-plates :height) :center false}
      (polygon [base (map + base [0 (- w)]) (map + base [w 0])]))))
@@ -367,7 +371,7 @@
 (defn- housing-mount-place [getopt side shape]
   (let [d (getopt :case :rear-housing :fasteners :diameter)
         offset (getopt :case :rear-housing :fasteners side :offset)
-        n (getopt :case :rear-housing :offsets :north)
+        n (getopt :case :rear-housing :position :offsets :north)
         t (getopt :case :web-thickness)
         h (iso-hex-nut-height d)
         [sign base] (case side

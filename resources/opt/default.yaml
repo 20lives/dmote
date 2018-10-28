@@ -381,12 +381,14 @@ case:
   web-thickness: 2.5
   rear-housing:
     include: true
+    position:
+      cluster: finger
+      offsets:
+        north: 15
+        east: -2
+        south: 3
     west-foot: true
-    distance: 3
     height: 46.1
-    offsets:
-      north: 15
-      east: -2
     fasteners:
       diameter: 6
       bosses: true
@@ -407,6 +409,8 @@ case:
       offset: [0, 0, 0]
   leds:
     include: true
+    position:
+      cluster: finger
     amount: 3
     # Settings here are for WS2818 diodes at 17 mm intervals.
     housing-size: 5.5  # Real size: 5 mm.

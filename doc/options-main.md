@@ -61,43 +61,51 @@ The thickness in mm of an imaginary “post” at each corner of each key mount.
 
 ### Parameter `web-thickness`
 
-The thickness in mm of the webbing between switch key mounting plates and of the rear housing’s walls and roof.
+The thickness in mm of the webbing between switch key mounting plates, and of the rear housing’s walls and roof.
 
 ### Section `rear-housing`
 
-The furthest row of the key cluster can be extended into a rear housing for the MCU and various other features.
+The furthest row of a key cluster can be extended into a rear housing for the MCU and various other features.
 
 #### Parameter `include`
 
-If `true`, add a rear housing. Please arrange case walls so as not to interfere, by removing them along the far side of the last row of key mounts in the finger cluster.
+If `true`, add a rear housing. Please arrange case walls so as not to interfere, by removing them along the far side of the last row of key mounts in the indicated cluster.
+
+#### Section `position`
+
+Where to put the rear housing. By default, it sits all along the far side of the `main` cluster but has no depth.
+
+##### Parameter `cluster`
+
+The key cluster at which to anchor the housing.
+
+##### Section `offsets`
+
+Modifiers for where to put the four sides of the roof. All are in mm.
+
+###### Parameter `north`
+
+The extent of the roof on the y axis; its horizontal depth.
+
+###### Parameter `west`
+
+The extent on the x axis past the first key in the row.
+
+###### Parameter `east`
+
+The extent on the x axis past the last key in the row.
+
+###### Parameter `south`
+
+The horizontal distance in mm, on the y axis, between the furthest key in the row and the roof of the rear housing.
 
 #### Parameter `west-foot`
 
 If `true`, add a foot plate at ground level by the far inward corner of the rear housing. The height of the plate is controlled by the `foot-plates` section below.
 
-#### Parameter `distance`
-
-The horizontal distance in mm between the furthest key in the row and the roof of the rear housing.
-
 #### Parameter `height`
 
 The height in mm of the roof, over the floor.
-
-#### Section `offsets`
-
-Modifiers for the size of the roof. All are in mm.
-
-##### Parameter `north`
-
-The extent of the roof on the y axis; its horizontal depth.
-
-##### Parameter `west`
-
-The extent on the x axis past the first key in the row.
-
-##### Parameter `east`
-
-The extent on the x axis past the last key in the row.
 
 #### Section `fasteners`
 
@@ -184,6 +192,14 @@ Support for light-emitting diodes in the case walls.
 #### Parameter `include`
 
 If `true`, cut slots for LEDs out of the case wall, facing the space between the two halves.
+
+#### Section `position`
+
+Where to attach the LED strip.
+
+##### Parameter `cluster`
+
+The key cluster at which to anchor the strip.
 
 #### Parameter `amount`
 
