@@ -177,24 +177,44 @@
 
 ;; Leaf metadata imitates clojure.tools.cli with extras.
 (spec/def ::parameter-descriptor
-  #{:heading-template :help :default :parse-fn :validate})
+  #{:heading-template :help :default :parse-fn :validate :resolve-fn})
 (spec/def ::parameter-spec (spec/map-of ::parameter-descriptor some?))
 
-(defn parse-leaf [nominal candidate]
-  (let [raw (or candidate (:default nominal))
-        parse-fn (get nominal :parse-fn identity)]
+(defn- hard-defaults
+  "Pick a user-supplied value over a default value.
+  This is the default method for resolving overlap between built-in defaults
+  and the user configuration, at the leaf level."
+  [nominal candidate]
+  (or candidate (:default nominal)))
+
+(defn- soft-defaults [nominal candidate]
+  "Prioritize a user-supplied value over a default value, but make it spongy.
+  This is an alternate method for resolving overlap, intended for use with
+  defaults that are so complicated the user will not want to write a complete,
+  explicit replacement every time."
+  (generics/soft-merge (:default nominal) candidate))
+
+(defn parse-leaf
+  "Resolve differences between default values and user-supplied values.
+  Run the result through a specified parsing function and return it."
+  [nominal candidate]
+  (let [resolve-fn (get nominal :resolve-fn hard-defaults)
+        parse-fn (get nominal :parse-fn identity)
+        merged (resolve-fn nominal candidate)]
    (try
-     (parse-fn raw)
+     (parse-fn merged)
      (catch Exception e
        (throw (ex-info "Could not cast value to correct data type"
                         {:type :parsing-error
-                         :raw-value raw
+                         :raw-value candidate
+                         :merged-value merged
                          :original-exception e}))))))
 
 (declare validate-leaf validate-branch)
 
-(defn validate-node [nominal candidate key]
+(defn validate-node
   "Validate a fragment of a configuration received through the UI."
+  [nominal candidate key]
   (assert (not (spec/valid? ::parameter-descriptor key)))
   (if (contains? nominal key)
     (if (spec/valid? ::parameter-spec (key nominal))
@@ -213,20 +233,22 @@
                      :keys (list key)
                      :accepted-keys (keys nominal)}))))
 
-(defn validate-branch [nominal candidate]
+(defn validate-branch
   "Validate a section of a configuration received through the UI."
+  [nominal candidate]
   (reduce (partial validate-node nominal)
           candidate
           (remove #(= :metadata %)
             (distinct (apply concat (map keys [nominal candidate]))))))
 
 (defn extract-defaults
-  "Fetch default values for a section of the configuration."
+  "Fetch default values for a broad section of the configuration."
   [flat]
   (validate-branch (inflate flat) {}))
 
-(defn validate-leaf [nominal candidate]
+(defn validate-leaf
   "Validate a specific parameter received through the UI."
+  [nominal candidate]
   (assert (spec/valid? ::parameter-spec nominal))
   (reduce
     (fn [unvalidated validator]
@@ -631,13 +653,15 @@
      :default (extract-defaults nested-raws)
      :parse-fn (map-like {:parameters identity
                           :clusters parse-by-key-overrides})
+     :resolve-fn soft-defaults
      :validate [(spec/keys :opt-un [::parameters ::clusters])]}
     "This section is built like an onion. Each layer of settings inside it "
     "is more specific to a smaller part of the keyboard, eventually reaching "
     "the level of individual keys. It’s all documented "
     "[here](options-nested.md)."]
    [:section [:case]
-    "Much of the keyboard case is generated from the `wall` parameters above. "
+    "Much of the keyboard case is generated from the `wall` parameters "
+    "described [here](options-nested.md). "
     "This section deals with lesser features of the case."]
    [:parameter [:case :key-mount-thickness]
     {:default 1 :parse-fn num}
@@ -779,7 +803,7 @@
    [:parameter [:case :tweaks]
     {:default [] :parse-fn case-tweaks :validate [::hull-around]}
     "Additional shapes. This is usually needed to bridge gaps between the "
-    "walls of the finger and key clusters.\n"
+    "walls of the key clusters.\n"
     "\n"
     "The expected value here is an arbitrarily nested structure starting with "
     "a list. Each item in the list can follow one of the following patterns:\n"
@@ -790,7 +814,7 @@
     "the top level and as the immediate child of each map node.\n"
     "\n"
     "Each leaf node identifies a particular set of key mount corner posts. "
-    "These are identical to the posts used to build the walls (see above), "
+    "These are identical to the posts used to build the walls, "
     "but this section gives you greater freedom in how to combine them. "
     "A leaf node must contain:\n"
     "\n"
@@ -1171,7 +1195,9 @@
     "The position of the center point of the mask. By default, `[0, 0, 500]`, "
     "which is supposed to mask out everything below ground level."]])
 
-(defn- print-markdown-fragment [node level]
+(defn- print-markdown-fragment
+  "Print a description of a node in the settings structure using Markdown."
+  [node level]
   (let [heading-style
           (fn [text]
             (if (< level 7)  ; Markdown only supports up to h6 tags.

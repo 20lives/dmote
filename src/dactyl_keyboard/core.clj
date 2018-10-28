@@ -152,17 +152,12 @@
 (defn- parse-build-opts
   "Parse model parameters. Return an accessor for them."
   [{:keys [debug] :as options}]
-  (let [deep-defaults (params/extract-defaults params/main-raws)
-        raws (apply generics/soft-merge
+  (let [raws (apply generics/soft-merge
                (map from-file (:configuration-file options)))]
    (if debug
-     (do (pprint-settings "Built-in default settings:" deep-defaults)
-         (pprint-settings "Received settings:" raws)))
-   (let [merged (generics/soft-merge deep-defaults raws)
-         validated (params/validate-configuration merged)]
-    (if debug
-      (do (pprint-settings "Merged settings:" merged)
-          (pprint-settings "Validated settings:" validated)))
+     (pprint-settings "Received settings without built-in defaults:" raws))
+   (let [validated (params/validate-configuration raws)]
+    (if debug (pprint-settings "Resolved and validated settings:" validated))
     (build-option-accessor (enrich-option-metadata validated)))))
 
 (defn- render-to-stl
@@ -177,13 +172,14 @@
 
 (defn- author
   "Describe a model in one or more output files."
-  [[basename model {:keys [render renderer]}]]
+  [[basename model {:keys [debug render renderer]}]]
   (let [scad (str "things/scad/" basename ".scad")
         stl (str "things/stl/" basename ".stl")]
-    (println "Transpiling" scad)
+    (if debug (println "Started" scad))
     (make-parents scad)
     (spit scad (write-scad model))
-    (if render (render-to-stl renderer scad stl))))
+    (if render (render-to-stl renderer scad stl))
+    (if debug (println "Finished" scad))))
 
 (defn collect-models
   "Make an option accessor function and assemble models with it.
@@ -263,4 +259,6 @@
            ;; Likely raised by getopt.
            (println "An exception occurred:" (.getMessage e))
            (pprint (ex-data e))
-           (System/exit 1))))))
+           (System/exit 1))))
+   (if (:debug options) (println "Exiting without error."))
+   (System/exit 0)))

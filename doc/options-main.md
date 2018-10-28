@@ -47,7 +47,7 @@ This section is built like an onion. Each layer of settings inside it is more sp
 
 ## Section `case`
 
-Much of the keyboard case is generated from the `wall` parameters above. This section deals with lesser features of the case.
+Much of the keyboard case is generated from the `wall` parameters described [here](options-nested.md). This section deals with lesser features of the case.
 
 ### Parameter `key-mount-thickness`
 
@@ -205,7 +205,7 @@ The distance between LEDs on the strip. You may want to apply a setting slightly
 
 ### Parameter `tweaks`
 
-Additional shapes. This is usually needed to bridge gaps between the walls of the finger and key clusters.
+Additional shapes. This is usually needed to bridge gaps between the walls of the key clusters.
 
 The expected value here is an arbitrarily nested structure starting with a list. Each item in the list can follow one of the following patterns:
 
@@ -213,7 +213,7 @@ The expected value here is an arbitrarily nested structure starting with a list.
 * A map, representing an instruction to combine nested items in a specific way.
 * A list of any combination of the other two types. This type exists at the top level and as the immediate child of each map node.
 
-Each leaf node identifies a particular set of key mount corner posts. These are identical to the posts used to build the walls (see above), but this section gives you greater freedom in how to combine them. A leaf node must contain:
+Each leaf node identifies a particular set of key mount corner posts. These are identical to the posts used to build the walls, but this section gives you greater freedom in how to combine them. A leaf node must contain:
 
 * A key alias defined under `key-clusters`.
 * A key corner ID, such as `NNE` for north by north-east.
