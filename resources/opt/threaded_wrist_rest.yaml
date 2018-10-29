@@ -13,7 +13,7 @@ wrist-rest:
     mounts:
       width: 15
       case-side:
-        key-alias: f2
+        key-alias: m2
         offset: [-1, -23.5]
         depth: 6
       plinth-side:

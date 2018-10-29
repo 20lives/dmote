@@ -6,11 +6,10 @@
 (ns dactyl-keyboard.cad.key
   (:require [clojure.core.matrix :as matrixmath]
             [scad-clj.model :exclude [use import] :refer :all]
-            [unicode-math.core :refer :all]
-            [dactyl-keyboard.generics :refer :all]
-            [dactyl-keyboard.params :as params]
-            [dactyl-keyboard.cad.misc :refer :all]
-            [dactyl-keyboard.cad.matrix :refer :all]))
+            [unicode-math.core :refer [π]]
+            [dactyl-keyboard.generics :as generics]
+            [dactyl-keyboard.cad.misc :as misc]
+            [dactyl-keyboard.cad.matrix :as matrix]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -134,11 +133,11 @@
             "True if specified key is requested."
             (if-let [data (nth matrix column nil)]
               (cond
-                (< row 0) (>= (get data :rows-below-home 0) (abs row))
+                (< row 0) (>= (get data :rows-below-home 0) (generics/abs row))
                 (> row 0) (>= (get data :rows-above-home 0) row)
                 :else true)  ; Home row.
               false))  ; Column not in matrix.
-        key-coordinates (coordinate-pairs column-range row-range key-requested?)
+        key-coordinates (matrix/coordinate-pairs column-range row-range key-requested?)
         M (fn [f coll] (into {} (map f coll)))
         row-indices-by-column
           (M (fn [c] [c (filter #(key-requested? [c %]) row-range)])
@@ -217,7 +216,7 @@
         keyswitch-hole-y (getopt :switches :derived :keyswitch-hole-y)]
    (color [0.75 0.75 1 1]
      (translate [0 0 (getopt :case :key-mount-thickness)]
-       (pairwise-hulls
+       (misc/pairwise-hulls
          ;; A bottom plate for ease of mounting a switch:
          (step 0.5 (max keyswitch-hole-x keyswitch-hole-y))
          ;; Space for the keycap’s edges in travel:
@@ -314,8 +313,8 @@
         neighbour-z (getopt :case :key-mount-thickness)
         area-z (getopt :case :web-thickness)
         m (getopt :case :key-mount-corner-margin)]
-    [(* (apply compass-dx directions) (- (/ subject-x 2) (/ m 2)))
-     (* (apply compass-dy directions) (- (/ subject-y 2) (/ m 2)))
+    [(* (apply matrix/compass-dx directions) (- (/ subject-x 2) (/ m 2)))
+     (* (apply matrix/compass-dy directions) (- (/ subject-y 2) (/ m 2)))
      (+ (/ area-z -2) neighbour-z)]))
 
 (defn web-post [getopt]
@@ -352,7 +351,7 @@
        (->> obj
             (rot-ax-fn angle-product)
             (translate-fn [ortho-x 0 ortho-z]))
-       (swing-callables translate-fn radius (partial rot-ax-fn angle-product) obj)))))
+       (misc/swing-callables translate-fn radius (partial rot-ax-fn angle-product) obj)))))
 
 (defn put-in-column [translate-fn rot-ax-fn getopt cluster coord obj]
   "Place a key in relation to its column."

@@ -7,11 +7,10 @@
   (:require [scad-clj.model :exclude [use import] :refer :all]
             [unicode-math.core :refer :all]
             [dactyl-keyboard.generics :as generics]
-            [dactyl-keyboard.params :refer :all]
-            [dactyl-keyboard.cad.misc :refer :all]
-            [dactyl-keyboard.cad.matrix :refer :all]
-            [dactyl-keyboard.cad.key :refer :all]
-            [dactyl-keyboard.cad.body :refer :all]))
+            [dactyl-keyboard.cad.misc :as misc]
+            [dactyl-keyboard.cad.matrix :as matrix]
+            [dactyl-keyboard.cad.key :as key]
+            [dactyl-keyboard.cad.body :as body]))
 
 
 ;;;;;;;;;;;;;;;;;;;
@@ -34,14 +33,14 @@
                          (getopt field :position :prefer-rear-housing))
         general
           (if use-housing
-            (housing-position getopt corner 3 [0 0 0])
+            (body/housing-position getopt corner 3 [0 0 0])
             (let [alias (getopt field :position :key-alias)
                   keyinfo (getopt :key-clusters :derived :aliases alias)
                   {cluster :cluster coordinates :coordinates} keyinfo]
-             (wall-corner-position getopt cluster coordinates corner)))
+             (body/wall-corner-position getopt cluster coordinates corner)))
         to-nook
           (if use-housing
-            (let [{dxs :dx dys :dy} (compass-to-grid (second corner))]
+            (let [{dxs :dx dys :dy} (matrix/compass-to-grid (second corner))]
              [(* -1 dxs lateral-shift) (* -1 dys lateral-shift) 0])
             ;; Else don’t bother.
             [0 0 0])
@@ -74,7 +73,7 @@
      ;; Arbitrary rotation. Not very useful for the MCU.
      (rotate (getopt :mcu :position :rotation))
      ;; Face the corner’s main direction.
-     (rotate [0 0 (- (compass-radians (first corner)))])
+     (rotate [0 0 (- (matrix/compass-radians (first corner)))])
      ;; Move to the requested corner.
      (translate (into-nook getopt :mcu (getopt :mcu :support :lateral-spacing)))
      (translate [0 0 (/ z 2)]))))
@@ -149,20 +148,20 @@
         keyinfo (getopt :key-clusters :derived :aliases alias)
         {cluster :cluster coordinates0 :coordinates} keyinfo
         direction (getopt :mcu :support :stop :direction)
-        opposite (turning-left (turning-left direction))
-        coordinates1 (walk-matrix coordinates0 direction)
+        opposite (matrix/turning-left (matrix/turning-left direction))
+        coordinates1 (matrix/walk-matrix coordinates0 direction)
         post (fn [coord corner]
-               (cluster-place getopt cluster coord
-                 (mount-corner-post getopt corner)))]
+               (key/cluster-place getopt cluster coord
+                 (key/mount-corner-post getopt corner)))]
     (union
       (mcu-position getopt (mcu-gripper getopt 1))
       (hull
         ;; Connect the back half of the gripper to two key mounts.
         (mcu-position getopt (mcu-gripper getopt 0.5))
-        (post coordinates0 [direction (turning-left direction)])
-        (post coordinates0 [direction (turning-right direction)])
-        (post coordinates1 [opposite (turning-left direction)])
-        (post coordinates1 [opposite (turning-right direction)])))))
+        (post coordinates0 [direction (matrix/turning-left direction)])
+        (post coordinates0 [direction (matrix/turning-right direction)])
+        (post coordinates1 [opposite (matrix/turning-left direction)])
+        (post coordinates1 [opposite (matrix/turning-right direction)])))))
 
 (defn mcu-lock-fixture-positive [getopt]
   "Parts of the lock-style MCU support that integrate with the case.
@@ -205,9 +204,9 @@
    (rotate [0 (/ π -2) 0]
      (translate [0 (- (+ y0 (/ y1 2))) (* 2 l1)]
        (union
-         (iso-bolt-model style d (+ l0 l1 l2))
+         (misc/iso-bolt-model style d (+ l0 l1 l2))
          (translate [0 0 (- (+ l0 l1 l2 -1))]
-           (iso-hex-nut-model d)))))))
+           (misc/iso-hex-nut-model d)))))))
 
 (defn mcu-lock-sink [getopt]
   (mcu-position getopt
@@ -240,7 +239,7 @@
                        (- (/ mount-overshoot 2) pcb-y (/ mount-base 2))
                        0]
              (cube mount-x (+ mount-overshoot mount-base) mount-z))
-           (pairwise-hulls
+           (misc/pairwise-hulls
              (translate [bolt-x0 (- pcb-y) 0]
                (cube bolt-x-mount 10 mount-z))
              (translate [bolt-x0 (/ pcb-y -4) 0]
@@ -271,8 +270,8 @@
         {cluster :cluster coordinates :coordinates} keyinfo]
    (->>
      shape
-     (translate (cluster-position getopt cluster coordinates
-                  (wall-slab-center-offset getopt cluster coordinates :north)))
+     (translate (key/cluster-position getopt cluster coordinates
+                  (body/wall-slab-center-offset getopt cluster coordinates :north)))
      (translate [0 0 (/ (getopt :case :back-plate :beam-height) -2)])
      (translate offset))))
 
@@ -301,7 +300,7 @@
                    (cylinder (/ d 2) 25)
                    (if (getopt :case :back-plate :fasteners :bosses)
                      (translate [0 0 10]
-                       (iso-hex-nut-model d 10))))
+                       (misc/iso-hex-nut-model d 10))))
                  (rotate [(/ π 2) 0 0])
                  (translate [x-offset 0 0])
                  (backplate-place getopt)))]
@@ -310,7 +309,7 @@
      (hole (/ D -2)))))
 
 (defn backplate-block [getopt]
-  (bottom-hull (backplate-place getopt (backplate-shape getopt))))
+  (misc/bottom-hull (backplate-place getopt (backplate-shape getopt))))
 
 
 ;;;;;;;;;;;;;;;
@@ -322,7 +321,7 @@
         by-cluster (partial (getopt :key-clusters :derived :by-cluster))]
     (for [row ((by-cluster cluster :row-indices-by-column) 0)
           corner [generics/WSW generics/WNW]]
-     (let [[x y _] (wall-corner-position getopt cluster [0 row] corner)]
+     (let [[x y _] (body/wall-corner-position getopt cluster [0 row] corner)]
       [(+ x (getopt :by-key :parameters :wall :thickness)) y]))))
 
 (defn west-wall-east-points [getopt]
@@ -338,7 +337,7 @@
   (let [cluster (getopt :case :leds :position :cluster)
         by-col (getopt :key-clusters :derived :by-cluster cluster :row-indices-by-column)
         row (first (by-col 0))
-        [x0 y0 _] (wall-corner-position getopt cluster [0 row] generics/WNW)
+        [x0 y0 _] (body/wall-corner-position getopt cluster [0 row] generics/WNW)
         h (+ 5 (/ (getopt :case :leds :housing-size) 2))]
    [x0 (+ y0 (* (getopt :case :leds :interval) ordinal)) h]))
 
@@ -390,7 +389,7 @@
         ;; Align with the wall (and perhaps the roof).
         (translate alignment)
         ;; Rotate to face the corner’s main direction.
-        (rotate [0 0 (- (compass-radians (first corner)))])
+        (rotate [0 0 (- (matrix/compass-radians (first corner)))])
         ;; Bring snugly to the requested corner.
         (translate (into-nook getopt :connection
                      (* 0.5 (+ thickness (first socket-size))))))))
@@ -437,7 +436,7 @@
                     :or {offset [0 0]}}]
              (let [key (getopt :key-clusters :derived :aliases key-alias)
                    {cluster :cluster coordinates :coordinates} key
-                   base (take 2 (wall-corner-position
+                   base (take 2 (body/wall-corner-position
                                   getopt cluster coordinates directions))]
                (vec (map + base offset))))
            (plate [polygon-spec]

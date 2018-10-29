@@ -7,7 +7,7 @@
   (:require [scad-clj.model :exclude [use import] :refer :all]
             [unicode-math.core :refer :all]
             [dactyl-keyboard.params :as params]
-            [dactyl-keyboard.generics :refer :all]
+            [dactyl-keyboard.generics :refer [abs ESE SSE SSW]]
             [dactyl-keyboard.cad.body :as body]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.misc :as misc]
@@ -45,7 +45,7 @@
     :z1 z1  ; Top of base, bottom of lip.
     :z2 z2  ; Top of lip. Plastic-silicone material transition zone.
     :z3 z3  ; Silicone-to-silicone transition at base of heightmap.
-    :z4 z4  ; Absolute peak of the entire plinth; top of silcone pad.
+    :z4 z4  ; Absolute peak of the entire plinth. Top of silicone pad.
     :key-cluster cluster
     :key-coord coord
     :nw corner-nw
