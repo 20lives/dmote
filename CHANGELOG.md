@@ -33,5 +33,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Rearranged derived parameter structure somewhat to support arbitrary key
   clusters.
 - Removed the `new-scad` function without replacement.
+- Shifted more heavily toward explicit namespacing and took the opportunity to
+  shorten some function names in the matrix module.
 
 [Unreleased]: https://github.com/veikman/dactyl-keyboard/compare/dmote-v0.2.0...HEAD

@@ -34,12 +34,12 @@
 (defn compass-dx [& directions] (apply compass-delta :dx directions))
 (defn compass-dy [& directions] (apply compass-delta :dy directions))
 
-(defn turning-left [direction]
+(defn left [direction]
   "Retrieve a direction keyword for turning left from ‘direction’."
   (ffirst (filter #(= direction (second %))
                   (partition 2 1 '(:north) (keys compass-to-grid)))))
 
-(defn turning-right [direction]
+(defn right [direction]
   (second (first (filter #(= direction (first %))
                          (partition 2 1 '(:north) (keys compass-to-grid))))))
 
@@ -51,10 +51,10 @@
   "Each row runs along the x axis; changing rows changes y."
   (+ row (compass-dy direction)))
 
-(defn walk-matrix [[column row] & directions]
+(defn walk [[column row] & directions]
   "A tuple describing the key position an arbitrary orthogonal walk would lead to."
   (if (empty? directions)
     [column row]
     (let [direction (first directions)]
-      (apply (partial walk-matrix [(next-column column direction) (next-row row direction)])
+      (apply (partial walk [(next-column column direction) (next-row row direction)])
         (rest directions)))))

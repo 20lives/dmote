@@ -148,8 +148,8 @@
         keyinfo (getopt :key-clusters :derived :aliases alias)
         {cluster :cluster coordinates0 :coordinates} keyinfo
         direction (getopt :mcu :support :stop :direction)
-        opposite (matrix/turning-left (matrix/turning-left direction))
-        coordinates1 (matrix/walk-matrix coordinates0 direction)
+        opposite (matrix/left (matrix/left direction))
+        coordinates1 (matrix/walk coordinates0 direction)
         post (fn [coord corner]
                (key/cluster-place getopt cluster coord
                  (key/mount-corner-post getopt corner)))]
@@ -158,10 +158,10 @@
       (hull
         ;; Connect the back half of the gripper to two key mounts.
         (mcu-position getopt (mcu-gripper getopt 0.5))
-        (post coordinates0 [direction (matrix/turning-left direction)])
-        (post coordinates0 [direction (matrix/turning-right direction)])
-        (post coordinates1 [opposite (matrix/turning-left direction)])
-        (post coordinates1 [opposite (matrix/turning-right direction)])))))
+        (post coordinates0 [direction (matrix/left direction)])
+        (post coordinates0 [direction (matrix/right direction)])
+        (post coordinates1 [opposite (matrix/left direction)])
+        (post coordinates1 [opposite (matrix/right direction)])))))
 
 (defn mcu-lock-fixture-positive [getopt]
   "Parts of the lock-style MCU support that integrate with the case.

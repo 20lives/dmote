@@ -37,9 +37,9 @@
     (if (empty? remaining-coordinates)
       shapes
       (let [coord-here (first remaining-coordinates)
-            coord-north (matrix/walk-matrix coord-here :north)
-            coord-east (matrix/walk-matrix coord-here :east)
-            coord-northeast (matrix/walk-matrix coord-here :north :east)
+            coord-north (matrix/walk coord-here :north)
+            coord-east (matrix/walk coord-here :east)
+            coord-northeast (matrix/walk coord-here :north :east)
             fill-here (spotter coord-here)
             fill-north (spotter coord-north)
             fill-east (spotter coord-east)
@@ -131,8 +131,7 @@
   (letfn [(c [turning-fn]
             (wall-corner-offset getopt cluster coordinates
               [direction (turning-fn direction)]))]
-    (vec (map / (vec (map + (c matrix/turning-left)
-                            (c matrix/turning-right))) [2 2 2]))))
+    (vec (map / (vec (map + (c matrix/left) (c matrix/right))) [2 2 2]))))
 
 ;; Functions for specifying parts of a perimeter wall. These all take the
 ;; edge-walking algorithm’s position and direction upon seeing the need for
@@ -141,32 +140,29 @@
 (defn wall-straight-body [[coordinates direction]]
   "The part of a case wall that runs along the side of a key mount on the
   edge of the board."
-  (let [facing (matrix/turning-left direction)]
-    [[coordinates facing matrix/turning-right]
-     [coordinates facing matrix/turning-left]]))
+  (let [facing (matrix/left direction)]
+    [[coordinates facing matrix/right] [coordinates facing matrix/left]]))
 
 (defn wall-straight-join [[coordinates direction]]
   "The part of a case wall that runs between two key mounts in a straight line."
-  (let [next-coord (matrix/walk-matrix coordinates direction)
-        facing (matrix/turning-left direction)]
-    [[coordinates facing matrix/turning-right]
-     [next-coord facing matrix/turning-left]]))
+  (let [next-coord (matrix/walk coordinates direction)
+        facing (matrix/left direction)]
+    [[coordinates facing matrix/right] [next-coord facing matrix/left]]))
 
 (defn wall-outer-corner [[coordinates direction]]
   "The part of a case wall that smooths out an outer, sharp corner."
-  (let [original-facing (matrix/turning-left direction)]
-    [[coordinates original-facing matrix/turning-right]
-     [coordinates direction matrix/turning-left]]))
+  (let [original-facing (matrix/left direction)]
+    [[coordinates original-facing matrix/right]
+     [coordinates direction matrix/left]]))
 
 (defn wall-inner-corner [[coordinates direction]]
   "The part of a case wall that covers any gap in an inner corner.
   In this case, it is import to pick not only the right corner but the right
   direction moving out from that corner."
-  (let [opposite (matrix/walk-matrix
-                   coordinates (matrix/turning-left direction) direction)
-        reverse (matrix/turning-left (matrix/turning-left direction))]
-     [[coordinates (matrix/turning-left direction) (fn [_] direction)]
-      [opposite reverse matrix/turning-left]]))
+  (let [opposite (matrix/walk coordinates (matrix/left direction) direction)
+        reverse (matrix/left (matrix/left direction))]
+    [[coordinates (matrix/left direction) (fn [_] direction)]
+     [opposite reverse matrix/left]]))
 
 ;; Edge walking.
 
@@ -207,11 +203,10 @@
     (assert (occlusion-fn (first start)))
     (loop [place-and-direction start shapes []]
       (let [[coordinates direction] place-and-direction
-            left (matrix/walk-matrix
-                   coordinates (matrix/turning-left direction))
-            ahead (matrix/walk-matrix coordinates direction)
-            ahead-left (matrix/walk-matrix
-                         coordinates direction (matrix/turning-left direction))
+            left (matrix/walk coordinates (matrix/left direction))
+            ahead (matrix/walk coordinates direction)
+            ahead-left (matrix/walk
+                         coordinates direction (matrix/left direction))
             landscape (vec (map occlusion-fn [left ahead-left ahead]))
             situation (case landscape
                         [false false false] :outer-corner
@@ -226,9 +221,9 @@
             (case situation
               ; In an outer corner, turn right in place.
               ; In an inner corner, jump diagonally ahead-left, turning left.
-              :outer-corner [coordinates (matrix/turning-right direction)]
+              :outer-corner [coordinates (matrix/right direction)]
               :straight     [ahead direction]
-              :inner-corner [ahead-left (matrix/turning-left direction)])
+              :inner-corner [ahead-left (matrix/left direction)])
             (conj
               shapes
               (mason wall-straight-body place-and-direction)
@@ -317,26 +312,26 @@
        (reduce
          (fn [coll shapes] (conj coll (apply hull shapes)))
          []
-         [(wall-edge getopt cluster true [wec :west matrix/turning-right])
+         [(wall-edge getopt cluster true [wec :west matrix/right])
           (map #(housing-place getopt WSW % c) (range 2))
           (map #(housing-place getopt WNW % c) (range 2))
           (map #(housing-place getopt NNW % c) (range 2))
           (map #(housing-place getopt NNE % c) (range 2))
           (map #(housing-place getopt ENE % c) (range 2))
           (map #(housing-place getopt ESE % c) (range 2))
-          (wall-edge getopt cluster true [eec :east matrix/turning-left])]))
+          (wall-edge getopt cluster true [eec :east matrix/left])]))
      (apply misc/pairwise-hulls
        (reduce
          (fn [coll shapes] (conj coll (apply misc/bottom-hull shapes)))
          []
-         [(wall-edge getopt cluster false [wec :west matrix/turning-right])
+         [(wall-edge getopt cluster false [wec :west matrix/right])
           (housing-place getopt WSW 1 c)
           (housing-place getopt WNW 1 c)
           (housing-place getopt NNW 1 c)
           (housing-place getopt NNE 1 c)
           (housing-place getopt ENE 1 c)
           (housing-place getopt ESE 1 c)
-          (wall-edge getopt cluster false [eec :east matrix/turning-left])])))))
+          (wall-edge getopt cluster false [eec :east matrix/left])])))))
 
 (defn- housing-web [getopt]
   "An extension of the finger key cluster’s webbing onto the roof of the
