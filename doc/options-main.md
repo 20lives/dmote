@@ -1,8 +1,6 @@
-# Configuration options
+# General configuration options
 
-Each heading in this document represents a recognized configuration key in YAML files for a DMOTE variant. The document was generated from the application CLI.
-
-This is the main body of available options. As such, it starts from the top level of a YAML file. Other documents cover sections of this one in more detail.
+Each heading in this document represents a recognized configuration key in the main body of a YAML file for a DMOTE variant. Other documents cover special sections of this one in more detail.
 
 ## Section `keycaps`
 
@@ -630,3 +628,7 @@ The size of the mask in mm. By default, `[1000, 1000, 1000]`.
 ### Parameter `center`
 
 The position of the center point of the mask. By default, `[0, 0, 500]`, which is supposed to mask out everything below ground level.
+
+⸻
+
+This document was generated from the application CLI.

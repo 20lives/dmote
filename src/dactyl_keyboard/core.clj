@@ -30,19 +30,17 @@
 (defn document-settings
   "Show documentation for settings."
   [{section :describe-parameters}]
-  (println "# Configuration options")
-  (println)
-  (println (str "Each heading in this document represents a recognized "
-                "configuration key in YAML files for a DMOTE variant. "
-                "The document was generated from the application CLI."))
-  (println)
   (params/print-markdown-section
     (case section
       :main params/main-raws
       :clusters params/cluster-raws
       :nested params/nested-raws
-      (do (println "ERROR: Unknown section requested.")
-          (System/exit 1)))))
+      (do (println "ERROR: Unknown section of parameters.")
+          (System/exit 1))))
+  (println)
+  (println "⸻")
+  (println)
+  (println "This document was generated from the application CLI."))
 
 (defn build-keyboard-right
   "Right-hand-side keyboard model."

@@ -1,14 +1,12 @@
-# Configuration options
+# Nestable configuration options
 
-Each heading in this document represents a recognized configuration key in YAML files for a DMOTE variant. The document was generated from the application CLI.
-
-This document describes all those settings which can be made at any level of specificity, from the entire keyboard down to an individual key.
+This document describes all those settings which can be made at any level of specificity, from the entire keyboard down to an individual key. These settings all go under `by-key` in a YAML file.
 
 ## Conceptual overview
 
 Variable specificity is accomplished by nesting. The following levels of specificity are currently available. Each one branches out, containing the next:
 
-* The global level, at `by-key` (cf. the [main document](options-main.md)).
+* The global level, directly under `by-key` (cf. the [main document](options-main.md)).
 * The key cluster level, at `by-key` → `clusters` → your cluster.
 * The column level, nested still further under your cluster → `columns` → column index.
 * The row level, nested under column index → `rows` → row index.
@@ -244,6 +242,10 @@ See `north`.
 
 
 
-## Parameter `clusters` ← overrides go in here
+## Special section `clusters` ← overrides go in here
 
 Starting here, you gradually descend from the global level toward the key level.
+
+⸻
+
+This document was generated from the application CLI.

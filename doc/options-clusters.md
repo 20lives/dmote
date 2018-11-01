@@ -1,6 +1,6 @@
-# Configuration options
+# Key cluster configuration options
 
-Each heading in this document represents a recognized configuration key in YAML files for a DMOTE variant. The document was generated from the application CLI.
+Each heading in this document represents a recognized configuration key in YAML files for a DMOTE variant.
 
 This specific document describes options for the general outline and position of any individual cluster of keys. One set of such options will exist for each entry in `key-clusters`, a parameter documented [here](options-main.md).
 
@@ -43,3 +43,7 @@ A key as named under any of the `aliases` sections described above. Take care to
 A 3-dimensional offset in mm from the indicated key or else from the origin of the coordinate system.
 
 The z-coordinate, which is the last number in this offset, is vertical adjustment of the key cluster. Set for your main cluster, it controls the overall height of the keyboard, including the height of its case.
+
+⸻
+
+This document was generated from the application CLI.

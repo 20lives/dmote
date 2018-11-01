@@ -267,7 +267,10 @@
 (def cluster-raws
   "A flat version of a special part of a user configuration.
   Default values and parsers here are secondary. Validators are used."
-  [["This specific document describes options for the general outline "
+  [["# Key cluster configuration options\n\n"
+    "Each heading in this document represents a recognized configuration key "
+    "in YAML files for a DMOTE variant.\n\n"
+    "This specific document describes options for the general outline "
     "and position of any individual cluster of keys. One set of such "
     "options will exist for each entry in `key-clusters`, a parameter "
     "documented [here](options-main.md)."]
@@ -345,9 +348,10 @@
 
 (def nested-raws
   "A flat version of another special part of a user configuration."
-  [["This document describes all those settings which can be made at "
-    "any level of specificity, from the entire keyboard down to an "
-    "individual key.\n"
+  [["# Nestable configuration options\n\n"
+    "This document describes all those settings which can be made at any "
+    "level of specificity, from the entire keyboard down to an individual "
+    "key. These settings all go under `by-key` in a YAML file.\n"
     "\n"
     "## Conceptual overview\n"
     "\n"
@@ -355,7 +359,7 @@
     "levels of specificity are currently available. Each one branches out, "
     "containing the next:\n"
     "\n"
-    "* The global level, at `by-key` (cf. the "
+    "* The global level, directly under `by-key` (cf. the "
     "[main document](options-main.md)).\n"
     "* The key cluster level, at `by-key` → `clusters` → your cluster.\n"
     "* The column level, nested still further under your cluster → "
@@ -586,7 +590,7 @@
    [:parameter [:parameters :wall :west :perpendicular]
     {:default 0 :parse-fn num}]
    [:parameter [:clusters]
-    {:heading-template "Parameter `%s` ← overrides go in here"
+    {:heading-template "Special section `%s` ← overrides go in here"
      :default {}
      :parse-fn parse-by-key-overrides
      :validate [(spec/map-of ::supported-key-cluster
@@ -609,9 +613,10 @@
 (def main-raws
   "A flat version of the specification for a user configuration.
   This excludes some major subsections."
-  [["This is the main body of available options. As such, it starts "
-    "from the top level of a YAML file. Other documents cover sections "
-    "of this one in more detail."]
+  [["# General configuration options\n\n"
+    "Each heading in this document represents a recognized configuration key "
+    "in the main body of a YAML file for a DMOTE variant. Other documents "
+    "cover special sections of this one in more detail."]
    [:section [:keycaps]
     "Keycaps are the plastic covers placed over the switches. Their shape will "
     "help determine the spacing between key mounts if the keyboard is curved. "
