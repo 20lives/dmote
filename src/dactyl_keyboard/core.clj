@@ -44,11 +44,6 @@
       (do (println "ERROR: Unknown section requested.")
           (System/exit 1)))))
 
-(defn new-scad
-  "Reload this namespace with any changed dependencies. Redraw .scad files."
-  []
-  (clojure.core/use 'dactyl-keyboard.core :reload-all))
-
 (defn build-keyboard-right
   "Right-hand-side keyboard model."
   [getopt]
