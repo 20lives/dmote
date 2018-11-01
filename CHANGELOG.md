@@ -15,6 +15,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   application itself (new flags: `--render`, `--renderer`).
 - Added intermediate `scad` and `stl` folders under `things`.
 - Split generated documentation (options.md) into three separate documents.
+- Reduced default threaded wrist-rest plinth pocket scale from 101% to 100.5%.
 
 ### Added
 - This log.
