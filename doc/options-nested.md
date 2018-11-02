@@ -6,16 +6,14 @@ This document describes all those settings which can be made at any level of spe
 
 Variable specificity is accomplished by nesting. The following levels of specificity are currently available. Each one branches out, containing the next:
 
-* The global level, directly under `by-key` (cf. the [main document](options-main.md)).
-* The key cluster level, at `by-key` → `clusters` → your cluster.
-* The column level, nested still further under your cluster → `columns` → column index.
-* The row level, nested under column index → `rows` → row index.
+- The global level, directly under `by-key` (cf. the [main document](options-main.md)).
+- The key cluster level, at `by-key` → `clusters` → your cluster.
+- The column level, nested still further under your cluster → `columns` → column index.
+- The row level, nested under column index → `rows` → row index. A setting at the row level will only affect keys in the specific cluster and column selected along the way, i.e. only one key per row. Therefore, the row level is effectively the key level.
 
-Each setting takes precedence over any copies of that specific setting at less specific levels. For example, any parameter at the row level is specific not only to a row but to the full combination of cluster, column and row in the chain that leads down to the row. The same setting made at any of those higher levels will be ignored in favour of the most specific setting. Conversely, a setting made on a specific row will not affect the same row in other columns.
+At each level, two subsections are permitted: `parameters`, where you put the settings themselves, and a section for the next level of nesting: `clusters`, then `columns`, then `rows`. More specific settings take precedence.
 
-At each level, two subsections are permitted: `parameters`, where you put the settings themselves, and a section for the next level of nesting: `clusters`, then `columns`, then `rows`. In effect, the row level is the key level and forms an exception, in that there are no further levels below it.
-
-In the following hypothetical example, the parameter `P`, which is not really supported, is defined three times: Once at the global level and twice at the key level.
+In the following hypothetical example, the parameter `P`, which is not really supported, is defined three times: Once at the global level and twice at the row (key) level.
 
 ```by-key:
   parameters:
@@ -33,11 +31,11 @@ In the following hypothetical example, the parameter `P`, which is not really su
                 P: false
 ```
 
-In this example, `P` will have the value “true” for all keys except two on each half of the keyboard. On the right-hand side, `P` will be false for the key closest to the user (“first” row) in the second column (column “1”) from the left in a cluster of keys here named `C`. `P` will also be false for the fourth key from the user (row “3”) in the same column.
+In this example, `P` will have the value “true” for all keys except two on each half of the keyboard. On the right-hand side, `P` will be false for the key closest to the user (“first” row) in the second column from the left (column “1”) in a cluster of keys here named `C`. `P` will also be false for the fourth key from the user (row “3”) in the same column.
 
 Columns and rows are indexed by their ordinal integers or the words “first” or “last”, which take priority.
 
-WARNING: Due to a peculiarity of the YAML parser, take care to quote your numeric column and row indices as strings. This is why there are quotation marks around column index 1 in the example.
+WARNING: Due to a peculiarity of the YAML parser, take care to quote your numeric column and row indices as strings. This is why there are quotation marks around column index 1 and row index 3 in the example.
 
 ## Section `parameters`
 
@@ -183,8 +181,8 @@ This section describes the shape of the wall on the north side of the keyboard. 
 
 Two types of values are permitted here:
 
-* The keyword `full`. This means a complete wall extending from the key mount all the way down to the ground via segments numbered 0 through 4 and a vertical drop thereafter.
-* An integer corresponding to the last wall segment to be included. A zero means there will be no wall. No matter the number, there will be no vertical drop to the floor.
+- The keyword `full`. This means a complete wall extending from the key mount all the way down to the ground via segments numbered 0 through 4 and a vertical drop thereafter.
+- An integer corresponding to the last wall segment to be included. A zero means there will be no wall. No matter the number, there will be no vertical drop to the floor.
 
 ##### Parameter `parallel`
 

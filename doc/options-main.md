@@ -28,8 +28,8 @@ Electrical switches close a circuit when pressed. They cannot be printed. This s
 
 The switch type. One of:
 
- * `alps`: ALPS style switches, including Matias.
-* `mx`: Cherry MX style switches.
+- `alps`: ALPS style switches, including Matias.
+- `mx`: Cherry MX style switches.
 
 ### Parameter `travel`
 
@@ -223,24 +223,24 @@ Additional shapes. This is usually needed to bridge gaps between the walls of th
 
 The expected value here is an arbitrarily nested structure starting with a list. Each item in the list can follow one of the following patterns:
 
-* A leaf node. This is a 3- or 4-tuple list with contents specified below.
-* A map, representing an instruction to combine nested items in a specific way.
-* A list of any combination of the other two types. This type exists at the top level and as the immediate child of each map node.
+- A leaf node. This is a 3- or 4-tuple list with contents specified below.
+- A map, representing an instruction to combine nested items in a specific way.
+- A list of any combination of the other two types. This type exists at the top level and as the immediate child of each map node.
 
 Each leaf node identifies a particular set of key mount corner posts. These are identical to the posts used to build the walls, but this section gives you greater freedom in how to combine them. A leaf node must contain:
 
-* A key alias defined under `key-clusters`.
-* A key corner ID, such as `NNE` for north by north-east.
-* A wall segment ID, which is an integer from 0 to 4.
+- A key alias defined under `key-clusters`.
+- A key corner ID, such as `NNE` for north by north-east.
+- A wall segment ID, which is an integer from 0 to 4.
 
 Together, these identify a starting segment. Optionally, a leaf node may contain a second segment ID trailing the first. In that case, the leaf will represent the convex hull of the first and second indicated segments, plus all in between.
 
 By default, a map node will create a convex hull around its child nodes. However, this behaviour can be modified. The following keys are recognized:
 
-* `to-ground`: If `true`, child nodes will be extended vertically down to the ground plane, as with a `full` wall.
-* `chunk-size`: Any integer greater than 1. If this is set, child nodes will not share a single convex hull. Instead, there will be a sequence of smaller hulls, each encompassing this many items.
-* `highlight`: If `true`, render the node in OpenSCAD’s highlighting style. This is convenient while you work.
-* `hull-around`: The list of child nodes. Required.
+- `to-ground`: If `true`, child nodes will be extended vertically down to the ground plane, as with a `full` wall.
+- `chunk-size`: Any integer greater than 1. If this is set, child nodes will not share a single convex hull. Instead, there will be a sequence of smaller hulls, each encompassing this many items.
+- `highlight`: If `true`, render the node in OpenSCAD’s highlighting style. This is convenient while you work.
+- `hull-around`: The list of child nodes. Required.
 
 In the following example, `A` and `B` are aliases that would be defined elsewhere. The example is interpreted to mean that a plate should be created stretching from the south-by-southeast corner of `A` to the north-by-northeast corner of `B`. Due to `chunk-size` 2, that first plate will be joined, not hulled, with a second plate from `B` back to a different corner of `A`, with a longer stretch of wall segments down the corner of `A`.
 
@@ -317,8 +317,8 @@ The support structure that holds the MCU PCBA in place.
 
 The style of the support. Available styles are:
 
-* `lock`: A separate physical object that is bolted in place over the MCU. This style is appropriate only with a rear housing, and then only when the PCB aligns with a long wall of that housing. It has the advantage that it can hug the connector on the PCB tightly, thus preventing a fragile surface-mounted connector from breaking off.
-* `stop`: A gripper that holds the MCU in place at its rear end. This gripper, in turn, is held up by key mount webbing and is thus integral to the keyboard, not printed separately like the lock. This style does not require rear housing.
+- `lock`: A separate physical object that is bolted in place over the MCU. This style is appropriate only with a rear housing, and then only when the PCB aligns with a long wall of that housing. It has the advantage that it can hug the connector on the PCB tightly, thus preventing a fragile surface-mounted connector from breaking off.
+- `stop`: A gripper that holds the MCU in place at its rear end. This gripper, in turn, is held up by key mount webbing and is thus integral to the keyboard, not printed separately like the lock. This style does not require rear housing.
 
 #### Parameter `preview`
 
@@ -454,8 +454,8 @@ If `true`, include a wrist rest with the keyboard.
 
 The style of the wrist rest. Available styles are:
 
-* `threaded`: threaded fasteners connect the case and wrist rest. This works with a great variety of keyboard shapes and will allow adjusting the position of the wrist rest for different hands.
-* `solid`: a printed plastic bridge along the ground as part of the model. This has more limitations, both in manufacture and in use. It includes a hook on the near outward side of the case, which will only be useful if the case wall at that point is short and the wrist rest is attached to a key cluster whose third column (column 2) is positioned and walled in such a way that the solid bridge can be wedged between the hook and the column.
+- `threaded`: threaded fasteners connect the case and wrist rest. This works with a great variety of keyboard shapes and will allow adjusting the position of the wrist rest for different hands.
+- `solid`: a printed plastic bridge along the ground as part of the model. This has more limitations, both in manufacture and in use. It includes a hook on the near outward side of the case, which will only be useful if the case wall at that point is short and the wrist rest is attached to a key cluster whose third column (column 2) is positioned and walled in such a way that the solid bridge can be wedged between the hook and the column.
 
 ### Parameter `preview`
 

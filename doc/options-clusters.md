@@ -8,8 +8,8 @@ This specific document describes options for the general outline and position of
 
 A list of key columns. Columns are aligned with the user’s fingers. Each column will be known by its index in this list, starting at zero for the first item. Each item may contain:
 
-* `rows-above-home`: An integer specifying the amount of keys on the far side of the home row in the column. If this parameter is omitted, the effective value will be zero.
-* `rows-below-home`: An integer specifying the amount of keys on the near side of the home row in the column. If this parameter is omitted, the effective value will be zero.
+- `rows-above-home`: An integer specifying the amount of keys on the far side of the home row in the column. If this parameter is omitted, the effective value will be zero.
+- `rows-below-home`: An integer specifying the amount of keys on the near side of the home row in the column. If this parameter is omitted, the effective value will be zero.
 
 For example, on a normal QWERTY keyboard, H is on the home row for purposes of touch typing, and you would probably want to use it as such here too, even though the matrix in this program has no necessary relationship with touch typing, nor with the matrix in your MCU firmware (TMK/QMK etc.). Your H key will then get the coordinates [0, 0] as the home-row key in the far left column on the right-hand side of the keyboard.
 
@@ -23,8 +23,8 @@ The next item in the list will be column 1, with J as [1, 0] and so on. On the l
 
 Cluster layout style. One of:
 
-* `standard`: Both columns and rows have the same type of curvature applied in a logically consistent manner.
-* `orthographic`: Rows are curved somewhat differently. This creates more space between columns and may prevent key mounts from fusing together if you have a broad matrix.
+- `standard`: Both columns and rows have the same type of curvature applied in a logically consistent manner.
+- `orthographic`: Rows are curved somewhat differently. This creates more space between columns and may prevent key mounts from fusing together if you have a broad matrix.
 
 ## Parameter `aliases`
 

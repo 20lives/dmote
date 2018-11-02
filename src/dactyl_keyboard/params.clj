@@ -282,10 +282,10 @@
     "Each column will be known by its index in this list, starting at zero "
     "for the first item. Each item may contain:\n"
     "\n"
-    "* `rows-above-home`: An integer specifying the amount of keys "
+    "- `rows-above-home`: An integer specifying the amount of keys "
     "on the far side of the home row in the column. If "
     "this parameter is omitted, the effective value will be zero.\n"
-    "* `rows-below-home`: An integer specifying the amount of keys "
+    "- `rows-below-home`: An integer specifying the amount of keys "
     "on the near side of the home row in the column. If this "
     "parameter is omitted, the effective value will be zero.\n"
     "\n"
@@ -314,9 +314,9 @@
      :parse-fn keyword
      :validate [::supported-cluster-style]}
     "Cluster layout style. One of:\n\n"
-    "* `standard`: Both columns and rows have the same type of curvature "
+    "- `standard`: Both columns and rows have the same type of curvature "
     "applied in a logically consistent manner.\n"
-    "* `orthographic`: Rows are curved somewhat differently. This creates "
+    "- `orthographic`: Rows are curved somewhat differently. This creates "
     "more space between columns and may prevent key mounts from fusing "
     "together if you have a broad matrix."]
    [:parameter [:aliases]
@@ -359,30 +359,24 @@
     "levels of specificity are currently available. Each one branches out, "
     "containing the next:\n"
     "\n"
-    "* The global level, directly under `by-key` (cf. the "
+    "- The global level, directly under `by-key` (cf. the "
     "[main document](options-main.md)).\n"
-    "* The key cluster level, at `by-key` → `clusters` → your cluster.\n"
-    "* The column level, nested still further under your cluster → "
+    "- The key cluster level, at `by-key` → `clusters` → your cluster.\n"
+    "- The column level, nested still further under your cluster → "
     "`columns` → column index.\n"
-    "* The row level, nested under column index → `rows` → row index.\n"
-    "\n"
-    "Each setting takes precedence over any copies of that specific setting "
-    "at less specific levels. For example, any parameter at the row level is "
-    "specific not only to a row but to the full combination of cluster, "
-    "column and row in the chain that leads down to the row. The same "
-    "setting made at any of those higher levels will be ignored in favour "
-    "of the most specific setting. Conversely, a setting made on a specific "
-    "row will not affect the same row in other columns.\n"
+    "- The row level, nested under column index → `rows` → row index. "
+    "A setting at the row level will only affect keys in the specific cluster "
+    "and column selected along the way, i.e. only one key per row. Therefore, "
+    "the row level is effectively the key level.\n"
     "\n"
     "At each level, two subsections are permitted: `parameters`, where you "
     "put the settings themselves, and a section for the next level of "
-    "nesting: `clusters`, then `columns`, then `rows`. In effect, the row "
-    "level is the key level and forms an exception, in that there are no "
-    "further levels below it.\n"
+    "nesting: `clusters`, then `columns`, then `rows`. More specific settings "
+    "take precedence.\n"
     "\n"
     "In the following hypothetical example, the parameter `P`, which is "
     "not really supported, is defined three times: Once at the global level "
-    "and twice at the key level.\n"
+    "and twice at the row (key) level.\n"
     "\n"
     "```by-key:\n"
     "  parameters:\n"
@@ -402,7 +396,7 @@
     "In this example, `P` will have the value “true” for all keys except two "
     "on each half of the keyboard. On the right-hand side, `P` will be false "
     "for the key closest to the user (“first” row) in the second column "
-    "(column “1”) from the left in a cluster of keys here named `C`. `P` will "
+    "from the left (column “1”) in a cluster of keys here named `C`. `P` will "
     "also be false for the fourth key from the user (row “3”) in the same "
     "column.\n"
     "\n"
@@ -411,7 +405,8 @@
     "\n"
     "WARNING: Due to a peculiarity of the YAML parser, take care "
     "to quote your numeric column and row indices as strings. This is why "
-    "there are quotation marks around column index 1 in the example."]
+    "there are quotation marks around column index 1 and row index 3 in the "
+    "example."]
    [:section [:parameters]
     "This section, and everything in it, can be repeated at each level "
     "of specificity."]
@@ -554,10 +549,10 @@
    [:parameter [:parameters :wall :north :extent]
     {:default :full :parse-fn keyword-or-integer :validate [::wall-extent]}
     "Two types of values are permitted here:\n\n"
-    "* The keyword `full`. This means a complete wall extending from the key "
+    "- The keyword `full`. This means a complete wall extending from the key "
     "mount all the way down to the ground via segments numbered 0 through 4 "
     "and a vertical drop thereafter.\n"
-    "* An integer corresponding to the last wall segment to be included. A "
+    "- An integer corresponding to the last wall segment to be included. A "
     "zero means there will be no wall. No matter the number, there will be no "
     "vertical drop to the floor."]
    [:parameter [:parameters :wall :north :parallel]
@@ -643,9 +638,9 @@
     {:default :alps
      :parse-fn keyword
      :validate [::supported-switch-style]}
-    "The switch type. One of:\n\n "
-    "* `alps`: ALPS style switches, including Matias.\n"
-    "* `mx`: Cherry MX style switches."]
+    "The switch type. One of:\n\n"
+    "- `alps`: ALPS style switches, including Matias.\n"
+    "- `mx`: Cherry MX style switches."]
    [:parameter [:switches :travel]
     {:default 1 :parse-fn num}
     "The distance in mm that a keycap can travel vertically when "
@@ -832,9 +827,9 @@
     "The expected value here is an arbitrarily nested structure starting with "
     "a list. Each item in the list can follow one of the following patterns:\n"
     "\n"
-    "* A leaf node. This is a 3- or 4-tuple list with contents specified below.\n"
-    "* A map, representing an instruction to combine nested items in a specific way.\n"
-    "* A list of any combination of the other two types. This type exists at "
+    "- A leaf node. This is a 3- or 4-tuple list with contents specified below.\n"
+    "- A map, representing an instruction to combine nested items in a specific way.\n"
+    "- A list of any combination of the other two types. This type exists at "
     "the top level and as the immediate child of each map node.\n"
     "\n"
     "Each leaf node identifies a particular set of key mount corner posts. "
@@ -842,9 +837,9 @@
     "but this section gives you greater freedom in how to combine them. "
     "A leaf node must contain:\n"
     "\n"
-    "* A key alias defined under `key-clusters`.\n"
-    "* A key corner ID, such as `NNE` for north by north-east.\n"
-    "* A wall segment ID, which is an integer from 0 to 4.\n"
+    "- A key alias defined under `key-clusters`.\n"
+    "- A key corner ID, such as `NNE` for north by north-east.\n"
+    "- A wall segment ID, which is an integer from 0 to 4.\n"
     "\n"
     "Together, these identify a starting segment. Optionally, a leaf node may "
     "contain a second segment ID trailing the first. In that case, the leaf "
@@ -855,14 +850,14 @@
     "nodes. However, this behaviour can be modified. The following keys are "
     "recognized:\n"
     "\n"
-    "* `to-ground`: If `true`, child nodes will be extended vertically down "
+    "- `to-ground`: If `true`, child nodes will be extended vertically down "
     "to the ground plane, as with a `full` wall.\n"
-    "* `chunk-size`: Any integer greater than 1. If this is set, child nodes "
+    "- `chunk-size`: Any integer greater than 1. If this is set, child nodes "
     "will not share a single convex hull. Instead, there will be a "
     "sequence of smaller hulls, each encompassing this many items.\n"
-    "* `highlight`: If `true`, render the node in OpenSCAD’s "
+    "- `highlight`: If `true`, render the node in OpenSCAD’s "
     "highlighting style. This is convenient while you work.\n"
-    "* `hull-around`: The list of child nodes. Required.\n"
+    "- `hull-around`: The list of child nodes. Required.\n"
     "\n"
     "In the following example, `A` and `B` are aliases that would be defined "
     "elsewhere. The example is interpreted to mean that a plate should be "
@@ -937,12 +932,12 @@
    [:parameter [:mcu :support :style]
     {:default :lock :parse-fn keyword :validate [::supported-mcu-support-style]}
     "The style of the support. Available styles are:\n\n"
-    "* `lock`: A separate physical object that is bolted in place over the "
+    "- `lock`: A separate physical object that is bolted in place over the "
     "MCU. This style is appropriate only with a rear housing, and then only "
     "when the PCB aligns with a long wall of that housing. It has the "
     "advantage that it can hug the connector on the PCB tightly, thus "
     "preventing a fragile surface-mounted connector from breaking off.\n"
-    "* `stop`: A gripper that holds the MCU in place at its rear end. "
+    "- `stop`: A gripper that holds the MCU in place at its rear end. "
     "This gripper, in turn, is held up by key mount webbing and is thus "
     "integral to the keyboard, not printed separately like the lock. "
     "This style does not require rear housing."]
@@ -1054,10 +1049,10 @@
      :parse-fn keyword
      :validate [::supported-wrist-rest-style]}
     "The style of the wrist rest. Available styles are:\n\n"
-    "* `threaded`: threaded fasteners connect the case and wrist rest. "
+    "- `threaded`: threaded fasteners connect the case and wrist rest. "
     "This works with a great variety of keyboard shapes and will allow "
     "adjusting the position of the wrist rest for different hands.\n"
-    "* `solid`: a printed plastic bridge along the ground as part of the "
+    "- `solid`: a printed plastic bridge along the ground as part of the "
     "model. This has more limitations, both in manufacture and in use. "
     "It includes a hook on the near outward side of the case, which will only "
     "be useful if the case wall at that point is short and the wrist rest is "

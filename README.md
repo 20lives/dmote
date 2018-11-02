@@ -1,25 +1,24 @@
-# The Dactyl-ManuForm Keyboard:
-# Opposable Thumb Edition
+## The Dactyl-ManuForm keyboard: Opposable Thumb Edition
 
-This, the DMOTE, is a fork of the [Dactyl-ManuForm](https://github.com/tshort/dactyl-keyboard),
-a parametrized, split-hand, concave, columnar, ergonomic keyboard. In this fork,
-the thumb cluster has been modified to minimize shearing forces.
+This, the DMOTE, is a fork of the
+[Dactyl-ManuForm](https://github.com/tshort/dactyl-keyboard), a parametrized,
+split-hand, concave, columnar, ergonomic keyboard. In this fork, the thumb
+cluster has been modified to minimize shearing forces.
 
 [![Image of the second working DMOTE](http://viktor.eikman.se/image/dmote-2-top-down-view/display)](http://viktor.eikman.se/article/the-dmote/)
 
-By cloning this repository and editing fairly simple parameter files you can
-adjust the following to taste:
+Parameters have been moved out of the application code itself, into separate
+files that are safe and easy to edit. Use them to change:
 
-* The size and shape of the key matrix
-* Row and column curvature and tilt (tenting)
-* Height
-* Exceptions (tilt and placement) for columns and individual keys
-* Switch type: ALPS or MX
-* Whether to include minor features: LED strips, wrist rests etc.
+- Switch type: ALPS or MX.
+- Size and shape.
+    - Row and column curvature and tilt (tenting).
+    - Exceptions at any level, down to the position of individual keys.
+- Minor features like LED strips and wrist rests.
 
 For documentation see [doc/](doc/).
 
-## License
+### License
 
 Copyright © 2015-2018 Matthew Adereth, Tom Short, Viktor Eikman et al.
 

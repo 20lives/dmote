@@ -1,4 +1,4 @@
-# Change Log
+# Change log
 This log follows the conventions of
 [keepachangelog.com](http://keepachangelog.com/). It picks up from DMOTE
 version 0.2.0, thus covering only a fraction of the project’s history.
