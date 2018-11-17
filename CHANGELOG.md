@@ -30,11 +30,14 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Support for a filename whitelist in the CLI.
 
 ### Developer
+- Added a dependency on `scad-tarmi` for shorter OpenSCAD code.
 - Started migration to docstring-first function definitions.
 - Rearranged derived parameter structure somewhat to support arbitrary key
   clusters.
 - Removed the `new-scad` function without replacement.
 - Shifted more heavily toward explicit namespacing and took the opportunity to
   shorten some function names in the matrix module.
+- Removed a dependency on `unicode-math`. The requisite version of the library
+  had not been deployed to clojars and its use was cosmetic.
 
 [Unreleased]: https://github.com/veikman/dactyl-keyboard/compare/dmote-v0.2.0...HEAD

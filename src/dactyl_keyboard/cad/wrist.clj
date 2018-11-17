@@ -5,7 +5,7 @@
 
 (ns dactyl-keyboard.cad.wrist
   (:require [scad-clj.model :exclude [use import] :refer :all]
-            [unicode-math.core :refer :all]
+            [scad-tarmi.core :refer [π]]
             [dactyl-keyboard.params :as params]
             [dactyl-keyboard.generics :refer [abs ESE SSE SSW]]
             [dactyl-keyboard.cad.body :as body]

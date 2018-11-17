@@ -5,7 +5,6 @@
 
 (ns dactyl-keyboard.cad.body
   (:require [scad-clj.model :exclude [use import] :refer :all]
-            [unicode-math.core :refer :all]
             [dactyl-keyboard.generics :refer [abs NNE ENE ESE WSW WNW NNW
                                               directions-to-unordered-corner]]
             [dactyl-keyboard.cad.misc :as misc]

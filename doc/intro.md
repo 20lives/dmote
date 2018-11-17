@@ -31,11 +31,7 @@ here’s how to make your own.
 On Debian GNU+Linux, the first three are accomplished with
 `apt install clojure leiningen make`.
 
-Other dependencies will be pulled in by a `lein run`, with one possible
-exception. As of 2018-09, the requisite version of the [`unicode-math`
-library](https://github.com/adereth/unicode-math) is not yet available from
-the central Maven repository. Until this is corrected, you will have to build
-it from source (download and run `lein install`).
+Other dependencies will be pulled in by a `lein run`.
 
 ### Producing OpenSCAD and STL files
 

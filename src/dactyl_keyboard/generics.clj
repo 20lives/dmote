@@ -6,8 +6,7 @@
 ;;; These are potentially useful in parameters and have very little to do
 ;;; with CAD or the keyboard.
 
-(ns dactyl-keyboard.generics
-  (:require [unicode-math.core :refer :all]))
+(ns dactyl-keyboard.generics)
 
 ;; Each switch mount has four corners with offsets in two directions.
 ;; Capitals in symbol names are reserved for these shorthand definitions

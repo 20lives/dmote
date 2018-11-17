@@ -5,8 +5,7 @@
 
 (ns dactyl-keyboard.cad.aux
   (:require [scad-clj.model :exclude [use import] :refer :all]
-            [scad-tarmi.core :refer [maybe-rotate]]
-            [unicode-math.core :refer :all]
+            [scad-tarmi.core :refer [π maybe-rotate]]
             [dactyl-keyboard.generics :as generics]
             [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.cad.matrix :as matrix]

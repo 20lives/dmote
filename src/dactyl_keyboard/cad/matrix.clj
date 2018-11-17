@@ -4,7 +4,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (ns dactyl-keyboard.cad.matrix
-  (:require [unicode-math.core :refer [π]]))
+  (:require [scad-tarmi.core :refer [π]]))
 
 (defn coordinate-pairs
   ([columns rows] (for [column columns row rows] [column row]))
