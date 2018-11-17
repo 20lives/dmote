@@ -19,5 +19,4 @@ wrist-rest:
       plinth-side:
         offset: [3.5, -3.5]
         depth: 9.8
-        pocket-scale: 1.005
         pocket-height: -100

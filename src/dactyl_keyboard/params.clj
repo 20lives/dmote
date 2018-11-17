@@ -1171,12 +1171,6 @@
     {:default 1 :parse-fn num}
     "The thickness of the mount in mm along the axis of the fastener(s). "
     "This is typically larger than the case-side depth to allow adjustment."]
-   [:parameter [:wrist-rest :fasteners :mounts :plinth-side :pocket-scale]
-    {:default 1 :parse-fn num}
-    "A scale coefficient for the nut model used to carve out the pocket. "
-    "This defaults to 1. You would need to set it higher if your printing "
-    "material, in combination with your nozzle diameter, shrinks or expands "
-    "in such a way that the deep pocket would otherwise be too tight."]
    [:parameter [:wrist-rest :fasteners :mounts :plinth-side :pocket-height]
     {:default 0 :parse-fn num}
     "The height of the nut pocket inside the mounting plate, in mm.\n\n"
@@ -1202,6 +1196,18 @@
    [:parameter [:wrist-rest :solid-bridge :height]
     {:default 1 :parse-fn num}
     "The height in mm of the land bridge between the case and the plinth."]
+   [:section [:dfm]
+    "Settings for design for manufacturability (DFM)."]
+   [:parameter [:dfm :error]
+    {:default 0 :parse-fn num}
+    "A measurement in mm of errors introduced to negative space in the xy "
+    "plane by slicer software and the printer you will use.\n"
+    "\n"
+    "The default value is zero. An appropriate value for a typical slicer "
+    "and FDM printer with a 0.5 mm nozzle would be about -0.5 mm.\n"
+    "\n"
+    "This application will try to compensate for the error, though only for "
+    "certain sensitive inserts, not for the case as a whole."]
    [:section [:mask]
     "A box limits the entire shape, cutting off any projecting byproducts of "
     "the algorithms. By resizing and moving this box, you can select a "

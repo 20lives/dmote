@@ -10,12 +10,13 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       `case` → `rear-housing` → `position`.
     - Moved `case` → `rear-housing` → `distance` into
       `case` → `rear-housing` → `position` → `offsets` as `south`.
+- Removed the option `wrist-rest` → `fasteners` → `mounts` → `plinth-side` →
+  `pocket-scale`, obviated by the generic `dfm` feature.
 - Renamed the ‘finger’ key cluster to ‘main‘.
 - Removed `create-models.sh`, adding equivalent functionality to the Clojure
   application itself (new flags: `--render`, `--renderer`).
 - Added intermediate `scad` and `stl` folders under `things`.
 - Split generated documentation (options.md) into three separate documents.
-- Reduced default threaded wrist-rest plinth pocket scale from 101% to 100.5%.
 
 ### Added
 - This log.
@@ -28,6 +29,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       LEDs would previously be attached to the finger cluster.
     - Support for anchoring any cluster to any other, within logical limits.
 - Support for a filename whitelist in the CLI.
+- Support for generic compensation for slicer and printer inaccuracies in the
+  xy plane through a new option, `dfm` → `error`.
 
 ### Developer
 - Added a dependency on `scad-tarmi` for shorter OpenSCAD code.

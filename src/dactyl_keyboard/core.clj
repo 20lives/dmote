@@ -11,6 +11,7 @@
             [clj-yaml.core :as yaml]
             [scad-clj.scad :refer [write-scad]]
             [scad-clj.model :exclude [use import] :refer :all]
+            [scad-tarmi.dfm :refer [error-fn]]
             [dactyl-keyboard.generics :as generics]
             [dactyl-keyboard.params :as params]
             [dactyl-keyboard.sandbox :as sandbox]
@@ -127,7 +128,8 @@
                        (callable (build-option-accessor coll)))))
     build-options
     ;; Mind the order. One of these may depend upon earlier steps.
-    [[[:key-clusters] key/derive-cluster-properties]
+    [[[:dfm] (fn [getopt] {:compensator (error-fn (getopt :dfm :error))})]
+     [[:key-clusters] key/derive-cluster-properties]
      [[:key-clusters] key/derive-resolved-aliases]
      [[:keycaps] key/keycap-properties]
      [[:switches] key/keyswitch-dimensions]
