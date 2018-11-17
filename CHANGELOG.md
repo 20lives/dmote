@@ -10,6 +10,9 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       `case` → `rear-housing` → `position`.
     - Moved `case` → `rear-housing` → `distance` into
       `case` → `rear-housing` → `position` → `offsets` as `south`.
+- As a side effect of outsourcing the design of threaded fasteners to
+  `scad-tarmi`, the `flat` style of bolt head has been renamed to
+  the more specific `countersunk`.
 - Removed the option `wrist-rest` → `fasteners` → `mounts` → `plinth-side` →
   `pocket-scale`, obviated by the generic `dfm` feature.
 - Renamed the ‘finger’ key cluster to ‘main‘.
@@ -33,7 +36,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   xy plane through a new option, `dfm` → `error`.
 
 ### Developer
-- Added a dependency on `scad-tarmi` for shorter OpenSCAD code.
+- Added a dependency on `scad-tarmi` for shorter OpenSCAD code and more
+  capable models of threaded fasteners.
 - Started migration to docstring-first function definitions.
 - Rearranged derived parameter structure somewhat to support arbitrary key
   clusters.

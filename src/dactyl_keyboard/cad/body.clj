@@ -5,6 +5,7 @@
 
 (ns dactyl-keyboard.cad.body
   (:require [scad-clj.model :exclude [use import] :refer :all]
+            [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.generics :refer [abs NNE ENE ESE WSW WNW NNW
                                               directions-to-unordered-corner]]
             [dactyl-keyboard.cad.misc :as misc]
@@ -371,7 +372,7 @@
         offset (getopt :case :rear-housing :fasteners side :offset)
         n (getopt :case :rear-housing :position :offsets :north)
         t (getopt :case :web-thickness)
-        h (misc/iso-hex-nut-height d)
+        h (threaded/datum d :hex-nut-height)
         [sign base] (case side
                       :west [+ (getopt :case :rear-housing :derived :sw)]
                       :east [- (getopt :case :rear-housing :derived :se)])
@@ -385,17 +386,18 @@
   (let [d (getopt :case :rear-housing :fasteners :diameter)
         w (* 2.2 d)]
    (housing-mount-place getopt side
-     (cube w w (misc/iso-hex-nut-height d)))))
+     (cube w w (threaded/datum d :hex-nut-height)))))
 
 (defn- housing-mount-negative [getopt side]
   (let [d (getopt :case :rear-housing :fasteners :diameter)
+        compensator (getopt :dfm :derived :compensator)
         mount-side (* 2.2 d)]
    (union
      (housing-mount-place getopt side
        (cylinder (/ d 2) 20))
      (if (getopt :case :rear-housing :fasteners :bosses)
        (housing-mount-place getopt side
-         (misc/iso-hex-nut-model d))))))
+         (threaded/nut :iso-size d :compensator compensator :negative true))))))
 
 (defn rear-housing [getopt]
   "A squarish box at the far end of the finger key cluster."

@@ -5,6 +5,7 @@
 
 (ns dactyl-keyboard.cad.aux
   (:require [scad-clj.model :exclude [use import] :refer :all]
+            [scad-tarmi.threaded :as threaded]
             [scad-tarmi.core :refer [π maybe-rotate]]
             [dactyl-keyboard.generics :as generics]
             [dactyl-keyboard.cad.misc :as misc]
@@ -194,7 +195,7 @@
            (cube 1 1 (+ socket-z 6))))))))
 
 (defn mcu-lock-fasteners-model [getopt]
-  (let [style (getopt :mcu :support :lock :fastener :style)
+  (let [head-type (getopt :mcu :support :lock :fastener :style)
         d (getopt :mcu :support :lock :fastener :diameter)
         l0 (getopt :mcu :support :lock :bolt :mount-thickness)
         l1 (getopt :mcu :support :lateral-spacing)
@@ -204,9 +205,14 @@
    (rotate [0 (/ π -2) 0]
      (translate [0 (- (+ y0 (/ y1 2))) (* 2 l1)]
        (union
-         (misc/iso-bolt-model style d (+ l0 l1 l2))
+         (threaded/bolt
+           :iso-size d
+           :head-type head-type
+           :unthreaded-length (+ l0 l1 l2)
+           :threaded-length 0
+           :negative true)
          (translate [0 0 (- (+ l0 l1 l2 -1))]
-           (misc/iso-hex-nut-model d)))))))
+           (threaded/nut :iso-size d :height 6 :negative true)))))))
 
 (defn mcu-lock-sink [getopt]
   (mcu-position getopt
@@ -300,7 +306,7 @@
                    (cylinder (/ d 2) 25)
                    (if (getopt :case :back-plate :fasteners :bosses)
                      (translate [0 0 10]
-                       (misc/iso-hex-nut-model d 10))))
+                       (threaded/nut :iso-size d :height 10 :negative true))))
                  (rotate [(/ π 2) 0 0])
                  (translate [x-offset 0 0])
                  (backplate-place getopt)))]

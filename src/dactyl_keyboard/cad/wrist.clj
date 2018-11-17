@@ -6,6 +6,7 @@
 (ns dactyl-keyboard.cad.wrist
   (:require [scad-clj.model :exclude [use import] :refer :all]
             [scad-tarmi.core :refer [π]]
+            [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.params :as params]
             [dactyl-keyboard.generics :refer [abs ESE SSE SSW]]
             [dactyl-keyboard.cad.body :as body]
@@ -106,7 +107,9 @@
 (defn threaded-fasteners [getopt]
   "The full set of connecting threaded rods with nuts for case-side nut bosses."
   (let [nut
-          (->> (misc/iso-hex-nut-model (getopt :wrist-rest :fasteners :diameter))
+          (->> (threaded/nut
+                 :iso-size (getopt :wrist-rest :fasteners :diameter)
+                 :negative true)
                (rotate [(/ π 2) 0 0])
                (translate [0 3 0])
                (rotate [0 0 (rod-angle getopt)])
@@ -124,7 +127,7 @@
   (let [d (getopt :wrist-rest :fasteners :diameter)
         ph (getopt :wrist-rest :fasteners :mounts :plinth-side :pocket-height)
         compensator (getopt :dfm :derived :compensator)
-        nut (->> (misc/iso-hex-nut-model d)
+        nut (->> (threaded/nut :iso-size d :negative true)
                  (rotate [(/ π 2) 0 0])
                  (compensator d {}))]
    (translate (threaded-position-plinth getopt)

@@ -10,6 +10,7 @@
   (:require [clojure.string :as string]
             [clojure.spec.alpha :as spec]
             [flatland.ordered.map :refer [ordered-map]]
+            [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.generics :as generics]))
 
 (defn- coalesce
@@ -727,7 +728,7 @@
     "hardpoint for attachments like a stabilizer to connect the two halves of "
     "the keyboard."]
    [:parameter [:case :rear-housing :fasteners :diameter]
-    {:default 1 :parse-fn int}
+    {:default 1 :parse-fn num :validate [::threaded/iso-nominal]}
     "The ISO metric diameter of each fastener."]
    [:parameter [:case :rear-housing :fasteners :bosses]
     {:default false :parse-fn boolean}
@@ -771,7 +772,7 @@
    [:section [:case :back-plate :fasteners]
     "Two threaded bolts run through the back plate."]
    [:parameter [:case :back-plate :fasteners :diameter]
-    {:default 1 :parse-fn int}
+    {:default 1 :parse-fn num :validate [::threaded/iso-nominal]}
     "The ISO metric diameter of each fastener."]
    [:parameter [:case :back-plate :fasteners :distance]
     {:default 1 :parse-fn num}
@@ -960,10 +961,11 @@
    [:section [:mcu :support :lock :fastener]
     "Threaded fasteners—a nut and a bolt—connect the lock to the case."]
    [:parameter [:mcu :support :lock :fastener :style]
-    {:default :button :parse-fn keyword :validate [::supported-cap-style]}
-    "A supported bolt cap style."]
+    {:default :button :parse-fn keyword :validate [::threaded/head-type]}
+    "A style of bolt head (cap) supported by `scad-tarmi`."]
    [:parameter [:mcu :support :lock :fastener :diameter]
-    {:default 1 :parse-fn num} "The ISO metric diameter of the fastener."]
+    {:default 1 :parse-fn num :validate [::threaded/iso-nominal]}
+    "The ISO metric diameter of the fastener."]
    [:section [:mcu :support :lock :socket]
     "A housing around the USB connector on the MCU."]
    [:parameter [:mcu :support :lock :socket :thickness]
@@ -1122,7 +1124,8 @@
     {:default 1 :parse-fn int}
     "The number of fasteners connecting each case to its wrist rest."]
    [:parameter [:wrist-rest :fasteners :diameter]
-    {:default 1 :parse-fn int} "The ISO metric diameter of each fastener."]
+    {:default 1 :parse-fn int :validate [::threaded/iso-nominal]}
+    "The ISO metric diameter of each fastener."]
    [:parameter [:wrist-rest :fasteners :length]
     {:default 1 :parse-fn int} "The length in mm of each fastener."]
    [:section [:wrist-rest :fasteners :height]

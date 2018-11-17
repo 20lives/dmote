@@ -578,7 +578,7 @@ mcu:
     lateral-spacing: 2.5
     lock:
       fastener:
-        style: flat
+        style: countersunk
         diameter: 3
       socket:
         thickness: 1.5
