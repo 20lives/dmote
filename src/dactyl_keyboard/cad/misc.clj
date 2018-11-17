@@ -6,8 +6,8 @@
 ;;; Functions useful in more than one scad-clj project.
 
 (ns dactyl-keyboard.cad.misc
-  (:require [unicode-math.core :refer [π √]]
-            [scad-clj.model :exclude [use import] :refer :all]))
+  (:require [scad-clj.model :exclude [use import] :refer :all]
+            [scad-tarmi.core :refer [π √ maybe-rotate]]))
 
 (defn- supported-threaded-fastener [mapping]
   (fn [size]
@@ -108,9 +108,9 @@
   filter, a rotation function will be created based on that."
   (if (vector? rotator)
     (if (= (count rotator) 3)
-      (swing-callables translator radius (partial rotate rotator) obj)
+      (swing-callables translator radius (partial maybe-rotate rotator) obj)
       (swing-callables translator radius
-        (partial rotate (first rotator) (second rotator))
+        (partial maybe-rotate (first rotator) (second rotator))
         obj))
     ;; Else assume the rotator is usable as a function and apply it.
     (->> obj

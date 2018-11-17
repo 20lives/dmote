@@ -5,6 +5,7 @@
 
 (ns dactyl-keyboard.cad.aux
   (:require [scad-clj.model :exclude [use import] :refer :all]
+            [scad-tarmi.core :refer [maybe-rotate]]
             [unicode-math.core :refer :all]
             [dactyl-keyboard.generics :as generics]
             [dactyl-keyboard.cad.misc :as misc]
@@ -71,9 +72,9 @@
    (->>
      shape
      ;; Arbitrary rotation. Not very useful for the MCU.
-     (rotate (getopt :mcu :position :rotation))
+     (maybe-rotate (getopt :mcu :position :rotation))
      ;; Face the corner’s main direction.
-     (rotate [0 0 (- (matrix/compass-radians (first corner)))])
+     (maybe-rotate [0 0 (- (matrix/compass-radians (first corner)))])
      ;; Move to the requested corner.
      (translate (into-nook getopt :mcu (getopt :mcu :support :lateral-spacing)))
      (translate [0 0 (/ z 2)]))))
@@ -385,11 +386,11 @@
                      (vec (map * [0 -0.5 0.5] socket-size)))))
         corner (getopt :connection :position :corner)]
    (->> shape
-        (rotate (getopt :connection :position :rotation))
+        (maybe-rotate (getopt :connection :position :rotation))
         ;; Align with the wall (and perhaps the roof).
         (translate alignment)
         ;; Rotate to face the corner’s main direction.
-        (rotate [0 0 (- (matrix/compass-radians (first corner)))])
+        (maybe-rotate [0 0 (- (matrix/compass-radians (first corner)))])
         ;; Bring snugly to the requested corner.
         (translate (into-nook getopt :connection
                      (* 0.5 (+ thickness (first socket-size))))))))

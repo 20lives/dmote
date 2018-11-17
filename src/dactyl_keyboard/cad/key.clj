@@ -6,7 +6,7 @@
 (ns dactyl-keyboard.cad.key
   (:require [clojure.core.matrix :as matrixmath]
             [scad-clj.model :exclude [use import] :refer :all]
-            [unicode-math.core :refer [π]]
+            [scad-tarmi.core :refer [π maybe-rotate maybe-translate]]
             [dactyl-keyboard.generics :as generics]
             [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.cad.matrix :as matrix]))
@@ -407,10 +407,7 @@
 
 (def cluster-place
   "A function that puts a passed shape in a specified key matrix position."
-  (partial cluster-placement
-    (fn [coordinates obj]
-      (if (every? zero? coordinates) obj (translate coordinates obj)))
-    rotate))
+  (partial cluster-placement maybe-translate maybe-rotate))
 
 (defn- roimitate [[α β γ] position]
   "Transform a set of coordinates as in rotation.
