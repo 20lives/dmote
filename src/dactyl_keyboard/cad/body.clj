@@ -88,7 +88,9 @@
 ;; Wall-Building ;;
 ;;;;;;;;;;;;;;;;;;;
 
-(defn wall-segment-offset [getopt cluster coord cardinal-direction segment]
+(defn wall-segment-offset
+  "Compute a 3D offset from one corner of a switch mount to a part of its wall."
+  [getopt cluster coord cardinal-direction segment]
   (let [most #(key/most-specific-option getopt (concat [:wall] %) cluster coord)
         thickness (most [:thickness])
         bevel-factor (most [:bevel])
@@ -173,6 +175,9 @@
     [[coordinates (matrix/left direction) (fn [_] direction)]
      [opposite reverse matrix/left]]))
 
+(def wall-joiners
+  {:outer wall-outer-corner, nil wall-straight-join, :inner wall-inner-corner})
+
 ;; Edge walking.
 
 (defn wall-edge
@@ -205,44 +210,19 @@
      (apply misc/bottom-hull lower))))
 
 (defn cluster-wall
-  "Walk the edge of a key cluster clockwise. Wall it in."
+  "Walk the edge of a key cluster, walling it in."
   [getopt cluster]
   (let [prop (partial getopt :key-clusters :derived :by-cluster cluster)
-        occlusion-fn (prop :key-requested?)
-        start [[0 0] :north]
         mason (fn [edge-locator place-and-direction]
                 (wall-slab getopt cluster (edge-locator place-and-direction)))]
-    (assert (occlusion-fn (first start)))
-    (loop [place-and-direction start shapes []]
-      (let [[coordinates direction] place-and-direction
-            left (matrix/walk coordinates (matrix/left direction))
-            ahead (matrix/walk coordinates direction)
-            ahead-left (matrix/walk
-                         coordinates direction (matrix/left direction))
-            landscape (vec (map occlusion-fn [left ahead-left ahead]))
-            situation (case landscape
-                        [false false false] :outer-corner
-                        [false false true] :straight
-                        [false true true] :inner-corner
-                        (throw (Exception.
-                                 (format "Unforeseen landscape at %s: %s"
-                                   place-and-direction landscape))))]
-        (if (and (= place-and-direction start) (not (empty? shapes)))
-          (apply union shapes)
-          (recur
-            (case situation
-              ; In an outer corner, turn right in place.
-              ; In an inner corner, jump diagonally ahead-left, turning left.
-              :outer-corner [coordinates (matrix/right direction)]
-              :straight     [ahead direction]
-              :inner-corner [ahead-left (matrix/left direction)])
-            (conj
-              shapes
-              (mason wall-straight-body place-and-direction)
-              (mason (case situation :outer-corner wall-outer-corner
-                                     :straight wall-straight-join
-                                     :inner-corner wall-inner-corner)
-                     place-and-direction))))))))
+    (apply union
+      (reduce
+        (fn [coll {:keys [coordinates direction corner]}]
+          (conj coll
+            (mason wall-straight-body [coordinates direction])
+            (mason (get wall-joiners corner) [coordinates direction])))
+        []
+        (matrix/trace-between (prop :key-requested?))))))
 
 
 ;;;;;;;;;;;;;;;;;;
