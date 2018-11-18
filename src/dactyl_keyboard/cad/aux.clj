@@ -39,7 +39,8 @@
             (let [alias (getopt field :position :key-alias)
                   keyinfo (getopt :key-clusters :derived :aliases alias)
                   {cluster :cluster coordinates :coordinates} keyinfo]
-             (body/wall-corner-position getopt cluster coordinates corner)))
+             (body/wall-corner-position
+               getopt cluster coordinates {:directions corner})))
         to-nook
           (if use-housing
             (let [{dxs :dx dys :dy} (matrix/compass-to-grid (second corner))]
@@ -337,7 +338,8 @@
         by-cluster (partial (getopt :key-clusters :derived :by-cluster))]
     (for [row ((by-cluster cluster :row-indices-by-column) 0)
           corner [generics/WSW generics/WNW]]
-     (let [[x y _] (body/wall-corner-position getopt cluster [0 row] corner)]
+     (let [[x y _] (body/wall-corner-position
+                     getopt cluster [0 row] {:directions corner})]
       [(+ x (getopt :by-key :parameters :wall :thickness)) y]))))
 
 (defn west-wall-east-points [getopt]
@@ -353,7 +355,8 @@
   (let [cluster (getopt :case :leds :position :cluster)
         by-col (getopt :key-clusters :derived :by-cluster cluster :row-indices-by-column)
         row (first (by-col 0))
-        [x0 y0 _] (body/wall-corner-position getopt cluster [0 row] generics/WNW)
+        [x0 y0 _] (body/wall-corner-position
+                    getopt cluster [0 row] {:directions generics/WNW})
         h (+ 5 (/ (getopt :case :leds :housing-size) 2))]
    [x0 (+ y0 (* (getopt :case :leds :interval) ordinal)) h]))
 
@@ -454,8 +457,8 @@
   (letfn [(point [{:keys [key-alias key-corner offset] :or {offset [0 0]}}]
             (let [key (getopt :key-clusters :derived :aliases key-alias)
                   {:keys [cluster coordinates]} key
-                  base (take 2 (body/wall-corner-position
-                                 getopt cluster coordinates key-corner))]
+                  base (take 2 (body/wall-corner-position getopt cluster
+                                 coordinates {:directions key-corner}))]
               (vec (map + base offset))))
           (plate [polygon-spec]
             (extrude-linear

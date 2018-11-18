@@ -113,23 +113,42 @@
         (* dy (+ parallel))
         (+ perpendicular bevel)])))
 
-(defn wall-corner-offset
+(defn wall-vertex-offset
+  "Compute a 3D offset from the center of a web post to a vertex on it."
+  [getopt directions {:keys [bottom] :or {bottom true}}]
+  (let [xy (/ (getopt :case :key-mount-corner-margin) 2)
+        z (/ (getopt :case :key-mount-thickness) 2)]
+    [(* (apply matrix/compass-dx directions) xy)
+     (* (apply matrix/compass-dy directions) xy)
+     ((if bottom - +) z)]))
+
+(defn- wall-corner-offset
   "Combined [x y z] offset from the center of a switch mount.
-  This goes to one corner of the hem of the mount’s skirt of walling
-  and therefore finds the base of full walls."
-  [getopt cluster coordinates directions]
+  By default, this goes to one corner of the hem of the mount’s skirt of
+  walling and therefore finds the base of full walls."
+  [getopt cluster coordinates
+   {:keys [directions segment vertex]
+    :or {segment 3, vertex false} :as keyopts}]
   (vec
     (map +
-      (wall-segment-offset getopt cluster coordinates (first directions) 3)
-      (key/mount-corner-offset getopt directions))))
+      (if directions
+        (key/mount-corner-offset getopt directions)
+        [0 0 0])
+      (if directions
+        (wall-segment-offset
+          getopt cluster coordinates (first directions) segment)
+        [0 0 0])
+      (if (and directions vertex)
+        (wall-vertex-offset getopt directions keyopts)
+        [0 0 0]))))
 
 (defn wall-corner-position
   "Absolute position of the lower wall around a key mount."
-  [getopt cluster coordinates directions]
-  (key/cluster-position getopt cluster coordinates
-    (if (nil? directions)
-      [0 0 0]
-      (wall-corner-offset getopt cluster coordinates directions))))
+  ([getopt cluster coordinates]
+   (wall-corner-position getopt cluster coordinates {}))
+  ([getopt cluster coordinates keyopts]
+   (key/cluster-position getopt cluster coordinates
+     (wall-corner-offset getopt cluster coordinates keyopts))))
 
 (defn wall-slab-center-offset
   "Combined [x y z] offset to the center of a vertical wall.
@@ -137,7 +156,7 @@
   [getopt cluster coordinates direction]
   (letfn [(c [turning-fn]
             (wall-corner-offset getopt cluster coordinates
-              [direction (turning-fn direction)]))]
+              {:directions [direction (turning-fn direction)]}))]
     (vec (map / (vec (map + (c matrix/left) (c matrix/right))) [2 2 2]))))
 
 ;; Functions for specifying parts of a perimeter wall. These all take the
@@ -147,20 +166,20 @@
 (defn wall-straight-body
   "The part of a case wall that runs along the side of a key mount on the
   edge of the board."
-  [[coordinates direction]]
+  [{:keys [coordinates direction]}]
   (let [facing (matrix/left direction)]
     [[coordinates facing matrix/right] [coordinates facing matrix/left]]))
 
 (defn wall-straight-join
   "The part of a case wall that runs between two key mounts in a straight line."
-  [[coordinates direction]]
+  [{:keys [coordinates direction]}]
   (let [next-coord (matrix/walk coordinates direction)
         facing (matrix/left direction)]
     [[coordinates facing matrix/right] [next-coord facing matrix/left]]))
 
 (defn wall-outer-corner
   "The part of a case wall that smooths out an outer, sharp corner."
-  [[coordinates direction]]
+  [{:keys [coordinates direction]}]
   (let [original-facing (matrix/left direction)]
     [[coordinates original-facing matrix/right]
      [coordinates direction matrix/left]]))
@@ -169,14 +188,18 @@
   "The part of a case wall that covers any gap in an inner corner.
   In this case, it is import to pick not only the right corner but the right
   direction moving out from that corner."
-  [[coordinates direction]]
+  [{:keys [coordinates direction]}]
   (let [opposite (matrix/walk coordinates (matrix/left direction) direction)
         reverse (matrix/left (matrix/left direction))]
-    [[coordinates (matrix/left direction) (fn [_] direction)]
+    [[coordinates (matrix/left direction) (constantly direction)]
      [opposite reverse matrix/left]]))
 
-(def wall-joiners
-  {:outer wall-outer-corner, nil wall-straight-join, :inner wall-inner-corner})
+(defn connecting-wall
+  [{:keys [corner] :as position}]
+  (case corner
+    :outer (wall-outer-corner position)
+    nil (wall-straight-join position)
+    :inner (wall-inner-corner position)))
 
 ;; Edge walking.
 
@@ -212,17 +235,51 @@
 (defn cluster-wall
   "Walk the edge of a key cluster, walling it in."
   [getopt cluster]
-  (let [prop (partial getopt :key-clusters :derived :by-cluster cluster)
-        mason (fn [edge-locator place-and-direction]
-                (wall-slab getopt cluster (edge-locator place-and-direction)))]
-    (apply union
+  (apply union
+    (reduce
+      (fn [coll position]
+        (conj coll
+          (wall-slab getopt cluster (wall-straight-body position))
+          (wall-slab getopt cluster (connecting-wall position))))
+      []
+      (matrix/trace-between
+        (getopt :key-clusters :derived :by-cluster cluster :key-requested?)))))
+
+
+;;;;;;;;;;;;;;;;;;
+;; Bottom Plate ;;
+;;;;;;;;;;;;;;;;;;
+
+(defn- floor-finder
+  "Return a sequence of xy-coordinate pairs for exterior wall vertices."
+  [getopt cluster edges]
+  (map
+    (fn [[coord direction turning-fn]]
+      (take 2
+        (wall-corner-position getopt cluster coord
+          {:directions [direction (turning-fn direction)] :vertex true})))
+    edges))
+
+(defn- floor-polygon
+  "A polygon approximating a floor-level projection of a key clusters’s wall."
+  [getopt cluster]
+  (polygon
+    (mapcat identity  ; Flatten floor-finder output by one level only.
       (reduce
-        (fn [coll {:keys [coordinates direction corner]}]
+        (fn [coll position]
           (conj coll
-            (mason wall-straight-body [coordinates direction])
-            (mason (get wall-joiners corner) [coordinates direction])))
+            (floor-finder getopt cluster (connecting-wall position))))
         []
-        (matrix/trace-between (prop :key-requested?))))))
+        (matrix/trace-between
+          (getopt :key-clusters :derived :by-cluster cluster :key-requested?))))))
+
+(defn bottom-plate
+  "A model of a bottom plate for the entire case."
+  [getopt]
+  (color [150/255 90/255 70/255 1]
+    (extrude-linear
+      {:height (getopt :case :bottom-plate :thickness), :center false}
+      (key/metacluster floor-polygon getopt))))
 
 
 ;;;;;;;;;;;;;;;;;;

@@ -794,6 +794,19 @@
     {:default [0 0 0] :parse-fn vec}
     "An offset in mm from the middle of the north wall of the selected key, "
     "at ground level, to the middle of the base of the back plate block."]
+   [:section [:case :bottom-plate]
+    "A bottom plate can be added to close the case. This is useful mainly to "
+    "simplify transportation."]
+   [:parameter [:case :bottom-plate :include]
+    {:default false :parse-fn boolean}
+    "If `true`, include a bottom plate for the case."]
+   [:parameter [:case :bottom-plate :preview]
+    {:default false :parse-fn boolean}
+    "Preview mode. If `true`, put a model of the plate in the same file as "
+    "the case it closes. Not for printing."]
+   [:parameter [:case :bottom-plate :thickness]
+    {:default 1 :parse-fn num}
+    "The thickness (i.e. height) in mm of the bottom plate."]
    [:section [:case :leds]
     "Support for light-emitting diodes in the case walls."]
    [:parameter [:case :leds :include]

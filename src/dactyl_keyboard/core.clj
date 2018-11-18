@@ -89,6 +89,10 @@
     (if (and (= (getopt :mcu :support :style) :lock)
              (getopt :mcu :support :preview))
       (aux/mcu-lock-bolt getopt))
+    (if (and (getopt :case :bottom-plate :include)
+             (getopt :case :bottom-plate :preview))
+      (translate [0 0 (- (getopt :case :bottom-plate :thickness))]
+        (body/bottom-plate getopt)))
     (if (and (getopt :wrist-rest :include) (getopt :wrist-rest :preview))
       (wrist/unified-preview getopt))))
 
@@ -205,6 +209,10 @@
        :model-fn (partial key/metacluster key/cluster-keycaps)}
       {:basename "case"
        :model-fn build-keyboard-right
+       :pair true}
+      {:condition (getopt :case :bottom-plate :include)
+       :basename "bottom-plate"
+       :model-fn body/bottom-plate
        :pair true}
       {:condition (= (getopt :mcu :support :style) :lock)
        :basename "mcu-lock-bolt"

@@ -3,6 +3,9 @@
 
 keycaps:
   preview: true
+case:
+  bottom-plate:
+    preview: true
 mcu:
   preview: true
   support:

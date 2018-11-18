@@ -183,6 +183,22 @@ A named key where the block will attach. The vertical component of its position 
 
 An offset in mm from the middle of the north wall of the selected key, at ground level, to the middle of the base of the back plate block.
 
+### Section `bottom-plate`
+
+A bottom plate can be added to close the case. This is useful mainly to simplify transportation.
+
+#### Parameter `include`
+
+If `true`, include a bottom plate for the case.
+
+#### Parameter `preview`
+
+Preview mode. If `true`, put a model of the plate in the same file as the case it closes. Not for printing.
+
+#### Parameter `thickness`
+
+The thickness (i.e. height) in mm of the bottom plate.
+
 ### Section `leds`
 
 Support for light-emitting diodes in the case walls.
@@ -342,7 +358,7 @@ Threaded fasteners—a nut and a bolt—connect the lock to the case.
 
 ###### Parameter `style`
 
-A supported bolt cap style.
+A style of bolt head (cap) supported by `scad-tarmi`.
 
 ###### Parameter `diameter`
 

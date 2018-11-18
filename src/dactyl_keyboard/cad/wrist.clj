@@ -25,7 +25,7 @@
   (let [key-alias (getopt :wrist-rest :position :key-alias)
         cluster (getopt :key-clusters :derived :aliases key-alias :cluster)
         coord (getopt :key-clusters :derived :aliases key-alias :coordinates)
-        pivot (body/wall-corner-position getopt cluster coord nil)
+        pivot (body/wall-corner-position getopt cluster coord)
         offset (getopt :wrist-rest :position :offset)
         [base-x base-y z1] (getopt :wrist-rest :shape :plinth-base-size)
         lip (getopt :wrist-rest :shape :lip-height)
@@ -70,7 +70,7 @@
         {alias :key-alias offset :offset} position
         key (getopt :key-clusters :derived :aliases alias)
         {cluster :cluster coordinates :coordinates} key
-        base (body/wall-corner-position getopt cluster coordinates nil)
+        base (body/wall-corner-position getopt cluster coordinates)
         height (threaded-center-height getopt)]
    (conj (vec (map + (take 2 base) offset)) height)))
 
@@ -197,7 +197,8 @@
         by-col (getopt :key-clusters :derived :by-cluster cluster :coordinates-by-column)
         south-wall
           (fn [[coord corner]]
-            (take 2 (body/wall-corner-position getopt cluster coord corner)))
+            (take 2 (body/wall-corner-position
+                      getopt cluster coord {:directions corner})))
         case-points
           (filter #(>= (first %) x-west)
             (map south-wall

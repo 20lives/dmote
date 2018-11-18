@@ -23,6 +23,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 
 ### Added
 - This log.
+- Work in progress: Support for generating a bottom plate that closes the case.
 - Support for naming your key clusters much more freely, and/or adding
   additional clusters. Even the new ‘main’ cluster is optional.
     - Support for a `cluster` parameter to `case` → `rear-housing` →

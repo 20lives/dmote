@@ -406,6 +406,8 @@ case:
     position:
       key-alias: back
       offset: [0, 0, 0]
+  bottom-plate:
+    include: true
   leds:
     include: true
     amount: 3
