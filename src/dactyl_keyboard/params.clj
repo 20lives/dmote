@@ -732,7 +732,7 @@
     "hardpoint for attachments like a stabilizer to connect the two halves of "
     "the keyboard."]
    [:parameter [:case :rear-housing :fasteners :diameter]
-    {:default 1 :parse-fn num :validate [::threaded/iso-nominal]}
+    {:default 6 :parse-fn num :validate [::threaded/iso-nominal]}
     "The ISO metric diameter of each fastener."]
    [:parameter [:case :rear-housing :fasteners :bosses]
     {:default false :parse-fn boolean}
@@ -776,7 +776,7 @@
    [:section [:case :back-plate :fasteners]
     "Two threaded bolts run through the back plate."]
    [:parameter [:case :back-plate :fasteners :diameter]
-    {:default 1 :parse-fn num :validate [::threaded/iso-nominal]}
+    {:default 6 :parse-fn num :validate [::threaded/iso-nominal]}
     "The ISO metric diameter of each fastener."]
    [:parameter [:case :back-plate :fasteners :distance]
     {:default 1 :parse-fn num}
@@ -968,7 +968,7 @@
     {:default :button :parse-fn keyword :validate [::threaded/head-type]}
     "A style of bolt head (cap) supported by `scad-tarmi`."]
    [:parameter [:mcu :support :lock :fastener :diameter]
-    {:default 1 :parse-fn num :validate [::threaded/iso-nominal]}
+    {:default 6 :parse-fn num :validate [::threaded/iso-nominal]}
     "The ISO metric diameter of the fastener."]
    [:section [:mcu :support :lock :socket]
     "A housing around the USB connector on the MCU."]
@@ -1128,7 +1128,7 @@
     {:default 1 :parse-fn int}
     "The number of fasteners connecting each case to its wrist rest."]
    [:parameter [:wrist-rest :fasteners :diameter]
-    {:default 1 :parse-fn int :validate [::threaded/iso-nominal]}
+    {:default 6 :parse-fn int :validate [::threaded/iso-nominal]}
     "The ISO metric diameter of each fastener."]
    [:parameter [:wrist-rest :fasteners :length]
     {:default 1 :parse-fn int} "The length in mm of each fastener."]
