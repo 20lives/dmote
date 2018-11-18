@@ -53,22 +53,25 @@
 (def mx-overhang-z 1)  ; Estimated, dimension not included in datasheet.
 (def mx-underhang-z 5.004)
 
-(defn resolve-flex [getopt cluster [c0 r0]]
+(defn resolve-flex
   "Resolve supported keywords in a coordinate pair to names.
   This allows for integers as well as the keywords :first and :last, meaning
   first and last in the column or row. Columns have priority."
+  [getopt cluster [c0 r0]]
   (let [columns (derived getopt cluster :column-range)
         c1 (case c0 :first (first columns) :last (last columns) c0)
         rows (derived getopt cluster :row-indices-by-column c1)]
    [c1 (case r0 :first (first rows) :last (last rows) r0)]))
 
-(defn match-flex [getopt cluster & coords]
-  "Check if coordinate pairs are the same, with keyword support."
+(defn match-flex
+  "Check whether coordinate pairs are the same, with keyword support."
+  [getopt cluster & coords]
   (apply = (map (partial resolve-flex getopt cluster) coords)))
 
-(defn most-specific-getter [getopt end-path]
+(defn most-specific-getter
   "Return a function that will find the most specific configuration value
   available for a key on the keyboard."
+  [getopt end-path]
   (let [get-in-section
           (fn [section-path]
             (let [full-path (concat [:by-key] section-path [:parameters] end-path)]
@@ -118,8 +121,9 @@
 (defn most-specific-option [getopt end-path cluster coord]
   ((most-specific-getter getopt end-path) cluster coord))
 
-(defn chart-cluster [cluster getopt]
+(defn chart-cluster
   "Derive some properties about a key cluster from raw configuration info."
+  [cluster getopt]
   (let [raws (getopt :key-clusters cluster)
         matrix (getopt :key-clusters cluster :matrix-columns)
         gather (fn [key default] (map #(get % key default) matrix))
@@ -206,8 +210,9 @@
    {:from-plate-top coll
     :from-plate-bottom (into {} (map (fn [[k v]] [k (+ plate v)]) coll))}))
 
-(defn negative-cap-shape [getopt {h3 :height w3 :top-width m :margin}]
+(defn negative-cap-shape
   "The shape of a channel for a keycap to move in."
+  [getopt {h3 :height w3 :top-width m :margin}]
   (let [step (fn [h w] (translate [0 0 h] (cube w w 1)))
         h1 (getopt :keycaps :derived :from-plate-top :pressed-cap-bottom)
         w1 (+ key-width-1u m)
@@ -227,8 +232,9 @@
 
 (defn key-length [units] (- (* units mount-1u) (* 2 key-margin)))
 
-(defn keycap-model [getopt units]
+(defn keycap-model
   "The shape of one keycap, rectangular base, ’units’ in width, at rest."
+  [getopt units]
   (let [base-width (key-length units)
         base-depth (key-length 1)
         z (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)]
@@ -265,8 +271,9 @@
    (translate [0 0 (/ t 2)]
      (cube mount-width mount-depth t))))
 
-(defn single-switch-cutout [getopt]
+(defn single-switch-cutout
   "Negative space for the insertion of a key switch through a mounting plate."
+  [getopt]
   (let [t (getopt :case :key-mount-thickness)
         keyswitch-style (getopt :switches :style)
         keyswitch-hole-x (getopt :switches :derived :keyswitch-hole-x)
@@ -288,8 +295,9 @@
          (translate [0 0 -1.5]
                     (cube (+ keyswitch-hole-x 1) keyswitch-hole-y t)))))))
 
-(defn single-switch-nubs [getopt]
+(defn single-switch-nubs
   "MX-specific nubs that hold the keyswitch in place."
+  [getopt]
   (let [t (getopt :case :key-mount-thickness)
         keyswitch-hole-x (getopt :switches :derived :keyswitch-hole-x)
         keyswitch-hole-y (getopt :switches :derived :keyswitch-hole-y)
@@ -305,9 +313,9 @@
                 (mirror [1 0 0])
                 (mirror [0 1 0])))))
 
-
-(defn mount-corner-offset [getopt directions]
+(defn mount-corner-offset
   "Produce a mm coordinate offset for a corner of a switch mount."
+  [getopt directions]
   (let [subject-x mount-width
         subject-y mount-depth
         neighbour-z (getopt :case :key-mount-thickness)
@@ -317,19 +325,22 @@
      (* (apply matrix/compass-dy directions) (- (/ subject-y 2) (/ m 2)))
      (+ (/ area-z -2) neighbour-z)]))
 
-(defn web-post [getopt]
+(defn web-post
   "A shape for attaching things to a corner of a switch mount."
+  [getopt]
   (cube (getopt :case :key-mount-corner-margin)
         (getopt :case :key-mount-corner-margin)
         (getopt :case :web-thickness)))
 
-(defn mount-corner-post [getopt directions]
+(defn mount-corner-post
   "A post shape that comes offset for one corner of a key mount."
+  [getopt directions]
   (translate (mount-corner-offset getopt directions) (web-post getopt)))
 
-(defn curver [subject dimension-n rotate-type delta-fn orthographic
-              translate-fn rot-ax-fn getopt cluster coord obj]
+(defn curver
   "Given an angle for progressive curvature, apply it. Else lay keys out flat."
+  [subject dimension-n rotate-type delta-fn orthographic
+   translate-fn rot-ax-fn getopt cluster coord obj]
   (let [index (nth coord dimension-n)
         most #(most-specific-option getopt % cluster coord)
         angle-factor (most [:layout rotate-type :progressive])
@@ -351,15 +362,18 @@
        (->> obj
             (rot-ax-fn angle-product)
             (translate-fn [ortho-x 0 ortho-z]))
-       (misc/swing-callables translate-fn radius (partial rot-ax-fn angle-product) obj)))))
+       (misc/swing-callables translate-fn radius
+                             (partial rot-ax-fn angle-product) obj)))))
 
-(defn put-in-column [translate-fn rot-ax-fn getopt cluster coord obj]
+(defn put-in-column
   "Place a key in relation to its column."
+  [translate-fn rot-ax-fn getopt cluster coord obj]
   (curver :row 1 :pitch #(- %1 %2) false
           translate-fn rot-ax-fn getopt cluster coord obj))
 
-(defn put-in-row [translate-fn rot-ax-fn getopt cluster coord obj]
+(defn put-in-row
   "Place a key in relation to its row."
+  [translate-fn rot-ax-fn getopt cluster coord obj]
   (let [style (derived getopt cluster :style)]
    (curver :column 0 :roll #(- %2 %1) (= style :orthographic)
            translate-fn rot-ax-fn getopt cluster coord obj)))
@@ -368,7 +382,7 @@
 
 (defn- cluster-origin-function
   "Compute 3D coordinates for the middle of a key cluster.
-  Return a unary function: A partial translator or the identity function."
+  Return a unary function: A partial translator."
   [translate-fn getopt subject-cluster]
   (let [settings (getopt :key-clusters subject-cluster)
         {:keys [key-alias offset], :or {offset [0 0 0]}} (:position settings {})
@@ -379,9 +393,7 @@
              (cluster-position getopt cluster coordinates [0 0 0]))
             [0 0 0])
         origin (vec (map + from-alias offset))]
-   (if (= origin [0 0 0])
-     identity
-     (partial translate-fn origin))))
+   (partial translate-fn origin)))
 
 (defn cluster-placement
   "Place and tilt passed ‘subject’ as if into a key cluster."
@@ -436,9 +448,7 @@
   Using this wrapper, the ‘subject’ argument to cluster-placement should be a
   single point in 3-dimensional space, typically an offset in mm from the
   middle of the indicated key."
-  (partial cluster-placement
-    (partial map +)
-    roimitate))
+  (partial cluster-placement (partial map +) roimitate))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;

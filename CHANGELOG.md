@@ -42,7 +42,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 ### Developer
 - Added a dependency on `scad-tarmi` for shorter OpenSCAD code and more
   capable models of threaded fasteners.
-- Started migration to docstring-first function definitions.
+- Switched to docstring-first function definitions.
 - Rearranged derived parameter structure somewhat to support arbitrary key
   clusters.
 - Removed the `new-scad` function without replacement.

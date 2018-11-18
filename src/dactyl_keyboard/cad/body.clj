@@ -17,8 +17,9 @@
 ;; Masking ;;
 ;;;;;;;;;;;;;
 
-(defn mask [getopt & shapes]
-  """Implement overall limits on passed shapes."""
+(defn mask
+  "Implement overall limits on passed shapes."
+  [getopt & shapes]
   (intersection
     (translate (getopt :mask :center) (apply cube (getopt :mask :size)))
     (apply union shapes)))
@@ -30,8 +31,9 @@
 
 ;; This connects switch mount plates to one another.
 
-(defn web-shapes [coordinate-sequence spotter placer corner-finder]
+(defn web-shapes
   "A vector of shapes covering the interstices between points in a matrix."
+  [coordinate-sequence spotter placer corner-finder]
   (loop [remaining-coordinates coordinate-sequence
          shapes []]
     (if (empty? remaining-coordinates)
@@ -109,25 +111,28 @@
         (* dy (+ parallel))
         (+ perpendicular bevel)])))
 
-(defn wall-corner-offset [getopt cluster coordinates directions]
+(defn wall-corner-offset
   "Combined [x y z] offset from the center of a switch mount.
   This goes to one corner of the hem of the mount’s skirt of walling
   and therefore finds the base of full walls."
+  [getopt cluster coordinates directions]
   (vec
     (map +
       (wall-segment-offset getopt cluster coordinates (first directions) 3)
       (key/mount-corner-offset getopt directions))))
 
-(defn wall-corner-position [getopt cluster coordinates directions]
+(defn wall-corner-position
   "Absolute position of the lower wall around a key mount."
+  [getopt cluster coordinates directions]
   (key/cluster-position getopt cluster coordinates
     (if (nil? directions)
       [0 0 0]
       (wall-corner-offset getopt cluster coordinates directions))))
 
-(defn wall-slab-center-offset [getopt cluster coordinates direction]
+(defn wall-slab-center-offset
   "Combined [x y z] offset to the center of a vertical wall.
   Computed as the arithmetic average of its two corners."
+  [getopt cluster coordinates direction]
   (letfn [(c [turning-fn]
             (wall-corner-offset getopt cluster coordinates
               [direction (turning-fn direction)]))]
@@ -137,28 +142,32 @@
 ;; edge-walking algorithm’s position and direction upon seeing the need for
 ;; each part.
 
-(defn wall-straight-body [[coordinates direction]]
+(defn wall-straight-body
   "The part of a case wall that runs along the side of a key mount on the
   edge of the board."
+  [[coordinates direction]]
   (let [facing (matrix/left direction)]
     [[coordinates facing matrix/right] [coordinates facing matrix/left]]))
 
-(defn wall-straight-join [[coordinates direction]]
+(defn wall-straight-join
   "The part of a case wall that runs between two key mounts in a straight line."
+  [[coordinates direction]]
   (let [next-coord (matrix/walk coordinates direction)
         facing (matrix/left direction)]
     [[coordinates facing matrix/right] [next-coord facing matrix/left]]))
 
-(defn wall-outer-corner [[coordinates direction]]
+(defn wall-outer-corner
   "The part of a case wall that smooths out an outer, sharp corner."
+  [[coordinates direction]]
   (let [original-facing (matrix/left direction)]
     [[coordinates original-facing matrix/right]
      [coordinates direction matrix/left]]))
 
-(defn wall-inner-corner [[coordinates direction]]
+(defn wall-inner-corner
   "The part of a case wall that covers any gap in an inner corner.
   In this case, it is import to pick not only the right corner but the right
   direction moving out from that corner."
+  [[coordinates direction]]
   (let [opposite (matrix/walk coordinates (matrix/left direction) direction)
         reverse (matrix/left (matrix/left direction))]
     [[coordinates (matrix/left direction) (fn [_] direction)]
@@ -166,9 +175,10 @@
 
 ;; Edge walking.
 
-(defn wall-edge [getopt cluster upper [coord direction turning-fn]]
+(defn wall-edge
   "Produce a sequence of corner posts for the upper or lower part of the edge
   of one wall slab."
+  [getopt cluster upper [coord direction turning-fn]]
   (let [extent (key/most-specific-option getopt [:wall direction :extent]
                  cluster coord)
         last-upper-segment (case extent :full 4 :none 0 extent)
@@ -185,16 +195,18 @@
        (if (= extent :full)
          (map post [2 3 4]))))))
 
-(defn wall-slab [getopt cluster edges]
+(defn wall-slab
   "Produce a single shape joining some (two) edges."
+  [getopt cluster edges]
   (let [upper (map (partial wall-edge getopt cluster true) edges)
         lower (map (partial wall-edge getopt cluster false) edges)]
    (union
      (apply hull upper)
      (apply misc/bottom-hull lower))))
 
-(defn cluster-wall [getopt cluster]
+(defn cluster-wall
   "Walk the edge of a key cluster clockwise. Wall it in."
+  [getopt cluster]
   (let [prop (partial getopt :key-clusters :derived :by-cluster cluster)
         occlusion-fn (prop :key-requested?)
         start [[0 0] :north]
@@ -241,8 +253,9 @@
   (let [t (getopt :case :web-thickness)]
    (cube t t t)))
 
-(defn housing-properties [getopt]
+(defn housing-properties
   "Derive characteristics from parameters for the rear housing."
+  [getopt]
   (let [cluster (getopt :case :rear-housing :position :cluster)
         row (last (getopt :key-clusters :derived :by-cluster cluster :row-range))
         coords (getopt :key-clusters :derived :by-cluster cluster :coordinates-by-row row)
@@ -268,15 +281,17 @@
     :nw roof-nw
     :ne roof-ne}))
 
-(defn- housing-roof [getopt]
+(defn- housing-roof
   "A cuboid shape between the four corners of the rearing housing’s roof."
+  [getopt]
   (let [getcorner (partial getopt :case :rear-housing :derived)]
     (apply hull
       (map #(translate (getcorner %) (housing-cube getopt))
            [:nw :ne :se :sw]))))
 
-(defn- housing-segment-offset [getopt cardinal-direction segment]
+(defn- housing-segment-offset
   "Compute the [x y z] coordinate offset from a rear housing roof corner."
+  [getopt cardinal-direction segment]
   (let [cluster (getopt :case :rear-housing :position :cluster)
         key (partial getopt :case :rear-housing :derived)
         wall (partial wall-segment-offset getopt cluster)]
@@ -285,8 +300,9 @@
      :east (wall (key :east-end-coord) cardinal-direction segment)
      :north (if (= segment 0) [0 0 0] [0 1 -1]))))
 
-(defn- housing-placement [translate-fn getopt corner segment subject]
+(defn- housing-placement
   "Place passed shape in relation to a corner of the rear housing’s roof."
+  [translate-fn getopt corner segment subject]
   (->> subject
        (translate-fn (getopt :case :rear-housing :derived
                        (directions-to-unordered-corner corner)))
@@ -300,9 +316,10 @@
   "Akin to cluster-position but with a wall segment."
   (partial housing-placement (partial map +)))
 
-(defn- housing-outer-wall [getopt]
+(defn- housing-outer-wall
   "The west, north and east walls of the rear housing. These are mostly
   vertical but they do connect to the key cluster’s main wall."
+  [getopt]
   (let [cluster (getopt :case :rear-housing :position :cluster)
         wec (getopt :case :rear-housing :derived :west-end-coord)
         eec (getopt :case :rear-housing :derived :east-end-coord)
@@ -333,9 +350,9 @@
           (housing-place getopt ESE 1 c)
           (wall-edge getopt cluster false [eec :east matrix/left])])))))
 
-(defn- housing-web [getopt]
-  "An extension of the finger key cluster’s webbing onto the roof of the
-  rear housing."
+(defn- housing-web
+  "An extension of a key cluster’s webbing onto the roof of the rear housing."
+  [getopt]
   (let [cluster (getopt :case :rear-housing :position :cluster)
         pos-corner (fn [coord corner]
                      (key/cluster-position getopt cluster coord
@@ -359,8 +376,9 @@
        []
        (getopt :case :rear-housing :derived :coordinate-corner-pairs)))))
 
-(defn- housing-foot [getopt]
+(defn- housing-foot
   "A simple ground-level plate at one corner of the housing."
+  [getopt]
   (let [base (take 2 (getopt :case :rear-housing :derived :nw))
         w (min 10 (getopt :case :rear-housing :position :offsets :north))]
    (extrude-linear
@@ -399,8 +417,9 @@
        (housing-mount-place getopt side
          (threaded/nut :iso-size d :compensator compensator :negative true))))))
 
-(defn rear-housing [getopt]
-  "A squarish box at the far end of the finger key cluster."
+(defn rear-housing
+  "A squarish box at the far end of a key cluster."
+  [getopt]
   (let [prop (partial getopt :case :rear-housing :fasteners)
         pair (fn [function]
                (union
@@ -421,8 +440,9 @@
 ;; Tweak Plating ;;
 ;;;;;;;;;;;;;;;;;;;
 
-(defn- tweak-posts [getopt key-alias directions first-segment last-segment]
+(defn- tweak-posts
   "(The hull of) one or more corner posts from a single key mount."
+  [getopt key-alias directions first-segment last-segment]
   (if (= first-segment last-segment)
     (let [keyinfo (getopt :key-clusters :derived :aliases key-alias)
           {cluster :cluster coordinates :coordinates} keyinfo
@@ -436,8 +456,9 @@
 
 (declare tweak-plating)
 
-(defn- tweak-map [getopt node]
+(defn- tweak-map
   "Treat a map-type node in the configuration."
+  [getopt node]
   (let [parts (get node :chunk-size)
         to-ground (get node :to-ground false)
         combo (or to-ground parts)
@@ -450,14 +471,16 @@
               (partition parts 1 shapes))
          shapes)))))
 
-(defn- tweak-plating [getopt coll node]
+(defn- tweak-plating
   "A reducer."
+  [getopt coll node]
   (conj coll
     (if (map? node)
       (tweak-map getopt node)
       (apply (partial tweak-posts getopt) node))))
 
-(defn wall-tweaks [getopt]
+(defn wall-tweaks
   "User-requested additional shapes."
+  [getopt]
   (apply union
     (reduce (partial tweak-plating getopt) [] (getopt :case :tweaks))))

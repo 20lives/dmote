@@ -32,22 +32,25 @@
    :NNW NNW
    :WNW WNW})
 
-(defn directions-to-unordered-corner [tuple]
+(defn directions-to-unordered-corner
   "Reduce directional corner code to non-directional corner code, as
   used for rear housing."
+  [tuple]
   (cond
     (#{NNE ENE} tuple) :ne
     (#{SSE ESE} tuple) :se
     (#{SSW WSW} tuple) :sw
     (#{NNW WNW} tuple) :nw))
 
-(defn abs [n]
+(defn abs
   "The absolute of n."
+  [n]
   (max n (- n)))
 
-(defn soft-merge [& maps]
-  "Take mappings. Merge them depth-first so as to retain all leaves
-  from a mapping except where specifically overridden by the next."
+(defn soft-merge
+  "Merge mappings depth-first so as to retain leaves except where specifically
+  overridden."
+  [& maps]
   (apply (partial merge-with
            (fn [old new] (if (map? old) (soft-merge old new) new)))
          maps))

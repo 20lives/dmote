@@ -19,8 +19,9 @@
 ;; Generics ;;
 ;;;;;;;;;;;;;;
 
-(defn derive-properties [getopt]
+(defn derive-properties
   "Derive certain properties from the base configuration."
+  [getopt]
   (let [key-alias (getopt :wrist-rest :position :key-alias)
         cluster (getopt :key-clusters :derived :aliases key-alias :cluster)
         coord (getopt :key-clusters :derived :aliases key-alias :coordinates)
@@ -79,20 +80,24 @@
         height (threaded-center-height getopt)]
    (conj (vec (map + corner offset)) height)))
 
-(defn threaded-midpoint [getopt]
+(defn threaded-midpoint
   "The X, Y and Z coordinates of the middle of the threaded rod."
+  [getopt]
   (vec (map #(/ % 2)
             (map + (threaded-position-keyboard getopt)
                    (threaded-position-plinth getopt)))))
 
-(defn rod-angle [getopt]
+(defn rod-angle
   "The angle (from the y axis) of the threaded rod."
+   [getopt]
   (let [p (threaded-position-plinth getopt)
         d (map abs (map - (threaded-position-keyboard getopt) p))]
    (Math/atan (/ (first d) (second d)))))
 
-(defn threaded-rod [getopt]
-  "An unthreaded model of a theaded cylindrical rod connecting the keyboard and wrist rest."
+(defn threaded-rod
+  "An unthreaded model of a threaded cylindrical rod connecting the keyboard
+  and wrist rest."
+  [getopt]
   (translate (threaded-midpoint getopt)
     (rotate [(/ π 2) 0 (rod-angle getopt)]
       (cylinder (/ (getopt :wrist-rest :fasteners :diameter) 2)
@@ -101,11 +106,15 @@
 (defn rod-offset
   "A rod-specific offset relative to the primary rod (index 0).
   The unary form returns the offset of the last rod."
-  ([getopt] (rod-offset getopt (dec (getopt :wrist-rest :fasteners :amount))))
-  ([getopt index] (vec (map #(* index %) [0 0 (getopt :wrist-rest :fasteners :height :increment)]))))
+  ([getopt]
+   (rod-offset getopt (dec (getopt :wrist-rest :fasteners :amount))))
+  ([getopt index]
+   (vec (map #(* index %)
+             [0 0 (getopt :wrist-rest :fasteners :height :increment)]))))
 
-(defn threaded-fasteners [getopt]
+(defn threaded-fasteners
   "The full set of connecting threaded rods with nuts for case-side nut bosses."
+  [getopt]
   (let [nut
           (->> (threaded/nut
                  :iso-size (getopt :wrist-rest :fasteners :diameter)
@@ -122,8 +131,9 @@
           (if (getopt :wrist-rest :fasteners :mounts :case-side :nuts :bosses :include)
             nut)))))))
 
-(defn- plinth-nut-pockets [getopt]
+(defn- plinth-nut-pockets
   "Nut(s) in the plinth-side plate, with pocket(s)."
+  [getopt]
   (let [d (getopt :wrist-rest :fasteners :diameter)
         ph (getopt :wrist-rest :fasteners :mounts :plinth-side :pocket-height)
         compensator (getopt :dfm :derived :compensator)
@@ -147,21 +157,28 @@
      (cube g1 d0 g1)
      (cube 1 1 (+ g1 8)))))
 
-(defn case-plate [getopt]
+(defn case-plate
   "A plate for attaching a threaded rod to the keyboard case.
   This is intended to have nuts on both sides, with a boss on the inward side."
-  (misc/bottom-hull
-    (translate (threaded-position-keyboard getopt)
-      (translate (rod-offset getopt)
-        (rotate [0 0 (rod-angle getopt)]
-          (plate-block getopt (getopt :wrist-rest :fasteners :mounts :case-side :depth)))))))
+  [getopt]
+  (let [depth (getopt :wrist-rest :fasteners :mounts :case-side :depth)]
+    (->>
+      (plate-block getopt depth)
+      (rotate [0 0 (rod-angle getopt)])
+      (translate (rod-offset getopt))
+      (translate (threaded-position-keyboard getopt))
+      (misc/bottom-hull))))
 
-(defn plinth-plate [getopt]
-  "A plate on the plinth side."
-  (misc/bottom-hull
-    (translate (vec (map + (threaded-position-plinth getopt) (rod-offset getopt)))
-      (rotate [0 0 (rod-angle getopt)]
-        (plate-block getopt (getopt :wrist-rest :fasteners :mounts :plinth-side :depth))))))
+(defn plinth-plate
+  "A plate on the plinth side for a threaded rod to the keyboard case."
+  [getopt]
+  (let [depth (getopt :wrist-rest :fasteners :mounts :plinth-side :depth)]
+    (->>
+      (plate-block getopt depth)
+      (rotate [0 0 (rod-angle getopt)])
+      (translate
+        (vec (map + (threaded-position-plinth getopt) (rod-offset getopt))))
+      (misc/bottom-hull))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -207,8 +224,9 @@
            ; Add an intermediate point for aesthetics.
            [[(first sw) (+ (second sw) bevel)]]))))))
 
-(defn case-hook [getopt]
+(defn case-hook
   "A model hook. In the solid style, this holds the rest in place."
+  [getopt]
   (let [cluster (getopt :wrist-rest :derived :key-cluster)
         coord (getopt :wrist-rest :derived :key-coord)
         [x4 y2 _] (key/cluster-position getopt cluster coord
@@ -233,16 +251,18 @@
 ;; Main Model Basics ;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn plinth-outline [getopt]
+(defn plinth-outline
   "A 2D outline, centered."
+  [getopt]
   (let [prop (partial getopt :wrist-rest :derived)
         chamfer (getopt :wrist-rest :shape :chamfer)]
    (->> (square (prop :base-x) (prop :base-y))
         (offset {:delta (- chamfer)})
         (offset {:delta chamfer :chamfer true}))))
 
-(defn soft-zone [getopt]
+(defn soft-zone
   "A 3D mask capturing what would be rubber material, with wide margins."
+  [getopt]
   (let [height 100
         depth (getopt :wrist-rest :shape :pad :height :below-lip)
         z2 (getopt :wrist-rest :derived :z2)]
@@ -255,9 +275,10 @@
            (offset -2
              (plinth-outline getopt))))))))
 
-(defn plinth-maquette [getopt]
+(defn plinth-maquette
   "The overall shape of rubber and plastic as one object in place.
   This does not have all the details."
+  [getopt]
   (let [prop (partial getopt :wrist-rest :derived)
         z3 (prop :z3)
         margin 0.4
@@ -301,8 +322,9 @@
 ;; Outputs ;;
 ;;;;;;;;;;;;;
 
-(defn plinth-plastic [getopt]
+(defn plinth-plastic
   "The lower portion of a wrist rest, to be printed in a rigid material."
+  [getopt]
   (body/mask getopt
     (difference
       (plinth-maquette getopt)
@@ -319,18 +341,20 @@
       (translate (vec (map + (getopt :wrist-rest :derived :sw) [20 20]))
         (cube 12 12 200)))))
 
-(defn rubber-insert [getopt]
+(defn rubber-insert
   "The upper portion of a wrist rest, to be cast or printed in a soft material."
+  [getopt]
   (color [0.5 0.5 1 1]
     (intersection
       (soft-zone getopt)
       (plinth-maquette getopt))))
 
-(defn rubber-casting-mould [getopt]
+(defn rubber-casting-mould
   "A thin shell that goes on top of a wrist plinth temporarily.
   This is for casting silicone into, “in place”. If the wrist rest has
   180° rotational symmetry around the z axis, one mould should
   be enough for both halves’ wrist rests, with tape to prevent leaks."
+  [getopt]
   (let [prop (partial getopt :wrist-rest :derived)
         thickness 2
         height (+ (- (prop :z4) (prop :z1)) thickness)]
@@ -343,10 +367,11 @@
                (plinth-outline getopt)))))
        (plinth-maquette getopt)))))
 
-(defn unified-preview [getopt]
+(defn unified-preview
   "A merged view of a wrist rest. This might be printed in hard plastic for a
   prototype but is not suitable for long-term use: It would typically be too
   hard for ergonomy and does not have a nut pocket for threaded rods."
+  [getopt]
   (body/mask getopt
     (difference
       (plinth-maquette getopt)

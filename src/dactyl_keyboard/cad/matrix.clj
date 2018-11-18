@@ -24,8 +24,9 @@
    :south π,
    :west  (/ π -2)})
 
-(defn compass-delta [axis & directions]
+(defn compass-delta
   "Find a coordinate axis delta for movement in any of the stated directions."
+  [axis & directions]
   (let [value (get-in compass-to-grid [(first directions) axis])]
     (if (or (not (zero? value)) (= (count directions) 1))
       value
@@ -34,8 +35,9 @@
 (defn compass-dx [& directions] (apply compass-delta :dx directions))
 (defn compass-dy [& directions] (apply compass-delta :dy directions))
 
-(defn left [direction]
+(defn left
   "Retrieve a direction keyword for turning left from ‘direction’."
+  [direction]
   (ffirst (filter #(= direction (second %))
                   (partition 2 1 '(:north) (keys compass-to-grid)))))
 
@@ -43,18 +45,22 @@
   (second (first (filter #(= direction (first %))
                          (partition 2 1 '(:north) (keys compass-to-grid))))))
 
-(defn next-column [column direction]
+(defn next-column
   "Each column runs along the y axis; changing columns changes x."
+  [column direction]
   (+ column (compass-dx direction)))
 
-(defn next-row [row direction]
+(defn next-row
   "Each row runs along the x axis; changing rows changes y."
+  [row direction]
   (+ row (compass-dy direction)))
 
-(defn walk [[column row] & directions]
-  "A tuple describing the key position an arbitrary orthogonal walk would lead to."
+(defn walk
+  "A tuple describing the position an arbitrary orthogonal walk would lead to."
+  [[column row] & directions]
   (if (empty? directions)
     [column row]
     (let [direction (first directions)]
-      (apply (partial walk [(next-column column direction) (next-row row direction)])
+      (apply (partial walk [(next-column column direction)
+                            (next-row row direction)])
         (rest directions)))))

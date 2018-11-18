@@ -22,12 +22,13 @@
 (defn bottom-hull [& p]
   (hull p (bottom-extrusion 0.001 p)))
 
-(defn swing-callables [translator radius rotator obj]
+(defn swing-callables
   "Rotate passed object with passed radius, not around its own axes.
   The ‘translator’ function receives a vector based on the radius, in the z
   axis only, and an object to translate.
   If ‘rotator’ is a 3-vector of angles or a 2-vector of an angle and an axial
   filter, a rotation function will be created based on that."
+  [translator radius rotator obj]
   (if (vector? rotator)
     (if (= (count rotator) 3)
       (swing-callables translator radius (partial maybe-rotate rotator) obj)

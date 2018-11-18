@@ -53,16 +53,18 @@
               (throw (Exception. (format "Invalid key: %s" key)))))]
     (fn [candidate] (into {} (map parse-item candidate)))))
 
-(defn map-of [key-parser value-parser]
+(defn map-of
   "Return a parser of a map where the general type of key is known."
+  [key-parser value-parser]
   (letfn [(parse-item [[key value]]
             [(key-parser key) (value-parser value)])]
     (fn [candidate] (into {} (map parse-item candidate)))))
 
-(defn keyword-or-integer [candidate]
+(defn keyword-or-integer
   "A parser that takes a number as an integer or a string as a keyword.
   This works around a peculiar facet of clj-yaml, wherein integer keys to
   maps are parsed as keywords."
+  [candidate]
   (try
     (int candidate)  ; Input like “1”.
     (catch ClassCastException _
@@ -105,9 +107,9 @@
                  (map-like {:parameters identity}))}))})))
 
 (defn case-tweak-corner
-  "Parse notation for a range of wall segments off a specific key
-  corner."
-  ([alias corner s0] (case-tweak-corner alias corner s0 s0))
+  "Parse notation for a range of wall segments off a specific key corner."
+  ([alias corner s0]
+   (case-tweak-corner alias corner s0 s0))
   ([alias corner s0 s1]
    [(keyword alias) (string-corner corner) (int s0) (int s1)]))
 
@@ -189,11 +191,12 @@
   [nominal candidate]
   (or candidate (:default nominal)))
 
-(defn- soft-defaults [nominal candidate]
+(defn- soft-defaults
   "Prioritize a user-supplied value over a default value, but make it spongy.
   This is an alternate method for resolving overlap, intended for use with
   defaults that are so complicated the user will not want to write a complete,
   explicit replacement every time."
+  [nominal candidate]
   (generics/soft-merge (:default nominal) candidate))
 
 (defn parse-leaf
