@@ -7,7 +7,7 @@
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.pprint :refer [pprint]]
             [clojure.java.shell :refer [sh]]
-            [clojure.java.io :refer [make-parents]]
+            [clojure.java.io :refer [file make-parents]]
             [clj-yaml.core :as yaml]
             [scad-clj.scad :refer [write-scad]]
             [scad-clj.model :exclude [use import] :refer :all]
@@ -170,8 +170,8 @@
 (defn- author
   "Describe a model in one or more output files."
   [[basename model {:keys [debug render renderer]}]]
-  (let [scad (str "things/scad/" basename ".scad")
-        stl (str "things/stl/" basename ".stl")]
+  (let [scad (file "things" "scad" (str basename ".scad"))
+        stl (file "things" "stl" (str basename ".stl"))]
     (if debug (println "Started" scad))
     (make-parents scad)
     (spit scad (write-scad model))
@@ -225,7 +225,7 @@
 (def cli-options
   "Define command-line interface."
   [["-c" "--configuration-file PATH" "Path to parameter file in YAML format"
-    :default ["resources/opt/default.yaml"]
+    :default [(file "resources" "opt" "default.yaml")]
     :assoc-fn (fn [m k new] (update-in m [k] (fn [old] (conj old new))))]
    [nil "--describe-parameters SECTION"
     "Print a Markdown document specifying what a configuration file may contain"

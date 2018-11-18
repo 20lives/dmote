@@ -14,7 +14,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   `scad-tarmi`, the `flat` style of bolt head has been renamed to
   the more specific `countersunk`.
 - Removed the option `wrist-rest` → `fasteners` → `mounts` → `plinth-side` →
-  `pocket-scale`, obviated by the generic `dfm` feature.
+  `pocket-scale`, obviated by a new generic `dfm` feature.
 - Renamed the ‘finger’ key cluster to ‘main‘.
 - Removed `create-models.sh`, adding equivalent functionality to the Clojure
   application itself (new flags: `--render`, `--renderer`).
@@ -34,6 +34,10 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Support for a filename whitelist in the CLI.
 - Support for generic compensation for slicer and printer inaccuracies in the
   xy plane through a new option, `dfm` → `error`.
+
+### Fixed
+- Improved support for Windows by using `clojure.java.io/file` instead of
+  string literals with Unix-style file-path separators.
 
 ### Developer
 - Added a dependency on `scad-tarmi` for shorter OpenSCAD code and more

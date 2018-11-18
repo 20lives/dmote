@@ -9,6 +9,7 @@
 (ns dactyl-keyboard.params
   (:require [clojure.string :as string]
             [clojure.spec.alpha :as spec]
+            [clojure.java.io :refer [file]]
             [flatland.ordered.map :refer [ordered-map]]
             [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.generics :as generics]))
@@ -1095,7 +1096,7 @@
     "The top of the wrist rest should be printed or cast in a soft material, "
     "such as silicone rubber."]
    [:parameter [:wrist-rest :shape :pad :surface-heightmap]
-    {:default "resources/heightmap/default.dat"}
+    {:default (file ".." ".." "resources" "heightmap" "default.dat")}
     "A filepath. The path, and file, will be interpreted by OpenScad, using "
     "its [`surface()` function](https://en.wikibooks.org/wiki/"
     "OpenSCAD_User_Manual/Other_Language_Features#Surface).\n\n"

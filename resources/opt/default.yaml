@@ -612,7 +612,6 @@ wrist-rest:
     chamfer: 3
     lip-height: 2
     pad:
-      surface-heightmap: ../resources/heightmap/default.dat
       height:
         surface-range: 28
         lip-to-surface: 3
