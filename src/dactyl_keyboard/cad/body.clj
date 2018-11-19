@@ -247,42 +247,6 @@
 
 
 ;;;;;;;;;;;;;;;;;;
-;; Bottom Plate ;;
-;;;;;;;;;;;;;;;;;;
-
-(defn- floor-finder
-  "Return a sequence of xy-coordinate pairs for exterior wall vertices."
-  [getopt cluster edges]
-  (map
-    (fn [[coord direction turning-fn]]
-      (take 2
-        (wall-corner-position getopt cluster coord
-          {:directions [direction (turning-fn direction)] :vertex true})))
-    edges))
-
-(defn- floor-polygon
-  "A polygon approximating a floor-level projection of a key clusters’s wall."
-  [getopt cluster]
-  (polygon
-    (mapcat identity  ; Flatten floor-finder output by one level only.
-      (reduce
-        (fn [coll position]
-          (conj coll
-            (floor-finder getopt cluster (connecting-wall position))))
-        []
-        (matrix/trace-between
-          (getopt :key-clusters :derived :by-cluster cluster :key-requested?))))))
-
-(defn bottom-plate
-  "A model of a bottom plate for the entire case."
-  [getopt]
-  (color [150/255 90/255 70/255 1]
-    (extrude-linear
-      {:height (getopt :case :bottom-plate :thickness), :center false}
-      (key/metacluster floor-polygon getopt))))
-
-
-;;;;;;;;;;;;;;;;;;
 ;; Rear Housing ;;
 ;;;;;;;;;;;;;;;;;;
 
@@ -353,39 +317,65 @@
   "Akin to cluster-position but with a wall segment."
   (partial housing-placement (partial map +)))
 
-(defn- housing-outer-wall
-  "The west, north and east walls of the rear housing. These are mostly
-  vertical but they do connect to the key cluster’s main wall."
-  [getopt]
+(defn- housing-west-wall
+  "The western outer wall connecting case to rear housing."
+  [getopt upper]
   (let [cluster (getopt :case :rear-housing :position :cluster)
-        wec (getopt :case :rear-housing :derived :west-end-coord)
-        eec (getopt :case :rear-housing :derived :east-end-coord)
-        c (housing-cube getopt)]
-   (union
-     (apply misc/pairwise-hulls
-       (reduce
-         (fn [coll shapes] (conj coll (apply hull shapes)))
-         []
-         [(wall-edge getopt cluster true [wec :west matrix/right])
-          (map #(housing-place getopt WSW % c) (range 2))
-          (map #(housing-place getopt WNW % c) (range 2))
-          (map #(housing-place getopt NNW % c) (range 2))
-          (map #(housing-place getopt NNE % c) (range 2))
-          (map #(housing-place getopt ENE % c) (range 2))
-          (map #(housing-place getopt ESE % c) (range 2))
-          (wall-edge getopt cluster true [eec :east matrix/left])]))
-     (apply misc/pairwise-hulls
-       (reduce
-         (fn [coll shapes] (conj coll (apply misc/bottom-hull shapes)))
-         []
-         [(wall-edge getopt cluster false [wec :west matrix/right])
-          (housing-place getopt WSW 1 c)
-          (housing-place getopt WNW 1 c)
-          (housing-place getopt NNW 1 c)
-          (housing-place getopt NNE 1 c)
-          (housing-place getopt ENE 1 c)
-          (housing-place getopt ESE 1 c)
-          (wall-edge getopt cluster false [eec :east matrix/left])])))))
+        wec (getopt :case :rear-housing :derived :west-end-coord)]
+    (wall-edge getopt cluster upper [wec :west matrix/right])))
+
+(defn- housing-east-wall
+  "The eastern outer wall connecting case to rear housing."
+  [getopt upper]
+  (let [cluster (getopt :case :rear-housing :position :cluster)
+        eec (getopt :case :rear-housing :derived :east-end-coord)]
+    (wall-edge getopt cluster upper [eec :east matrix/left])))
+
+(defn- housing-straight-wall-post-fn
+  "Close over a function that places cubes for the completely straight main
+  walls of the rear housing."
+  [getopt segments]
+  (fn [pair]
+    (map #(housing-place getopt pair % (housing-cube getopt)) segments)))
+
+(defn- housing-straight-wall-cubes
+  "A sequence of cubes that form part of a straight wall."
+  [getopt segments corners]
+  (map (housing-straight-wall-post-fn getopt segments) corners))
+
+(defn- housing-wall-sequences
+  "Some portion of the completely straight main walls of the rear housing."
+  ([getopt segments]
+   (housing-wall-sequences getopt segments identity))
+  ([getopt segments transformer]
+   (housing-straight-wall-cubes getopt segments
+     (transformer [WSW WNW NNW NNE ENE ESE]))))
+
+(defn- housing-straight-single
+  "A convenience for selecting just one post or piece of the straight walls."
+  [getopt selector]
+  (housing-wall-sequences getopt [1] (fn [corners] [(selector corners)])))
+
+(defn- housing-wall-level
+  "The west, north and east walls of the rear housing with connections to the
+  ordinary case wall."
+  [getopt is-upper-level joiner segments]
+  (apply misc/pairwise-hulls
+    (reduce
+      (fn [coll shapes] (conj coll (apply joiner shapes)))
+      []
+      (concat
+        [(housing-west-wall getopt is-upper-level)]
+        (housing-wall-sequences getopt segments)
+        [(housing-east-wall getopt is-upper-level)]))))
+
+(defn- housing-outer-wall
+  "The complete walls of the rear housing: Vertical walls and a bevelled upper
+  level that meets the roof."
+  [getopt]
+  (union
+    (housing-wall-level getopt true hull [0 1])
+    (housing-wall-level getopt false misc/bottom-hull [1])))
 
 (defn- housing-web
   "An extension of a key cluster’s webbing onto the roof of the rear housing."
@@ -521,3 +511,55 @@
   [getopt]
   (apply union
     (reduce (partial tweak-plating getopt) [] (getopt :case :tweaks))))
+
+
+;;;;;;;;;;;;;;;;;;
+;; Bottom Plate ;;
+;;;;;;;;;;;;;;;;;;
+
+(defn- floor-finder
+  "Return a sequence of xy-coordinate pairs for exterior wall vertices."
+  [getopt cluster edges]
+  (map
+    (fn [[coord direction turning-fn]]
+      (let [key [:wall direction :extent]
+            extent (key/most-specific-option getopt key cluster coord)]
+        (when (= extent :full)
+          (take 2
+            (wall-corner-position getopt cluster coord
+              {:directions [direction (turning-fn direction)] :vertex true})))))
+    edges))
+
+(defn- floor-polygon
+  "A polygon approximating a floor-level projection of a key clusters’s wall."
+  [getopt cluster]
+  (polygon
+    (filter some?  ; Get rid of edges with partial walls.
+      (mapcat identity  ; Flatten floor-finder output by one level only.
+        (reduce
+          (fn [coll position]
+            (conj coll
+              (floor-finder getopt cluster (connecting-wall position))))
+          []
+          (matrix/trace-between
+            (getopt :key-clusters :derived :by-cluster cluster :key-requested?)))))))
+
+(defn bottom-plate
+  "A model of a bottom plate for the entire case."
+  [getopt]
+  (color [150/255 90/255 70/255 1]
+    (extrude-linear
+      {:height (getopt :case :bottom-plate :thickness), :center false}
+      (union
+        (key/metacluster floor-polygon getopt)
+        (if (getopt :case :rear-housing :include)
+          ;; Take care to hull the straight and other parts of the rear housing
+          ;; separately because the connection between them may be concave.
+          (cut
+            (misc/bottom-hull  ; The cuboid part of the housing.
+              (housing-wall-sequences getopt [1]))
+            (misc/bottom-hull  ; The connection’s four corners.
+              (housing-west-wall getopt false)
+              (housing-straight-single getopt first)
+              (housing-east-wall getopt false)
+              (housing-straight-single getopt last))))))))
