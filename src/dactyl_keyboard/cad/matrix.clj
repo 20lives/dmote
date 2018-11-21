@@ -95,21 +95,6 @@
     :inner {:coordinates (walk coordinates direction (left direction))
             :direction (left direction)}))
 
-(defn- back-clockwise
-  "Pick the previous position along the edge of a matrix."
-  [occlusion-fn {:keys [coordinates direction] :as position}]
-  {:pre [(occlusion-fn coordinates)]}
-  (let [on-left (walk coordinates (left direction))
-        ahead (walk coordinates direction)
-        ahead-left (walk coordinates direction (left direction))
-        landscape (vec (map occlusion-fn [on-left ahead-left ahead]))]
-    (case landscape
-      [false false false] :outer
-      [false false true ] nil
-      [false true  true ] :inner
-      (throw (Exception.
-               (format "Unforeseen landscape at %s: %s" position landscape))))))
-
 (defn trace-edge
   "Walk the edge of a matrix, clockwise. Return a lazy, infinite sequence.
   Annotate each position with a description of how the edge turns."
@@ -132,3 +117,10 @@
          stop (salient stop-position)
          pred (fn [p] (not= (salient p) stop))]
      (concat [p0] (take-while pred pn)))))
+
+(defn cube-vertex-offset
+  "Compute a 3D offset from the center of a cube to a vertex on it."
+  [directions [x y z] {:keys [bottom] :or {bottom true}}]
+  [(* (apply compass-dx directions) x)
+   (* (apply compass-dy directions) y)
+   ((if bottom - +) z)])

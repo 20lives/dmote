@@ -5,6 +5,7 @@
 
 (ns dactyl-keyboard.cad.body
   (:require [scad-clj.model :exclude [use import] :refer :all]
+            [scad-tarmi.core :refer [maybe-translate]]
             [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.generics :refer [abs NNE ENE ESE WSW WNW NNW
                                               directions-to-unordered-corner]]
@@ -88,7 +89,7 @@
 ;; Wall-Building ;;
 ;;;;;;;;;;;;;;;;;;;
 
-(defn wall-segment-offset
+(defn- wall-segment-offset
   "Compute a 3D offset from one corner of a switch mount to a part of its wall."
   [getopt cluster coord cardinal-direction segment]
   (let [most #(key/most-specific-option getopt (concat [:wall] %) cluster coord)
@@ -115,12 +116,10 @@
 
 (defn wall-vertex-offset
   "Compute a 3D offset from the center of a web post to a vertex on it."
-  [getopt directions {:keys [bottom] :or {bottom true}}]
+  [getopt directions keyopts]
   (let [xy (/ (getopt :case :key-mount-corner-margin) 2)
         z (/ (getopt :case :key-mount-thickness) 2)]
-    [(* (apply matrix/compass-dx directions) xy)
-     (* (apply matrix/compass-dy directions) xy)
-     ((if bottom - +) z)]))
+    (matrix/cube-vertex-offset directions [xy xy z] keyopts)))
 
 (defn- wall-corner-offset
   "Combined [x y z] offset from the center of a switch mount.
@@ -203,31 +202,49 @@
 
 ;; Edge walking.
 
-(defn wall-edge
+(defn wall-edge-placement
   "Produce a sequence of corner posts for the upper or lower part of the edge
   of one wall slab."
-  [getopt cluster upper [coord direction turning-fn]]
+  [post-fn getopt cluster upper [coord direction turning-fn]]
   (let [extent (key/most-specific-option getopt [:wall direction :extent]
                  cluster coord)
-        last-upper-segment (case extent :full 4 :none 0 extent)
-        to-ground (= extent :full)
-        corner [direction (turning-fn direction)]
-        offsetter (partial wall-segment-offset getopt cluster coord direction)
-        post (fn [segment]
-               (->> (key/mount-corner-post getopt corner)
-                    (translate (offsetter segment))
-                    (key/cluster-place getopt cluster coord)))]
+        last-upper-segment (case extent :full 4, :none 0, extent)
+        place-post (post-fn getopt cluster coord
+                     [direction (turning-fn direction)])]
    (if-not (zero? last-upper-segment)
      (if upper
-       (map post (range (inc last-upper-segment)))
-       (if (= extent :full)
-         (map post [2 3 4]))))))
+       (map place-post (range (inc last-upper-segment)))
+       (when (= extent :full)
+         (map place-post [2 3 4]))))))
+
+(defn- cluster-segment-placer
+  "A function for wall edge placement that puts an actual object in place."
+  [getopt cluster coord directions]
+  (fn [segment]
+    (->>
+      (key/web-post getopt)
+      (maybe-translate
+        (wall-corner-offset getopt cluster coord
+          {:directions directions, :segment segment, :vertex false}))
+      (key/cluster-place getopt cluster coord))))
+
+(def wall-edge-place (partial wall-edge-placement cluster-segment-placer))
+
+(defn- cluster-reckoner
+  "A function for finding wall edge vertices."
+  [getopt cluster coord directions]
+  (fn [segment]
+    (key/cluster-position getopt cluster coord
+      (wall-corner-offset getopt cluster coord
+        {:directions directions, :segment segment, :vertex true}))))
+
+(def wall-edge-reckon (partial wall-edge-placement cluster-reckoner))
 
 (defn wall-slab
   "Produce a single shape joining some (two) edges."
   [getopt cluster edges]
-  (let [upper (map (partial wall-edge getopt cluster true) edges)
-        lower (map (partial wall-edge getopt cluster false) edges)]
+  (let [upper (map (partial wall-edge-place getopt cluster true) edges)
+        lower (map (partial wall-edge-place getopt cluster false) edges)]
    (union
      (apply hull upper)
      (apply misc/bottom-hull lower))))
@@ -283,11 +300,11 @@
     :ne roof-ne}))
 
 (defn- housing-roof
-  "A cuboid shape between the four corners of the rearing housing’s roof."
+  "A cuboid shape between the four corners of the rear housing’s roof."
   [getopt]
   (let [getcorner (partial getopt :case :rear-housing :derived)]
     (apply hull
-      (map #(translate (getcorner %) (housing-cube getopt))
+      (map #(maybe-translate (getcorner %) (housing-cube getopt))
            [:nw :ne :se :sw]))))
 
 (defn- housing-segment-offset
@@ -301,6 +318,10 @@
      :east (wall (key :east-end-coord) cardinal-direction segment)
      :north (if (= segment 0) [0 0 0] [0 1 -1]))))
 
+(defn housing-vertex-offset [getopt directions]
+  (let [t (/ (getopt :case :web-thickness) 2)]
+    (matrix/cube-vertex-offset directions [t t t] {})))
+
 (defn- housing-placement
   "Place passed shape in relation to a corner of the rear housing’s roof."
   [translate-fn getopt corner segment subject]
@@ -310,72 +331,91 @@
        (translate-fn (housing-segment-offset getopt (first corner) segment))))
 
 (def housing-place
-  "Akin to cluster-place but with a wall segment."
-  (partial housing-placement translate))
+  "Akin to cluster-place but with a rear housing wall segment."
+  (partial housing-placement maybe-translate))
 
-(def housing-position
-  "Akin to cluster-position but with a wall segment."
+(defn- housing-cube-place [getopt corner segment]
+  (housing-place getopt corner segment (housing-cube getopt)))
+
+(def housing-reckon
+  "Akin to cluster-position but with a rear housing wall segment."
   (partial housing-placement (partial map +)))
 
-(defn- housing-west-wall
-  "The western outer wall connecting case to rear housing."
-  [getopt upper]
+(defn- housing-vertex-reckon
+  "Find the exact position of a vertex on a housing cube."
+  [getopt corner segment]
+  (housing-reckon getopt corner segment (housing-vertex-offset getopt corner)))
+
+(defn- housing-opposite-reckon
+  "Like housing-vertex-reckon but for the other end of the indicated facing."
+  ;; This is just a workaround for fitting the bottom plate.
+  ;; It would not be needed if there were an edge walking function like that
+  ;; of the cluster walls but for the rear housing: A function that returned
+  ;; pairs of vertices on the outside wall.
+  [getopt corner segment]
+  (let [[dir0 dir1] corner
+        other-corner [dir0 (matrix/left (matrix/left dir1))]]
+    (housing-reckon getopt corner segment
+      (housing-vertex-offset getopt other-corner))))
+
+(defn- housing-pillar-functions
+  "Make functions that determine the exact positions of rear housing walls.
+  This is an awkward combination of reckoning functions for building the
+  bottom plate in 2D and placement functions for building the case walls in
+  3D. Because they’re specialized, the ultimate return values disturbingly
+  different."
+  [getopt]
   (let [cluster (getopt :case :rear-housing :position :cluster)
-        wec (getopt :case :rear-housing :derived :west-end-coord)]
-    (wall-edge getopt cluster upper [wec :west matrix/right])))
+        cluster-pillar
+          (fn [coord-key direction housing-turning-fn cluster-turning-fn]
+            ;; Make a function for a part of the cluster wall.
+            ;; For reckoning, return a 3D coordinate vector.
+            ;; For building, return a sequence of web posts.
+            (fn [reckon upper]
+              (let [coord (getopt :case :rear-housing :derived coord-key)
+                    function (if reckon wall-edge-reckon wall-edge-place)
+                    picker (if reckon #(first (take-last 2 %)) identity)]
+                (picker
+                  (function getopt cluster upper
+                    [coord direction housing-turning-fn])))))
+        housing-pillar
+          (fn [reckon-fn directions]
+            ;; Make a function for a part of the rear housing.
+            ;; For reckoning, return a 3D coordinate vector.
+            ;; For building, return a hull of housing cubes.
+            (fn [reckon upper]
+              (let [segments (if upper [0 1] [1])]
+                (if reckon
+                  (reckon-fn getopt directions (first segments))
+                  (apply hull
+                    (map #(housing-cube-place getopt directions %)
+                         segments))))))]
+    [(cluster-pillar :west-end-coord :west matrix/right matrix/left)
+     (housing-pillar housing-opposite-reckon WSW)
+     (housing-pillar housing-vertex-reckon WNW)
+     (housing-pillar housing-vertex-reckon NNW)
+     (housing-pillar housing-vertex-reckon NNE)
+     (housing-pillar housing-vertex-reckon ENE)
+     (housing-pillar housing-opposite-reckon ESE)
+     (cluster-pillar :east-end-coord :east matrix/left matrix/right)]))
 
-(defn- housing-east-wall
-  "The eastern outer wall connecting case to rear housing."
-  [getopt upper]
-  (let [cluster (getopt :case :rear-housing :position :cluster)
-        eec (getopt :case :rear-housing :derived :east-end-coord)]
-    (wall-edge getopt cluster upper [eec :east matrix/left])))
-
-(defn- housing-straight-wall-post-fn
-  "Close over a function that places cubes for the completely straight main
-  walls of the rear housing."
-  [getopt segments]
-  (fn [pair]
-    (map #(housing-place getopt pair % (housing-cube getopt)) segments)))
-
-(defn- housing-straight-wall-cubes
-  "A sequence of cubes that form part of a straight wall."
-  [getopt segments corners]
-  (map (housing-straight-wall-post-fn getopt segments) corners))
-
-(defn- housing-wall-sequences
-  "Some portion of the completely straight main walls of the rear housing."
-  ([getopt segments]
-   (housing-wall-sequences getopt segments identity))
-  ([getopt segments transformer]
-   (housing-straight-wall-cubes getopt segments
-     (transformer [WSW WNW NNW NNE ENE ESE]))))
-
-(defn- housing-straight-single
-  "A convenience for selecting just one post or piece of the straight walls."
-  [getopt selector]
-  (housing-wall-sequences getopt [1] (fn [corners] [(selector corners)])))
-
-(defn- housing-wall-level
+(defn- housing-wall-shape-level
   "The west, north and east walls of the rear housing with connections to the
   ordinary case wall."
-  [getopt is-upper-level joiner segments]
+  [getopt is-upper-level joiner]
   (apply misc/pairwise-hulls
     (reduce
-      (fn [coll shapes] (conj coll (apply joiner shapes)))
+      (fn [coll function] (conj coll (joiner (function false is-upper-level))))
       []
-      (concat
-        [(housing-west-wall getopt is-upper-level)]
-        (housing-wall-sequences getopt segments)
-        [(housing-east-wall getopt is-upper-level)]))))
+      (housing-pillar-functions getopt))))
 
 (defn- housing-outer-wall
   "The complete walls of the rear housing: Vertical walls and a bevelled upper
   level that meets the roof."
   [getopt]
   (union
-    (housing-wall-level getopt true hull [0 1])
-    (housing-wall-level getopt false misc/bottom-hull [1])))
+    (housing-wall-shape-level getopt true identity)
+    (housing-wall-shape-level getopt false misc/bottom-hull)))
 
 (defn- housing-web
   "An extension of a key cluster’s webbing onto the roof of the rear housing."
@@ -472,12 +512,9 @@
   [getopt key-alias directions first-segment last-segment]
   (if (= first-segment last-segment)
     (let [keyinfo (getopt :key-clusters :derived :aliases key-alias)
-          {cluster :cluster coordinates :coordinates} keyinfo
-          offset (wall-segment-offset getopt cluster coordinates
-                  (first directions) first-segment)]
-     (->> (key/mount-corner-post getopt directions)
-          (translate offset)
-          (key/cluster-place getopt cluster coordinates)))
+          {:keys [cluster coordinates]} keyinfo
+          placer (cluster-segment-placer getopt cluster coordinates directions)]
+      (placer first-segment))
     (apply hull (map #(tweak-posts getopt key-alias directions %1 %1)
                      (range first-segment (inc last-segment))))))
 
@@ -544,6 +581,18 @@
           (matrix/trace-between
             (getopt :key-clusters :derived :by-cluster cluster :key-requested?)))))))
 
+(defn- housing-polygon
+  "A polygon describing the area underneath the rear housing.
+  A projection of the 3D shape would work but it would require taking care to
+  hull the straight and other parts of the housing separately, because the
+  connection between them may be concave. The 2D approach is safer."
+  [getopt]
+  (polygon
+    (reduce
+      (fn [coll pillar-fn] (conj coll (take 2 (pillar-fn true false))))
+      []
+      (housing-pillar-functions getopt))))
+
 (defn bottom-plate
   "A model of a bottom plate for the entire case."
   [getopt]
@@ -553,13 +602,4 @@
       (union
         (key/metacluster floor-polygon getopt)
         (if (getopt :case :rear-housing :include)
-          ;; Take care to hull the straight and other parts of the rear housing
-          ;; separately because the connection between them may be concave.
-          (cut
-            (misc/bottom-hull  ; The cuboid part of the housing.
-              (housing-wall-sequences getopt [1]))
-            (misc/bottom-hull  ; The connection’s four corners.
-              (housing-west-wall getopt false)
-              (housing-straight-single getopt first)
-              (housing-east-wall getopt false)
-              (housing-straight-single getopt last))))))))
+          (housing-polygon getopt))))))

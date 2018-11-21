@@ -35,7 +35,7 @@
                          (getopt field :position :prefer-rear-housing))
         general
           (if use-housing
-            (body/housing-position getopt corner 3 [0 0 0])
+            (body/housing-reckon getopt corner 3 [0 0 0])
             (let [alias (getopt field :position :key-alias)
                   keyinfo (getopt :key-clusters :derived :aliases alias)
                   {cluster :cluster coordinates :coordinates} keyinfo]
