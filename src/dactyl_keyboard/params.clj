@@ -799,6 +799,8 @@
     "A bottom plate can be added to close the case. This is useful mainly to "
     "simplify transportation.\n"
     "\n"
+    "#### Overview\n"
+    "\n"
     "The bottom plate is largely two-dimensional. The application builds it "
     "from a set of polygons, trying to match the perimeter of the case at the "
     "ground level (i.e. z = 0).\n"
@@ -814,8 +816,21 @@
     "hollow and cannot be convex-hulled without escaping the case, unless "
     "your case is convex to start with.\n"
     "\n"
-    "If you require an exact match, do the projection, save it as DXF/SVG "
-    "etc. and post-process that file to fill the interior gap."]
+    "If you require an exact match for the case, do the projection, save it "
+    "as DXF/SVG etc. and post-process that file to fill the interior gap.\n"
+    "\n"
+    "#### Interaction with wrist rests\n"
+    "\n"
+    "If you include both `bottom-plate` and `wrist-rest`, you will get "
+    "plates for the wrist rests too. These plates have no ESDS electronics to "
+    "protect but serve other purposes: Covering nut pockets, covering silicone "
+    "mould-pour cavities, covering plaster or other dense material poured into "
+    "plinths printed without a bottom layer, and balancing the height of the "
+    "different parts (case and rest, which must be connected).\n"
+    "\n"
+    "There are other ways to balance the height, such as adjusting other "
+    "parameters for the connection (doing separate renders) or adding "
+    "silicone feet."]
    [:parameter [:case :bottom-plate :include]
     {:default false :parse-fn boolean}
     "If `true`, include a bottom plate for the case."]

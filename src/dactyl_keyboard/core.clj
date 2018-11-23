@@ -93,6 +93,12 @@
              (getopt :case :bottom-plate :preview))
       (translate [0 0 (- (getopt :case :bottom-plate :thickness))]
         (body/bottom-plate getopt)))
+    (if (and (getopt :case :bottom-plate :include)
+             (getopt :case :bottom-plate :preview)
+             (getopt :wrist-rest :include)
+             (getopt :wrist-rest :preview))
+      (translate [0 0 (- (getopt :case :bottom-plate :thickness))]
+        (wrist/bottom-plate getopt)))
     (if (and (getopt :wrist-rest :include) (getopt :wrist-rest :preview))
       (wrist/unified-preview getopt))))
 
@@ -207,11 +213,11 @@
      ;; in pairs (left and right).
      [{:basename "preview-keycap"
        :model-fn (partial key/metacluster key/cluster-keycaps)}
-      {:basename "case"
+      {:basename "case-main"
        :model-fn build-keyboard-right
        :pair true}
       {:condition (getopt :case :bottom-plate :include)
-       :basename "bottom-plate"
+       :basename "case-bottom-plate"
        :model-fn body/bottom-plate
        :pair true}
       {:condition (= (getopt :mcu :support :style) :lock)
@@ -226,8 +232,13 @@
        :model-fn wrist/rubber-insert
        :pair true}
       {:condition (getopt :wrist-rest :include)
-       :basename "plinth"
+       :basename "plinth-main"
        :model-fn wrist/plinth-plastic
+       :pair true}
+      {:condition (and (getopt :case :bottom-plate :include)
+                       (getopt :wrist-rest :include))
+       :basename "plinth-bottom-plate"
+       :model-fn wrist/bottom-plate
        :pair true}])))
 
 (def cli-options

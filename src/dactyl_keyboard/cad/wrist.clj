@@ -342,6 +342,13 @@
       (translate (vec (map + (getopt :wrist-rest :derived :sw) [20 20]))
         (cube 12 12 200)))))
 
+(defn bottom-plate
+  [getopt]
+  (color [150/255 90/255 70/255 1]
+    (extrude-linear
+      {:height (getopt :case :bottom-plate :thickness), :center false}
+      (cut (plinth-maquette getopt)))))
+
 (defn rubber-insert
   "The upper portion of a wrist rest, to be cast or printed in a soft material."
   [getopt]
