@@ -4,15 +4,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (ns dactyl-keyboard.cad.body
-  (:require [scad-clj.model :exclude [use import] :refer :all]
-            [scad-tarmi.core :refer [maybe-translate]]
+  (:require [clojure.spec.alpha :as spec]
+            [scad-clj.model :exclude [use import] :refer :all]
+            [scad-tarmi.core :refer [maybe-translate maybe-union]]
             [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.generics :refer [abs NNE ENE ESE WSW WNW NNW
                                               directions-to-unordered-corner]]
             [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.key :as key]))
-
 
 ;;;;;;;;;;;;;
 ;; Masking ;;
@@ -232,11 +232,16 @@
 
 (defn- cluster-reckoner
   "A function for finding wall edge vertices."
-  [getopt cluster coord directions]
-  (fn [segment]
-    (key/cluster-position getopt cluster coord
-      (wall-corner-offset getopt cluster coord
-        {:directions directions, :segment segment, :vertex true}))))
+  ([getopt cluster coord directions & {:as keyopts}]
+   (fn [segment]
+     (key/cluster-position getopt cluster coord
+       (wall-corner-offset getopt cluster coord
+         (merge {:directions directions, :segment segment, :vertex true}
+                keyopts))))))
+
+(defn- cluster-segment-reckon
+  [getopt cluster coord directions segment bottom]
+  ((cluster-reckoner getopt cluster coord directions :bottom bottom) segment))
 
 (def wall-edge-reckon (partial wall-edge-placement cluster-reckoner))
 
@@ -525,7 +530,6 @@
   [getopt node]
   (let [parts (get node :chunk-size)
         to-ground (get node :to-ground false)
-        combo (or to-ground parts)
         prefix (if (get node :highlight) -# identity)
         shapes (reduce (partial tweak-plating getopt) [] (:hull-around node))]
    (prefix
@@ -567,7 +571,7 @@
               {:directions [direction (turning-fn direction)] :vertex true})))))
     edges))
 
-(defn- floor-polygon
+(defn- cluster-floor-polygon
   "A polygon approximating a floor-level projection of a key clusters’s wall."
   [getopt cluster]
   (polygon
@@ -581,7 +585,7 @@
           (matrix/trace-between
             (getopt :key-clusters :derived :by-cluster cluster :key-requested?)))))))
 
-(defn- housing-polygon
+(defn- housing-floor-polygon
   "A polygon describing the area underneath the rear housing.
   A projection of the 3D shape would work but it would require taking care to
   hull the straight and other parts of the housing separately, because the
@@ -593,6 +597,57 @@
       []
       (housing-pillar-functions getopt))))
 
+(spec/def ::point-2d (spec/coll-of number? :count 2))
+(spec/def ::point-coll-2d (spec/coll-of ::point-2d))
+
+(defn- tweak-floor-vertex
+  "A corner vertex on a tweak wall, extending from a key mount."
+  [getopt segment-picker bottom
+   [key-alias directions first-segment last-segment]]
+  {:post [(spec/valid? ::point-2d %)]}
+  (let [keyinfo (getopt :key-clusters :derived :aliases key-alias)
+        {:keys [cluster coordinates]} keyinfo
+        segment (segment-picker (range first-segment (inc last-segment)))]
+    (take 2 (cluster-segment-reckon
+              getopt cluster coordinates directions segment bottom))))
+
+(defn- dig-to-seq [node]
+  (if (map? node) (dig-to-seq (:hull-around node)) node))
+
+(defn- tweak-floor-pairs
+  "Produce coordinate pairs for a polygon. A reducer."
+  [getopt [post-picker segment-picker bottom] coll node]
+  {:post [(spec/valid? ::point-coll-2d %)]}
+  (let [vertex-fn (partial tweak-floor-vertex getopt segment-picker bottom)]
+    (conj coll
+      (if (map? node)
+        ;; Pick just one post in the subordinate node, on the assumption that
+        ;; they’re not all ringing the case.
+        (vertex-fn (post-picker (dig-to-seq node)))
+        ;; Node is one post at the top level. Always use that.
+        (vertex-fn node)))))
+
+(defn- tweak-plate-polygon
+  "A single version of the footprint of a tweak."
+  [getopt pickers node-list]
+  (polygon (reduce (partial tweak-floor-pairs getopt pickers) [] node-list)))
+
+(defn- tweak-plate-shadows
+  "Versions of a tweak footprint.
+  This is a semi-brute-force-approach to the problem that we cannot easily
+  identify which vertices shape the outside of the case at z = 0."
+  [getopt node-list]
+  (apply union
+    (for
+      [post [first last], segment [first last], bottom [false true]]
+      (tweak-plate-polygon getopt [post segment bottom] node-list))))
+
+(defn- tweak-plate-flooring
+  "The footprint of all user-requested additional shapes that go to the floor."
+  [getopt]
+  (apply maybe-union (map #(tweak-plate-shadows getopt (:hull-around %))
+                          (filter :to-ground (getopt :case :tweaks)))))
+
 (defn bottom-plate
   "A model of a bottom plate for the entire case."
   [getopt]
@@ -600,6 +655,7 @@
     (extrude-linear
       {:height (getopt :case :bottom-plate :thickness), :center false}
       (union
-        (key/metacluster floor-polygon getopt)
-        (if (getopt :case :rear-housing :include)
-          (housing-polygon getopt))))))
+        (key/metacluster cluster-floor-polygon getopt)
+        (tweak-plate-flooring getopt)
+        (when (getopt :case :rear-housing :include)
+          (housing-floor-polygon getopt))))))

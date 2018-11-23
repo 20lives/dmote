@@ -764,7 +764,8 @@
     "connects them electrically.\n\n"
     "This option is similar to rear housing, but the back plate block "
     "provides no interior space for an MCU etc. It is solid, with holes "
-    "for threaded fasteners including the option of nut bosses."]
+    "for threaded fasteners including the option of nut bosses. "
+    "Its footprint is not part of a `bottom-plate`."]
    [:parameter [:case :back-plate :include]
     {:default false :parse-fn boolean}
     "If `true`, include a back plate block."]
@@ -796,7 +797,25 @@
     "at ground level, to the middle of the base of the back plate block."]
    [:section [:case :bottom-plate]
     "A bottom plate can be added to close the case. This is useful mainly to "
-    "simplify transportation."]
+    "simplify transportation.\n"
+    "\n"
+    "The bottom plate is largely two-dimensional. The application builds it "
+    "from a set of polygons, trying to match the perimeter of the case at the "
+    "ground level (i.e. z = 0).\n"
+    "\n"
+    "Specifically, there is one polygon per key cluster, limited to `full` "
+    "wall edges, one polygon for the rear housing, and one set of polygons "
+    "for each of the first-level case `tweaks` that use `to-ground`, ignoring "
+    "chunk size and almost ignoring nested tweaks.\n"
+    "\n"
+    "This methodology is mentioned here because its results are not perfect."
+    "Pending future features in OpenSCAD, a future version may be based on a "
+    "more exact projection of the case, but as of 2018, such a projection is "
+    "hollow and cannot be convex-hulled without escaping the case, unless "
+    "your case is convex to start with.\n"
+    "\n"
+    "If you require an exact match, do the projection, save it as DXF/SVG "
+    "etc. and post-process that file to fill the interior gap."]
    [:parameter [:case :bottom-plate :include]
     {:default false :parse-fn boolean}
     "If `true`, include a bottom plate for the case."]
@@ -845,7 +864,7 @@
     "The expected value here is an arbitrarily nested structure starting with "
     "a list. Each item in the list can follow one of the following patterns:\n"
     "\n"
-    "- A leaf node. This is a 3- or 4-tuple list with contents specified below.\n"
+    "- A leaf node. This is a 3- or 4-tuple with contents specified below.\n"
     "- A map, representing an instruction to combine nested items in a specific way.\n"
     "- A list of any combination of the other two types. This type exists at "
     "the top level and as the immediate child of each map node.\n"
@@ -861,15 +880,15 @@
     "\n"
     "Together, these identify a starting segment. Optionally, a leaf node may "
     "contain a second segment ID trailing the first. In that case, the leaf "
-    "will represent the convex hull of the first and second indicated "
-    "segments, plus all in between.\n"
+    "will represent the convex hull of the indicated segments plus all "
+    "segments between them.\n"
     "\n"
     "By default, a map node will create a convex hull around its child "
     "nodes. However, this behaviour can be modified. The following keys are "
     "recognized:\n"
     "\n"
     "- `to-ground`: If `true`, child nodes will be extended vertically down "
-    "to the ground plane, as with a `full` wall.\n"
+    "to the ground plane, as with a `full` wall. See also: `bottom-plate`.\n"
     "- `chunk-size`: Any integer greater than 1. If this is set, child nodes "
     "will not share a single convex hull. Instead, there will be a "
     "sequence of smaller hulls, each encompassing this many items.\n"

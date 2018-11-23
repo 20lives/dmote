@@ -145,7 +145,7 @@ A fastener on the outward-facing end of the rear housing. All parameters are ana
 
 Given that independent movement of each half of the keyboard is not useful, each half can include a mounting plate for a stabilizing ‘beam’. That is a straight piece of wood, aluminium, rigid plastic etc. to connect the two halves mechanically and possibly carry the wire that connects them electrically.
 
-This option is similar to rear housing, but the back plate block provides no interior space for an MCU etc. It is solid, with holes for threaded fasteners including the option of nut bosses.
+This option is similar to rear housing, but the back plate block provides no interior space for an MCU etc. It is solid, with holes for threaded fasteners including the option of nut bosses. Its footprint is not part of a `bottom-plate`.
 
 #### Parameter `include`
 
@@ -186,6 +186,14 @@ An offset in mm from the middle of the north wall of the selected key, at ground
 ### Section `bottom-plate`
 
 A bottom plate can be added to close the case. This is useful mainly to simplify transportation.
+
+The bottom plate is largely two-dimensional. The application builds it from a set of polygons, trying to match the perimeter of the case at the ground level (i.e. z = 0).
+
+Specifically, there is one polygon per key cluster, limited to `full` wall edges, one polygon for the rear housing, and one set of polygons for each of the first-level case `tweaks` that use `to-ground`, ignoring chunk size and almost ignoring nested tweaks.
+
+This methodology is mentioned here because its results are not perfect.Pending future features in OpenSCAD, a future version may be based on a more exact projection of the case, but as of 2018, such a projection is hollow and cannot be convex-hulled without escaping the case, unless your case is convex to start with.
+
+If you require an exact match, do the projection, save it as DXF/SVG etc. and post-process that file to fill the interior gap.
 
 #### Parameter `include`
 
@@ -239,7 +247,7 @@ Additional shapes. This is usually needed to bridge gaps between the walls of th
 
 The expected value here is an arbitrarily nested structure starting with a list. Each item in the list can follow one of the following patterns:
 
-- A leaf node. This is a 3- or 4-tuple list with contents specified below.
+- A leaf node. This is a 3- or 4-tuple with contents specified below.
 - A map, representing an instruction to combine nested items in a specific way.
 - A list of any combination of the other two types. This type exists at the top level and as the immediate child of each map node.
 
@@ -249,11 +257,11 @@ Each leaf node identifies a particular set of key mount corner posts. These are 
 - A key corner ID, such as `NNE` for north by north-east.
 - A wall segment ID, which is an integer from 0 to 4.
 
-Together, these identify a starting segment. Optionally, a leaf node may contain a second segment ID trailing the first. In that case, the leaf will represent the convex hull of the first and second indicated segments, plus all in between.
+Together, these identify a starting segment. Optionally, a leaf node may contain a second segment ID trailing the first. In that case, the leaf will represent the convex hull of the indicated segments plus all segments between them.
 
 By default, a map node will create a convex hull around its child nodes. However, this behaviour can be modified. The following keys are recognized:
 
-- `to-ground`: If `true`, child nodes will be extended vertically down to the ground plane, as with a `full` wall.
+- `to-ground`: If `true`, child nodes will be extended vertically down to the ground plane, as with a `full` wall. See also: `bottom-plate`.
 - `chunk-size`: Any integer greater than 1. If this is set, child nodes will not share a single convex hull. Instead, there will be a sequence of smaller hulls, each encompassing this many items.
 - `highlight`: If `true`, render the node in OpenSCAD’s highlighting style. This is convenient while you work.
 - `hull-around`: The list of child nodes. Required.
