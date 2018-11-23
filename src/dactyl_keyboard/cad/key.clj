@@ -219,7 +219,7 @@
         h2 (getopt :keycaps :derived :from-plate-top :resting-cap-bottom)
         keyswitch-hole-x (getopt :switches :derived :keyswitch-hole-x)
         keyswitch-hole-y (getopt :switches :derived :keyswitch-hole-y)]
-   (color [0.75 0.75 1 1]
+   (color (:cap-negative generics/colours)
      (translate [0 0 (getopt :case :key-mount-thickness)]
        (misc/pairwise-hulls
          ;; A bottom plate for ease of mounting a switch:
@@ -243,7 +243,7 @@
      (extrude-linear {:height (getopt :keycaps :body-height)
                       :center false :scale 0.73})  ; Based on DSA.
      (translate [0 0 z])
-     (color [220/255 163/255 163/255 1]))))
+     (color (:cap-body generics/colours)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

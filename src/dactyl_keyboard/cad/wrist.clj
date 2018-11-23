@@ -8,7 +8,7 @@
             [scad-tarmi.core :refer [π]]
             [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.params :as params]
-            [dactyl-keyboard.generics :refer [abs ESE SSE SSW]]
+            [dactyl-keyboard.generics :refer [abs ESE SSE SSW colours]]
             [dactyl-keyboard.cad.body :as body]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.misc :as misc]
@@ -343,8 +343,9 @@
         (cube 12 12 200)))))
 
 (defn bottom-plate
+  "Equivalent to the corresponding function in the body module."
   [getopt]
-  (color [150/255 90/255 70/255 1]
+  (color (:bottom-plate colours)
     (extrude-linear
       {:height (getopt :case :bottom-plate :thickness), :center false}
       (cut (plinth-maquette getopt)))))
@@ -352,7 +353,7 @@
 (defn rubber-insert
   "The upper portion of a wrist rest, to be cast or printed in a soft material."
   [getopt]
-  (color [0.5 0.5 1 1]
+  (color (:rubber colours)
     (intersection
       (soft-zone getopt)
       (plinth-maquette getopt))))

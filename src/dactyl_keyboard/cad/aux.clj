@@ -97,12 +97,12 @@
         mcube (fn [& dimensions] (apply cube (map #(+ % margin) dimensions)))]
    (union
      (translate [0 (/ pcb-y -2) 0]
-       (color [26/255, 90/255, 160/255 1]
+       (color (:pcb generics/colours)
          (mcube pcb-x pcb-y pcb-z)))
      (translate [(/ (+ pcb-x usb-x) 2)
                  (+ (/ usb-y -2) (/ connector-elongation 2) overshoot)
                  0]
-       (color [0.5 0.5 0.5 1]
+       (color (:metal generics/colours)
          (mcube usb-x usb-y usb-z))))))
 
 (defn mcu-visualization [getopt]
@@ -247,22 +247,21 @@
         bolt-x0 (+ (/ pcb-x 2) clearance (/ bolt-x-mount 2))
         bolt-x1 (+ (/ pcb-x 2) shave (/ contact-x 2))]
    (mcu-position getopt
-     (color [222/255 184/255 135/255 1]
-       (difference
-         (union
-           (translate [(+ (/ pcb-x -2) (/ mount-x 2))
-                       (- (/ mount-overshoot 2) pcb-y (/ mount-base 2))
-                       0]
-             (cube mount-x (+ mount-overshoot mount-base) mount-z))
-           (misc/pairwise-hulls
-             (translate [bolt-x0 (- pcb-y) 0]
-               (cube bolt-x-mount 10 mount-z))
-             (translate [bolt-x0 (/ pcb-y -4) 0]
-               (cube bolt-x-mount 1 usb-z))
-             (translate [bolt-x1 (- usb-overshoot usb-y) 0]
-               (cube contact-x 0.01 usb-z))))
-         (mcu-model getopt true 0)  ; Notch the mount.
-         (mcu-lock-fasteners-model getopt))))))
+     (difference
+       (union
+         (translate [(+ (/ pcb-x -2) (/ mount-x 2))
+                     (- (/ mount-overshoot 2) pcb-y (/ mount-base 2))
+                     0]
+           (cube mount-x (+ mount-overshoot mount-base) mount-z))
+         (misc/pairwise-hulls
+           (translate [bolt-x0 (- pcb-y) 0]
+             (cube bolt-x-mount 10 mount-z))
+           (translate [bolt-x0 (/ pcb-y -4) 0]
+             (cube bolt-x-mount 1 usb-z))
+           (translate [bolt-x1 (- usb-overshoot usb-y) 0]
+             (cube contact-x 0.01 usb-z))))
+       (mcu-model getopt true 0)  ; Notch the mount.
+       (mcu-lock-fasteners-model getopt)))))
 
 (defn mcu-lock-fixture-composite [getopt]
   (difference

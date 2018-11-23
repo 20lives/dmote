@@ -9,7 +9,8 @@
             [scad-tarmi.core :refer [maybe-translate maybe-union]]
             [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.generics :refer [abs NNE ENE ESE WSW WNW NNW
-                                              directions-to-unordered-corner]]
+                                              directions-to-unordered-corner
+                                              colours]]
             [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.key :as key]))
@@ -651,7 +652,7 @@
 (defn bottom-plate
   "A model of a bottom plate for the entire case."
   [getopt]
-  (color [150/255 90/255 70/255 1]
+  (color (:bottom-plate colours)
     (extrude-linear
       {:height (getopt :case :bottom-plate :thickness), :center false}
       (union

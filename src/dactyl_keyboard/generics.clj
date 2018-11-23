@@ -8,6 +8,15 @@
 
 (ns dactyl-keyboard.generics)
 
+(def colours
+  "OpenSCAD preview colours."
+  {:cap-body [220/255 163/255 163/255 1]
+   :cap-negative [0.5 0.5 1 1]
+   :pcb [26/255, 90/255, 160/255 1]
+   :metal [0.5 0.5 0.5 1]
+   :bottom-plate [0.25 0.25 0.25 1]
+   :rubber [0.5 0.5 1 1]})
+
 ;; Each switch mount has four corners with offsets in two directions.
 ;; Capitals in symbol names are reserved for these shorthand definitions
 ;; of the four corners. In each case, the cardinal direction naming the side
