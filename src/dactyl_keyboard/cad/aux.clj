@@ -26,6 +26,26 @@
   {:full {:width 10.0 :length 13.6 :height 6.5}
    :micro {:width 7.5 :length 5.9 :height 2.55}})
 
+(defn reckon-key-anchor
+  [getopt {:keys [key-alias corner]}]
+  (let [key (getopt :key-clusters :derived :aliases key-alias)
+        {:keys [cluster coordinates]} key]
+    (body/wall-corner-position getopt cluster coordinates {:directions corner})))
+
+(defn reckon-2d-anchor
+  "A convenience for placing stuff in relation to other features.
+  Return a vec, for predictably conj’ing a zero onto."
+  [getopt {:keys [anchor corner] :or {anchor :key} :as opts}]
+  (vec (take 2
+         (case anchor
+           :key (reckon-key-anchor getopt opts)
+           :rear-housing (body/housing-corner-coordinates getopt corner)))))
+
+(defn reckon-2d-offset
+  "Determine xy coordinates of some other feature with an offset."
+  [getopt {:keys [offset] :or {offset [0 0]} :as opts}]
+  (vec (map + (reckon-2d-anchor getopt opts) offset)))
+
 (defn into-nook
   "Produce coordinates for translation into requested corner.
   This has strict expectations but can place a feature in relation either
@@ -35,13 +55,10 @@
         use-housing (and (getopt :case :rear-housing :include)
                          (getopt field :position :prefer-rear-housing))
         general
-          (if use-housing
-            (body/housing-reckon getopt corner 3 [0 0 0])
-            (let [alias (getopt field :position :key-alias)
-                  keyinfo (getopt :key-clusters :derived :aliases alias)
-                  {cluster :cluster coordinates :coordinates} keyinfo]
-             (body/wall-corner-position
-               getopt cluster coordinates {:directions corner})))
+          (reckon-2d-anchor getopt
+             {:anchor (if use-housing :rear-housing :key)
+              :key-alias (getopt field :position :key-alias)
+              :corner corner})
         to-nook
           (if use-housing
             (let [{dxs :dx dys :dy} (matrix/compass-to-grid (second corner))]
@@ -49,7 +66,7 @@
             ;; Else don’t bother.
             [0 0 0])
         offset (getopt field :position :offset)]
-   (vec (map + (conj (vec (take 2 general)) 0) to-nook offset))))
+   (vec (map + (conj general 0) to-nook offset))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -333,7 +350,7 @@
 ;; LED Strip ;;
 ;;;;;;;;;;;;;;;
 
-(defn west-wall-west-points [getopt]
+(defn- west-wall-west-points [getopt]
   (let [cluster (getopt :case :leds :position :cluster)
         by-cluster (partial (getopt :key-clusters :derived :by-cluster))]
     (for [row ((by-cluster cluster :row-indices-by-column) 0)
@@ -448,20 +465,17 @@
 ;; Minor Features ;;
 ;;;;;;;;;;;;;;;;;;;;
 
+(defn- foot-plate
+  [getopt polygon-spec]
+  (extrude-linear
+    {:height (getopt :case :foot-plates :height), :center false}
+    (polygon (map (partial reckon-2d-offset getopt) (:points polygon-spec)))))
+
 (defn foot-plates
   "Model plates from polygons.
-  Each vector specifying a point in a polygon must have a key and a mount
-  corner identified by a direction tuple. These can be followed by
-  a two-dimensional offset for tweaking."
+  Each vector specifying a point in a polygon must have an anchor (usually a
+  key alias) and a corner thereof identified by a direction tuple. These can
+  be followed by a two-dimensional offset for tweaking."
   [getopt]
-  (letfn [(point [{:keys [key-alias key-corner offset] :or {offset [0 0]}}]
-            (let [key (getopt :key-clusters :derived :aliases key-alias)
-                  {:keys [cluster coordinates]} key
-                  base (take 2 (body/wall-corner-position getopt cluster
-                                 coordinates {:directions key-corner}))]
-              (vec (map + base offset))))
-          (plate [polygon-spec]
-            (extrude-linear
-              {:height (getopt :case :foot-plates :height) :center false}
-              (polygon (map point (:points polygon-spec)))))]
-    (apply union (map plate (getopt :case :foot-plates :polygons)))))
+  (apply maybe/union
+    (map (partial foot-plate getopt) (getopt :case :foot-plates :polygons))))

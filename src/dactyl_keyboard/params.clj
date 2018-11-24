@@ -132,13 +132,15 @@
     (map-like
       {:points (tuple-of
                  (map-like
-                   {:key-alias keyword
-                    :key-corner string-corner
+                   {:anchor keyword
+                    :key-alias keyword
+                    :corner string-corner
                     :offset vec}))})))
 
 ;; Validators:
 
 ;; Used with spec/keys, making the names sensitive:
+(spec/def ::anchor #{:key :rear-housing})
 (spec/def ::key-alias keyword)
 (spec/def ::points (spec/coll-of ::foot-plate-point))
 (spec/def ::highlight boolean?)
@@ -149,7 +151,8 @@
 
 ;; Users thereof:
 (spec/def ::foot-plate (spec/keys :req-un [::points]))
-(spec/def ::foot-plate-point (spec/keys :req-un [::key-alias]))
+(spec/def ::foot-plate-point
+  (spec/keys :opt-un [::anchor ::key-alias ::corner ::offset]))
 (spec/def ::tweak-plate-map
   (spec/keys :req-un [::hull-around]
              :opt-un [::highlight ::chunk-size ::to-ground]))
@@ -719,11 +722,6 @@
     {:default 0 :parse-fn num}
     "The horizontal distance in mm, on the y axis, between the furthest key "
     "in the row and the roof of the rear housing."]
-   [:parameter [:case :rear-housing :west-foot]
-    {:default false :parse-fn boolean}
-    "If `true`, add a foot plate at ground level by the far inward corner "
-    "of the rear housing. The height of the plate is controlled by the "
-    "`foot-plates` section below."]
    [:parameter [:case :rear-housing :height]
     {:default 0 :parse-fn num}
     "The height in mm of the roof, over the floor."]

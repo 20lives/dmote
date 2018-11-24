@@ -330,12 +330,16 @@
   (let [t (/ (getopt :case :web-thickness) 2)]
     (matrix/cube-vertex-offset directions [t t t] {})))
 
+(defn housing-corner-coordinates
+  "Convert an ordered corner tuple to a 3-tuple of coordinates."
+  [getopt corner]
+  (getopt :case :rear-housing :derived (directions-to-unordered-corner corner)))
+
 (defn- housing-placement
   "Place passed shape in relation to a corner of the rear housing’s roof."
   [translate-fn getopt corner segment subject]
   (->> subject
-       (translate-fn (getopt :case :rear-housing :derived
-                       (directions-to-unordered-corner corner)))
+       (translate-fn (housing-corner-coordinates getopt corner))
        (translate-fn (housing-segment-offset getopt (first corner) segment))))
 
 (def housing-place
@@ -370,7 +374,7 @@
   "Make functions that determine the exact positions of rear housing walls.
   This is an awkward combination of reckoning functions for building the
   bottom plate in 2D and placement functions for building the case walls in
-  3D. Because they’re specialized, the ultimate return values disturbingly
+  3D. Because they’re specialized, the ultimate return values are disturbingly
   different."
   [getopt]
   (let [cluster (getopt :case :rear-housing :position :cluster)
@@ -451,15 +455,6 @@
        []
        (getopt :case :rear-housing :derived :coordinate-corner-pairs)))))
 
-(defn- housing-foot
-  "A simple ground-level plate at one corner of the housing."
-  [getopt]
-  (let [base (take 2 (getopt :case :rear-housing :derived :nw))
-        w (min 10 (getopt :case :rear-housing :position :offsets :north))]
-   (extrude-linear
-     {:height (getopt :case :foot-plates :height) :center false}
-     (polygon [base (map + base [0 (- w)]) (map + base [w 0])]))))
-
 (defn- housing-mount-place [getopt side shape]
   (let [d (getopt :case :rear-housing :fasteners :diameter)
         offset (getopt :case :rear-housing :fasteners side :offset)
@@ -504,8 +499,6 @@
      (union
        (housing-roof getopt)
        (housing-web getopt)
-       (if (getopt :case :rear-housing :west-foot)
-         (housing-foot getopt))
        (housing-outer-wall getopt)
        (if (prop :bosses) (pair housing-mount-positive)))
      (pair housing-mount-negative))))

@@ -10,6 +10,10 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       `case` → `rear-housing` → `position`.
     - Moved `case` → `rear-housing` → `distance` into
       `case` → `rear-housing` → `position` → `offsets` as `south`.
+    - Renamed the `key-corner` input of `case` → `foot-plates` → `polygons`
+      to `corner`.
+    - Removed the option `case` → `rear-housing` → `west-foot` in favour of
+      more general `foot-plates` functionality.
 - As a side effect of outsourcing the design of threaded fasteners to
   `scad-tarmi`, the `flat` style of bolt head has been renamed to
   the more specific `countersunk`.
@@ -33,6 +37,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       LEDs would previously be attached to the finger cluster.
     - Support for anchoring any cluster to any other, within logical limits.
 - Support for a filename whitelist in the CLI.
+- Support for placing `foot-plates` in relation to objects other than keys.
 - Support for generic compensation for slicer and printer inaccuracies in the
   xy plane through a new option, `dfm` → `error`.
 

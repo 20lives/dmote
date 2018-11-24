@@ -97,10 +97,6 @@ The extent on the x axis past the last key in the row.
 
 The horizontal distance in mm, on the y axis, between the furthest key in the row and the roof of the rear housing.
 
-#### Parameter `west-foot`
-
-If `true`, add a foot plate at ground level by the far inward corner of the rear housing. The height of the plate is controlled by the `foot-plates` section below.
-
 #### Parameter `height`
 
 The height in mm of the roof, over the floor.
