@@ -197,11 +197,6 @@ This methodology is mentioned here because its results are not perfect.Pending f
 
 If you require an exact match for the case, do the projection, save it as DXF/SVG etc. and post-process that file to fill the interior gap.
 
-#### Interaction with wrist rests
-
-If you include both `bottom-plate` and `wrist-rest`, you will get plates for the wrist rests too. These plates have no ESDS electronics to protect but serve other purposes: Covering nut pockets, covering silicone mould-pour cavities, covering plaster or other dense material poured into plinths printed without a bottom layer, and balancing the height of the different parts (case and rest, which must be connected).
-
-There are other ways to balance the height, such as adjusting other parameters for the connection (doing separate renders) or adding silicone feet.
 
 #### Parameter `include`
 
@@ -213,7 +208,9 @@ Preview mode. If `true`, put a model of the plate in the same file as the case i
 
 #### Parameter `thickness`
 
-The thickness (i.e. height) in mm of the bottom plate.
+The thickness (i.e. height) in mm of all bottom plates you choose to include. This covers plates for the case and for the wrist rest.
+
+The case will not be raised to compensate for this. Instead, the height of the bottom plate will be removed from the main model so that it does not extend to z = 0.
 
 ### Section `leds`
 
@@ -645,6 +642,16 @@ The value of this parameter, and the shape of the keyboard case, should be arran
 
 The height in mm of the land bridge between the case and the plinth.
 
+### Section `bottom-plate`
+
+The equivalent of the case `bottom-plate` parameter. If included, bottom plates for the wrist rests use the `thickness` configured for those of the case.
+
+Bottom plates for the wrist rests have no ESDS electronics to protect but serve other purposes: Covering nut pockets, silicone mould-pour cavities, and plaster or other dense material poured into plinths printed without a bottom shell.
+
+#### Parameter `include`
+
+Whether to include a bottom plate for each wrist rest.
+
 ## Section `dfm`
 
 Settings for design for manufacturability (DFM).
@@ -667,7 +674,7 @@ The size of the mask in mm. By default, `[1000, 1000, 1000]`.
 
 ### Parameter `center`
 
-The position of the center point of the mask. By default, `[0, 0, 500]`, which is supposed to mask out everything below ground level.
+The position of the center point of the mask. By default, `[0, 0, 500]`, which is supposed to mask out everything below ground level. If you include bottom plates, their thickness will automatically affect the placement of the mask beyond what you specify here.
 
 ⸻
 

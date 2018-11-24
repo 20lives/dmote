@@ -47,7 +47,7 @@
   "Right-hand-side keyboard model."
   [getopt]
   (union
-    (body/mask getopt
+    (body/mask getopt (getopt :case :bottom-plate :include)
       (difference
         (union
           (key/metacluster key/cluster-plates getopt)

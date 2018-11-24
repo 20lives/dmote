@@ -326,7 +326,7 @@
 (defn plinth-plastic
   "The lower portion of a wrist rest, to be printed in a rigid material."
   [getopt]
-  (body/mask getopt
+  (body/mask getopt (getopt :wrist-rest :bottom-plate :include)
     (difference
       (plinth-maquette getopt)
       (soft-zone getopt)
@@ -381,10 +381,9 @@
   prototype but is not suitable for long-term use: It would typically be too
   hard for ergonomy and does not have a nut pocket for threaded rods."
   [getopt]
-  (body/mask getopt
-    (difference
-      (plinth-maquette getopt)
-      (union
-        (case (getopt :wrist-rest :style)
-          :solid (solid-negative getopt)
-          :threaded (threaded-fasteners getopt))))))
+  (difference
+    (plinth-maquette getopt)
+    (union
+      (case (getopt :wrist-rest :style)
+        :solid (solid-negative getopt)
+        :threaded (threaded-fasteners getopt)))))

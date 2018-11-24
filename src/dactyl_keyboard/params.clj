@@ -817,20 +817,7 @@
     "your case is convex to start with.\n"
     "\n"
     "If you require an exact match for the case, do the projection, save it "
-    "as DXF/SVG etc. and post-process that file to fill the interior gap.\n"
-    "\n"
-    "#### Interaction with wrist rests\n"
-    "\n"
-    "If you include both `bottom-plate` and `wrist-rest`, you will get "
-    "plates for the wrist rests too. These plates have no ESDS electronics to "
-    "protect but serve other purposes: Covering nut pockets, covering silicone "
-    "mould-pour cavities, covering plaster or other dense material poured into "
-    "plinths printed without a bottom layer, and balancing the height of the "
-    "different parts (case and rest, which must be connected).\n"
-    "\n"
-    "There are other ways to balance the height, such as adjusting other "
-    "parameters for the connection (doing separate renders) or adding "
-    "silicone feet."]
+    "as DXF/SVG etc. and post-process that file to fill the interior gap.\n"]
    [:parameter [:case :bottom-plate :include]
     {:default false :parse-fn boolean}
     "If `true`, include a bottom plate for the case."]
@@ -840,7 +827,12 @@
     "the case it closes. Not for printing."]
    [:parameter [:case :bottom-plate :thickness]
     {:default 1 :parse-fn num}
-    "The thickness (i.e. height) in mm of the bottom plate."]
+    "The thickness (i.e. height) in mm of all bottom plates you choose to "
+    "include. This covers plates for the case and for the wrist rest.\n"
+    "\n"
+    "The case will not be raised to compensate for this. Instead, the height "
+    "of the bottom plate will be removed from the main model so that it "
+    "does not extend to z = 0."]
    [:section [:case :leds]
     "Support for light-emitting diodes in the case walls."]
    [:parameter [:case :leds :include]
@@ -1250,6 +1242,18 @@
    [:parameter [:wrist-rest :solid-bridge :height]
     {:default 1 :parse-fn num}
     "The height in mm of the land bridge between the case and the plinth."]
+   [:section [:wrist-rest :bottom-plate]
+    "The equivalent of the case `bottom-plate` parameter. If included, "
+    "bottom plates for the wrist rests use the `thickness` configured for "
+    "those of the case.\n"
+    "\n"
+    "Bottom plates for the wrist rests have no ESDS electronics to "
+    "protect but serve other purposes: Covering nut pockets, silicone "
+    "mould-pour cavities, and plaster or other dense material poured into "
+    "plinths printed without a bottom shell."]
+   [:parameter [:wrist-rest :bottom-plate :include]
+    {:default false :parse-fn boolean}
+    "Whether to include a bottom plate for each wrist rest."]
    [:section [:dfm]
     "Settings for design for manufacturability (DFM)."]
    [:parameter [:dfm :error]
@@ -1273,7 +1277,9 @@
    [:parameter [:mask :center]
     {:default [0 0 500] :parse-fn vec :validate [::3d-point]}
     "The position of the center point of the mask. By default, `[0, 0, 500]`, "
-    "which is supposed to mask out everything below ground level."]])
+    "which is supposed to mask out everything below ground level. If you "
+    "include bottom plates, their thickness will automatically affect the "
+    "placement of the mask beyond what you specify here."]])
 
 (defn- print-markdown-fragment
   "Print a description of a node in the settings structure using Markdown."

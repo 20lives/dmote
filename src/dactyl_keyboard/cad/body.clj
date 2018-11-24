@@ -21,10 +21,8 @@
 
 (defn mask
   "Implement overall limits on passed shapes."
-  [getopt & shapes]
-  (let [plate (if (getopt :case :bottom-plate :include)
-                (getopt :case :bottom-plate :thickness)
-                0)]
+  [getopt with-plate & shapes]
+  (let [plate (if with-plate (getopt :case :bottom-plate :thickness) 0)]
     (intersection
       (maybe-translate [0 0 (/ plate 2)]
         (translate (getopt :mask :center) (apply cube (getopt :mask :size))))
