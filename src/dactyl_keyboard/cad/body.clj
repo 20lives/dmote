@@ -6,7 +6,7 @@
 (ns dactyl-keyboard.cad.body
   (:require [clojure.spec.alpha :as spec]
             [scad-clj.model :exclude [use import] :refer :all]
-            [scad-tarmi.core :refer [maybe-translate maybe-union]]
+            [scad-tarmi.maybe :as maybe]
             [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.generics :refer [abs NNE ENE ESE WSW WNW NNW
                                               directions-to-unordered-corner
@@ -24,7 +24,7 @@
   [getopt with-plate & shapes]
   (let [plate (if with-plate (getopt :case :bottom-plate :thickness) 0)]
     (intersection
-      (maybe-translate [0 0 (/ plate 2)]
+      (maybe/translate [0 0 (/ plate 2)]
         (translate (getopt :mask :center) (apply cube (getopt :mask :size))))
       (apply union shapes))))
 
@@ -226,7 +226,7 @@
   (fn [segment]
     (->>
       (key/web-post getopt)
-      (maybe-translate
+      (maybe/translate
         (wall-corner-offset getopt cluster coord
           {:directions directions, :segment segment, :vertex false}))
       (key/cluster-place getopt cluster coord))))
@@ -312,7 +312,7 @@
   [getopt]
   (let [getcorner (partial getopt :case :rear-housing :derived)]
     (apply hull
-      (map #(maybe-translate (getcorner %) (housing-cube getopt))
+      (map #(maybe/translate (getcorner %) (housing-cube getopt))
            [:nw :ne :se :sw]))))
 
 (defn- housing-segment-offset
@@ -340,7 +340,7 @@
 
 (def housing-place
   "Akin to cluster-place but with a rear housing wall segment."
-  (partial housing-placement maybe-translate))
+  (partial housing-placement maybe/translate))
 
 (defn- housing-cube-place [getopt corner segment]
   (housing-place getopt corner segment (housing-cube getopt)))
@@ -577,7 +577,7 @@
 (defn- cluster-floor-polygon
   "A polygon approximating a floor-level projection of a key clusters’s wall."
   [getopt cluster]
-  (polygon
+  (maybe/polygon
     (filter some?  ; Get rid of edges with partial walls.
       (mapcat identity  ; Flatten floor-finder output by one level only.
         (reduce
@@ -648,7 +648,7 @@
 (defn- tweak-plate-flooring
   "The footprint of all user-requested additional shapes that go to the floor."
   [getopt]
-  (apply maybe-union (map #(tweak-plate-shadows getopt (:hull-around %))
+  (apply maybe/union (map #(tweak-plate-shadows getopt (:hull-around %))
                           (filter :to-ground (getopt :case :tweaks)))))
 
 (defn bottom-plate

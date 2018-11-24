@@ -7,7 +7,7 @@
 
 (ns dactyl-keyboard.cad.misc
   (:require [scad-clj.model :exclude [use import] :refer :all]
-            [scad-tarmi.core :refer [maybe-rotate]]))
+            [scad-tarmi.maybe :as maybe]))
 
 
 (defn pairwise-hulls [& shapes]
@@ -32,9 +32,9 @@
   [translator radius rotator obj]
   (if (vector? rotator)
     (if (= (count rotator) 3)
-      (swing-callables translator radius (partial maybe-rotate rotator) obj)
+      (swing-callables translator radius (partial maybe/rotate rotator) obj)
       (swing-callables translator radius
-        (partial maybe-rotate (first rotator) (second rotator))
+        (partial maybe/rotate (first rotator) (second rotator))
         obj))
     ;; Else assume the rotator is usable as a function and apply it.
     (->> obj
