@@ -22,9 +22,13 @@
 (defn mask
   "Implement overall limits on passed shapes."
   [getopt & shapes]
-  (intersection
-    (translate (getopt :mask :center) (apply cube (getopt :mask :size)))
-    (apply union shapes)))
+  (let [plate (if (getopt :case :bottom-plate :include)
+                (getopt :case :bottom-plate :thickness)
+                0)]
+    (intersection
+      (maybe-translate [0 0 (/ plate 2)]
+        (translate (getopt :mask :center) (apply cube (getopt :mask :size))))
+      (apply union shapes))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -160,8 +164,8 @@
     (vec (map / (vec (map + (c matrix/left) (c matrix/right))) [2 2 2]))))
 
 ;; Functions for specifying parts of a perimeter wall. These all take the
-;; edge-walking algorithm’s position and direction upon seeing the need for
-;; each part.
+;; edge-walking algorithm’s map output with position and direction, upon
+;; seeing the need for each part.
 
 (defn wall-straight-body
   "The part of a case wall that runs along the side of a key mount on the
