@@ -311,6 +311,9 @@ by-key:
                 layout:
                   translation:
                     early: [-1, 0, 0]
+                wall:
+                  north:
+                    extent: 0
         "1":
           parameters:
             layout:
@@ -407,6 +410,29 @@ case:
       offset: [0, 0, 0]
   bottom-plate:
     include: true
+    installation:
+      fasteners:
+        diameter: 3
+        length: 6.5
+        positions:
+        - anchor: rear-housing
+          corner: NNW
+          offset: [2, -3]
+        - anchor: rear-housing
+          corner: NNE
+          offset: [-2, -12]
+        - key-alias: far-right
+          corner: ENE
+          offset: [-3, -2]
+        - key-alias: near-right
+          corner: ESE
+          offset: [-3, 2]
+        - key-alias: t5
+          corner: SSW
+          offset: [-4, 1]
+        - key-alias: t1
+          corner: NNW
+          offset: [1, -4]
   leds:
     include: true
     amount: 3
@@ -416,6 +442,10 @@ case:
     interval: 16.8
   tweaks:
   # First, a bunch of extra webbing at the four corners of the thumb cluster:
+  - hull-around:
+    - [t0, NNW, 0]
+    - [t0, NNE, 0]
+    - [t1, NNW, 0]
   - hull-around:
     - [t2, NNW, 0, 1]
     - [t2, NNE, 0, 1]
@@ -439,6 +469,12 @@ case:
     - hull-around:
       - [t4, ESE, 1, 4]
       - [t4, SSE, 0, 4]
+  # Cosmetic detail owing to m0’s south wall being elevated.
+  - hull-around:
+    - [m0, WSW, 1]
+    - [m0, WSW, 3]
+    - [t1, NNW, 2, 3]
+    - [t1, NNE, 2, 3]
   # Plating over the cluster gap:
   - chunk-size: 2
     hull-around:
@@ -525,10 +561,8 @@ case:
     chunk-size: 2
     hull-around:
     - [m0, WSW, 2, 3]
-    - hull-around:
-      - [t0, NNW, 0, 3]
-      - [t0, NNE, 0, 1]
-      - [t1, NNW, 0, 4]
+    - [t1, NNW, 2, 3]
+    - [t1, NNW, 0, 1]
     - [t0, WNW, 0, 1]
     - [t0, WSW, 0, 1]
     - [t5, WNW, 0, 1]
@@ -543,38 +577,6 @@ case:
     - [m2, NNE, 3, 4]
     - [m3, WSW, 3, 4]
     - [m3, SSW, 3, 4]
-  foot-plates:
-    include: true
-    height: 3
-    polygons:
-    - points:
-      - anchor: rear-housing
-        corner: NNW
-        offset: [0, 0]
-      - anchor: rear-housing
-        corner: NNW
-        offset: [10, 0]
-      - anchor: rear-housing
-        corner: NNW
-        offset: [0, -10]
-    - points:
-      - key-alias: far-right
-        corner: WNW
-        offset: [7, 0]
-      - key-alias: far-right
-        corner: NNE
-      - key-alias: far-right
-        corner: ESE
-        offset: [0, -2]
-    - points:
-      - key-alias: near-right
-        corner: SSW
-        offset: [4, 1]
-      - key-alias: near-right
-        corner: NNE
-        offset: [1, -5]
-      - key-alias: near-right
-        corner: ESE
 mcu:
   type: promicro
   margin: 0.25
@@ -589,7 +591,6 @@ mcu:
     lateral-spacing: 2.5
     lock:
       fastener:
-        style: countersunk
         diameter: 3
       socket:
         thickness: 1.5

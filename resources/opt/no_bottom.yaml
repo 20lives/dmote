@@ -1,0 +1,38 @@
+# Configuration fragment for an open case.
+# Key aliases used herein refer to default.yaml.
+
+case:
+  bottom-plate:
+    include: false
+  foot-plates:
+    include: true
+    height: 3
+    polygons:
+    - points:
+      - anchor: rear-housing
+        corner: NNW
+        offset: [0, 0]
+      - anchor: rear-housing
+        corner: NNW
+        offset: [10, 0]
+      - anchor: rear-housing
+        corner: NNW
+        offset: [0, -10]
+    - points:
+      - key-alias: far-right
+        corner: WNW
+        offset: [7, 0]
+      - key-alias: far-right
+        corner: NNE
+      - key-alias: far-right
+        corner: ESE
+        offset: [0, -2]
+    - points:
+      - key-alias: near-right
+        corner: SSW
+        offset: [4, 1]
+      - key-alias: near-right
+        corner: NNE
+        offset: [1, -5]
+      - key-alias: near-right
+        corner: ESE

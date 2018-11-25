@@ -342,7 +342,7 @@
       (translate (vec (map + (getopt :wrist-rest :derived :sw) [20 20]))
         (cube 12 12 200)))))
 
-(defn bottom-plate
+(defn bottom-plate-positive
   "Equivalent to the corresponding function in the body module."
   [getopt]
   (color (:bottom-plate colours)

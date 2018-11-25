@@ -127,22 +127,25 @@
        candidate)
       (map case-tweaks candidate))))
 
-(def key-based-polygons
+(def anchored-2d-positions
   (tuple-of
     (map-like
-      {:points (tuple-of
-                 (map-like
-                   {:anchor keyword
-                    :key-alias keyword
-                    :corner string-corner
-                    :offset vec}))})))
+      {:anchor keyword
+       :key-alias keyword
+       :corner string-corner
+       :offset vec})))
+
+(def anchored-polygons
+  (tuple-of
+    (map-like
+      {:points anchored-2d-positions})))
 
 ;; Validators:
 
 ;; Used with spec/keys, making the names sensitive:
 (spec/def ::anchor #{:key :rear-housing})
 (spec/def ::key-alias keyword)
-(spec/def ::points (spec/coll-of ::foot-plate-point))
+(spec/def ::points (spec/coll-of ::anchored-2d-position))
 (spec/def ::highlight boolean?)
 (spec/def ::to-ground boolean?)
 (spec/def ::chunk-size (spec/and int? #(> % 1)))
@@ -151,7 +154,7 @@
 
 ;; Users thereof:
 (spec/def ::foot-plate (spec/keys :req-un [::points]))
-(spec/def ::foot-plate-point
+(spec/def ::anchored-2d-position
   (spec/keys :opt-un [::anchor ::key-alias ::corner ::offset]))
 (spec/def ::tweak-plate-map
   (spec/keys :req-un [::hull-around]
@@ -162,6 +165,7 @@
 (spec/def ::supported-switch-style #{:alps :mx})
 (spec/def ::supported-cluster-style #{:standard :orthographic})
 (spec/def ::supported-cap-style #{:flat :socket :button})
+(spec/def ::supported-plate-installation-style #{:threads :inserts})
 (spec/def ::supported-mcu-type #{:promicro})
 (spec/def ::supported-mcu-support-style #{:lock :stop})
 (spec/def ::supported-wrist-rest-style #{:threaded :solid})
@@ -179,6 +183,8 @@
   (spec/or :short (spec/tuple keyword? ::corner ::wall-segment)
            :long (spec/tuple keyword? ::corner ::wall-segment ::wall-segment)))
 (spec/def ::foot-plate-polygons (spec/coll-of ::foot-plate))
+(spec/def ::plate-screw-positions (spec/coll-of ::anchored-2d-position))
+
 
 ;; Composition of parsing and validation:
 
@@ -829,8 +835,51 @@
     "include. This covers plates for the case and for the wrist rest.\n"
     "\n"
     "The case will not be raised to compensate for this. Instead, the height "
-    "of the bottom plate will be removed from the main model so that it "
-    "does not extend to z = 0."]
+    "of the bottom plate will be removed from the bottom of the main model so "
+    "that it does not extend to z = 0."]
+   [:section [:case :bottom-plate :installation]
+    "How your bottom plate is attached to the rest of your case."]
+   [:parameter [:case :bottom-plate :installation :style]
+    {:default :threads :parse-fn keyword
+     :validate [::supported-plate-installation-style]}
+    "The general means of installation. All currently available styles "
+    "use threaded fasteners with countersunk heads. The styles differ only "
+    "in how these fasteners attach to the case.\n\n"
+    "One of:\n\n"
+    "- `threads`: Threaded holes in the case.\n"
+    "- `inserts`: Unthreaded holes for threaded heat-set inserts.\n\n"
+    "In any case you may want to use `foot-plates` to provide additional "
+    "support for the anchor points configured in this section."]
+   [:section [:case :bottom-plate :installation :inserts]
+    "Properties of heat-set inserts for the `inserts` style."]
+   [:parameter [:case :bottom-plate :installation :inserts :length]
+    {:default 1 :parse-fn num}
+    "The length in mm of each insert."]
+   [:section [:case :bottom-plate :installation :inserts :diameter]
+    "It is assumed that, as in Tom Short’s Dactyl-ManuForm, the inserts are "
+    "largely cylindrical but vary in diameter across their length."]
+   [:parameter [:case :bottom-plate :installation :inserts :diameter :top]
+    {:default 1 :parse-fn num}
+    "Top diameter in m."]
+   [:parameter [:case :bottom-plate :installation :inserts :diameter :bottom]
+    {:default 1 :parse-fn num}
+    "Bottom diameter in mm. This needs to be at least as large as the top "
+    "diameter since the mounts for the inserts only open from the bottom."]
+   [:section [:case :bottom-plate :installation :fasteners]
+    "The type and positions of the threaded fasteners used to secure each "
+    "bottom plate."]
+   [:parameter [:case :bottom-plate :installation :fasteners :diameter]
+    {:default 6 :parse-fn num :validate [::threaded/iso-nominal]}
+    "The ISO metric diameter of each fastener."]
+   [:parameter [:case :bottom-plate :installation :fasteners :length]
+    {:default 1 :parse-fn num}
+    "The length in mm of each fastener. In the `threads` style, this refers "
+    "to the part of the screw that is itself threaded: It excludes the head."]
+   [:parameter [:case :bottom-plate :installation :fasteners :positions]
+    {:default [] :parse-fn anchored-2d-positions
+     :validate [::plate-screw-positions]}
+    "A list of places where threaded fasteners will connect the bottom plate "
+    "to the rest of the case."]
    [:section [:case :leds]
     "Support for light-emitting diodes in the case walls."]
    [:parameter [:case :leds :include]
@@ -926,7 +975,7 @@
     {:default 4 :parse-fn num} "The height in mm of each mounting plate."]
    [:parameter [:case :foot-plates :polygons]
     {:default []
-     :parse-fn key-based-polygons
+     :parse-fn anchored-polygons
      :validate [::foot-plate-polygons]}
     "A list describing the horizontal shape, size and "
     "position of each mounting plate as a polygon."]
@@ -1002,7 +1051,7 @@
    [:section [:mcu :support :lock :fastener]
     "Threaded fasteners—a nut and a bolt—connect the lock to the case."]
    [:parameter [:mcu :support :lock :fastener :style]
-    {:default :button :parse-fn keyword :validate [::threaded/head-type]}
+    {:default :countersunk :parse-fn keyword :validate [::threaded/head-type]}
     "A style of bolt head (cap) supported by `scad-tarmi`."]
    [:parameter [:mcu :support :lock :fastener :diameter]
     {:default 6 :parse-fn num :validate [::threaded/iso-nominal]}

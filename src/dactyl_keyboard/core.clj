@@ -11,6 +11,7 @@
             [clj-yaml.core :as yaml]
             [scad-clj.scad :refer [write-scad]]
             [scad-clj.model :exclude [use import] :refer :all]
+            [scad-tarmi.maybe :as maybe]
             [scad-tarmi.dfm :refer [error-fn]]
             [dactyl-keyboard.generics :as generics]
             [dactyl-keyboard.params :as params]
@@ -43,64 +44,78 @@
   (println)
   (println "This document was generated from the application CLI."))
 
+(def module-map
+  "A mapping naming OpenSCAD modules and the functions that make them."
+  {"bottom_plate_anchor_positive" aux/bottom-plate-anchor-positive
+   "bottom_plate_anchor_negative" aux/bottom-plate-anchor-negative})
+
 (defn build-keyboard-right
   "Right-hand-side keyboard model."
   [getopt]
-  (union
-    (body/mask getopt (getopt :case :bottom-plate :include)
-      (difference
-        (union
-          (key/metacluster key/cluster-plates getopt)
-          (key/metacluster body/cluster-web getopt)
-          (key/metacluster body/cluster-wall getopt)
-          (when (getopt :wrist-rest :include)
-            (case (getopt :wrist-rest :style)
-              :solid (wrist/case-hook getopt)
-              :threaded (wrist/case-plate getopt)))
-          (when (= (getopt :mcu :support :style) :stop)
-            (aux/mcu-stop getopt))
-          (aux/connection-positive getopt)
-          (aux/foot-plates getopt)
+  (maybe/union
+    (maybe/difference
+      (maybe/union
+        (maybe/difference
+          (maybe/union
+            (body/mask getopt (getopt :case :bottom-plate :include)
+              ;; The innermost positives, subject to the mask and all negatives:
+              (key/metacluster key/cluster-plates getopt)
+              (key/metacluster body/cluster-web getopt)
+              (key/metacluster body/cluster-wall getopt)
+              (when (getopt :wrist-rest :include)
+                (case (getopt :wrist-rest :style)
+                  :solid (wrist/case-hook getopt)
+                  :threaded (wrist/case-plate getopt)))
+              (when (= (getopt :mcu :support :style) :stop)
+                (aux/mcu-stop getopt))
+              (aux/connection-positive getopt)
+              (when (getopt :case :back-plate :include)
+                (aux/backplate-block getopt))
+              (when (getopt :case :rear-housing :include)
+                (body/rear-housing getopt))
+              (body/wall-tweaks getopt)
+              (aux/foot-plates getopt)
+              (aux/bottom-plate-anchors getopt "bottom_plate_anchor_positive"))
+            ;; Stuff that goes outside the mask but should be subject to all negatives:
+            (when (and (getopt :wrist-rest :include)
+                       (getopt :wrist-rest :preview))
+              (wrist/unified-preview getopt))
+            (when (and (getopt :case :bottom-plate :include)
+                       (getopt :case :bottom-plate :preview))
+              (maybe/union
+                (body/bottom-plate-positive getopt)
+                (when (and (getopt :wrist-rest :include)
+                           (getopt :wrist-rest :preview))
+                  (wrist/bottom-plate-positive getopt))))
+            (sandbox/positive getopt))
+          ;; First-level negatives:
+          (key/metacluster key/cluster-cutouts getopt)
+          (key/metacluster key/cluster-channels getopt)
+          (aux/connection-negative getopt)
+          (aux/mcu-negative getopt)
+          (aux/mcu-alcove getopt)
+          (when (= (getopt :mcu :support :style) :lock)
+            (aux/mcu-lock-sink getopt))
+          (when (getopt :case :leds :include) (aux/led-holes getopt))
           (when (getopt :case :back-plate :include)
-            (aux/backplate-block getopt))
-          (when (getopt :case :rear-housing :include)
-            (body/rear-housing getopt))
-          (body/wall-tweaks getopt)
+            (aux/backplate-fastener-holes getopt))
           (when (and (getopt :wrist-rest :include)
-                     (getopt :wrist-rest :preview))
-            ;; Visualization for use in development.
-            (wrist/unified-preview getopt))
-          (sandbox/positive getopt))
-        (key/metacluster key/cluster-cutouts getopt)
-        (key/metacluster key/cluster-channels getopt)
-        (aux/connection-negative getopt)
-        (aux/mcu-negative getopt)
-        (aux/mcu-alcove getopt)
-        (when (= (getopt :mcu :support :style) :lock)
-          (aux/mcu-lock-sink getopt))
-        (when (getopt :case :leds :include) (aux/led-holes getopt))
-        (when (getopt :case :back-plate :include)
-          (aux/backplate-fastener-holes getopt))
-        (when (and (getopt :wrist-rest :include)
-                   (= (getopt :wrist-rest :style) :threaded))
+                     (= (getopt :wrist-rest :style) :threaded))
             (wrist/threaded-fasteners getopt))
-        (sandbox/negative getopt))
-      (when (= (getopt :switches :style) :mx)
-        (key/metacluster key/cluster-nubs getopt))
-      (when (= (getopt :mcu :support :style) :lock) ; Outside the alcove.
-        (aux/mcu-lock-fixture-composite getopt)))
+          (sandbox/negative getopt))
+        ;; Outer positives, subject only to outer negatives:
+        (when (= (getopt :switches :style) :mx)
+          (key/metacluster key/cluster-nubs getopt))
+        (when (= (getopt :mcu :support :style) :lock) ; Outside the alcove.
+          (aux/mcu-lock-fixture-composite getopt)))
+      ;; Outer negatives:
+      (aux/bottom-plate-anchors getopt "bottom_plate_anchor_negative"))
     ;; The remaining elements are visualizations for use in development.
     (when (getopt :keycaps :preview) (key/metacluster key/cluster-keycaps getopt))
     (when (getopt :mcu :preview) (aux/mcu-visualization getopt))
     (when (and (= (getopt :mcu :support :style) :lock)
                (getopt :mcu :support :preview))
-      (aux/mcu-lock-bolt getopt))
-    (when (and (getopt :case :bottom-plate :include)
-               (getopt :case :bottom-plate :preview))
-      (union
-        (body/bottom-plate getopt)
-        (if (and (getopt :wrist-rest :include) (getopt :wrist-rest :preview))
-          (wrist/bottom-plate getopt))))))
+      (aux/mcu-lock-bolt getopt))))
 
 (defn build-option-accessor
   "Close over a—potentially incomplete—user configuration."
@@ -179,12 +194,12 @@
 
 (defn- author
   "Describe a model in one or more output files."
-  [[basename model {:keys [debug render renderer]}]]
+  [[basename modules model {:keys [debug render renderer]}]]
   (let [scad (file "things" "scad" (str basename ".scad"))
         stl (file "things" "stl" (str basename ".stl"))]
     (if debug (println "Started" scad))
     (make-parents scad)
-    (spit scad (write-scad model))
+    (spit scad (apply write-scad (conj modules model)))
     (if render (render-to-stl renderer scad stl))
     (if debug (println "Finished" scad))))
 
@@ -193,17 +208,21 @@
   Return a vector of vectors suitable for calling the author function."
   [{:keys [debug whitelist] :as options}]
   (let [getopt (parse-build-opts options)
-        single (fn [basename model] [basename model options])
-        producer (fn [{:keys [condition pair basename model-fn]
-                       :or {condition true pair false}}]
-                  (if (and (re-find whitelist basename) condition)
-                    (let [model (model-fn getopt)]
-                     (if pair
-                       [(single (str "right-hand-" basename) model)
-                        (single
-                          (str "left-hand-" basename)
-                          (mirror [-1 0 0] model))]
-                       [(single basename model)]))))]
+        predefine #(define-module % ((get module-map %) getopt))
+        producer
+          (fn [{:keys [condition pair basename module-names model-fn]
+                :or {condition true, pair false, modules []}}]
+            (if (and (re-find whitelist basename) condition)
+              (let [basemodel (model-fn getopt)
+                    modules (vec (map predefine module-names))
+                    single (fn [filename model]
+                             [filename modules model options])]
+               (if pair
+                 [(single (str "right-hand-" basename) basemodel)
+                  (single
+                    (str "left-hand-" basename)
+                    (mirror [-1 0 0] basemodel))]
+                 [(single basename basemodel)]))))]
    (if debug (pprint-settings "Enriched settings:" (getopt)))
    (reduce
      (fn [coll model-info] (concat coll (producer model-info)))
@@ -214,11 +233,13 @@
      [{:basename "preview-keycap"
        :model-fn (partial key/metacluster key/cluster-keycaps)}
       {:basename "case-main"
+       :module-names ["bottom_plate_anchor_positive"
+                      "bottom_plate_anchor_negative"]
        :model-fn build-keyboard-right
        :pair true}
       {:condition (getopt :case :bottom-plate :include)
        :basename "case-bottom-plate"
-       :model-fn body/bottom-plate
+       :model-fn aux/case-bottom-plate
        :pair true}
       {:condition (= (getopt :mcu :support :style) :lock)
        :basename "mcu-lock-bolt"
@@ -238,7 +259,7 @@
       {:condition (and (getopt :case :bottom-plate :include)
                        (getopt :wrist-rest :include))
        :basename "plinth-bottom-plate"
-       :model-fn wrist/bottom-plate
+       :model-fn wrist/bottom-plate-positive  ; TODO: Negate.
        :pair true}])))
 
 (def cli-options

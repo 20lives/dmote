@@ -206,7 +206,58 @@ Preview mode. If `true`, put a model of the plate in the same file as the case i
 
 The thickness (i.e. height) in mm of all bottom plates you choose to include. This covers plates for the case and for the wrist rest.
 
-The case will not be raised to compensate for this. Instead, the height of the bottom plate will be removed from the main model so that it does not extend to z = 0.
+The case will not be raised to compensate for this. Instead, the height of the bottom plate will be removed from the bottom of the main model so that it does not extend to z = 0.
+
+#### Section `installation`
+
+How your bottom plate is attached to the rest of your case.
+
+##### Parameter `style`
+
+The general means of installation. All currently available styles use threaded fasteners with countersunk heads. The styles differ only in how these fasteners attach to the case.
+
+One of:
+
+- `threads`: Threaded holes in the case.
+- `inserts`: Unthreaded holes for threaded heat-set inserts.
+
+In any case you may want to use `foot-plates` to provide additional support for the anchor points configured in this section.
+
+##### Section `inserts`
+
+Properties of heat-set inserts for the `inserts` style.
+
+###### Parameter `length`
+
+The length in mm of each insert.
+
+###### Section `diameter`
+
+It is assumed that, as in Tom Short’s Dactyl-ManuForm, the inserts are largely cylindrical but vary in diameter across their length.
+
+###### Parameter `top` at level 7
+
+Top diameter in m.
+
+###### Parameter `bottom` at level 7
+
+Bottom diameter in mm. This needs to be at least as large as the top diameter since the mounts for the inserts only open from the bottom.
+
+##### Section `fasteners`
+
+The type and positions of the threaded fasteners used to secure each bottom plate.
+
+###### Parameter `diameter`
+
+The ISO metric diameter of each fastener.
+
+###### Parameter `length`
+
+The length in mm of each fastener. In the `threads` style, this refers to the part of the screw that is itself threaded: It excludes the head.
+
+###### Parameter `positions`
+
+A list of places where threaded fasteners will connect the bottom plate to the rest of the case.
 
 ### Section `leds`
 

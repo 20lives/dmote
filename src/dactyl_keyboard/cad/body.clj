@@ -24,7 +24,7 @@
   [getopt with-plate & shapes]
   (let [plate (if with-plate (getopt :case :bottom-plate :thickness) 0)]
     (intersection
-      (maybe/translate [0 0 (/ plate 2)]
+      (maybe/translate [0 0 plate]
         (translate (getopt :mask :center) (apply cube (getopt :mask :size))))
       (apply union shapes))))
 
@@ -644,8 +644,9 @@
   (apply maybe/union (map #(tweak-plate-shadows getopt (:hull-around %))
                           (filter :to-ground (getopt :case :tweaks)))))
 
-(defn bottom-plate
-  "A model of a bottom plate for the entire case."
+(defn bottom-plate-positive
+  "A model of a bottom plate for the entire case.
+  Screw holes not included."
   [getopt]
   (color (:bottom-plate colours)
     (extrude-linear

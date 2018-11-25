@@ -34,12 +34,14 @@
 
 (defn reckon-2d-anchor
   "A convenience for placing stuff in relation to other features.
-  Return a vec, for predictably conj’ing a zero onto."
-  [getopt {:keys [anchor corner] :or {anchor :key} :as opts}]
+  Return a vec, for predictably conj’ing a zero onto.
+  The position refers to what would be the middle of the outer wall post of the
+  anchor."
+  [getopt {:keys [anchor corner] :or {anchor :key, segment 0} :as opts}]
   (vec (take 2
          (case anchor
            :key (reckon-key-anchor getopt opts)
-           :rear-housing (body/housing-corner-coordinates getopt corner)))))
+           :rear-housing (body/housing-reckon getopt corner 1 [0 0 0])))))
 
 (defn reckon-2d-offset
   "Determine xy coordinates of some other feature with an offset."
@@ -479,3 +481,73 @@
   [getopt]
   (apply maybe/union
     (map (partial foot-plate getopt) (getopt :case :foot-plates :polygons))))
+
+(defn bottom-plate-anchor-positive
+  "A shape that holds a screw, and possibly a heat-set insert.
+  Written for use as an OpenSCAD module."
+  [getopt]
+  (let [prop (partial getopt :case :bottom-plate :installation)
+        style (prop :style)
+        iso-size (prop :fasteners :diameter)
+        head-height (threaded/head-height iso-size :countersunk)
+        thickness (getopt :case :web-thickness)
+        inserts (= style :inserts)
+        base-top-diameter (if inserts (prop :inserts :diameter :top) iso-size)
+        walled-top-diameter (+ base-top-diameter thickness)
+        z-top-interior (if inserts (max (+ head-height (prop :inserts :length))
+                                        (prop :fasteners :length))
+                                   (prop :fasteners :length))
+        dome (translate [0 0 z-top-interior]
+               (sphere (/ walled-top-diameter 2)))]
+    (if inserts
+      (let [bottom-diameter (prop :inserts :diameter :bottom)
+            top-disc (translate [0 0 z-top-interior]
+                             (cylinder (/ walled-top-diameter 2) 0.001))
+            bottom-disc (translate [0 0 head-height]
+                          (cylinder (/ (+ bottom-diameter thickness) 2) 0.001))]
+        (union
+          dome
+          (hull top-disc bottom-disc)
+          (misc/bottom-hull bottom-disc)))
+      (misc/bottom-hull dome))))
+
+(defn bottom-plate-anchor-negative
+  "The shape of a screw and optionally a heat-set insert for that screw.
+  Written for use as an OpenSCAD module."
+  [getopt]
+  (let [prop (partial getopt :case :bottom-plate :installation)
+        style (prop :style)
+        iso-size (prop :fasteners :diameter)]
+    (maybe/union
+      (rotate [π 0 0]
+        (threaded/bolt
+          :iso-size iso-size,
+          :head-type :countersunk,
+          :total-length (prop :fasteners :length),
+          :unthreaded-length (when (= style :threads) 0),
+          :threaded-length (when (not= style :threads) 0),
+          :compensator (getopt :dfm :derived :compensator)
+          :negative true))
+      (when (= style :inserts)
+        (let [d0 (prop :inserts :diameter :bottom)
+              d1 (prop :inserts :diameter :top)
+              z0 (threaded/head-height iso-size :countersunk)
+              z1 (+ z0 (prop :inserts :length))]
+          (misc/bottom-hull (translate [0 0 z1] (cylinder (/ d1 2) 0.001))
+                            (translate [0 0 z0] (cylinder (/ d0 2) 0.001))))))))
+
+(defn bottom-plate-anchors
+  [getopt module-name]
+  (apply maybe/union
+    (map (fn [position]
+           (translate (conj (reckon-2d-offset getopt position) 0)
+             (call-module module-name)))
+         (getopt :case :bottom-plate :installation :fasteners :positions))))
+
+(defn case-bottom-plate
+  "Oriented for printing."
+  [getopt]
+  (rotate [0 π 0]
+    (maybe/difference
+      (body/bottom-plate-positive getopt)
+      (bottom-plate-anchors getopt "bottom_plate_anchor_negative"))))
