@@ -8,7 +8,8 @@
             [scad-tarmi.core :refer [π]]
             [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.params :as params]
-            [dactyl-keyboard.generics :refer [abs ESE SSE SSW colours]]
+            [dactyl-keyboard.generics :refer [abs ESE SSE SSW colours
+                                              directions-to-unordered-corner]]
             [dactyl-keyboard.cad.body :as body]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.misc :as misc]
@@ -56,6 +57,22 @@
     :se corner-se
     :center center}))
 
+(defn wrist-reckon
+  "Patterned after reckoning functions for other parts. Return a vector
+  describing the position of a corner of a wrist rest’s plinth.
+  Translate the segment range used for keys into a very rough equivalent
+  for the plinth, pretending that, as with the rear housing and key clusters,
+  segments extend outward and downward."
+  [getopt corner segment start]
+  (let [prop (partial getopt :wrist-rest :derived)
+        base (prop (directions-to-unordered-corner corner))
+        {:keys [dx dy]} (matrix/compass-to-grid corner)
+        chamfer (getopt :wrist-rest :shape :chamfer)]
+    (vec (map + start
+                (conj base (case segment, 0 (prop :z2), 1 (prop :z1), 0))
+                (if (= segment 0)
+                  [(* -1 dx chamfer) (* -1 dy chamfer) 0]
+                  [0 0 0])))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Threaded Connector Variant ;;

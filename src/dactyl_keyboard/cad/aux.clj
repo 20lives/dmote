@@ -12,7 +12,8 @@
             [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.key :as key]
-            [dactyl-keyboard.cad.body :as body]))
+            [dactyl-keyboard.cad.body :as body]
+            [dactyl-keyboard.cad.wrist :as wrist]))
 
 
 ;;;;;;;;;;;;;;;;;;;
@@ -41,7 +42,8 @@
   (vec (take 2
          (case anchor
            :key (reckon-key-anchor getopt opts)
-           :rear-housing (body/housing-reckon getopt corner 1 [0 0 0])))))
+           :rear-housing (body/housing-reckon getopt corner 1 [0 0 0])
+           :wrist-rest (wrist/wrist-reckon getopt corner 1 [0 0 0])))))
 
 (defn reckon-2d-offset
   "Determine xy coordinates of some other feature with an offset."
@@ -537,12 +539,14 @@
                             (translate [0 0 z0] (cylinder (/ d0 2) 0.001))))))))
 
 (defn bottom-plate-anchors
-  [getopt module-name]
+  [getopt part module-name]
   (apply maybe/union
     (map (fn [position]
            (translate (conj (reckon-2d-offset getopt position) 0)
              (call-module module-name)))
-         (getopt :case :bottom-plate :installation :fasteners :positions))))
+         (case part
+           :case (getopt :case :bottom-plate :installation :fasteners :positions)
+           :wrist-rest (getopt :wrist-rest :bottom-plate :fastener-positions)))))
 
 (defn case-bottom-plate
   "Oriented for printing."
@@ -550,4 +554,12 @@
   (rotate [0 π 0]
     (maybe/difference
       (body/bottom-plate-positive getopt)
-      (bottom-plate-anchors getopt "bottom_plate_anchor_negative"))))
+      (bottom-plate-anchors getopt :case "bottom_plate_anchor_negative"))))
+
+(defn wrist-bottom-plate
+  "Oriented for printing."
+  [getopt]
+  (rotate [0 π 0]
+    (maybe/difference
+      (wrist/bottom-plate-positive getopt)
+      (bottom-plate-anchors getopt :wrist-rest "bottom_plate_anchor_negative"))))

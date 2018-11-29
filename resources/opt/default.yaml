@@ -628,5 +628,17 @@ wrist-rest:
         surface-range: 28
         lip-to-surface: 3
         below-lip: 4
+  bottom-plate:
+    include: true
+    fastener-positions:
+    - anchor: wrist-rest
+      corner: NNE
+      offset: [-5, -5]
+    - anchor: wrist-rest
+      corner: SSE
+      offset: [-5, 5]
+    - anchor: wrist-rest
+      corner: SSW
+      offset: [5, 5]
 dfm:
   error: -0.5

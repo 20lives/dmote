@@ -143,7 +143,7 @@
 ;; Validators:
 
 ;; Used with spec/keys, making the names sensitive:
-(spec/def ::anchor #{:key :rear-housing})
+(spec/def ::anchor #{:key :rear-housing :wrist-rest})
 (spec/def ::key-alias keyword)
 (spec/def ::points (spec/coll-of ::anchored-2d-position))
 (spec/def ::highlight boolean?)
@@ -1301,6 +1301,14 @@
    [:parameter [:wrist-rest :bottom-plate :include]
     {:default false :parse-fn boolean}
     "Whether to include a bottom plate for each wrist rest."]
+   [:parameter [:wrist-rest :bottom-plate :fastener-positions]
+    {:default [] :parse-fn anchored-2d-positions
+     :validate [::plate-screw-positions]}
+    "The positions of threaded fasteners used to attach the bottom plate to "
+    "its wrist rest. The syntax of this parameter is precisely the same as "
+    "for the case’s bottom-plate fasteners. Other properties used for these "
+    "fasteners are determined by settings for the case, except that no "
+    "positive housings will be created because the plinth itself is solid."]
    [:section [:dfm]
     "Settings for design for manufacturability (DFM)."]
    [:parameter [:dfm :error]

@@ -699,6 +699,10 @@ Bottom plates for the wrist rests have no ESDS electronics to protect but serve 
 
 Whether to include a bottom plate for each wrist rest.
 
+#### Parameter `fastener-positions`
+
+The positions of threaded fasteners used to attach the bottom plate to its wrist rest. The syntax of this parameter is precisely the same as for the case’s bottom-plate fasteners. Other properties used for these fasteners are determined by settings for the case, except that no positive housings will be created because the plinth itself is solid.
+
 ## Section `dfm`
 
 Settings for design for manufacturability (DFM).
