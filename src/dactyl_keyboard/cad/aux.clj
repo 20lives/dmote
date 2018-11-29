@@ -549,17 +549,19 @@
            :wrist-rest (getopt :wrist-rest :bottom-plate :fastener-positions)))))
 
 (defn case-bottom-plate
-  "Oriented for printing."
   [getopt]
-  (rotate [0 π 0]
-    (maybe/difference
-      (body/bottom-plate-positive getopt)
-      (bottom-plate-anchors getopt :case "bottom_plate_anchor_negative"))))
+  (maybe/difference
+    (body/bottom-plate-positive getopt)
+    (bottom-plate-anchors getopt :case "bottom_plate_anchor_negative")))
 
 (defn wrist-bottom-plate
-  "Oriented for printing."
   [getopt]
-  (rotate [0 π 0]
-    (maybe/difference
-      (wrist/bottom-plate-positive getopt)
-      (bottom-plate-anchors getopt :wrist-rest "bottom_plate_anchor_negative"))))
+  (maybe/difference
+    (wrist/bottom-plate-positive getopt)
+    (bottom-plate-anchors getopt :wrist-rest "bottom_plate_anchor_negative")))
+
+(defn wrist-plinth-plastic
+  [getopt]
+  (maybe/difference
+    (wrist/plinth-plastic-positive getopt)
+    (bottom-plate-anchors getopt :wrist-rest "bottom_plate_anchor_negative")))

@@ -340,7 +340,7 @@
 ;; Outputs ;;
 ;;;;;;;;;;;;;
 
-(defn plinth-plastic
+(defn plinth-plastic-positive
   "The lower portion of a wrist rest, to be printed in a rigid material."
   [getopt]
   (body/mask getopt (getopt :wrist-rest :bottom-plate :include)

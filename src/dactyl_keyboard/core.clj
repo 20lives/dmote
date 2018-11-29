@@ -11,6 +11,7 @@
             [clj-yaml.core :as yaml]
             [scad-clj.scad :refer [write-scad]]
             [scad-clj.model :exclude [use import] :refer :all]
+            [scad-tarmi.core :refer [π]]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.dfm :refer [error-fn]]
             [dactyl-keyboard.generics :as generics]
@@ -214,18 +215,17 @@
   (let [getopt (parse-build-opts options)
         predefine #(define-module % ((get module-map %) getopt))
         producer
-          (fn [{:keys [condition pair basename module-names model-fn]
-                :or {condition true, pair false, modules []}}]
+          (fn [{:keys [condition pair rotation basename module-names model-fn]
+                :or {condition true, pair false, rotation [0 0 0], modules []}}]
             (if (and (re-find whitelist basename) condition)
-              (let [basemodel (model-fn getopt)
-                    modules (vec (map predefine module-names))
+              (let [modules (vec (map predefine module-names))
+                    basemodel (maybe/rotate rotation (model-fn getopt))
                     single (fn [filename model]
                              [filename modules model options])]
                (if pair
                  [(single (str "right-hand-" basename) basemodel)
-                  (single
-                    (str "left-hand-" basename)
-                    (mirror [-1 0 0] basemodel))]
+                  (single (str "left-hand-" basename)
+                          (mirror [-1 0 0] basemodel))]
                  [(single basename basemodel)]))))]
    (if debug (pprint-settings "Enriched settings:" (getopt)))
    (reduce
@@ -245,10 +245,12 @@
        :basename "case-bottom-plate"
        :module-names ["bottom_plate_anchor_negative"]
        :model-fn aux/case-bottom-plate
-       :pair true}
+       :pair true
+       :rotation [0 π 0]}
       {:condition (= (getopt :mcu :support :style) :lock)
        :basename "mcu-lock-bolt"
-       :model-fn aux/mcu-lock-bolt}
+       :model-fn aux/mcu-lock-bolt
+       :rotation [(/ π 2) 0 0]}
       {:condition (getopt :wrist-rest :include)
        :basename "pad-mould"
        :model-fn wrist/rubber-casting-mould
@@ -266,7 +268,8 @@
        :basename "plinth-bottom-plate"
        :module-names ["bottom_plate_anchor_negative"]
        :model-fn aux/wrist-bottom-plate
-       :pair true}])))
+       :pair true
+       :rotation [0 π 0]}])))
 
 (def cli-options
   "Define command-line interface."
