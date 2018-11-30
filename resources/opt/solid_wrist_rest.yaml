@@ -6,12 +6,12 @@ case:
     polygons:
     - points:
       - key-alias: far-right
-        key-corner: WNW
+        corner: WNW
         offset: [7, 0]
       - key-alias: far-right
-        key-corner: NNE
+        corner: NNE
       - key-alias: far-right
-        key-corner: ESE
+        corner: ESE
         offset: [0, -2]
 wrist-rest:
   include: true

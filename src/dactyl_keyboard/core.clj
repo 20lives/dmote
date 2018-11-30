@@ -77,8 +77,11 @@
                 (body/rear-housing getopt))
               (body/wall-tweaks getopt)
               (aux/foot-plates getopt)
-              (aux/bottom-plate-anchors getopt :case "bottom_plate_anchor_positive"))
-            ;; Stuff that goes outside the mask but should be subject to all negatives:
+              (when (getopt :case :bottom-plate :include)
+                (aux/bottom-plate-anchors getopt :case
+                  "bottom_plate_anchor_positive")))
+            ;; Stuff that goes outside the mask but
+            ;; should be subject to all negatives:
             (when (and (getopt :wrist-rest :include)
                        (getopt :wrist-rest :preview))
               (wrist/unified-preview getopt))
@@ -111,11 +114,13 @@
         (when (= (getopt :mcu :support :style) :lock) ; Outside the alcove.
           (aux/mcu-lock-fixture-composite getopt)))
       ;; Outer negatives:
-      (aux/bottom-plate-anchors getopt :case "bottom_plate_anchor_negative")
+      (when (getopt :case :bottom-plate :include)
+        (aux/bottom-plate-anchors getopt :case "bottom_plate_anchor_negative"))
       (when (and (getopt :wrist-rest :bottom-plate :include)
                  (getopt :wrist-rest :include)
                  (getopt :wrist-rest :preview))
-        (aux/bottom-plate-anchors getopt :wrist-rest "bottom_plate_anchor_negative")))
+        (aux/bottom-plate-anchors getopt :wrist-rest
+          "bottom_plate_anchor_negative")))
     ;; The remaining elements are visualizations for use in development.
     (when (getopt :keycaps :preview) (key/metacluster key/cluster-keycaps getopt))
     (when (getopt :mcu :preview) (aux/mcu-visualization getopt))
@@ -214,22 +219,23 @@
 (defn- produce
   "Produce SCAD file(s) from a single model."
   [getopt cli-options
-   {:keys [condition pair rotation basename module-names model-fn]
+   {:keys [condition pair rotation basename modules model-fn]
     :or {condition true, pair false, rotation [0 0 0], modules []}}]
   (if (and (re-find (:whitelist cli-options) basename) condition)
     (let [predefine
-            (fn [mirrored module-name]
+            (fn [mirrored [module-condition module-name]]
               (let [module-properties (get module-map module-name)
                     basemodule-fn (:model-fn module-properties)
                     chiral (get module-properties :chiral false)
                     should-flip (and mirrored chiral)
                     model (maybe-flip should-flip (basemodule-fn getopt))]
-                (define-module module-name model)))
+                (when module-condition
+                  (define-module module-name model))))
           basemodel (maybe/rotate rotation (model-fn getopt))
           single
             (fn [prefix mirrored]
               [(str prefix basename)
-               (vec (map #(predefine mirrored %) module-names))
+               (vec (map #(predefine mirrored %) modules))
                (maybe-flip mirrored basemodel)
                cli-options])]
       (if pair
@@ -252,13 +258,15 @@
      [{:basename "preview-keycap"
        :model-fn (partial key/metacluster key/cluster-keycaps)}
       {:basename "case-main"
-       :module-names ["bottom_plate_anchor_positive"
-                      "bottom_plate_anchor_negative"]
+       :modules [[(getopt :case :bottom-plate :include)
+                  "bottom_plate_anchor_positive"]
+                 [(getopt :case :bottom-plate :include)
+                  "bottom_plate_anchor_negative"]]
        :model-fn build-keyboard-right
        :pair true}
       {:condition (getopt :case :bottom-plate :include)
        :basename "case-bottom-plate"
-       :module-names ["bottom_plate_anchor_negative"]
+       :modules [[true "bottom_plate_anchor_negative"]]
        :model-fn aux/case-bottom-plate
        :pair true
        :rotation [0 π 0]}
@@ -276,13 +284,14 @@
        :pair true}
       {:condition (getopt :wrist-rest :include)
        :basename "plinth-main"
-       :module-names ["bottom_plate_anchor_negative"]
+       :modules [[(getopt :wrist-rest :bottom-plate :include)
+                  "bottom_plate_anchor_negative"]]
        :model-fn aux/wrist-plinth-plastic
        :pair true}
-      {:condition (and (getopt :case :bottom-plate :include)
-                       (getopt :wrist-rest :include))
+      {:condition (and (getopt :wrist-rest :include)
+                       (getopt :wrist-rest :bottom-plate :include))
        :basename "plinth-bottom-plate"
-       :module-names ["bottom_plate_anchor_negative"]
+       :modules [[true "bottom_plate_anchor_negative"]]
        :model-fn aux/wrist-bottom-plate
        :pair true
        :rotation [0 π 0]}])))
