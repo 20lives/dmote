@@ -47,8 +47,9 @@
 
 (def module-map
   "A mapping naming OpenSCAD modules and the functions that make them."
-  {"bottom_plate_anchor_positive" aux/bottom-plate-anchor-positive
-   "bottom_plate_anchor_negative" aux/bottom-plate-anchor-negative})
+  {"bottom_plate_anchor_positive" {:model-fn aux/bottom-plate-anchor-positive}
+   "bottom_plate_anchor_negative" {:model-fn aux/bottom-plate-anchor-negative,
+                                   :chiral true}})
 
 (defn build-keyboard-right
   "Right-hand-side keyboard model."
@@ -208,32 +209,46 @@
     (if render (render-to-stl renderer scad stl))
     (if debug (println "Finished" scad))))
 
+(defn- maybe-flip [mirrored model] (if mirrored (mirror [-1 0 0] model) model))
+
+(defn- produce
+  "Produce SCAD file(s) from a single model."
+  [getopt cli-options
+   {:keys [condition pair rotation basename module-names model-fn]
+    :or {condition true, pair false, rotation [0 0 0], modules []}}]
+  (if (and (re-find (:whitelist cli-options) basename) condition)
+    (let [predefine
+            (fn [mirrored module-name]
+              (let [module-properties (get module-map module-name)
+                    basemodule-fn (:model-fn module-properties)
+                    chiral (get module-properties :chiral false)
+                    should-flip (and mirrored chiral)
+                    model (maybe-flip should-flip (basemodule-fn getopt))]
+                (define-module module-name model)))
+          basemodel (maybe/rotate rotation (model-fn getopt))
+          single
+            (fn [prefix mirrored]
+              [(str prefix basename)
+               (vec (map #(predefine mirrored %) module-names))
+               (maybe-flip mirrored basemodel)
+               cli-options])]
+      (if pair
+        [(single "right-hand-" false)
+         (single "left-hand-" true)]
+        [(single "" false)]))))
+
 (defn collect-models
   "Make an option accessor function and assemble models with it.
   Return a vector of vectors suitable for calling the author function."
-  [{:keys [debug whitelist] :as options}]
-  (let [getopt (parse-build-opts options)
-        predefine #(define-module % ((get module-map %) getopt))
-        producer
-          (fn [{:keys [condition pair rotation basename module-names model-fn]
-                :or {condition true, pair false, rotation [0 0 0], modules []}}]
-            (if (and (re-find whitelist basename) condition)
-              (let [modules (vec (map predefine module-names))
-                    basemodel (maybe/rotate rotation (model-fn getopt))
-                    single (fn [filename model]
-                             [filename modules model options])]
-               (if pair
-                 [(single (str "right-hand-" basename) basemodel)
-                  (single (str "left-hand-" basename)
-                          (mirror [-1 0 0] basemodel))]
-                 [(single basename basemodel)]))))]
+  [{:keys [debug] :as options}]
+  (let [getopt (parse-build-opts options)]
    (if debug (pprint-settings "Enriched settings:" (getopt)))
    (reduce
-     (fn [coll model-info] (concat coll (producer model-info)))
+     (fn [coll model-info] (concat coll (produce getopt options model-info)))
      []
      ;; What follows is the central roster of files and the models that go
      ;; into each. Some depend on special configuration values and some come
-     ;; in pairs (left and right).
+     ;; in pairs (left and right). Some are rotated for ease of printing.
      [{:basename "preview-keycap"
        :model-fn (partial key/metacluster key/cluster-keycaps)}
       {:basename "case-main"
@@ -261,7 +276,8 @@
        :pair true}
       {:condition (getopt :wrist-rest :include)
        :basename "plinth-main"
-       :model-fn wrist/plinth-plastic
+       :module-names ["bottom_plate_anchor_negative"]
+       :model-fn aux/wrist-plinth-plastic
        :pair true}
       {:condition (and (getopt :case :bottom-plate :include)
                        (getopt :wrist-rest :include))
