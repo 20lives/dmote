@@ -12,7 +12,7 @@ do
   if [ -n "$RENDERER" ]
   then
     echo "Transporting."
-    rsync -a things/*.scad $RENDERER &
+    rsync -a things/scad/*.scad $RENDERER &
   fi
   echo "Waiting for source changes."
   inotifywait -re CLOSE_WRITE src/ resources/
