@@ -1,616 +1,24 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The Dactyl-ManuForm Keyboard — Opposable Thumb Edition              ;;
-;; Shape Parameters                                                    ;;
+;; Parameter Specification – Main                                      ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; This file describes the interpretation of configuration files for the
-;;; application. It parses and validates serialized data.
-
-(ns dactyl-keyboard.params
-  (:require [clojure.string :as string]
-            [clojure.spec.alpha :as spec]
+(ns dactyl-keyboard.param.tree.main
+  (:require [clojure.spec.alpha :as spec]
             [clojure.java.io :refer [file]]
-            [flatland.ordered.map :refer [ordered-map]]
             [scad-tarmi.threaded :as threaded]
-            [dactyl-keyboard.generics :as generics]))
-
-(defn- coalesce
-  "Assemble one branch in a tree structure from flat specifications."
-  [coll [type path & metadata]]
-  (case type
-    :section
-      (assoc-in coll path
-        (ordered-map :metadata {:help (apply str metadata)}))
-    :parameter
-      (assoc-in coll path
-        (assoc (first metadata) :help (apply str (rest metadata))))
-    (throw (Exception. "Bad type in configuration master."))))
-
-(defn inflate
-  "Recursively assemble a tree from flat specifications.
-  Skip the first entry (an introduction)."
-  [flat]
-  (reduce coalesce (ordered-map) (rest flat)))
-
-;; Parsers:
-
-(defn string-corner
-  "For use with YAML, where string values are not automatically converted."
-  [string]
-  ((keyword string) generics/keyword-to-directions))
-
-(defn tuple-of
-  "A maker of parsers for vectors."
-  [item-parser]
-  (fn [candidate] (into [] (map item-parser candidate))))
-
-(defn map-like
-  "Return a parser of a map where the exact keys are known."
-  [key-value-parsers]
-  (letfn [(parse-item [[key value]]
-            (if-let [value-parser (get key-value-parsers key)]
-              [key (value-parser value)]
-              (throw (Exception. (format "Invalid key: %s" key)))))]
-    (fn [candidate] (into {} (map parse-item candidate)))))
-
-(defn map-of
-  "Return a parser of a map where the general type of key is known."
-  [key-parser value-parser]
-  (letfn [(parse-item [[key value]]
-            [(key-parser key) (value-parser value)])]
-    (fn [candidate] (into {} (map parse-item candidate)))))
-
-(defn keyword-or-integer
-  "A parser that takes a number as an integer or a string as a keyword.
-  This works around a peculiar facet of clj-yaml, wherein integer keys to
-  maps are parsed as keywords."
-  [candidate]
-  (try
-    (int candidate)  ; Input like “1”.
-    (catch ClassCastException _
-      (try
-        (Integer/parseInt (name candidate))  ; Input like “:1” (clj-yaml key).
-        (catch java.lang.NumberFormatException _
-          (keyword candidate))))))           ; Input like “:first” or “"first"”.
-
-(def parse-key-clusters
-  "A function to parse input for the [:key-clusters] parameter."
-  (map-of
-    keyword
-    (map-like
-      {:matrix-columns
-         (tuple-of
-           (map-like
-             {:rows-below-home int
-              :rows-above-home int}))
-       :position
-         (map-like
-           {:key-alias keyword
-            :offset (tuple-of num)})
-       :style keyword
-       :aliases (map-of keyword (tuple-of keyword-or-integer))})))
-
-(def parse-by-key-overrides
-  "A function to parse input for the [:by-key :clusters] section."
-  (map-of
-    keyword
-    (map-like
-      {:parameters identity
-       :columns
-        (map-of
-          keyword-or-integer
-          (map-like
-            {:parameters identity
-             :rows
-               (map-of
-                 keyword-or-integer
-                 (map-like {:parameters identity}))}))})))
-
-(defn case-tweak-corner
-  "Parse notation for a range of wall segments off a specific key corner."
-  ([alias corner s0]
-   (case-tweak-corner alias corner s0 s0))
-  ([alias corner s0 s1]
-   [(keyword alias) (string-corner corner) (int s0) (int s1)]))
-
-(defn case-tweaks [candidate]
-  "Parse a tweak. This can be a lazy sequence describing a single
-  corner, a lazy sequence of such sequences, or a map. If it is a
-  map, it may contain a similar nested structure."
-  (if (string? (first candidate))
-    (apply case-tweak-corner candidate)
-    (if (map? candidate)
-      ((map-like {:chunk-size int
-                  :to-ground boolean
-                  :highlight boolean
-                  :hull-around case-tweaks})
-       candidate)
-      (map case-tweaks candidate))))
-
-(def anchored-2d-positions
-  (tuple-of
-    (map-like
-      {:anchor keyword
-       :key-alias keyword
-       :corner string-corner
-       :offset vec})))
-
-(def anchored-polygons
-  (tuple-of
-    (map-like
-      {:points anchored-2d-positions})))
-
-;; Validators:
-
-;; Used with spec/keys, making the names sensitive:
-(spec/def ::anchor #{:key :rear-housing :wrist-rest})
-(spec/def ::key-alias keyword)
-(spec/def ::points (spec/coll-of ::anchored-2d-position))
-(spec/def ::highlight boolean?)
-(spec/def ::to-ground boolean?)
-(spec/def ::chunk-size (spec/and int? #(> % 1)))
-(spec/def ::hull-around (spec/coll-of (spec/or :leaf ::tweak-plate-leaf
-                                               :map ::tweak-plate-map)))
-
-;; Users thereof:
-(spec/def ::foot-plate (spec/keys :req-un [::points]))
-(spec/def ::anchored-2d-position
-  (spec/keys :opt-un [::anchor ::key-alias ::corner ::offset]))
-(spec/def ::tweak-plate-map
-  (spec/keys :req-un [::hull-around]
-             :opt-un [::highlight ::chunk-size ::to-ground]))
-
-;; Other:
-(spec/def ::supported-key-cluster #(not (= :derived %)))
-(spec/def ::supported-switch-style #{:alps :mx})
-(spec/def ::supported-cluster-style #{:standard :orthographic})
-(spec/def ::supported-cap-style #{:flat :socket :button})
-(spec/def ::supported-plate-installation-style #{:threads :inserts})
-(spec/def ::supported-mcu-type #{:promicro})
-(spec/def ::supported-mcu-support-style #{:lock :stop})
-(spec/def ::supported-wrist-rest-style #{:threaded :solid})
-(spec/def ::column-disposition
-  (spec/keys ::opt-un [::rows-below-home ::rows-above-home]))
-(spec/def ::flexcoord (spec/or :absolute int? :extreme #{:first :last}))
-(spec/def ::2d-flexcoord (spec/coll-of ::flexcoord :count 2))
-(spec/def ::key-coordinates ::2d-flexcoord)  ; Exposed for unit testing.
-(spec/def ::3d-point (spec/coll-of number? :count 3))
-(spec/def ::corner (set (vals generics/keyword-to-directions)))
-(spec/def ::direction (set (map first (vals generics/keyword-to-directions))))
-(spec/def ::wall-segment (spec/int-in 0 5))
-(spec/def ::wall-extent (spec/or :partial ::wall-segment :full #{:full}))
-(spec/def ::tweak-plate-leaf
-  (spec/or :short (spec/tuple keyword? ::corner ::wall-segment)
-           :long (spec/tuple keyword? ::corner ::wall-segment ::wall-segment)))
-(spec/def ::foot-plate-polygons (spec/coll-of ::foot-plate))
-(spec/def ::plate-screw-positions (spec/coll-of ::anchored-2d-position))
+            [dactyl-keyboard.param.base :as base]
+            [dactyl-keyboard.param.schema :as schema]
+            [dactyl-keyboard.param.tree.nested :as nested]
+            [dactyl-keyboard.param.tree.cluster :as cluster]))
 
 
-;; Composition of parsing and validation:
+;; Though this module describes the main body of parameters, it contains
+;; within it certain sections specified elsewhere. Validators for these
+;; sections are created from the detailed specifications and applied here.
 
-;; Leaf metadata imitates clojure.tools.cli with extras.
-(spec/def ::parameter-descriptor
-  #{:heading-template :help :default :parse-fn :validate :resolve-fn})
-(spec/def ::parameter-spec (spec/map-of ::parameter-descriptor some?))
-
-(defn- hard-defaults
-  "Pick a user-supplied value over a default value.
-  This is the default method for resolving overlap between built-in defaults
-  and the user configuration, at the leaf level."
-  [nominal candidate]
-  (or candidate (:default nominal)))
-
-(defn- soft-defaults
-  "Prioritize a user-supplied value over a default value, but make it spongy.
-  This is an alternate method for resolving overlap, intended for use with
-  defaults that are so complicated the user will not want to write a complete,
-  explicit replacement every time."
-  [nominal candidate]
-  (generics/soft-merge (:default nominal) candidate))
-
-(defn parse-leaf
-  "Resolve differences between default values and user-supplied values.
-  Run the result through a specified parsing function and return it."
-  [nominal candidate]
-  (let [resolve-fn (get nominal :resolve-fn hard-defaults)
-        parse-fn (get nominal :parse-fn identity)
-        merged (resolve-fn nominal candidate)]
-   (try
-     (parse-fn merged)
-     (catch Exception e
-       (throw (ex-info "Could not cast value to correct data type"
-                        {:type :parsing-error
-                         :raw-value candidate
-                         :merged-value merged
-                         :original-exception e}))))))
-
-(declare validate-leaf validate-branch)
-
-(defn validate-node
-  "Validate a fragment of a configuration received through the UI."
-  [nominal candidate key]
-  (assert (not (spec/valid? ::parameter-descriptor key)))
-  (if (contains? nominal key)
-    (if (spec/valid? ::parameter-spec (key nominal))
-      (try
-        (assoc candidate key (validate-leaf (key nominal) (key candidate)))
-        (catch clojure.lang.ExceptionInfo e
-          ;; Add the current key for richer logging at a higher level.
-          ;; This would work better if the call stack were deep.
-          (let [data (ex-data e)
-                keys (get data :keys ())
-                new-data (assoc data :keys (conj keys key))]
-           (throw (ex-info (.getMessage e) new-data)))))
-      (assoc candidate key (validate-branch (key nominal) (key candidate))))
-    (throw (ex-info "Superfluous configuration key"
-                    {:type :superfluous-key
-                     :keys (list key)
-                     :accepted-keys (keys nominal)}))))
-
-(defn validate-branch
-  "Validate a section of a configuration received through the UI."
-  [nominal candidate]
-  (reduce (partial validate-node nominal)
-          candidate
-          (remove #(= :metadata %)
-            (distinct (apply concat (map keys [nominal candidate]))))))
-
-(defn extract-defaults
-  "Fetch default values for a broad section of the configuration."
-  [flat]
-  (validate-branch (inflate flat) {}))
-
-(defn validate-leaf
-  "Validate a specific parameter received through the UI."
-  [nominal candidate]
-  (assert (spec/valid? ::parameter-spec nominal))
-  (reduce
-    (fn [unvalidated validator]
-      (if (spec/valid? validator unvalidated)
-        unvalidated
-        (throw (ex-info "Value out of range"
-                        {:type :validation-error
-                         :parsed-value unvalidated
-                         :raw-value candidate
-                         :spec-explanation (spec/explain-str validator unvalidated)}))))
-    (parse-leaf nominal candidate)
-    (get nominal :validate [some?])))
-
-;; Specification:
-
-(def cluster-raws
-  "A flat version of a special part of a user configuration.
-  Default values and parsers here are secondary. Validators are used."
-  [["# Key cluster configuration options\n\n"
-    "Each heading in this document represents a recognized configuration key "
-    "in YAML files for a DMOTE variant.\n\n"
-    "This specific document describes options for the general outline "
-    "and position of any individual cluster of keys. One set of such "
-    "options will exist for each entry in `key-clusters`, a parameter "
-    "documented [here](options-main.md)."]
-   [:parameter [:matrix-columns]
-    {:default [{}]
-     :parse-fn vec
-     :validate [(spec/coll-of ::column-disposition)]}
-    "A list of key columns. Columns are aligned with the user’s fingers. "
-    "Each column will be known by its index in this list, starting at zero "
-    "for the first item. Each item may contain:\n"
-    "\n"
-    "- `rows-above-home`: An integer specifying the amount of keys "
-    "on the far side of the home row in the column. If "
-    "this parameter is omitted, the effective value will be zero.\n"
-    "- `rows-below-home`: An integer specifying the amount of keys "
-    "on the near side of the home row in the column. If this "
-    "parameter is omitted, the effective value will be zero.\n"
-    "\n"
-    "For example, on a normal QWERTY keyboard, H is on the home row for "
-    "purposes of touch typing, and you would probably want to use it as such "
-    "here too, even though the matrix in this program has no necessary "
-    "relationship with touch typing, nor with the matrix in your MCU firmware "
-    "(TMK/QMK etc.). Your H key will then get the coordinates [0, 0] as the "
-    "home-row key in the far left column on the right-hand side of the "
-    "keyboard.\n"
-    "\n"
-    "In that first column, to continue the QWERTY pattern, you will want "
-    "`rows-above-home` set to 1, to make a Y key, or 2 to make a 6-and-^ key, "
-    "or 3 to make a function key above the 6-and-^. Your Y key will have the "
-    "coordinates [0, 1]. Your 6-and-^ key will have the coordinates [0, 2], etc.\n"
-    "\n"
-    "Still in that first column, to finish the QWERTY pattern, you will want "
-    "`rows-below-home` set to 2, where the two keys below H are N "
-    "(coordinates [0, -1]) and Space (coordinates [0, -2]).\n"
-    "\n"
-    "The next item in the list will be column 1, with J as [1, 0] and so on. "
-    "On the left-hand side of a DMOTE, everything is mirrored so that [0, 0] "
-    "will be G instead of H in QWERTY, [1, 0] will be F instead of J, and so on."]
-   [:parameter [:style]
-    {:default :standard
-     :parse-fn keyword
-     :validate [::supported-cluster-style]}
-    "Cluster layout style. One of:\n\n"
-    "- `standard`: Both columns and rows have the same type of curvature "
-    "applied in a logically consistent manner.\n"
-    "- `orthographic`: Rows are curved somewhat differently. This creates "
-    "more space between columns and may prevent key mounts from fusing "
-    "together if you have a broad matrix."]
-   [:parameter [:aliases]
-    {:default {:origin [0 0]}
-     :parse-fn (map-of keyword (tuple-of keyword-or-integer))
-     :validate [(spec/map-of keyword? ::2d-flexcoord)]}
-    "A map of short names to specific keys by coordinate pair. "
-    "Such aliases are for use elsewhere in the configuration."]
-   [:section [:position]
-    "If this section is omitted, the key clusters will be positioned at the "
-    "origin of the coordinate system."]
-   [:parameter [:position :key-alias]
-    {:default :origin
-     :parse-fn keyword
-     :validate [::key-alias]}
-    "A key as named under any of the `aliases` sections described above. "
-    "Take care to name a key in a different cluster, and don’t create "
-    "circular dependencies between clusters."]
-   [:parameter [:position :offset]
-    {:default [0 0 0]
-     :parse-fn (tuple-of num)
-     :validate [::3d-point]}
-    "A 3-dimensional offset in mm from the indicated key or else from the "
-    "origin of the coordinate system.\n"
-    "\n"
-    "The z-coordinate, which is the last number in this offset, is vertical "
-    "adjustment of the key cluster. Set for your main cluster, it controls "
-    "the overall height of the keyboard, including the height of its case."]])
-
-(def nested-raws
-  "A flat version of another special part of a user configuration."
-  [["# Nestable configuration options\n\n"
-    "This document describes all those settings which can be made at any "
-    "level of specificity, from the entire keyboard down to an individual "
-    "key. These settings all go under `by-key` in a YAML file.\n"
-    "\n"
-    "## Conceptual overview\n"
-    "\n"
-    "Variable specificity is accomplished by nesting. The following "
-    "levels of specificity are currently available. Each one branches out, "
-    "containing the next:\n"
-    "\n"
-    "- The global level, directly under `by-key` (cf. the "
-    "[main document](options-main.md)).\n"
-    "- The key cluster level, at `by-key` → `clusters` → your cluster.\n"
-    "- The column level, nested still further under your cluster → "
-    "`columns` → column index.\n"
-    "- The row level, nested under column index → `rows` → row index. "
-    "A setting at the row level will only affect keys in the specific cluster "
-    "and column selected along the way, i.e. only one key per row. Therefore, "
-    "the row level is effectively the key level.\n"
-    "\n"
-    "At each level, two subsections are permitted: `parameters`, where you "
-    "put the settings themselves, and a section for the next level of "
-    "nesting: `clusters`, then `columns`, then `rows`. More specific settings "
-    "take precedence.\n"
-    "\n"
-    "In the following hypothetical example, the parameter `P`, which is "
-    "not really supported, is defined three times: Once at the global level "
-    "and twice at the row (key) level.\n"
-    "\n"
-    "```by-key:\n"
-    "  parameters:\n"
-    "    P: true\n"
-    "  clusters:\n"
-    "    C:\n"
-    "      columns:\n"
-    "        \"1\":\n"
-    "          rows:\n"
-    "            first:\n"
-    "              parameters:\n"
-    "                P: false\n"
-    "            \"3\":\n"
-    "              parameters:\n"
-    "                P: false\n```"
-    "\n\n"
-    "In this example, `P` will have the value “true” for all keys except two "
-    "on each half of the keyboard. On the right-hand side, `P` will be false "
-    "for the key closest to the user (“first” row) in the second column "
-    "from the left (column “1”) in a cluster of keys here named `C`. `P` will "
-    "also be false for the fourth key from the user (row “3”) in the same "
-    "column.\n"
-    "\n"
-    "Columns and rows are indexed by their ordinal integers "
-    "or the words “first” or “last”, which take priority.\n"
-    "\n"
-    "WARNING: Due to a peculiarity of the YAML parser, take care "
-    "to quote your numeric column and row indices as strings. This is why "
-    "there are quotation marks around column index 1 and row index 3 in the "
-    "example."]
-   [:section [:parameters]
-    "This section, and everything in it, can be repeated at each level "
-    "of specificity."]
-   [:section [:parameters :layout]
-    "Settings for how to place keys."]
-   [:section [:parameters :layout :matrix]
-    "Roughly how keys are spaced out to form a matrix."]
-   [:section [:parameters :layout :matrix :neutral]
-    "The neutral point in a column or row is where any progressive curvature "
-    "both starts and has no effect."]
-   [:parameter [:parameters :layout :matrix :neutral :column]
-    {:default 0 :parse-fn int}
-    "An integer column ID."]
-   [:parameter [:parameters :layout :matrix :neutral :row]
-    {:default 0 :parse-fn int}
-    "An integer row ID."]
-   [:section [:parameters :layout :matrix :separation]
-    "Tweaks to control the systematic separation of keys. The parameters in "
-    "this section will be multiplied by the difference between each affected "
-    "key’s coordinates and the neutral column and row."]
-   [:parameter [:parameters :layout :matrix :separation :column]
-    {:default 0 :parse-fn num}
-    "A distance in mm."]
-   [:parameter [:parameters :layout :matrix :separation :row]
-    {:default 0 :parse-fn num}
-    "A distance in mm."]
-   [:section [:parameters :layout :pitch]
-    "Tait-Bryan pitch, meaning the rotation of keys around the x axis."]
-   [:parameter [:parameters :layout :pitch :base]
-    {:default 0 :parse-fn num}
-    "An angle in radians. Set at a high level, this controls the general "
-    "front-to-back incline of a key cluster."]
-   [:parameter [:parameters :layout :pitch :intrinsic]
-    {:default 0 :parse-fn num}
-    "An angle in radians. Intrinsic pitching occurs early in key placement. "
-    "It is typically intended to produce a tactile break between two rows of "
-    "keys, as in the typewriter-like terracing common on flat keyboards with "
-    "OEM-profile or similarly angled caps.\n\n"
-    "The term “intrinsic” is used here because the key spins roughly around "
-    "its own center. The term should not be confused with intrinsic rotations "
-    "in the sense that each step is performed on a coordinate system "
-    "resulting from previous operations."]
-   [:parameter [:parameters :layout :pitch :progressive]
-    {:default 0 :parse-fn num}
-    "An angle in radians. This progressive pitch factor bends columns "
-    "lengthwise. If set to zero, columns are flat."]
-   [:section [:parameters :layout :roll]
-    "Tait-Bryan roll, meaning the rotation of keys around the y axis."]
-   [:parameter [:parameters :layout :roll :base]
-    {:default 0 :parse-fn num}
-    "An angle in radians. This is the “tenting” angle. Applied to your main "
-    "cluster, it controls the overall left-to-right tilt of each half of the "
-    "keyboard."]
-   [:parameter [:parameters :layout :roll :intrinsic]
-    {:default 0 :parse-fn num}
-    "An angle in radians, analogous to intrinsic pitching. Where more than "
-    "one column of keys is devoted to a single finger at the edge of the "
-    "keyboard, this can help make the edge column easier to reach, reducing "
-    "the need to bend the finger (or thumb) sideways."]
-   [:parameter [:parameters :layout :roll :progressive]
-    {:default 0 :parse-fn num}
-    "An angle in radians. This progressive roll factor bends rows "
-    "lengthwise, which also gives the columns a lateral curvature."]
-   [:section [:parameters :layout :yaw]
-    "Tait-Bryan yaw, meaning the rotation of keys around the z axis."]
-   [:parameter [:parameters :layout :yaw :base]
-    {:default 0 :parse-fn num}
-    "An angle in radians. Applied to your main key cluster, this serves the "
-    "purpose of allowing the user to keep their wrists straight even if the "
-    "two halves of the keyboard are closer together than the user’s shoulders."]
-   [:parameter [:parameters :layout :yaw :intrinsic]
-    {:default 0 :parse-fn num}
-    "An angle in radians, analogous to intrinsic pitching."]
-   [:section [:parameters :layout :translation]
-    "Translation in the geometric sense, displacing keys in relation to each "
-    "other. Depending on when this translation takes places, it may have a "
-    "a cascading effect on other aspects of key placement. All measurements "
-    "are three-dimensional vectors in mm."]
-   [:parameter [:parameters :layout :translation :early]
-    {:default [0 0 0] :parse-fn vec :validate [::3d-point]}
-    "”Early” translation happens before other operations in key placement and "
-    "therefore has the biggest knock-on effects."]
-   [:parameter [:parameters :layout :translation :mid]
-    {:default [0 0 0] :parse-fn vec :validate [::3d-point]}
-    "This happens after columns are styled but before base pitch and roll. "
-    "As such it is a good place to adjust whole columns for relative finger "
-    "length."]
-   [:parameter [:parameters :layout :translation :late]
-    {:default [0 0 0] :parse-fn vec :validate [::3d-point]}
-    "“Late” translation is the last step in key placement and therefore "
-    "interacts very little with other steps."]
-   [:section [:parameters :channel]
-    "Above each switch mount, there is a channel of negative space for the "
-    "user’s finger and the keycap to move inside. This is only useful in those "
-    "cases where nearby walls or webbing between mounts on the keyboard would "
-    "otherwise obstruct movement."]
-   [:parameter [:parameters :channel :height]
-    {:default 1 :parse-fn num}
-    "The height in mm of the negative space, starting from the "
-    "bottom edge of each keycap in its pressed (active) state."]
-   [:parameter [:parameters :channel :top-width]
-    {:default 0 :parse-fn num}
-    "The width in mm of the negative space at its top. Its width at the "
-    "bottom is defined by keycap geometry."]
-   [:parameter [:parameters :channel :margin]
-    {:default 0 :parse-fn num}
-    "The width in mm of extra negative space around the edges of a keycap, on "
-    "all sides."]
-   [:section [:parameters :wall]
-    "The walls of the keyboard case support the key mounts and protect the "
-    "electronics. They are generated by an algorithm that walks around each "
-    "key cluster.\n"
-    "\n"
-    "This section determines the shape of the case wall, specifically "
-    "the skirt around each key mount along the edges of the board. These skirts "
-    "are made up of convex hulls wrapping sets of corner posts.\n"
-    "\n"
-    "There is one corner post at each actual corner of every key mount. "
-    "More posts are displaced from it, going down the sides. Their placement "
-    "is affected by the way the key mounts are rotated etc."]
-   [:parameter [:parameters :wall :thickness]
-    {:default 0 :parse-fn num}
-    "A distance in mm.\n"
-    "\n"
-    "This is actually the distance between some pairs of corner posts "
-    "(cf. `key-mount-corner-margin`), in the key mount’s frame of reference. "
-    "It is therefore inaccurate as a measure of wall thickness on the x-y plane."]
-   [:parameter [:parameters :wall :bevel]
-    {:default 0 :parse-fn num}
-    "A distance in mm.\n"
-    "\n"
-    "This is applied at the very top of a wall, making up the difference "
-    "between wall segments 0 and 1. It is applied again at the bottom, making "
-    "up the difference between segments 3 and 4."]
-   [:section [:parameters :wall :north]
-    "As explained [elsewhere](intro.md), “north” refers to the side facing "
-    "away from the user, barring yaw.\n\n"
-    "This section describes the shape of the wall on the north side of the "
-    "keyboard. There are identical sections for the other cardinal directions."]
-   [:parameter [:parameters :wall :north :extent]
-    {:default :full :parse-fn keyword-or-integer :validate [::wall-extent]}
-    "Two types of values are permitted here:\n\n"
-    "- The keyword `full`. This means a complete wall extending from the key "
-    "mount all the way down to the ground via segments numbered 0 through 4 "
-    "and a vertical drop thereafter.\n"
-    "- An integer corresponding to the last wall segment to be included. A "
-    "zero means there will be no wall. No matter the number, there will be no "
-    "vertical drop to the floor."]
-   [:parameter [:parameters :wall :north :parallel]
-    {:default 0 :parse-fn num}
-    "A distance in mm. The later wall segments extend this far "
-    "away from the corners of their key mount, on its plane."]
-   [:parameter [:parameters :wall :north :perpendicular]
-    {:default 0 :parse-fn num}
-    "A distance in mm. The later wall segments extend this far away from the "
-    "corners of their key mount, away from its plane."]
-   [:section [:parameters :wall :east] "See `north`."]
-   [:parameter [:parameters :wall :east :extent]
-    {:default :full :parse-fn keyword-or-integer :validate [::wall-extent]}]
-   [:parameter [:parameters :wall :east :parallel]
-    {:default 0 :parse-fn num}]
-   [:parameter [:parameters :wall :east :perpendicular]
-    {:default 0 :parse-fn num}]
-   [:section [:parameters :wall :south] "See `north`."]
-   [:parameter [:parameters :wall :south :extent]
-    {:default :full :parse-fn keyword-or-integer :validate [::wall-extent]}]
-   [:parameter [:parameters :wall :south :parallel]
-    {:default 0 :parse-fn num}]
-   [:parameter [:parameters :wall :south :perpendicular]
-    {:default 0 :parse-fn num}]
-   [:section [:parameters :wall :west] "See `north`."]
-   [:parameter [:parameters :wall :west :extent]
-    {:default :full :parse-fn keyword-or-integer :validate [::wall-extent]}]
-   [:parameter [:parameters :wall :west :parallel]
-    {:default 0 :parse-fn num}]
-   [:parameter [:parameters :wall :west :perpendicular]
-    {:default 0 :parse-fn num}]
-   [:parameter [:clusters]
-    {:heading-template "Special section `%s` ← overrides go in here"
-     :default {}
-     :parse-fn parse-by-key-overrides
-     :validate [(spec/map-of ::supported-key-cluster
-                             ::individual-cluster-overrides)]}
-    "Starting here, you gradually descend from the global level "
-    "toward the key level."]])
-
-;; A predicate made from nested-raws is applied for validation below.
-;; It is defined here because it uses nested-raws.
 (spec/def ::parameters
-  #(some? (validate-branch (:parameters (inflate nested-raws)) %)))
+  #(some? (base/validate-branch (:parameters (base/inflate nested/raws)) %)))
 (spec/def ::individual-row (spec/keys :opt-un [::parameters]))
 (spec/def ::rows (spec/map-of ::flexcoord ::individual-row))
 (spec/def ::individual-column (spec/keys :opt-un [::rows ::parameters]))
@@ -619,9 +27,9 @@
   (spec/keys :opt-un [::columns ::parameters]))
 (spec/def ::clusters ::individual-cluster-overrides)
 
-(def main-raws
-  "A flat version of the specification for a user configuration.
-  This excludes some major subsections."
+(def raws
+  "A flat version of the specification for a complete user configuration.
+  This absorbs major subsections from elsewhere."
   [["# General configuration options\n\n"
     "Each heading in this document represents a recognized configuration key "
     "in the main body of a YAML file for a DMOTE variant. Other documents "
@@ -651,7 +59,7 @@
    [:parameter [:switches :style]
     {:default :alps
      :parse-fn keyword
-     :validate [::supported-switch-style]}
+     :validate [::schema/switch-style]}
     "The switch type. One of:\n\n"
     "- `alps`: ALPS style switches, including Matias.\n"
     "- `mx`: Cherry MX style switches."]
@@ -663,19 +71,19 @@
     {:heading-template "Special section `%s`"
      :default {:main {:matrix-columns [{:rows-below-home 0}]
                       :aliases {:origin [0 0]}}}
-     :parse-fn parse-key-clusters
+     :parse-fn schema/parse-key-clusters
      :validate [(spec/map-of
-                  ::supported-key-cluster
-                  #(some? (validate-branch (inflate cluster-raws) %)))]}
+                  ::schema/key-cluster
+                  #(some? (base/validate-branch (base/inflate cluster/raws) %)))]}
     "This section describes the general size, shape and position of "
     "the clusters of keys on the keyboard, each in its own subsection. "
     "It is documented in detail [here](options-clusters.md)."]
    [:parameter [:by-key]
     {:heading-template "Special nesting section `%s`"
-     :default (extract-defaults nested-raws)
-     :parse-fn (map-like {:parameters identity
-                          :clusters parse-by-key-overrides})
-     :resolve-fn soft-defaults
+     :default (base/extract-defaults nested/raws)
+     :parse-fn (schema/map-like {:parameters identity
+                                 :clusters schema/parse-by-key-overrides})
+     :resolve-fn base/soft-defaults
      :validate [(spec/keys :opt-un [::parameters ::clusters])]}
     "This section is built like an onion. Each layer of settings inside it "
     "is more specific to a smaller part of the keyboard, eventually reaching "
@@ -711,7 +119,7 @@
     "Where to put the rear housing. By default, it sits all along the far "
     "side of the `main` cluster but has no depth."]
    [:parameter [:case :rear-housing :position :cluster]
-    {:default :main :parse-fn keyword :validate [::supported-key-cluster]}
+    {:default :main :parse-fn keyword :validate [::schema/key-cluster]}
     "The key cluster at which to anchor the housing."]
    [:section [:case :rear-housing :position :offsets]
     "Modifiers for where to put the four sides of the roof. All are in mm."]
@@ -841,7 +249,7 @@
     "How your bottom plate is attached to the rest of your case."]
    [:parameter [:case :bottom-plate :installation :style]
     {:default :threads :parse-fn keyword
-     :validate [::supported-plate-installation-style]}
+     :validate [::schema/plate-installation-style]}
     "The general means of installation. All currently available styles "
     "use threaded fasteners with countersunk heads. The styles differ only "
     "in how these fasteners attach to the case.\n\n"
@@ -876,8 +284,8 @@
     "The length in mm of each fastener. In the `threads` style, this refers "
     "to the part of the screw that is itself threaded: It excludes the head."]
    [:parameter [:case :bottom-plate :installation :fasteners :positions]
-    {:default [] :parse-fn anchored-2d-positions
-     :validate [::plate-screw-positions]}
+    {:default [] :parse-fn schema/anchored-2d-positions
+     :validate [::schema/plate-screw-positions]}
     "A list of places where threaded fasteners will connect the bottom plate "
     "to the rest of the case."]
    [:section [:case :leds]
@@ -889,7 +297,7 @@
    [:section [:case :leds :position]
     "Where to attach the LED strip."]
    [:parameter [:case :leds :position :cluster]
-    {:default :main :parse-fn keyword :validate [::supported-key-cluster]}
+    {:default :main :parse-fn keyword :validate [::schema/key-cluster]}
     "The key cluster at which to anchor the strip."]
    [:parameter [:case :leds :amount]
     {:default 1 :parse-fn int} "The number of LEDs."]
@@ -911,7 +319,7 @@
     "slightly shorter than the real distance, since the algorithm carving the "
     "holes does not account for wall curvature."]
    [:parameter [:case :tweaks]
-    {:default [] :parse-fn case-tweaks :validate [::hull-around]}
+    {:default [] :parse-fn schema/case-tweaks :validate [::schema/hull-around]}
     "Additional shapes. This is usually needed to bridge gaps between the "
     "walls of the key clusters.\n"
     "\n"
@@ -975,8 +383,8 @@
     {:default 4 :parse-fn num} "The height in mm of each mounting plate."]
    [:parameter [:case :foot-plates :polygons]
     {:default []
-     :parse-fn anchored-polygons
-     :validate [::foot-plate-polygons]}
+     :parse-fn schema/anchored-polygons
+     :validate [::schema/foot-plate-polygons]}
     "A list describing the horizontal shape, size and "
     "position of each mounting plate as a polygon."]
    [:section [:mcu]
@@ -985,7 +393,7 @@
     {:default false :parse-fn boolean}
     "If `true`, render a visualization of the MCU for use in development."]
    [:parameter [:mcu :type]
-    {:default :promicro :parse-fn keyword :validate [::supported-mcu-type]}
+    {:default :promicro :parse-fn keyword :validate [::schema/mcu-type]}
     "A symbolic name for a commercial product. Currently, only "
     "`promicro` is supported, referring to any MCU with the dimensions of a "
     "SparkFun Pro Micro."]
@@ -1007,21 +415,21 @@
     "The name of a key at which to place the MCU if `prefer-rear-housing` "
     "is `false` or rear housing is not included."]
    [:parameter [:mcu :position :corner]
-    {:default "ENE" :parse-fn string-corner :validate [::corner]}
+    {:default "ENE" :parse-fn schema/string-corner :validate [::schema/corner]}
     "A code for a corner of the rear housing or of `key-alias`. "
     "This determines both the location and facing of the MCU."]
    [:parameter [:mcu :position :offset]
-    {:default [0 0 0] :parse-fn vec :validate [::3d-point]}
+    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
     "A 3D offset in mm, measuring from the `corner`."]
    [:parameter [:mcu :position :rotation]
-    {:default [0 0 0] :parse-fn vec :validate [::3d-point]}
+    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
     "A vector of 3 angles in radians. This parameter governs the rotation of "
     "the MCU around its anchor point in the front. You would not normally "
     "need this for the MCU."]
    [:section [:mcu :support]
     "The support structure that holds the MCU PCBA in place."]
    [:parameter [:mcu :support :style]
-    {:default :lock :parse-fn keyword :validate [::supported-mcu-support-style]}
+    {:default :lock :parse-fn keyword :validate [::schema/mcu-support-style]}
     "The style of the support. Available styles are:\n\n"
     "- `lock`: A separate physical object that is bolted in place over the "
     "MCU. This style is appropriate only with a rear housing, and then only "
@@ -1089,7 +497,7 @@
     {:default :origin :parse-fn keyword}
     "The name of a key where a stop will start to attach itself."]
    [:parameter [:mcu :support :stop :direction]
-    {:default :south :parse-fn keyword :validate [::direction]}
+    {:default :south :parse-fn keyword :validate [::schema/direction]}
     "A direction in the matrix from the named key. The stop will attach "
     "to a hull of four neighbouring key mount corners in this direction."]
    [:section [:mcu :support :stop :gripper]
@@ -1112,7 +520,7 @@
     "between its two halves. This section adds a socket for that purpose. "
     "For example, this might be a type 616E female for a 4P4C “RJ9” plug."]
    [:parameter [:connection :socket-size]
-    {:default [1 1 1] :parse-fn vec :validate [::3d-point]}
+    {:default [1 1 1] :parse-fn vec :validate [::schema/point-3d]}
     "The size of a hole in the case, for the female to fit into."]
    [:section [:connection :position]
     "Where to place the socket. Equivalent to `connection` → `mcu`."]
@@ -1121,16 +529,16 @@
    [:parameter [:connection :position :key-alias]
     {:default :origin :parse-fn keyword}]
    [:parameter [:connection :position :corner]
-    {:default "ENE" :parse-fn string-corner :validate [::corner]}]
+    {:default "ENE" :parse-fn schema/string-corner :validate [::schema/corner]}]
    [:parameter [:connection :position :raise]
     {:default false :parse-fn boolean}
     "If `true`, and the socket is being placed in relation to the rear "
     "housing, put it directly under the ceiling, instead of directly over "
     "the floor."]
    [:parameter [:connection :position :offset]
-    {:default [0 0 0] :parse-fn vec :validate [::3d-point]}]
+    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}]
    [:parameter [:connection :position :rotation]
-    {:default [0 0 0] :parse-fn vec :validate [::3d-point]}]
+    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}]
    [:section [:wrist-rest]
     "An optional extension to support the user’s wrist."]
    [:parameter [:wrist-rest :include]
@@ -1139,7 +547,7 @@
    [:parameter [:wrist-rest :style]
     {:default :threaded
      :parse-fn keyword
-     :validate [::supported-wrist-rest-style]}
+     :validate [::schema/wrist-rest-style]}
     "The style of the wrist rest. Available styles are:\n\n"
     "- `threaded`: threaded fasteners connect the case and wrist rest. "
     "This works with a great variety of keyboard shapes and will allow "
@@ -1170,7 +578,7 @@
    [:section [:wrist-rest :shape]
     "The wrist rest needs to fit the user’s hand."]
    [:parameter [:wrist-rest :shape :plinth-base-size]
-    {:default [1 1 1] :parse-fn vec :validate [::3d-point]}
+    {:default [1 1 1] :parse-fn vec :validate [::schema/point-3d]}
     "The size of the plinth up to but not including the narrowing upper lip "
     "and rubber parts."]
    [:parameter [:wrist-rest :shape :chamfer]
@@ -1302,8 +710,8 @@
     {:default false :parse-fn boolean}
     "Whether to include a bottom plate for each wrist rest."]
    [:parameter [:wrist-rest :bottom-plate :fastener-positions]
-    {:default [] :parse-fn anchored-2d-positions
-     :validate [::plate-screw-positions]}
+    {:default [] :parse-fn schema/anchored-2d-positions
+     :validate [::schema/plate-screw-positions]}
     "The positions of threaded fasteners used to attach the bottom plate to "
     "its wrist rest. The syntax of this parameter is precisely the same as "
     "for the case’s bottom-plate fasteners. Other properties used for these "
@@ -1327,65 +735,11 @@
     "subsection for printing. You might want this while you are printing "
     "prototypes for a new style of switch, MCU support etc."]
    [:parameter [:mask :size]
-    {:default [1000 1000 1000] :parse-fn vec :validate [::3d-point]}
+    {:default [1000 1000 1000] :parse-fn vec :validate [::schema/point-3d]}
     "The size of the mask in mm. By default, `[1000, 1000, 1000]`."]
    [:parameter [:mask :center]
-    {:default [0 0 500] :parse-fn vec :validate [::3d-point]}
+    {:default [0 0 500] :parse-fn vec :validate [::schema/point-3d]}
     "The position of the center point of the mask. By default, `[0, 0, 500]`, "
     "which is supposed to mask out everything below ground level. If you "
     "include bottom plates, their thickness will automatically affect the "
     "placement of the mask beyond what you specify here."]])
-
-(defn- print-markdown-fragment
-  "Print a description of a node in the settings structure using Markdown."
-  [node level]
-  (let [heading-style
-          (fn [text]
-            (if (< level 7)  ; Markdown only supports up to h6 tags.
-              (str (string/join "" (repeat level "#")) " " text)
-              (str "###### " text " at level " level)))]
-    (doseq [key (remove #(= :metadata %) (keys node))]
-      (println)
-      (if (spec/valid? ::parameter-spec (key node))
-        (do (println
-              (heading-style
-                (format (get-in node [key :heading-template] "Parameter `%s`")
-                        (name key))))
-            (println)
-            (println (get-in node [key :help] "Undocumented.")))
-        (do (println (heading-style (format "Section `%s`" (name key))))
-            (println)
-            (println (get-in node [key :metadata :help] "Undocumented."))
-            (print-markdown-fragment (key node) (inc level)))))))
-
-(defn print-markdown-section
-  "Print documentation for a section based on its flat specifications.
-  Use the first entry as an introduction."
-  [flat]
-  (println (apply str (first flat)))
-  (print-markdown-fragment (inflate flat) 2))
-
-(defn validate-configuration
-  "Attempt to describe any errors in the user configuration."
-  [candidate]
-  (try
-    (validate-branch (inflate main-raws) candidate)
-    (catch clojure.lang.ExceptionInfo e
-      (let [data (ex-data e)]
-       (println "Validation error:" (.getMessage e))
-       (println "    At key(s):" (string/join " >> " (:keys data)))
-       (if (:accepted-keys data)
-         (println "    Accepted key(s) there:" (:accepted-keys data)))
-       (if (:raw-value data)
-         (println "    Value before parsing:" (:raw-value data)))
-       (if (:parsed-value data)
-         (println "    Value after parsing:" (:parsed-value data)))
-       (if (:spec-explanation data)
-         (println "    Validator output:" (:spec-explanation data)))
-       (if (:original-exception data)
-         (do (println "    Caused by:")
-             (print "      ")
-             (println
-               (string/join "\n      "
-                 (string/split-lines (pr-str (:original-exception data)))))))
-       (System/exit 1)))))

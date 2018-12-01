@@ -12,8 +12,7 @@
             [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.key :as key]
-            [dactyl-keyboard.cad.body :as body]
-            [dactyl-keyboard.cad.wrist :as wrist]))
+            [dactyl-keyboard.cad.place :as place]))
 
 
 ;;;;;;;;;;;;;;;;;;;
@@ -26,51 +25,6 @@
   In a DMOTE, USB connector width would typically go on the z axis, etc."
   {:full {:width 10.0 :length 13.6 :height 6.5}
    :micro {:width 7.5 :length 5.9 :height 2.55}})
-
-(defn reckon-key-anchor
-  [getopt {:keys [key-alias corner]}]
-  (let [key (getopt :key-clusters :derived :aliases key-alias)
-        {:keys [cluster coordinates]} key]
-    (body/wall-corner-position getopt cluster coordinates {:directions corner})))
-
-(defn reckon-2d-anchor
-  "A convenience for placing stuff in relation to other features.
-  Return a vec, for predictably conj’ing a zero onto.
-  The position refers to what would be the middle of the outer wall post of the
-  anchor."
-  [getopt {:keys [anchor corner] :or {anchor :key, segment 0} :as opts}]
-  (vec (take 2
-         (case anchor
-           :key (reckon-key-anchor getopt opts)
-           :rear-housing (body/housing-reckon getopt corner 1 [0 0 0])
-           :wrist-rest (wrist/wrist-reckon getopt corner 1 [0 0 0])))))
-
-(defn reckon-2d-offset
-  "Determine xy coordinates of some other feature with an offset."
-  [getopt {:keys [offset] :or {offset [0 0]} :as opts}]
-  (vec (map + (reckon-2d-anchor getopt opts) offset)))
-
-(defn into-nook
-  "Produce coordinates for translation into requested corner.
-  This has strict expectations but can place a feature in relation either
-  to the rear housing or a key, as requested by the user."
-  [getopt field lateral-shift]
-  (let [corner (getopt field :position :corner)
-        use-housing (and (getopt :case :rear-housing :include)
-                         (getopt field :position :prefer-rear-housing))
-        general
-          (reckon-2d-anchor getopt
-             {:anchor (if use-housing :rear-housing :key)
-              :key-alias (getopt field :position :key-alias)
-              :corner corner})
-        to-nook
-          (if use-housing
-            (let [{dxs :dx dys :dy} (matrix/compass-to-grid (second corner))]
-             [(* -1 dxs lateral-shift) (* -1 dys lateral-shift) 0])
-            ;; Else don’t bother.
-            [0 0 0])
-        offset (getopt field :position :offset)]
-   (vec (map + (conj general 0) to-nook offset))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -101,7 +55,8 @@
      ;; Face the corner’s main direction.
      (maybe/rotate [0 0 (- (matrix/compass-radians (first corner)))])
      ;; Move to the requested corner.
-     (translate (into-nook getopt :mcu (getopt :mcu :support :lateral-spacing)))
+     (translate (place/into-nook getopt :mcu
+                  (getopt :mcu :support :lateral-spacing)))
      (translate [0 0 (/ z 2)]))))
 
 (defn mcu-model
@@ -181,7 +136,7 @@
         opposite (matrix/left (matrix/left direction))
         coordinates1 (matrix/walk coordinates0 direction)
         post (fn [coord corner]
-               (key/cluster-place getopt cluster coord
+               (place/cluster-place getopt cluster coord
                  (key/mount-corner-post getopt corner)))]
     (union
       (mcu-position getopt (mcu-gripper getopt 1))
@@ -306,8 +261,9 @@
         {cluster :cluster coordinates :coordinates} keyinfo]
    (->>
      shape
-     (translate (key/cluster-position getopt cluster coordinates
-                  (body/wall-slab-center-offset getopt cluster coordinates :north)))
+     (translate (place/cluster-position getopt cluster coordinates
+                  (place/wall-slab-center-offset
+                    getopt cluster coordinates :north)))
      (translate [0 0 (/ (getopt :case :back-plate :beam-height) -2)])
      (translate offset))))
 
@@ -359,7 +315,7 @@
         by-cluster (partial (getopt :key-clusters :derived :by-cluster))]
     (for [row ((by-cluster cluster :row-indices-by-column) 0)
           corner [generics/WSW generics/WNW]]
-     (let [[x y _] (body/wall-corner-position
+     (let [[x y _] (place/wall-corner-position
                      getopt cluster [0 row] {:directions corner})]
       [(+ x (getopt :by-key :parameters :wall :thickness)) y]))))
 
@@ -374,9 +330,10 @@
 
 (defn led-hole-position [getopt ordinal]
   (let [cluster (getopt :case :leds :position :cluster)
-        by-col (getopt :key-clusters :derived :by-cluster cluster :row-indices-by-column)
+        by-col (getopt :key-clusters :derived :by-cluster cluster
+                 :row-indices-by-column)
         row (first (by-col 0))
-        [x0 y0 _] (body/wall-corner-position
+        [x0 y0 _] (place/wall-corner-position
                     getopt cluster [0 row] {:directions generics/WNW})
         h (+ 5 (/ (getopt :case :leds :housing-size) 2))]
    [x0 (+ y0 (* (getopt :case :leds :interval) ordinal)) h]))
@@ -431,7 +388,7 @@
         ;; Rotate to face the corner’s main direction.
         (maybe/rotate [0 0 (- (matrix/compass-radians (first corner)))])
         ;; Bring snugly to the requested corner.
-        (translate (into-nook getopt :connection
+        (translate (place/into-nook getopt :connection
                      (* 0.5 (+ thickness (first socket-size))))))))
 
 (defn connection-metasocket
@@ -473,7 +430,8 @@
   [getopt polygon-spec]
   (extrude-linear
     {:height (getopt :case :foot-plates :height), :center false}
-    (polygon (map (partial reckon-2d-offset getopt) (:points polygon-spec)))))
+    (polygon (map (partial place/reckon-2d-offset getopt)
+                  (:points polygon-spec)))))
 
 (defn foot-plates
   "Model plates from polygons.
@@ -537,31 +495,3 @@
               z1 (+ z0 (prop :inserts :length))]
           (misc/bottom-hull (translate [0 0 z1] (cylinder (/ d1 2) 0.001))
                             (translate [0 0 z0] (cylinder (/ d0 2) 0.001))))))))
-
-(defn bottom-plate-anchors
-  [getopt part module-name]
-  (apply maybe/union
-    (map (fn [position]
-           (translate (conj (reckon-2d-offset getopt position) 0)
-             (call-module module-name)))
-         (case part
-           :case (getopt :case :bottom-plate :installation :fasteners :positions)
-           :wrist-rest (getopt :wrist-rest :bottom-plate :fastener-positions)))))
-
-(defn case-bottom-plate
-  [getopt]
-  (maybe/difference
-    (body/bottom-plate-positive getopt)
-    (bottom-plate-anchors getopt :case "bottom_plate_anchor_negative")))
-
-(defn wrist-bottom-plate
-  [getopt]
-  (maybe/difference
-    (wrist/bottom-plate-positive getopt)
-    (bottom-plate-anchors getopt :wrist-rest "bottom_plate_anchor_negative")))
-
-(defn wrist-plinth-plastic
-  [getopt]
-  (maybe/difference
-    (wrist/plinth-plastic-positive getopt)
-    (bottom-plate-anchors getopt :wrist-rest "bottom_plate_anchor_negative")))

@@ -51,11 +51,6 @@
     (#{SSW WSW} tuple) :sw
     (#{NNW WNW} tuple) :nw))
 
-(defn abs
-  "The absolute of n."
-  [n]
-  (max n (- n)))
-
 (defn soft-merge
   "Merge mappings depth-first so as to retain leaves except where specifically
   overridden."

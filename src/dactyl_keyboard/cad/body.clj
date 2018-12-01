@@ -8,12 +8,13 @@
             [scad-clj.model :exclude [use import] :refer :all]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.threaded :as threaded]
-            [dactyl-keyboard.generics :refer [abs NNE ENE ESE WSW WNW NNW
-                                              directions-to-unordered-corner
-                                              colours]]
+            [dactyl-keyboard.generics :refer [NNE ENE ESE WSW WNW NNW colours]]
             [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.cad.matrix :as matrix]
-            [dactyl-keyboard.cad.key :as key]))
+            [dactyl-keyboard.cad.place :as place]
+            [dactyl-keyboard.cad.key :as key]
+            [dactyl-keyboard.param.access :refer [most-specific]]))
+
 
 ;;;;;;;;;;;;;
 ;; Masking ;;
@@ -84,82 +85,13 @@
       (getopt :key-clusters :derived :by-cluster cluster :column-range)
       (getopt :key-clusters :derived :by-cluster cluster :row-range)
       (getopt :key-clusters :derived :by-cluster cluster :key-requested?)
-      (partial key/cluster-place getopt cluster)
+      (partial place/cluster-place getopt cluster)
       (partial key/mount-corner-post getopt))))
 
 
 ;;;;;;;;;;;;;;;;;;;
 ;; Wall-Building ;;
 ;;;;;;;;;;;;;;;;;;;
-
-(defn- wall-segment-offset
-  "Compute a 3D offset from one corner of a switch mount to a part of its wall."
-  [getopt cluster coord cardinal-direction segment]
-  (let [most #(key/most-specific-option getopt (concat [:wall] %) cluster coord)
-        thickness (most [:thickness])
-        bevel-factor (most [:bevel])
-        parallel (most [cardinal-direction :parallel])
-        perpendicular (most [cardinal-direction :perpendicular])
-        {dx :dx dy :dy} (cardinal-direction matrix/compass-to-grid)
-        bevel
-          (if (zero? perpendicular)
-            bevel-factor
-            (* bevel-factor
-               (/ perpendicular (abs perpendicular))))]
-   (case segment
-     0 [0 0 0]
-     1 [(* dx thickness) (* dy thickness) bevel]
-     2 [(* dx parallel) (* dy parallel) perpendicular]
-     3 [(* dx (+ parallel thickness))
-        (* dy (+ parallel thickness))
-        perpendicular]
-     4 [(* dx (+ parallel))
-        (* dy (+ parallel))
-        (+ perpendicular bevel)])))
-
-(defn wall-vertex-offset
-  "Compute a 3D offset from the center of a web post to a vertex on it."
-  [getopt directions keyopts]
-  (let [xy (/ (getopt :case :key-mount-corner-margin) 2)
-        z (/ (getopt :case :key-mount-thickness) 2)]
-    (matrix/cube-vertex-offset directions [xy xy z] keyopts)))
-
-(defn- wall-corner-offset
-  "Combined [x y z] offset from the center of a switch mount.
-  By default, this goes to one corner of the hem of the mount’s skirt of
-  walling and therefore finds the base of full walls."
-  [getopt cluster coordinates
-   {:keys [directions segment vertex]
-    :or {segment 3, vertex false} :as keyopts}]
-  (vec
-    (map +
-      (if directions
-        (key/mount-corner-offset getopt directions)
-        [0 0 0])
-      (if directions
-        (wall-segment-offset
-          getopt cluster coordinates (first directions) segment)
-        [0 0 0])
-      (if (and directions vertex)
-        (wall-vertex-offset getopt directions keyopts)
-        [0 0 0]))))
-
-(defn wall-corner-position
-  "Absolute position of the lower wall around a key mount."
-  ([getopt cluster coordinates]
-   (wall-corner-position getopt cluster coordinates {}))
-  ([getopt cluster coordinates keyopts]
-   (key/cluster-position getopt cluster coordinates
-     (wall-corner-offset getopt cluster coordinates keyopts))))
-
-(defn wall-slab-center-offset
-  "Combined [x y z] offset to the center of a vertical wall.
-  Computed as the arithmetic average of its two corners."
-  [getopt cluster coordinates direction]
-  (letfn [(c [turning-fn]
-            (wall-corner-offset getopt cluster coordinates
-              {:directions [direction (turning-fn direction)]}))]
-    (vec (map / (vec (map + (c matrix/left) (c matrix/right))) [2 2 2]))))
 
 ;; Functions for specifying parts of a perimeter wall. These all take the
 ;; edge-walking algorithm’s map output with position and direction, upon
@@ -209,7 +141,7 @@
   "Produce a sequence of corner posts for the upper or lower part of the edge
   of one wall slab."
   [post-fn getopt cluster upper [coord direction turning-fn]]
-  (let [extent (key/most-specific-option getopt [:wall direction :extent]
+  (let [extent (most-specific getopt [:wall direction :extent]
                  cluster coord)
         last-upper-segment (case extent :full 4, :none 0, extent)
         place-post (post-fn getopt cluster coord
@@ -227,9 +159,9 @@
     (->>
       (key/web-post getopt)
       (maybe/translate
-        (wall-corner-offset getopt cluster coord
+        (place/wall-corner-offset getopt cluster coord
           {:directions directions, :segment segment, :vertex false}))
-      (key/cluster-place getopt cluster coord))))
+      (place/cluster-place getopt cluster coord))))
 
 (def wall-edge-place (partial wall-edge-placement cluster-segment-placer))
 
@@ -237,8 +169,8 @@
   "A function for finding wall edge vertices."
   ([getopt cluster coord directions & {:as keyopts}]
    (fn [segment]
-     (key/cluster-position getopt cluster coord
-       (wall-corner-offset getopt cluster coord
+     (place/cluster-position getopt cluster coord
+       (place/wall-corner-offset getopt cluster coord
          (merge {:directions directions, :segment segment, :vertex true}
                 keyopts))))))
 
@@ -287,8 +219,8 @@
         coords (getopt :key-clusters :derived :by-cluster cluster :coordinates-by-row row)
         pairs (into [] (for [coord coords corner [NNW NNE]] [coord corner]))
         getpos (fn [[coord corner]]
-                 (key/cluster-position getopt cluster coord
-                   (key/mount-corner-offset getopt corner)))
+                 (place/cluster-position getopt cluster coord
+                   (place/mount-corner-offset getopt corner)))
         y-max (apply max (map #(second (getpos %)) pairs))
         getoffset (partial getopt :case :rear-housing :position :offsets)
         y-roof-s (+ y-max (getoffset :south))
@@ -314,61 +246,6 @@
     (apply hull
       (map #(maybe/translate (getcorner %) (housing-cube getopt))
            [:nw :ne :se :sw]))))
-
-(defn- housing-segment-offset
-  "Compute the [x y z] coordinate offset from a rear housing roof corner."
-  [getopt cardinal-direction segment]
-  (let [cluster (getopt :case :rear-housing :position :cluster)
-        key (partial getopt :case :rear-housing :derived)
-        wall (partial wall-segment-offset getopt cluster)]
-   (case cardinal-direction
-     :west (wall (key :west-end-coord) cardinal-direction segment)
-     :east (wall (key :east-end-coord) cardinal-direction segment)
-     :north (if (= segment 0) [0 0 0] [0 1 -1]))))
-
-(defn housing-vertex-offset [getopt directions]
-  (let [t (/ (getopt :case :web-thickness) 2)]
-    (matrix/cube-vertex-offset directions [t t t] {})))
-
-(defn housing-corner-coordinates
-  "Convert an ordered corner tuple to a 3-tuple of coordinates."
-  [getopt corner]
-  (getopt :case :rear-housing :derived (directions-to-unordered-corner corner)))
-
-(defn- housing-placement
-  "Place passed shape in relation to a corner of the rear housing’s roof."
-  [translate-fn getopt corner segment subject]
-  (->> subject
-       (translate-fn (housing-corner-coordinates getopt corner))
-       (translate-fn (housing-segment-offset getopt (first corner) segment))))
-
-(def housing-place
-  "Akin to cluster-place but with a rear housing wall segment."
-  (partial housing-placement maybe/translate))
-
-(defn- housing-cube-place [getopt corner segment]
-  (housing-place getopt corner segment (housing-cube getopt)))
-
-(def housing-reckon
-  "Akin to cluster-position but with a rear housing wall segment."
-  (partial housing-placement (partial map +)))
-
-(defn- housing-vertex-reckon
-  "Find the exact position of a vertex on a housing cube."
-  [getopt corner segment]
-  (housing-reckon getopt corner segment (housing-vertex-offset getopt corner)))
-
-(defn- housing-opposite-reckon
-  "Like housing-vertex-reckon but for the other end of the indicated facing."
-  ;; This is just a workaround for fitting the bottom plate.
-  ;; It would not be needed if there were an edge walking function like that
-  ;; of the cluster walls but for the rear housing: A function that returned
-  ;; pairs of vertices on the outside wall.
-  [getopt corner segment]
-  (let [[dir0 dir1] corner
-        other-corner [dir0 (matrix/left (matrix/left dir1))]]
-    (housing-reckon getopt corner segment
-      (housing-vertex-offset getopt other-corner))))
 
 (defn- housing-pillar-functions
   "Make functions that determine the exact positions of rear housing walls.
@@ -400,15 +277,15 @@
                 (if reckon
                   (reckon-fn getopt directions (first segments))
                   (apply hull
-                    (map #(housing-cube-place getopt directions %)
+                    (map #(place/housing-place getopt directions % (housing-cube getopt))
                          segments))))))]
     [(cluster-pillar :west-end-coord :west matrix/right matrix/left)
-     (housing-pillar housing-opposite-reckon WSW)
-     (housing-pillar housing-vertex-reckon WNW)
-     (housing-pillar housing-vertex-reckon NNW)
-     (housing-pillar housing-vertex-reckon NNE)
-     (housing-pillar housing-vertex-reckon ENE)
-     (housing-pillar housing-opposite-reckon ESE)
+     (housing-pillar place/housing-opposite-reckon WSW)
+     (housing-pillar place/housing-vertex-reckon WNW)
+     (housing-pillar place/housing-vertex-reckon NNW)
+     (housing-pillar place/housing-vertex-reckon NNE)
+     (housing-pillar place/housing-vertex-reckon ENE)
+     (housing-pillar place/housing-opposite-reckon ESE)
      (cluster-pillar :east-end-coord :east matrix/left matrix/right)]))
 
 (defn- housing-wall-shape-level
@@ -434,8 +311,8 @@
   [getopt]
   (let [cluster (getopt :case :rear-housing :position :cluster)
         pos-corner (fn [coord corner]
-                     (key/cluster-position getopt cluster coord
-                       (key/mount-corner-offset getopt corner)))
+                     (place/cluster-position getopt cluster coord
+                       (place/mount-corner-offset getopt corner)))
         sw (getopt :case :rear-housing :derived :sw)
         se (getopt :case :rear-housing :derived :se)
         x (fn [coord corner]
@@ -448,7 +325,7 @@
      (reduce
        (fn [coll [coord corner]]
          (conj coll
-           (hull (key/cluster-place getopt cluster coord
+           (hull (place/cluster-place getopt cluster coord
                    (key/mount-corner-post getopt corner))
                  (translate [(x coord corner) y z]
                    (housing-cube getopt)))))
@@ -560,10 +437,10 @@
   (map
     (fn [[coord direction turning-fn]]
       (let [key [:wall direction :extent]
-            extent (key/most-specific-option getopt key cluster coord)]
+            extent (most-specific getopt key cluster coord)]
         (when (= extent :full)
           (take 2
-            (wall-corner-position getopt cluster coord
+            (place/wall-corner-position getopt cluster coord
               {:directions [direction (turning-fn direction)] :vertex true})))))
     edges))
 
@@ -644,6 +521,10 @@
   (apply maybe/union (map #(tweak-plate-shadows getopt (:hull-around %))
                           (filter :to-ground (getopt :case :tweaks)))))
 
+(defn bottom-plate-anchors
+  [getopt]
+  (place/bottom-plate-anchors getopt :case "bottom_plate_anchor_positive"))
+
 (defn bottom-plate-positive
   "A model of a bottom plate for the entire case.
   Screw holes not included."
@@ -656,3 +537,13 @@
         (tweak-plate-flooring getopt)
         (when (getopt :case :rear-housing :include)
           (housing-floor-polygon getopt))))))
+
+(defn bottom-plate-negative
+  [getopt]
+  (place/bottom-plate-anchors getopt :case "bottom_plate_anchor_negative"))
+
+(defn bottom-plate-complete
+  [getopt]
+  (maybe/difference
+    (bottom-plate-positive getopt)
+    (bottom-plate-negative getopt)))

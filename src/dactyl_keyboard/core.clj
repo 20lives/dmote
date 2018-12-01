@@ -15,8 +15,11 @@
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.dfm :refer [error-fn]]
             [dactyl-keyboard.generics :as generics]
-            [dactyl-keyboard.params :as params]
             [dactyl-keyboard.sandbox :as sandbox]
+            [dactyl-keyboard.param.access :as access]
+            [dactyl-keyboard.param.tree.cluster]
+            [dactyl-keyboard.param.tree.nested]
+            [dactyl-keyboard.param.tree.main]
             [dactyl-keyboard.cad.aux :as aux]
             [dactyl-keyboard.cad.key :as key]
             [dactyl-keyboard.cad.body :as body]
@@ -33,11 +36,11 @@
 (defn document-settings
   "Show documentation for settings."
   [{section :describe-parameters}]
-  (params/print-markdown-section
+  (access/print-markdown-section
     (case section
-      :main params/main-raws
-      :clusters params/cluster-raws
-      :nested params/nested-raws
+      :main dactyl-keyboard.param.tree.main/raws
+      :clusters dactyl-keyboard.param.tree.cluster/raws
+      :nested dactyl-keyboard.param.tree.nested/raws
       (do (println "ERROR: Unknown section of parameters.")
           (System/exit 1))))
   (println)
@@ -76,15 +79,15 @@
               (when (getopt :case :rear-housing :include)
                 (body/rear-housing getopt))
               (body/wall-tweaks getopt)
-              (aux/foot-plates getopt)
               (when (getopt :case :bottom-plate :include)
-                (aux/bottom-plate-anchors getopt :case
-                  "bottom_plate_anchor_positive")))
+                (body/bottom-plate-anchors getopt))
+              (aux/foot-plates getopt))
             ;; Stuff that goes outside the mask but
             ;; should be subject to all negatives:
             (when (and (getopt :wrist-rest :include)
                        (getopt :wrist-rest :preview))
-              (wrist/unified-preview getopt))
+              (body/mask getopt (getopt :wrist-rest :include)
+                (wrist/unified-preview getopt)))
             (when (and (getopt :case :bottom-plate :include)
                        (getopt :case :bottom-plate :preview))
               (maybe/union
@@ -115,41 +118,19 @@
           (aux/mcu-lock-fixture-composite getopt)))
       ;; Outer negatives:
       (when (getopt :case :bottom-plate :include)
-        (aux/bottom-plate-anchors getopt :case "bottom_plate_anchor_negative"))
+        (body/bottom-plate-negative getopt))
       (when (and (getopt :wrist-rest :bottom-plate :include)
                  (getopt :wrist-rest :include)
                  (getopt :wrist-rest :preview))
-        (aux/bottom-plate-anchors getopt :wrist-rest
-          "bottom_plate_anchor_negative")))
+        (wrist/bottom-plate-negative getopt)))
     ;; The remaining elements are visualizations for use in development.
-    (when (getopt :keycaps :preview) (key/metacluster key/cluster-keycaps getopt))
-    (when (getopt :mcu :preview) (aux/mcu-visualization getopt))
+    (when (getopt :keycaps :preview)
+      (key/metacluster key/cluster-keycaps getopt))
+    (when (getopt :mcu :preview)
+      (aux/mcu-visualization getopt))
     (when (and (= (getopt :mcu :support :style) :lock)
                (getopt :mcu :support :preview))
       (aux/mcu-lock-bolt getopt))))
-
-(defn build-option-accessor
-  "Close over a—potentially incomplete—user configuration."
-  [build-options]
-  (letfn [(value-at [path] (get-in build-options path ::none))
-          (path-exists? [path] (not (= ::none (value-at path))))
-          (valid? [path] (and (path-exists? path)
-                              (not (nil? (value-at path)))))  ; “false” is OK.
-          (step [path key]
-            (let [next-path (conj path key)]
-             (if (path-exists? next-path) next-path path)))
-          (backtrack [path] (reduce step [] path))]
-    (fn [& path]
-      (let [exc {:path path
-                 :last-good (backtrack path)
-                 :at-last-good (value-at (backtrack path))}]
-        (if-not (path-exists? path)
-          (throw (ex-info "Configuration lacks key"
-                          (assoc exc :type :missing-parameter)))
-          (if-not (valid? path)
-            (throw (ex-info "Configuration lacks value for key"
-                            (assoc exc :type :unset-parameter)))
-            (value-at path)))))))
 
 (defn enrich-option-metadata
   "Derive certain properties that are implicit in the user configuration.
@@ -161,7 +142,7 @@
       (generics/soft-merge
         coll
         (assoc-in coll (conj path :derived)
-                       (callable (build-option-accessor coll)))))
+                       (callable (access/option-accessor coll)))))
     build-options
     ;; Mind the order. One of these may depend upon earlier steps.
     [[[:dfm] (fn [getopt] {:compensator (error-fn (getopt :dfm :error))})]
@@ -189,9 +170,9 @@
                (map from-file (:configuration-file options)))]
    (if debug
      (pprint-settings "Received settings without built-in defaults:" raws))
-   (let [validated (params/validate-configuration raws)]
+   (let [validated (access/validate-configuration raws)]
     (if debug (pprint-settings "Resolved and validated settings:" validated))
-    (build-option-accessor (enrich-option-metadata validated)))))
+    (access/option-accessor (enrich-option-metadata validated)))))
 
 (defn- render-to-stl
   "Call OpenSCAD to render an SCAD file to STL."
@@ -267,7 +248,7 @@
       {:condition (getopt :case :bottom-plate :include)
        :basename "case-bottom-plate"
        :modules [[true "bottom_plate_anchor_negative"]]
-       :model-fn aux/case-bottom-plate
+       :model-fn body/bottom-plate-complete
        :pair true
        :rotation [0 π 0]}
       {:condition (= (getopt :mcu :support :style) :lock)
@@ -286,13 +267,13 @@
        :basename "plinth-main"
        :modules [[(getopt :wrist-rest :bottom-plate :include)
                   "bottom_plate_anchor_negative"]]
-       :model-fn aux/wrist-plinth-plastic
+       :model-fn wrist/plinth-plastic
        :pair true}
       {:condition (and (getopt :wrist-rest :include)
                        (getopt :wrist-rest :bottom-plate :include))
        :basename "plinth-bottom-plate"
        :modules [[true "bottom_plate_anchor_negative"]]
-       :model-fn aux/wrist-bottom-plate
+       :model-fn wrist/bottom-plate-complete
        :pair true
        :rotation [0 π 0]}])))
 

@@ -23,7 +23,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Removed `create-models.sh`, adding equivalent functionality to the Clojure
   application itself (new flags: `--render`, `--renderer`).
 - Added intermediate `scad` and `stl` folders under `things`.
-- Split generated documentation (options.md) into three separate documents.
+- Split generated documentation (`options.md`) into three separate documents
+  (`options-*.md`).
 
 ### Added
 - This log.
@@ -46,15 +47,16 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   string literals with Unix-style file-path separators.
 
 ### Developer
+- Significant restructuring of the code base for separation of concerns.
+    - Switched to docstring-first function definitions.
+    - Shifted more heavily toward explicit namespacing and took the opportunity
+      to shorten some function names in the matrix module and elsewhere.
 - Added a dependency on `scad-tarmi` for shorter OpenSCAD code and more
   capable models of threaded fasteners.
-- Switched to docstring-first function definitions.
 - Rearranged derived parameter structure somewhat to support arbitrary key
   clusters.
 - Removed the `new-scad` function without replacement.
-- Shifted more heavily toward explicit namespacing and took the opportunity to
-  shorten some function names in the matrix module.
 - Removed a dependency on `unicode-math`. The requisite version of the library
-  had not been deployed to clojars and its use was cosmetic.
+  had not been deployed to Clojars and its use was cosmetic.
 
 [Unreleased]: https://github.com/veikman/dactyl-keyboard/compare/dmote-v0.2.0...HEAD

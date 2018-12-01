@@ -5,15 +5,14 @@
 
 (ns dactyl-keyboard.cad.wrist
   (:require [scad-clj.model :exclude [use import] :refer :all]
-            [scad-tarmi.core :refer [π]]
+            [scad-tarmi.core :refer [abs π]]
+            [scad-tarmi.maybe :as maybe]
             [scad-tarmi.threaded :as threaded]
-            [dactyl-keyboard.params :as params]
-            [dactyl-keyboard.generics :refer [abs ESE SSE SSW colours
-                                              directions-to-unordered-corner]]
+            [dactyl-keyboard.generics :refer [ESE SSE SSW colours]]
             [dactyl-keyboard.cad.body :as body]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.misc :as misc]
-            [dactyl-keyboard.cad.key :as key]))
+            [dactyl-keyboard.cad.place :as place]))
 
 
 ;;;;;;;;;;;;;;
@@ -26,7 +25,7 @@
   (let [key-alias (getopt :wrist-rest :position :key-alias)
         cluster (getopt :key-clusters :derived :aliases key-alias :cluster)
         coord (getopt :key-clusters :derived :aliases key-alias :coordinates)
-        pivot (body/wall-corner-position getopt cluster coord)
+        pivot (place/wall-corner-position getopt cluster coord)
         offset (getopt :wrist-rest :position :offset)
         [base-x base-y z1] (getopt :wrist-rest :shape :plinth-base-size)
         lip (getopt :wrist-rest :shape :lip-height)
@@ -57,22 +56,6 @@
     :se corner-se
     :center center}))
 
-(defn wrist-reckon
-  "Patterned after reckoning functions for other parts. Return a vector
-  describing the position of a corner of a wrist rest’s plinth.
-  Translate the segment range used for keys into a very rough equivalent
-  for the plinth, pretending that, as with the rear housing and key clusters,
-  segments extend outward and downward."
-  [getopt corner segment start]
-  (let [prop (partial getopt :wrist-rest :derived)
-        base (prop (directions-to-unordered-corner corner))
-        {:keys [dx dy]} (matrix/compass-to-grid corner)
-        chamfer (getopt :wrist-rest :shape :chamfer)]
-    (vec (map + start
-                (conj base (case segment, 0 (prop :z2), 1 (prop :z1), 0))
-                (if (= segment 0)
-                  [(* -1 dx chamfer) (* -1 dy chamfer) 0]
-                  [0 0 0])))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Threaded Connector Variant ;;
@@ -87,7 +70,7 @@
         {alias :key-alias offset :offset} position
         key (getopt :key-clusters :derived :aliases alias)
         {cluster :cluster coordinates :coordinates} key
-        base (body/wall-corner-position getopt cluster coordinates)
+        base (place/wall-corner-position getopt cluster coordinates)
         height (threaded-center-height getopt)]
    (conj (vec (map + (take 2 base) offset)) height)))
 
@@ -206,15 +189,15 @@
   (let [cluster (getopt :wrist-rest :derived :key-cluster)
         case-east-coord (getopt :wrist-rest :derived :key-coord)
         width (getopt :wrist-rest :solid-bridge :width)
-        ne (take 2 (key/cluster-position getopt cluster case-east-coord
-                            (key/mount-corner-offset getopt SSE)))
+        ne (take 2 (place/cluster-position getopt cluster case-east-coord
+                            (place/mount-corner-offset getopt SSE)))
         x-west (- (first ne) width)
         plinth-west (getopt :wrist-rest :derived :nw)
         plinth-east (getopt :wrist-rest :derived :ne)
         by-col (getopt :key-clusters :derived :by-cluster cluster :coordinates-by-column)
         south-wall
           (fn [[coord corner]]
-            (take 2 (body/wall-corner-position
+            (take 2 (place/wall-corner-position
                       getopt cluster coord {:directions corner})))
         case-points
           (filter #(>= (first %) x-west)
@@ -247,8 +230,8 @@
   [getopt]
   (let [cluster (getopt :wrist-rest :derived :key-cluster)
         coord (getopt :wrist-rest :derived :key-coord)
-        [x4 y2 _] (key/cluster-position getopt cluster coord
-                    (key/mount-corner-offset getopt ESE))
+        [x4 y2 _] (place/cluster-position getopt cluster coord
+                    (place/mount-corner-offset getopt ESE))
         x3 (- x4 2)
         x2 (- x3 6)
         x1 (- x2 2)
@@ -340,7 +323,7 @@
 ;; Outputs ;;
 ;;;;;;;;;;;;;
 
-(defn plinth-plastic-positive
+(defn plinth-plastic
   "The lower portion of a wrist rest, to be printed in a rigid material."
   [getopt]
   (body/mask getopt (getopt :wrist-rest :bottom-plate :include)
@@ -357,15 +340,11 @@
       (translate (vec (map + (getopt :wrist-rest :derived :ne) [-20 -20]))
         (cube 12 12 200))
       (translate (vec (map + (getopt :wrist-rest :derived :sw) [20 20]))
-        (cube 12 12 200)))))
-
-(defn bottom-plate-positive
-  "Equivalent to the corresponding function in the body module."
-  [getopt]
-  (color (:bottom-plate colours)
-    (extrude-linear
-      {:height (getopt :case :bottom-plate :thickness), :center false}
-      (cut (plinth-maquette getopt)))))
+        (cube 12 12 200))
+      ;; Holes for installing a bottom plate:
+      (when (getopt :wrist-rest :bottom-plate :include)
+        (place/bottom-plate-anchors getopt :wrist-rest
+          "bottom_plate_anchor_negative")))))
 
 (defn rubber-insert
   "The upper portion of a wrist rest, to be cast or printed in a soft material."
@@ -396,7 +375,8 @@
 (defn unified-preview
   "A merged view of a wrist rest. This might be printed in hard plastic for a
   prototype but is not suitable for long-term use: It would typically be too
-  hard for ergonomy and does not have a nut pocket for threaded rods."
+  hard for ergonomy and does not have a nut pocket for threaded rods, nor
+  holes for mounting a bottom plate."
   [getopt]
   (difference
     (plinth-maquette getopt)
@@ -404,3 +384,23 @@
       (case (getopt :wrist-rest :style)
         :solid (solid-negative getopt)
         :threaded (threaded-fasteners getopt)))))
+
+(defn bottom-plate-positive
+  "Equivalent to the corresponding function in the body module."
+  [getopt]
+  (color (:bottom-plate colours)
+    (extrude-linear
+      {:height (getopt :case :bottom-plate :thickness), :center false}
+      (cut (plinth-maquette getopt)))))
+
+(defn bottom-plate-negative
+  "Equivalent to the corresponding function in the body module."
+  [getopt]
+  (place/bottom-plate-anchors getopt :wrist-rest "bottom_plate_anchor_negative"))
+
+(defn bottom-plate-complete
+  "Equivalent to the corresponding function in the body module."
+  [getopt]
+  (maybe/difference
+    (bottom-plate-positive getopt)
+    (bottom-plate-negative getopt)))

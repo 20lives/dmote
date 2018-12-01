@@ -6,22 +6,22 @@
 ;;; Functions useful in more than one scad-clj project.
 
 (ns dactyl-keyboard.cad.misc
-  (:require [scad-clj.model :exclude [use import] :refer :all]
+  (:require [scad-clj.model :as model]
             [scad-tarmi.maybe :as maybe]))
 
 
 (defn pairwise-hulls [& shapes]
-  (apply union (map (partial apply hull) (partition 2 1 shapes))))
+  (apply maybe/union (map (partial apply model/hull) (partition 2 1 shapes))))
 
 (defn triangle-hulls [& shapes]
-  (apply union (map (partial apply hull) (partition 3 1 shapes))))
+  (apply maybe/union (map (partial apply model/hull) (partition 3 1 shapes))))
 
 (defn bottom-extrusion [height p]
-  (->> (project p)
-       (extrude-linear {:height height :twist 0 :convexity 0 :center false})))
+  (model/extrude-linear {:height height, :twist 0, :convexity 0, :center false}
+    (model/project p)))
 
 (defn bottom-hull [& p]
-  (hull p (bottom-extrusion 0.001 p)))
+  (model/hull p (bottom-extrusion 0.001 p)))
 
 (defn swing-callables
   "Rotate passed object with passed radius, not around its own axes.
