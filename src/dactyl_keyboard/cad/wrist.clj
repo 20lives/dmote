@@ -324,27 +324,23 @@
 ;;;;;;;;;;;;;
 
 (defn plinth-plastic
-  "The lower portion of a wrist rest, to be printed in a rigid material."
+  "The lower portion of a wrist rest, to be printed in a rigid material.
+  This is complete except for masking and holes for a bottom plate."
   [getopt]
-  (body/mask getopt (getopt :wrist-rest :bottom-plate :include)
-    (difference
-      (plinth-maquette getopt)
-      (soft-zone getopt)
-      (case (getopt :wrist-rest :style)
-        :solid (solid-negative getopt)
-        :threaded
-          (union
-            (threaded-fasteners getopt)
-            (plinth-nut-pockets getopt)))
-      ;; Two square holes for pouring silicone:
-      (translate (vec (map + (getopt :wrist-rest :derived :ne) [-20 -20]))
-        (cube 12 12 200))
-      (translate (vec (map + (getopt :wrist-rest :derived :sw) [20 20]))
-        (cube 12 12 200))
-      ;; Holes for installing a bottom plate:
-      (when (getopt :wrist-rest :bottom-plate :include)
-        (place/bottom-plate-anchors getopt :wrist-rest
-          "bottom_plate_anchor_negative")))))
+  (difference
+    (plinth-maquette getopt)
+    (soft-zone getopt)
+    (case (getopt :wrist-rest :style)
+      :solid (solid-negative getopt)
+      :threaded
+        (union
+          (threaded-fasteners getopt)
+          (plinth-nut-pockets getopt)))
+    ;; Two square holes for pouring silicone:
+    (translate (vec (map + (getopt :wrist-rest :derived :ne) [-20 -20]))
+      (cube 12 12 200))
+    (translate (vec (map + (getopt :wrist-rest :derived :sw) [20 20]))
+      (cube 12 12 200))))
 
 (defn rubber-insert
   "The upper portion of a wrist rest, to be cast or printed in a soft material."
@@ -384,23 +380,3 @@
       (case (getopt :wrist-rest :style)
         :solid (solid-negative getopt)
         :threaded (threaded-fasteners getopt)))))
-
-(defn bottom-plate-positive
-  "Equivalent to the corresponding function in the body module."
-  [getopt]
-  (color (:bottom-plate colours)
-    (extrude-linear
-      {:height (getopt :case :bottom-plate :thickness), :center false}
-      (cut (plinth-maquette getopt)))))
-
-(defn bottom-plate-negative
-  "Equivalent to the corresponding function in the body module."
-  [getopt]
-  (place/bottom-plate-anchors getopt :wrist-rest "bottom_plate_anchor_negative"))
-
-(defn bottom-plate-complete
-  "Equivalent to the corresponding function in the body module."
-  [getopt]
-  (maybe/difference
-    (bottom-plate-positive getopt)
-    (bottom-plate-negative getopt)))

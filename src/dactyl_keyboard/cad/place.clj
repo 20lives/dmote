@@ -219,6 +219,52 @@
               {:directions [direction (turning-fn direction)]}))]
     (vec (map / (vec (map + (c matrix/left) (c matrix/right))) [2 2 2]))))
 
+(defn- wall-edge
+  "Produce a sequence of corner posts for the upper or lower part of the edge
+  of one wall slab."
+  [post-fn getopt cluster upper [coord direction turning-fn]]
+  (let [extent (most-specific getopt [:wall direction :extent]
+                 cluster coord)
+        last-upper-segment (case extent :full 4, :none 0, extent)
+        place-post (post-fn getopt cluster coord
+                     [direction (turning-fn direction)])]
+   (if-not (zero? last-upper-segment)
+     (if upper
+       (map place-post (range (inc last-upper-segment)))
+       (when (= extent :full)
+         (map place-post [2 3 4]))))))
+
+(defn cluster-segment-placer
+  "Two-level closure for wall edge object placement."
+  [shape-fn]
+  (fn [getopt cluster coord directions]
+    (fn [segment]
+      (->>
+        (shape-fn getopt)
+        (maybe/translate
+          (wall-corner-offset getopt cluster coord
+            {:directions directions, :segment segment, :vertex false}))
+        (cluster-place getopt cluster coord)))))
+
+(defn wall-edge-placer
+  [shape-fn]
+  (partial wall-edge (cluster-segment-placer shape-fn)))
+
+(defn- cluster-reckoner
+  "A function for finding wall edge vertices."
+  ([getopt cluster coord directions & {:as keyopts}]
+   (fn [segment]
+     (cluster-position getopt cluster coord
+       (wall-corner-offset getopt cluster coord
+         (merge {:directions directions, :segment segment, :vertex true}
+                keyopts))))))
+
+(defn cluster-segment-reckon
+  [getopt cluster coord directions segment bottom]
+  ((cluster-reckoner getopt cluster coord directions :bottom bottom) segment))
+
+(def wall-edge-reckon (partial wall-edge cluster-reckoner))
+
 
 ;; Rear housing.
 
@@ -340,14 +386,3 @@
             [0 0 0])
         offset (getopt field :position :offset)]
    (vec (map + (conj general 0) to-nook offset))))
-
-(defn bottom-plate-anchors
-  "Place instances of named module where configured."
-  [getopt part module-name]
-  (apply maybe/union
-    (map (fn [position]
-           (model/translate (conj (reckon-2d-offset getopt position) 0)
-             (model/call-module module-name)))
-         (case part
-           :case (getopt :case :bottom-plate :installation :fasteners :positions)
-           :wrist-rest (getopt :wrist-rest :bottom-plate :fastener-positions)))))

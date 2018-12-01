@@ -10,7 +10,7 @@
             [clojure.java.io :refer [file make-parents]]
             [clj-yaml.core :as yaml]
             [scad-clj.scad :refer [write-scad]]
-            [scad-clj.model :exclude [use import] :refer :all]
+            [scad-clj.model :as model]
             [scad-tarmi.core :refer [π]]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.dfm :refer [error-fn]]
@@ -23,6 +23,7 @@
             [dactyl-keyboard.cad.aux :as aux]
             [dactyl-keyboard.cad.key :as key]
             [dactyl-keyboard.cad.body :as body]
+            [dactyl-keyboard.cad.bottom :as bottom]
             [dactyl-keyboard.cad.wrist :as wrist])
   (:gen-class :main true))
 
@@ -50,8 +51,8 @@
 
 (def module-map
   "A mapping naming OpenSCAD modules and the functions that make them."
-  {"bottom_plate_anchor_positive" {:model-fn aux/bottom-plate-anchor-positive}
-   "bottom_plate_anchor_negative" {:model-fn aux/bottom-plate-anchor-negative,
+  {"bottom_plate_anchor_positive" {:model-fn bottom/anchor-positive}
+   "bottom_plate_anchor_negative" {:model-fn bottom/anchor-negative,
                                    :chiral true}})
 
 (defn build-keyboard-right
@@ -80,7 +81,7 @@
                 (body/rear-housing getopt))
               (body/wall-tweaks getopt)
               (when (getopt :case :bottom-plate :include)
-                (body/bottom-plate-anchors getopt))
+                (bottom/case-anchors-positive getopt))
               (aux/foot-plates getopt))
             ;; Stuff that goes outside the mask but
             ;; should be subject to all negatives:
@@ -91,10 +92,11 @@
             (when (and (getopt :case :bottom-plate :include)
                        (getopt :case :bottom-plate :preview))
               (maybe/union
-                (body/bottom-plate-positive getopt)
+                (bottom/case-positive getopt)
                 (when (and (getopt :wrist-rest :include)
-                           (getopt :wrist-rest :preview))
-                  (wrist/bottom-plate-positive getopt))))
+                           (getopt :wrist-rest :preview)
+                           (getopt :wrist-rest :bottom-plate :include))
+                  (bottom/wrist-positive getopt))))
             (sandbox/positive getopt))
           ;; First-level negatives:
           (key/metacluster key/cluster-cutouts getopt)
@@ -118,11 +120,11 @@
           (aux/mcu-lock-fixture-composite getopt)))
       ;; Outer negatives:
       (when (getopt :case :bottom-plate :include)
-        (body/bottom-plate-negative getopt))
-      (when (and (getopt :wrist-rest :bottom-plate :include)
-                 (getopt :wrist-rest :include)
-                 (getopt :wrist-rest :preview))
-        (wrist/bottom-plate-negative getopt)))
+        (bottom/case-negative getopt))
+      (when (and (getopt :wrist-rest :include)
+                 (getopt :wrist-rest :preview)
+                 (getopt :wrist-rest :bottom-plate :include))
+        (bottom/wrist-negative getopt)))
     ;; The remaining elements are visualizations for use in development.
     (when (getopt :keycaps :preview)
       (key/metacluster key/cluster-keycaps getopt))
@@ -131,6 +133,19 @@
     (when (and (= (getopt :mcu :support :style) :lock)
                (getopt :mcu :support :preview))
       (aux/mcu-lock-bolt getopt))))
+
+(defn build-plinth-right
+  "Right-hand-side non-preview wrist-rest plinth model."
+  [getopt]
+  (maybe/difference
+    (maybe/union
+      (body/mask getopt (getopt :wrist-rest :bottom-plate :include)
+        (wrist/plinth-plastic getopt))
+      (when (and (getopt :wrist-rest :preview)
+                 (getopt :wrist-rest :bottom-plate :include))
+        (bottom/wrist-positive getopt)))
+    (when (getopt :wrist-rest :bottom-plate :include)
+      (bottom/wrist-negative getopt))))
 
 (defn enrich-option-metadata
   "Derive certain properties that are implicit in the user configuration.
@@ -195,7 +210,8 @@
     (if render (render-to-stl renderer scad stl))
     (if debug (println "Finished" scad))))
 
-(defn- maybe-flip [mirrored model] (if mirrored (mirror [-1 0 0] model) model))
+(defn- maybe-flip [mirrored model]
+  (if mirrored (model/mirror [-1 0 0] model) model))
 
 (defn- produce
   "Produce SCAD file(s) from a single model."
@@ -211,7 +227,7 @@
                     should-flip (and mirrored chiral)
                     model (maybe-flip should-flip (basemodule-fn getopt))]
                 (when module-condition
-                  (define-module module-name model))))
+                  (model/define-module module-name model))))
           basemodel (maybe/rotate rotation (model-fn getopt))
           single
             (fn [prefix mirrored]
@@ -248,7 +264,7 @@
       {:condition (getopt :case :bottom-plate :include)
        :basename "case-bottom-plate"
        :modules [[true "bottom_plate_anchor_negative"]]
-       :model-fn body/bottom-plate-complete
+       :model-fn bottom/case-complete
        :pair true
        :rotation [0 π 0]}
       {:condition (= (getopt :mcu :support :style) :lock)
@@ -267,13 +283,13 @@
        :basename "plinth-main"
        :modules [[(getopt :wrist-rest :bottom-plate :include)
                   "bottom_plate_anchor_negative"]]
-       :model-fn wrist/plinth-plastic
+       :model-fn build-plinth-right
        :pair true}
       {:condition (and (getopt :wrist-rest :include)
                        (getopt :wrist-rest :bottom-plate :include))
        :basename "plinth-bottom-plate"
        :modules [[true "bottom_plate_anchor_negative"]]
-       :model-fn wrist/bottom-plate-complete
+       :model-fn bottom/wrist-complete
        :pair true
        :rotation [0 π 0]}])))
 

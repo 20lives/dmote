@@ -4,8 +4,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (ns dactyl-keyboard.cad.body
-  (:require [clojure.spec.alpha :as spec]
-            [scad-clj.model :exclude [use import] :refer :all]
+  (:require [scad-clj.model :exclude [use import] :refer :all]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.generics :refer [NNE ENE ESE WSW WNW NNW colours]]
@@ -137,54 +136,13 @@
 
 ;; Edge walking.
 
-(defn wall-edge-placement
-  "Produce a sequence of corner posts for the upper or lower part of the edge
-  of one wall slab."
-  [post-fn getopt cluster upper [coord direction turning-fn]]
-  (let [extent (most-specific getopt [:wall direction :extent]
-                 cluster coord)
-        last-upper-segment (case extent :full 4, :none 0, extent)
-        place-post (post-fn getopt cluster coord
-                     [direction (turning-fn direction)])]
-   (if-not (zero? last-upper-segment)
-     (if upper
-       (map place-post (range (inc last-upper-segment)))
-       (when (= extent :full)
-         (map place-post [2 3 4]))))))
-
-(defn- cluster-segment-placer
-  "A function for wall edge placement that puts an actual object in place."
-  [getopt cluster coord directions]
-  (fn [segment]
-    (->>
-      (key/web-post getopt)
-      (maybe/translate
-        (place/wall-corner-offset getopt cluster coord
-          {:directions directions, :segment segment, :vertex false}))
-      (place/cluster-place getopt cluster coord))))
-
-(def wall-edge-place (partial wall-edge-placement cluster-segment-placer))
-
-(defn- cluster-reckoner
-  "A function for finding wall edge vertices."
-  ([getopt cluster coord directions & {:as keyopts}]
-   (fn [segment]
-     (place/cluster-position getopt cluster coord
-       (place/wall-corner-offset getopt cluster coord
-         (merge {:directions directions, :segment segment, :vertex true}
-                keyopts))))))
-
-(defn- cluster-segment-reckon
-  [getopt cluster coord directions segment bottom]
-  ((cluster-reckoner getopt cluster coord directions :bottom bottom) segment))
-
-(def wall-edge-reckon (partial wall-edge-placement cluster-reckoner))
+(def wall-edge-post (place/wall-edge-placer key/web-post))
 
 (defn wall-slab
   "Produce a single shape joining some (two) edges."
   [getopt cluster edges]
-  (let [upper (map (partial wall-edge-place getopt cluster true) edges)
-        lower (map (partial wall-edge-place getopt cluster false) edges)]
+  (let [upper (map (partial wall-edge-post getopt cluster true) edges)
+        lower (map (partial wall-edge-post getopt cluster false) edges)]
    (union
      (apply hull upper)
      (apply misc/bottom-hull lower))))
@@ -247,7 +205,7 @@
       (map #(maybe/translate (getcorner %) (housing-cube getopt))
            [:nw :ne :se :sw]))))
 
-(defn- housing-pillar-functions
+(defn housing-pillar-functions
   "Make functions that determine the exact positions of rear housing walls.
   This is an awkward combination of reckoning functions for building the
   bottom plate in 2D and placement functions for building the case walls in
@@ -262,7 +220,7 @@
             ;; For building, return a sequence of web posts.
             (fn [reckon upper]
               (let [coord (getopt :case :rear-housing :derived coord-key)
-                    function (if reckon wall-edge-reckon wall-edge-place)
+                    function (if reckon place/wall-edge-reckon wall-edge-post)
                     picker (if reckon #(first (take-last 2 %)) identity)]
                 (picker
                   (function getopt cluster upper
@@ -391,7 +349,8 @@
   (if (= first-segment last-segment)
     (let [keyinfo (getopt :key-clusters :derived :aliases key-alias)
           {:keys [cluster coordinates]} keyinfo
-          placer (cluster-segment-placer getopt cluster coordinates directions)]
+          poster (place/cluster-segment-placer key/web-post)
+          placer (poster getopt cluster coordinates directions)]
       (placer first-segment))
     (apply hull (map #(tweak-posts getopt key-alias directions %1 %1)
                      (range first-segment (inc last-segment))))))
@@ -425,125 +384,3 @@
   [getopt]
   (apply union
     (reduce (partial tweak-plating getopt) [] (getopt :case :tweaks))))
-
-
-;;;;;;;;;;;;;;;;;;
-;; Bottom Plate ;;
-;;;;;;;;;;;;;;;;;;
-
-(defn- floor-finder
-  "Return a sequence of xy-coordinate pairs for exterior wall vertices."
-  [getopt cluster edges]
-  (map
-    (fn [[coord direction turning-fn]]
-      (let [key [:wall direction :extent]
-            extent (most-specific getopt key cluster coord)]
-        (when (= extent :full)
-          (take 2
-            (place/wall-corner-position getopt cluster coord
-              {:directions [direction (turning-fn direction)] :vertex true})))))
-    edges))
-
-(defn- cluster-floor-polygon
-  "A polygon approximating a floor-level projection of a key clusters’s wall."
-  [getopt cluster]
-  (maybe/polygon
-    (filter some?  ; Get rid of edges with partial walls.
-      (mapcat identity  ; Flatten floor-finder output by one level only.
-        (reduce
-          (fn [coll position]
-            (conj coll
-              (floor-finder getopt cluster (connecting-wall position))))
-          []
-          (matrix/trace-between
-            (getopt :key-clusters :derived :by-cluster cluster :key-requested?)))))))
-
-(defn- housing-floor-polygon
-  "A polygon describing the area underneath the rear housing.
-  A projection of the 3D shape would work but it would require taking care to
-  hull the straight and other parts of the housing separately, because the
-  connection between them may be concave. The 2D approach is safer."
-  [getopt]
-  (polygon
-    (reduce
-      (fn [coll pillar-fn] (conj coll (take 2 (pillar-fn true false))))
-      []
-      (housing-pillar-functions getopt))))
-
-(spec/def ::point-2d (spec/coll-of number? :count 2))
-(spec/def ::point-coll-2d (spec/coll-of ::point-2d))
-
-(defn- tweak-floor-vertex
-  "A corner vertex on a tweak wall, extending from a key mount."
-  [getopt segment-picker bottom
-   [key-alias directions first-segment last-segment]]
-  {:post [(spec/valid? ::point-2d %)]}
-  (let [keyinfo (getopt :key-clusters :derived :aliases key-alias)
-        {:keys [cluster coordinates]} keyinfo
-        segment (segment-picker (range first-segment (inc last-segment)))]
-    (take 2 (cluster-segment-reckon
-              getopt cluster coordinates directions segment bottom))))
-
-(defn- dig-to-seq [node]
-  (if (map? node) (dig-to-seq (:hull-around node)) node))
-
-(defn- tweak-floor-pairs
-  "Produce coordinate pairs for a polygon. A reducer."
-  [getopt [post-picker segment-picker bottom] coll node]
-  {:post [(spec/valid? ::point-coll-2d %)]}
-  (let [vertex-fn (partial tweak-floor-vertex getopt segment-picker bottom)]
-    (conj coll
-      (if (map? node)
-        ;; Pick just one post in the subordinate node, on the assumption that
-        ;; they’re not all ringing the case.
-        (vertex-fn (post-picker (dig-to-seq node)))
-        ;; Node is one post at the top level. Always use that.
-        (vertex-fn node)))))
-
-(defn- tweak-plate-polygon
-  "A single version of the footprint of a tweak."
-  [getopt pickers node-list]
-  (polygon (reduce (partial tweak-floor-pairs getopt pickers) [] node-list)))
-
-(defn- tweak-plate-shadows
-  "Versions of a tweak footprint.
-  This is a semi-brute-force-approach to the problem that we cannot easily
-  identify which vertices shape the outside of the case at z = 0."
-  [getopt node-list]
-  (apply union
-    (for
-      [post [first last], segment [first last], bottom [false true]]
-      (tweak-plate-polygon getopt [post segment bottom] node-list))))
-
-(defn- tweak-plate-flooring
-  "The footprint of all user-requested additional shapes that go to the floor."
-  [getopt]
-  (apply maybe/union (map #(tweak-plate-shadows getopt (:hull-around %))
-                          (filter :to-ground (getopt :case :tweaks)))))
-
-(defn bottom-plate-anchors
-  [getopt]
-  (place/bottom-plate-anchors getopt :case "bottom_plate_anchor_positive"))
-
-(defn bottom-plate-positive
-  "A model of a bottom plate for the entire case.
-  Screw holes not included."
-  [getopt]
-  (color (:bottom-plate colours)
-    (extrude-linear
-      {:height (getopt :case :bottom-plate :thickness), :center false}
-      (union
-        (key/metacluster cluster-floor-polygon getopt)
-        (tweak-plate-flooring getopt)
-        (when (getopt :case :rear-housing :include)
-          (housing-floor-polygon getopt))))))
-
-(defn bottom-plate-negative
-  [getopt]
-  (place/bottom-plate-anchors getopt :case "bottom_plate_anchor_negative"))
-
-(defn bottom-plate-complete
-  [getopt]
-  (maybe/difference
-    (bottom-plate-positive getopt)
-    (bottom-plate-negative getopt)))
