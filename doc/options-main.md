@@ -202,6 +202,10 @@ If `true`, include a bottom plate for the case.
 
 Preview mode. If `true`, put a model of the plate in the same file as the case it closes. Not for printing.
 
+#### Parameter `combine`
+
+If `true`, combine wrist rests for the case and the bottom plate into a single model, when both are enabled.
+
 #### Parameter `thickness`
 
 The thickness (i.e. height) in mm of all bottom plates you choose to include. This covers plates for the case and for the wrist rest.

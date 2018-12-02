@@ -1,6 +1,10 @@
 # Configuration fragment illustrating the use of threaded-mount to put a
-# wrist rest in direct contact with the case.
+# wrist rest in direct contact with the case. This includes a combined bottom
+# plate.
 
+case:
+  bottom-plate:
+    combine: true
 wrist-rest:
   include: true
   style: threaded
@@ -13,7 +17,7 @@ wrist-rest:
     diameter: 6
     length: 25
     height:
-      first: 6
+      first: 12
     mounts:
       width: 15
       case-side:

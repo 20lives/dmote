@@ -29,6 +29,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 ### Added
 - This log.
 - Support for generating a bottom plate that closes the case.
+    - This includes support for a separate plate for the wrist rest, and a
+      combined plate that joins the two models.
 - Support for naming your key clusters much more freely, and/or adding
   additional clusters. Even the new ‘main’ cluster is optional.
     - Support for a `cluster` parameter to `case` → `rear-housing` →

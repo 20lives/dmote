@@ -237,6 +237,10 @@
     {:default false :parse-fn boolean}
     "Preview mode. If `true`, put a model of the plate in the same file as "
     "the case it closes. Not for printing."]
+   [:parameter [:case :bottom-plate :combine]
+    {:default false :parse-fn boolean}
+    "If `true`, combine wrist rests for the case and the bottom plate into a "
+    "single model, when both are enabled."]
    [:parameter [:case :bottom-plate :thickness]
     {:default 1 :parse-fn num}
     "The thickness (i.e. height) in mm of all bottom plates you choose to "

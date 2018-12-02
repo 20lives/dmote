@@ -25,7 +25,7 @@ threaded-key: target/dmote.jar
 	java -jar target/dmote.jar -c resources/opt/wrist/threaded_key.yaml
 
 threaded-visualization: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/wrist/threaded_key.yaml -c resources/opt/visualization.yaml
+	java -jar target/dmote.jar -c resources/opt/wrist/threaded_mount.yaml -c resources/opt/visualization.yaml
 
 solid: target/dmote.jar
 	java -jar target/dmote.jar -c resources/opt/wrist/solid.yaml

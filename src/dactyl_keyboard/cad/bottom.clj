@@ -92,6 +92,14 @@
            :case (getopt :case :bottom-plate :installation :fasteners :positions)
            :wrist-rest (getopt :wrist-rest :bottom-plate :fastener-positions)))))
 
+(defn- to-3d
+  "Build a 3D bottom plate from a 2D block."
+  [getopt block]
+  (model/color (:bottom-plate colours)
+    (model/extrude-linear
+      {:height (getopt :case :bottom-plate :thickness), :center false}
+      block)))
+
 
 ;;;;;;;;;;
 ;; Case ;;
@@ -192,21 +200,27 @@
   [getopt]
   (fastener-positions getopt :case "bottom_plate_anchor_positive"))
 
+(defn- case-positive-2d
+  [getopt]
+  (model/union
+    (key/metacluster cluster-floor-polygon getopt)
+    (tweak-plate-flooring getopt)
+    (when (getopt :case :rear-housing :include)
+      (housing-floor-polygon getopt))
+    (when (and (getopt :wrist-rest :include)
+               (= (getopt :wrist-rest :style) :threaded))
+      (model/cut (wrist/case-plate getopt)))))
+
 (defn case-positive
   "A model of a bottom plate for the entire case but not the wrist rests.
   Screw holes not included."
   [getopt]
-  (model/color (:bottom-plate colours)
-    (model/extrude-linear
-      {:height (getopt :case :bottom-plate :thickness), :center false}
-      (model/union
-        (key/metacluster cluster-floor-polygon getopt)
-        (tweak-plate-flooring getopt)
-        (when (getopt :case :rear-housing :include)
-          (housing-floor-polygon getopt))
-        (when (and (getopt :wrist-rest :include)
-                   (= (getopt :wrist-rest :style) :threaded))
-          (model/cut (wrist/case-plate getopt)))))))
+  (to-3d getopt
+    (model/union
+      (case-positive-2d getopt)
+      (when (and (getopt :wrist-rest :include)
+                 (= (getopt :wrist-rest :style) :threaded))
+        (model/cut (wrist/case-plate getopt))))))
 
 (defn case-negative
   "Just the holes that go into both the case bottom plate and the case body."
@@ -214,7 +228,7 @@
   (fastener-positions getopt :case "bottom_plate_anchor_negative"))
 
 (defn case-complete
-  "A printable model of the case bottom plate in one piece."
+  "A printable model of a case bottom plate in one piece."
   [getopt]
   (maybe/difference
     (case-positive getopt)
@@ -225,22 +239,54 @@
 ;; Wrist Rests ;;
 ;;;;;;;;;;;;;;;;;
 
+(defn- wrist-positive-2d [getopt]
+  (model/cut (wrist/plinth-maquette getopt)))
+
 (defn wrist-positive
-  "Equivalent to the corresponding function in the body module."
+  "3d wrist-rest bottom plate without screw holes."
   [getopt]
-  (model/color (:bottom-plate colours)
-    (model/extrude-linear
-      {:height (getopt :case :bottom-plate :thickness), :center false}
-      (model/cut (wrist/plinth-maquette getopt)))))
+  (to-3d getopt (wrist-positive-2d getopt)))
 
 (defn wrist-negative
-  "Equivalent to the corresponding function in the body module."
+  "Wrist-rest screw holes."
   [getopt]
   (fastener-positions getopt :wrist-rest "bottom_plate_anchor_negative"))
 
 (defn wrist-complete
-  "Equivalent to the corresponding function in the body module."
+  "A printable model of a wrist-rest bottom plate in one piece."
   [getopt]
   (maybe/difference
     (wrist-positive getopt)
     (wrist-negative getopt)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Combined Case and Wrist-Rest Plates ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn combined-positive
+  "A combined bottom plate for case and wrist rest.
+  This assumes the use of a threaded-style wrist rest, but will obviously
+  prevent the use of threaded fasteners in adjusting the wrist rest.
+  This is therefore recommended only where there is no space available between
+  case and wrist rest."
+  [getopt]
+  (to-3d getopt
+    (model/union
+      (case-positive-2d getopt)
+      (model/hull
+        (model/cut (wrist/case-plate getopt))
+        (model/cut (wrist/plinth-plate getopt)))
+      (wrist-positive-2d getopt))))
+
+(defn combined-negative
+  [getopt]
+  (model/union
+    (case-negative getopt)
+    (wrist-negative getopt)))
+
+(defn combined-complete
+  [getopt]
+  (maybe/difference
+    (combined-positive getopt)
+    (combined-negative getopt)))
