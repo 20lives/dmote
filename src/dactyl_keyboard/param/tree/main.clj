@@ -545,9 +545,7 @@
     {:default false :parse-fn boolean}
     "If `true`, include a wrist rest with the keyboard."]
    [:parameter [:wrist-rest :style]
-    {:default :threaded
-     :parse-fn keyword
-     :validate [::schema/wrist-rest-style]}
+    {:default :threaded :parse-fn keyword :validate [::schema/wrist-rest-style]}
     "The style of the wrist rest. Available styles are:\n\n"
     "- `threaded`: threaded fasteners connect the case and wrist rest. "
     "This works with a great variety of keyboard shapes and will allow "
@@ -565,16 +563,25 @@
     "OpenSCAD file as the case. That model is simplified, intended for gauging "
     "distance, not for printing."]
    [:section [:wrist-rest :position]
-    "The wrist rest is positioned in relation to a key mount."]
+    "The wrist rest is positioned in relation to something."]
+   [:parameter [:wrist-rest :position :style]
+    {:default :key :parse-fn keyword :validate [::schema/wrist-position-style]}
+    "One of:\n\n"
+    "- `key`: The wrist rest is positioned in relation to a specific key, "
+    "which must be named using the `key-alias` parameter below.\n"
+    "- `threaded-mount`: The plinth (main body) of the wrist rest is "
+    "positioned in relation to the plinth-side mount for threaded fasteners, "
+    "as used in the `threaded` style of wrist rest. Using `threaded-mount` "
+    "without `threaded` is an error."]
    [:parameter [:wrist-rest :position :key-alias]
     {:default :origin :parse-fn keyword}
-    "A named key where the wrist rest will attach. "
+    "A named key where the wrist rest will attach in the `key` position style. "
     "The vertical component of its position will be ignored."]
    [:parameter [:wrist-rest :position :offset]
     {:default [0 0] :parse-fn vec}
-    "An offset in mm from the selected key to one corner of the base of the "
-    "wrist rest. Specifically, it is the corner close to the keyboard case, "
-    "on the right-hand side of the right-hand half."]
+    "An offset in mm from the selected key (`key` style) or the plinth-side "
+    "mount (`threaded-mount` style) to the nominally northwest corner of the "
+    "plinth, the main body of the wrist rest."]
    [:section [:wrist-rest :shape]
     "The wrist rest needs to fit the user’s hand."]
    [:parameter [:wrist-rest :shape :plinth-base-size]
@@ -618,6 +625,12 @@
     "going down into the plinth. This part of the pad just keeps it in place."]
    [:section [:wrist-rest :fasteners]
     "This is only relevant with the `threaded` style of wrist rest."]
+   [:parameter [:wrist-rest :fasteners :angle]
+    {:default 0 :parse-fn num}
+    "The angle in radians of the fasteners, on the xy plane, from the y axis. "
+    "This parameter is only used with `threaded-mount` as your "
+    "`position` → `style` setting, otherwise the angle is calculated from "
+    "other settings."]
    [:parameter [:wrist-rest :fasteners :amount]
     {:default 1 :parse-fn int}
     "The number of fasteners connecting each case to its wrist rest."]
@@ -638,6 +651,12 @@
     "center of the next."]
    [:section [:wrist-rest :fasteners :mounts]
     "The mounts, or anchor points, for each fastener on each side."]
+   [:parameter [:wrist-rest :fasteners :mounts :distance]
+    {:default 0 :parse-fn num}
+    "The distance in mm between the two mounts. "
+    "This parameter is only used with `threaded-mount` as your "
+    "`position` → `style` setting, otherwise the distance is a "
+    "consequence of fastener `length` and wrist-rest `offset`."]
    [:parameter [:wrist-rest :fasteners :mounts :width]
     {:default 1 :parse-fn num}
     "The width in mm of the face or front bezel on each "
@@ -666,8 +685,9 @@
     "The side of the wrist rest."]
    [:parameter [:wrist-rest :fasteners :mounts :plinth-side :offset]
     {:default [0 0] :parse-fn vec}
-    "The offset in mm from the corner of the plinth to the fastener mount "
-    "point attached to the plinth."]
+    "An offset in mm from the corner of the plinth to the fastener mount "
+    "point attached to the plinth. This is ignored with `threaded-mount` as "
+    "your `position` → `style` setting."]
    [:parameter [:wrist-rest :fasteners :mounts :plinth-side :depth]
     {:default 1 :parse-fn num}
     "The thickness of the mount in mm along the axis of the fastener(s). "

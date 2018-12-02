@@ -152,6 +152,7 @@
 (spec/def ::mcu-type #{:promicro})
 (spec/def ::mcu-support-style #{:lock :stop})
 (spec/def ::wrist-rest-style #{:threaded :solid})
+(spec/def ::wrist-position-style #{:key :threaded-mount})
 (spec/def ::column-disposition
   (spec/keys ::opt-un [::rows-below-home ::rows-above-home]))
 (spec/def ::flexcoord (spec/or :absolute int? :extreme #{:first :last}))

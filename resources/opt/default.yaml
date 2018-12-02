@@ -615,8 +615,8 @@ connection:
     raise: true
 wrist-rest:
   include: false
-  style: threaded
   position:
+    style: key
     key-alias: near-right
     offset: [-45, -39.1]
   shape:

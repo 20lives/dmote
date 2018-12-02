@@ -36,3 +36,6 @@ case:
         offset: [1, -5]
       - key-alias: near-right
         corner: ESE
+case:
+  bottom-plate:
+    include: false

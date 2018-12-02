@@ -7,7 +7,6 @@
 ;;; with CAD or the keyboard.
 
 (ns dactyl-keyboard.generics)
-
 (def colours
   "OpenSCAD preview colours."
   {:cap-body [220/255 163/255 163/255 1]

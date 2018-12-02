@@ -539,15 +539,22 @@ Preview mode. If `true`, this puts a model of the wrist rest in the same OpenSCA
 
 ### Section `position`
 
-The wrist rest is positioned in relation to a key mount.
+The wrist rest is positioned in relation to something.
+
+#### Parameter `style`
+
+One of:
+
+- `key`: The wrist rest is positioned in relation to a specific key, which must be named using the `key-alias` parameter below.
+- `threaded-mount`: The plinth (main body) of the wrist rest is positioned in relation to the plinth-side mount for threaded fasteners, as used in the `threaded` style of wrist rest. Using `threaded-mount` without `threaded` is an error.
 
 #### Parameter `key-alias`
 
-A named key where the wrist rest will attach. The vertical component of its position will be ignored.
+A named key where the wrist rest will attach in the `key` position style. The vertical component of its position will be ignored.
 
 #### Parameter `offset`
 
-An offset in mm from the selected key to one corner of the base of the wrist rest. Specifically, it is the corner close to the keyboard case, on the right-hand side of the right-hand half.
+An offset in mm from the selected key (`key` style) or the plinth-side mount (`threaded-mount` style) to the nominally northwest corner of the plinth, the main body of the wrist rest.
 
 ### Section `shape`
 
@@ -595,6 +602,10 @@ The depth of the rubber wrist support, measured from the top of the lip, going d
 
 This is only relevant with the `threaded` style of wrist rest.
 
+#### Parameter `angle`
+
+The angle in radians of the fasteners, on the xy plane, from the y axis. This parameter is only used with `threaded-mount` as your `position` → `style` setting, otherwise the angle is calculated from other settings.
+
 #### Parameter `amount`
 
 The number of fasteners connecting each case to its wrist rest.
@@ -622,6 +633,10 @@ The vertical distance in mm from the center of each fastener to the center of th
 #### Section `mounts`
 
 The mounts, or anchor points, for each fastener on each side.
+
+##### Parameter `distance`
+
+The distance in mm between the two mounts. This parameter is only used with `threaded-mount` as your `position` → `style` setting, otherwise the distance is a consequence of fastener `length` and wrist-rest `offset`.
 
 ##### Parameter `width`
 
@@ -661,7 +676,7 @@ The side of the wrist rest.
 
 ###### Parameter `offset`
 
-The offset in mm from the corner of the plinth to the fastener mount point attached to the plinth.
+An offset in mm from the corner of the plinth to the fastener mount point attached to the plinth. This is ignored with `threaded-mount` as your `position` → `style` setting.
 
 ###### Parameter `depth`
 

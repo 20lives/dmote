@@ -1,0 +1,22 @@
+# Configuration fragment for long bolts between the case and a wrist rest.
+
+wrist-rest:
+  include: true
+  style: threaded
+  fasteners:
+    amount: 2
+    diameter: 6
+    length: 50
+    height:
+      first: 4
+      increment: 16
+    mounts:
+      width: 15
+      case-side:
+        key-alias: m2
+        offset: [-1, -23.5]
+        depth: 6
+      plinth-side:
+        offset: [3.5, -3.5]
+        depth: 9.8
+        pocket-height: -100

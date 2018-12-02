@@ -5,7 +5,7 @@
 
 (ns dactyl-keyboard.cad.wrist
   (:require [scad-clj.model :exclude [use import] :refer :all]
-            [scad-tarmi.core :refer [abs π]]
+            [scad-tarmi.core :refer [abs sin cos π]]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.generics :refer [ESE SSE SSW colours]]
@@ -19,15 +19,69 @@
 ;; Generics ;;
 ;;;;;;;;;;;;;;
 
+(defn- key-alias [getopt]
+  (getopt :wrist-rest :position :key-alias))
+
+(defn- key-cluster [getopt]
+  (getopt :key-clusters :derived :aliases (key-alias getopt) :cluster))
+
+(defn- key-coord [getopt]
+  (getopt :key-clusters :derived :aliases (key-alias getopt) :coordinates))
+
+(defn- threaded-center-height
+  "The mid-point height of the first threaded fastener."
+  [getopt]
+  (+ (/ (getopt :wrist-rest :fasteners :diameter) 2)
+     (getopt :wrist-rest :fasteners :height :first)))
+
+(defn- threaded-position-keyboard
+  "Find the position of the case-side threaded fastener mount.
+  This is a 3D position with the height of the first threaded fastener."
+  [getopt]
+  (let [position (getopt :wrist-rest :fasteners :mounts :case-side)
+        {alias :key-alias offset :offset} position
+        key (getopt :key-clusters :derived :aliases alias)
+        {cluster :cluster coordinates :coordinates} key
+        base (take 2 (place/wall-corner-position getopt cluster coordinates))]
+   (conj (vec (map + base offset)) (threaded-center-height getopt))))
+
+(defn- mount-to-mount-distance
+  [getopt]
+  (+ (getopt :wrist-rest :fasteners :mounts :distance)
+     (/ (getopt :wrist-rest :fasteners :mounts :case-side :depth) 2)
+     (/ (getopt :wrist-rest :fasteners :mounts :plinth-side :depth) 2)))
+
+(declare rod-angle)
+
+(defn- threaded-position-plinth
+  "Find the position of the plinth-side threaded fastener mount."
+  [getopt]
+  (case (getopt :wrist-rest :position :style)
+    :key
+      (let [corner (getopt :wrist-rest :derived :nw)
+            offset (getopt :wrist-rest :fasteners :mounts :plinth-side :offset)]
+        (conj (vec (map + corner offset)) (threaded-center-height getopt)))
+    :threaded-mount
+      (let [base (threaded-position-keyboard getopt)
+            θ (rod-angle getopt)
+            d (mount-to-mount-distance getopt)]
+        (vec (map + base [(* d (cos θ)), (* d (sin θ)), 0])))))
+
+(defn- rod-angle
+  "The angle θ of the threaded rod over the x axis."
+  [getopt]
+  (case (getopt :wrist-rest :position :style)
+    :key  ; Compute the angle from the position of the mounts.
+      (let [p0 (threaded-position-plinth getopt)
+            p1 (threaded-position-keyboard getopt)]
+        (Math/atan (apply / (reverse (take 2 (map - p0 p1))))))
+    :threaded-mount  ; Use a fixed angle.
+      (getopt :wrist-rest :fasteners :angle)))
+
 (defn derive-properties
   "Derive certain properties from the base configuration."
   [getopt]
-  (let [key-alias (getopt :wrist-rest :position :key-alias)
-        cluster (getopt :key-clusters :derived :aliases key-alias :cluster)
-        coord (getopt :key-clusters :derived :aliases key-alias :coordinates)
-        pivot (place/wall-corner-position getopt cluster coord)
-        offset (getopt :wrist-rest :position :offset)
-        [base-x base-y z1] (getopt :wrist-rest :shape :plinth-base-size)
+  (let [[base-x base-y z1] (getopt :wrist-rest :shape :plinth-base-size)
         lip (getopt :wrist-rest :shape :lip-height)
         z2 (+ z1 lip)
         getpad (partial getopt :wrist-rest :shape :pad :height)
@@ -36,20 +90,25 @@
         pad-above (getpad :surface-range)
         z4 (+ z3 pad-above)
         pad-below (getpad :below-lip)
-        corner-nw (vec (map + (take 2 pivot) offset))
+        style (getopt :wrist-rest :position :style)
+        corner-nw
+          (vec (map +
+                 (take 2
+                   (case style
+                     :key (place/wall-corner-position
+                            getopt (key-cluster getopt) (key-coord getopt))
+                     :threaded-mount (threaded-position-plinth getopt)))
+                 (getopt :wrist-rest :position :offset)))
         corner-ne (vec (map + corner-nw [base-x 0]))
         corner-sw (vec (map - corner-nw [0 base-y]))
         corner-se (vec (map - corner-ne [0 base-y]))
         center (conj (vec (map - corner-ne (map #(/ % 2) [base-x base-y]))))]
-   {:offset offset
-    :base-x base-x
+   {:base-x base-x
     :base-y base-y
-    :z1 z1  ; Top of base, bottom of lip.
-    :z2 z2  ; Top of lip. Plastic-silicone material transition zone.
+    :z1 z1  ; Top of base, bottom of lip. All plastic.
+    :z2 z2  ; Top of lip. Plastic-to-silicone material transition.
     :z3 z3  ; Silicone-to-silicone transition at base of heightmap.
     :z4 z4  ; Absolute peak of the entire plinth. Top of silicone pad.
-    :key-cluster cluster
-    :key-coord coord
     :nw corner-nw
     :ne corner-ne
     :sw corner-sw
@@ -61,25 +120,6 @@
 ;; Threaded Connector Variant ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn threaded-center-height [getopt]
-  (+ (/ (getopt :wrist-rest :fasteners :diameter) 2)
-     (getopt :wrist-rest :fasteners :height :first)))
-
-(defn threaded-position-keyboard [getopt]
-  (let [position (getopt :wrist-rest :fasteners :mounts :case-side)
-        {alias :key-alias offset :offset} position
-        key (getopt :key-clusters :derived :aliases alias)
-        {cluster :cluster coordinates :coordinates} key
-        base (place/wall-corner-position getopt cluster coordinates)
-        height (threaded-center-height getopt)]
-   (conj (vec (map + (take 2 base) offset)) height)))
-
-(defn threaded-position-plinth [getopt]
-  (let [corner (getopt :wrist-rest :derived :nw)
-        offset (getopt :wrist-rest :fasteners :mounts :plinth-side :offset)
-        height (threaded-center-height getopt)]
-   (conj (vec (map + corner offset)) height)))
-
 (defn threaded-midpoint
   "The X, Y and Z coordinates of the middle of the threaded rod."
   [getopt]
@@ -87,19 +127,12 @@
             (map + (threaded-position-keyboard getopt)
                    (threaded-position-plinth getopt)))))
 
-(defn rod-angle
-  "The angle (from the y axis) of the threaded rod."
-   [getopt]
-  (let [p (threaded-position-plinth getopt)
-        d (map abs (map - (threaded-position-keyboard getopt) p))]
-   (Math/atan (/ (first d) (second d)))))
-
 (defn threaded-rod
   "An unthreaded model of a threaded cylindrical rod connecting the keyboard
   and wrist rest."
   [getopt]
   (translate (threaded-midpoint getopt)
-    (rotate [(/ π 2) 0 (rod-angle getopt)]
+    (rotate [0 (/ π 2) (rod-angle getopt)]
       (cylinder (/ (getopt :wrist-rest :fasteners :diameter) 2)
                 (getopt :wrist-rest :fasteners :length)))))
 
@@ -123,13 +156,13 @@
                (translate [0 3 0])
                (rotate [0 0 (rod-angle getopt)])
                (translate (threaded-position-keyboard getopt)))]
-   (apply union
-    (for [i (range (getopt :wrist-rest :fasteners :amount))]
-      (translate (rod-offset getopt i)
-        (union
-          (threaded-rod getopt)
-          (if (getopt :wrist-rest :fasteners :mounts :case-side :nuts :bosses :include)
-            nut)))))))
+    (apply maybe/union
+      (for [i (range (getopt :wrist-rest :fasteners :amount))]
+        (translate (rod-offset getopt i)
+          (union
+            (threaded-rod getopt)
+            (if (getopt :wrist-rest :fasteners :mounts :case-side :nuts :bosses :include)
+              nut)))))))
 
 (defn- plinth-nut-pockets
   "Nut(s) in the plinth-side plate, with pocket(s)."
@@ -138,7 +171,7 @@
         ph (getopt :wrist-rest :fasteners :mounts :plinth-side :pocket-height)
         compensator (getopt :dfm :derived :compensator)
         nut (->> (threaded/nut :iso-size d :negative true)
-                 (rotate [(/ π 2) 0 0])
+                 (rotate [(/ π 2) 0 (/ π 2)])
                  (compensator d {}))]
    (translate (threaded-position-plinth getopt)
      (rotate [0 0 (rod-angle getopt)]
@@ -153,8 +186,8 @@
         d0 depth
         d1 (dec d0)]
    (union
-     (cube g0 d1 g0)
-     (cube g1 d0 g1)
+     (cube d1 g0 g0)
+     (cube d0 g1 g1)
      (cube 1 1 (+ g1 8)))))
 
 (defn case-plate
@@ -165,8 +198,8 @@
     (->>
       (plate-block getopt depth)
       (rotate [0 0 (rod-angle getopt)])
-      (translate (rod-offset getopt))
-      (translate (threaded-position-keyboard getopt))
+      (translate
+        (vec (map + (threaded-position-keyboard getopt) (rod-offset getopt))))
       (misc/bottom-hull))))
 
 (defn plinth-plate
@@ -186,8 +219,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn solid-connector [getopt]
-  (let [cluster (getopt :wrist-rest :derived :key-cluster)
-        case-east-coord (getopt :wrist-rest :derived :key-coord)
+  (let [cluster (key-cluster getopt)
+        case-east-coord (key-coord getopt)
         width (getopt :wrist-rest :solid-bridge :width)
         ne (take 2 (place/cluster-position getopt cluster case-east-coord
                             (place/mount-corner-offset getopt SSE)))
@@ -228,9 +261,8 @@
 (defn case-hook
   "A model hook. In the solid style, this holds the rest in place."
   [getopt]
-  (let [cluster (getopt :wrist-rest :derived :key-cluster)
-        coord (getopt :wrist-rest :derived :key-coord)
-        [x4 y2 _] (place/cluster-position getopt cluster coord
+  (let [[x4 y2 _] (place/cluster-position getopt
+                    (key-cluster getopt) (key-coord getopt)
                     (place/mount-corner-offset getopt ESE))
         x3 (- x4 2)
         x2 (- x3 6)
@@ -316,7 +348,7 @@
   [getopt]
   (union
     (case-hook getopt)
-    (body/cluster-wall getopt (getopt :wrist-rest :derived :key-cluster))))
+    (body/cluster-wall getopt (key-cluster getopt))))
 
 
 ;;;;;;;;;;;;;

@@ -1,15 +1,19 @@
-# Configuration fragment for threaded rods between the case and a wrist rest.
+# Configuration fragment illustrating the use of threaded-mount to put a
+# wrist rest in direct contact with the case.
 
 wrist-rest:
   include: true
   style: threaded
+  position:
+    style: threaded-mount
+    offset: [-4, 4.5]
   fasteners:
-    amount: 2
+    angle: -0.5
+    amount: 1
     diameter: 6
-    length: 50
+    length: 25
     height:
-      first: 4
-      increment: 16
+      first: 6
     mounts:
       width: 15
       case-side:
@@ -17,6 +21,5 @@ wrist-rest:
         offset: [-1, -23.5]
         depth: 6
       plinth-side:
-        offset: [3.5, -3.5]
         depth: 9.8
         pocket-height: -100

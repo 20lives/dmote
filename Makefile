@@ -18,17 +18,20 @@ orthographic: target/dmote.jar
 flat: target/dmote.jar
 	java -jar target/dmote.jar -c resources/opt/flat_layout.yaml
 
-threaded: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/threaded_wrist_rest.yaml
+threaded-mount: target/dmote.jar
+	java -jar target/dmote.jar -c resources/opt/wrist/threaded_mount.yaml
+
+threaded-key: target/dmote.jar
+	java -jar target/dmote.jar -c resources/opt/wrist/threaded_key.yaml
 
 threaded-visualization: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/threaded_wrist_rest.yaml -c resources/opt/visualization.yaml
+	java -jar target/dmote.jar -c resources/opt/wrist/threaded_key.yaml -c resources/opt/visualization.yaml
 
 solid: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/solid_wrist_rest.yaml
+	java -jar target/dmote.jar -c resources/opt/wrist/solid.yaml
 
 solid-visualization: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/solid_wrist_rest.yaml -c resources/opt/visualization.yaml
+	java -jar target/dmote.jar -c resources/opt/wrist/solid.yaml -c resources/opt/visualization.yaml
 
 doc/options-main.md: target/dmote.jar
 	java -jar target/dmote.jar --describe-parameters main > doc/options-main.md

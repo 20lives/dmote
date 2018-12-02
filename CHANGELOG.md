@@ -38,6 +38,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       LEDs would previously be attached to the finger cluster.
     - Support for anchoring any cluster to any other, within logical limits.
 - Support for a filename whitelist in the CLI.
+- Support for placing `treaded`-style wrist rests in relation to their point
+  of attachment to the case.
 - Support for placing `foot-plates` in relation to objects other than keys.
 - Support for generic compensation for slicer and printer inaccuracies in the
   xy plane through a new option, `dfm` → `error`.
