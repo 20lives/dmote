@@ -211,7 +211,7 @@
     (if debug (println "Started" scad))
     (make-parents scad)
     (spit scad (apply write-scad (conj modules model)))
-    (if render (render-to-stl renderer scad stl))
+    (if render (render-to-stl renderer (str scad) (str stl)))
     (if debug (println "Finished" scad))))
 
 (defn- maybe-flip [mirrored model]

@@ -188,7 +188,7 @@
    (union
      (cube d1 g0 g0)
      (cube d0 g1 g1)
-     (cube 1 1 (+ g1 8)))))
+     (cube 1 1 (+ g1 3)))))
 
 (defn case-plate
   "A plate for attaching a threaded rod to the keyboard case.

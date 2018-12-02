@@ -339,8 +339,8 @@
    [x0 (+ y0 (* (getopt :case :leds :interval) ordinal)) h]))
 
 (defn led-emitter-channel [getopt ordinal]
-  (->> (cylinder (/ (getopt :case :leds :emitter-diameter) 2) 50)
-       (rotatev (/ π 2) [0 1 0])
+  (->> (cylinder (/ (getopt :case :leds :emitter-diameter) 2) 20)
+       (rotate [0 (/ π 2) 0])
        (translate (led-hole-position getopt ordinal))))
 
 (defn led-housing-channel [getopt ordinal]
