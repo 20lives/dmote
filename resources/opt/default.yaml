@@ -10,7 +10,7 @@ switches:
 key-clusters:
   main:
     position:
-      offset: [0, 0, 12]
+      offset: [0, 0, 10]
     matrix-columns:
     - rows-above-home: 1
       rows-below-home: 1
@@ -33,7 +33,7 @@ key-clusters:
   thumb:
     position:
       key-alias: m1
-      offset: [-10, -18, 2]
+      offset: [-8, -20, 16]
     matrix-columns:
     - rows-above-home: 1
     - rows-above-home: 1
@@ -50,7 +50,7 @@ key-clusters:
   aux0:
     position:
       key-alias: t5
-      offset: [13, -12, -6]
+      offset: [13, -17, 1]
     matrix-columns:
     - rows-above-home: 0
     aliases:
@@ -83,10 +83,11 @@ by-key:
               row: 0
               column: 0
           pitch:
-            base: 0.26
-            progressive: 0.45
+            base: 0.5
+            progressive: 0.3
+            intrinsic: -0.1
           roll:
-            base: 0.22
+            base: 0.1
             progressive: 0.06
           yaw:
             base: 0.03
@@ -96,30 +97,31 @@ by-key:
             layout:
               matrix:
                 separation:
-                  row: 0.3
+                  row: 1.8
               translation:
-                early: [-1, -2, 2]
+                early: [-4, -4, 5]
               roll:
-                intrinsic: 0.05
+                intrinsic: 0.3
             wall:
               south:
                 extent: 3
                 perpendicular: 4
           rows:
+            first:
+              parameters:
+                layout:
+                  pitch:
+                    intrinsic:
+                      -0.2
+                  translation:
+                    early: [-4.5, -4, 1]
             last:
               parameters:
                 wall:
                   north:
                     extent: 0
-                layout:
-                  translation:
-                    mid: [0, 0, 3]
         "1":
           parameters:
-            layout:
-              matrix:
-                separation:
-                  row: -0.8
             wall:
               south:
                 extent: 3
@@ -134,23 +136,15 @@ by-key:
               parameters:
                 layout:
                   pitch:
-                    intrinsic: -0.1
+                    intrinsic: -0.3
                   yaw:
                     intrinsic: -0.05
                   translation:
-                    early: [-0.7, -2, 3]
+                    early: [-1, -4, 8]
                 channel:
                   top-width: 15
-            "0":
-              parameters:
-                layout:
-                  translation:
-                    early: [0, 0, -1]
             last:
               parameters:
-                layout:
-                  translation:
-                    mid: [0, 0, 2]
                 wall:
                   north:
                     extent: 0
@@ -160,8 +154,10 @@ by-key:
               matrix:
                 separation:
                   row: -0.8
+              pitch:
+                progressive: 0.28
               translation:
-                mid: [0, 3, -3]
+                mid: [0, 3, -1]
             wall:
               east:
                 extent: 1
@@ -176,9 +172,9 @@ by-key:
               parameters:
                 layout:
                   pitch:
-                    intrinsic: -0.2
+                    intrinsic: -0.8
                   translation:
-                    early: [0, -5, 4]
+                    early: [0, -16, 8]
                 wall:
                   east:
                     extent: 4
@@ -186,14 +182,14 @@ by-key:
               parameters:
                 layout:
                   pitch:
-                    intrinsic: -0.1
+                    intrinsic: -0.3
                   translation:
-                    early: [0, -2, 3]
-            "0":
+                    early: [0, -3.5, 2]
+            "-1":
               parameters:
                 layout:
                   translation:
-                    early: [0, 0, -1]
+                    early: [0, -0.5, 0]
             last:
               parameters:
                 wall:
@@ -205,21 +201,19 @@ by-key:
               matrix:
                 separation:
                   row: -0.8
+              pitch:
+                base: 0.4
+                progressive: 0.29
           rows:
             first:
               parameters:
                 layout:
                   pitch:
-                    intrinsic: -0.1
+                    intrinsic: -0.3
                   yaw:
                     intrinsic: 0.05
                   translation:
-                    early: [0.7, -2, 3]
-            "0":
-              parameters:
-                layout:
-                  translation:
-                    early: [0, 0, -1]
+                    early: [0.7, -4, 5]
             last:
               parameters:
                 wall:
@@ -232,20 +226,12 @@ by-key:
                 separation:
                   row: -0.8
               pitch:
-                base: 0.4
-                progressive: 0.4
+                progressive:
+                  0.45
               yaw:
                 base: 0.08
               translation:
-                mid: [0.6, 1.3, 4.5]
-          rows:
-            last:
-              parameters:
-                layout:
-                  pitch:
-                    intrinsic: 0.5
-                  translation:
-                    early: [0, 8, 2]
+                mid: [-0.6, -3, 5.5]
         "5":
           parameters:
             layout:
@@ -253,36 +239,28 @@ by-key:
                 separation:
                   row: -0.8
               pitch:
-                base: 0.4
-                progressive: 0.4
+                progressive:
+                  0.45
               yaw:
                 base: 0.1
               translation:
-                mid: [0.6, 0.6, 5.5]
-          rows:
-            last:
-              parameters:
-                layout:
-                  pitch:
-                    intrinsic: 0.5
-                  translation:
-                    early: [0, 8, 2.5]
+                mid: [-0.6, -4, 5.5]
     thumb:
       parameters:
         layout:
           matrix:
             neutral:
-              column: 0.7
+              column: 1
             separation:
               column: 0
           roll:
-            base: -1.2
-            progressive: 0.3
+            base: -1.3
+            progressive: 0.45
           pitch:
-            base: -0.6
-            progressive: 0.3
+            base: -0.3
+            progressive: 0.25
           yaw:
-            base: 1.2
+            base: 1
         wall:
           north:
             extent: 1
@@ -303,20 +281,26 @@ by-key:
               parameters:
                 layout:
                   translation:
-                    early: [-0.2, -3, 0]
+                    early: [0.5, -2, -1]
                   pitch:
-                    intrinsic: -0.35
+                    intrinsic: -0.3
+                  yaw:
+                    intrinsic: -0.05
             "1":
               parameters:
                 layout:
                   translation:
-                    early: [-1, 0, 0]
+                    early: [-1, 1, 0]
+                  yaw:
+                    intrinsic: 0.1
                 wall:
                   north:
                     extent: 0
         "1":
           parameters:
             layout:
+              pitch:
+                progressive: 0.37
               translation:
                 mid: [0, 3, 0]
             wall:
@@ -336,7 +320,7 @@ by-key:
                     extent: 0
                     perpendicular: -14
                   south:
-                    extent: 4
+                    extent: 1
                     perpendicular: -14
             "1":
               parameters:
@@ -353,14 +337,18 @@ by-key:
               parameters:
                 layout:
                   translation:
-                    early: [0.2, -3, 0]
+                    early: [-0.5, -1.5, -1]
                   pitch:
-                    intrinsic: -0.35
+                    intrinsic: -0.3
+                  yaw:
+                    intrinsic: 0.05
             "1":
               parameters:
                 layout:
                   translation:
-                    early: [1, 0, 0]
+                    early: [1, 1, 0]
+                  yaw:
+                    intrinsic: -0.1
     aux0:
       parameters:
         layout:
@@ -387,9 +375,9 @@ case:
     position:
       offsets:
         north: 15
-        east: -2
+        east: -0.7
         south: 3
-    height: 46.1
+    height: 43.7
     fasteners:
       diameter: 6
       bosses: true
@@ -398,7 +386,7 @@ case:
         offset: 0
       east:
         include: true
-        offset: -15
+        offset: -13
   back-plate:
     include: false
     beam-height: 20
@@ -410,6 +398,7 @@ case:
       offset: [0, 0, 0]
   bottom-plate:
     include: true
+    thickness: 0.8
     installation:
       fasteners:
         diameter: 3
@@ -527,10 +516,22 @@ case:
       - [m2, SSE, 3, 4]
     - [t4, ESE, 4]
     - [m2, ESE, 3, 4]
-    - [t4, SSW, 4]
+  # The low eastern plate:
+  - chunk-size: 3
+    hull-around:
+    - hull-around:
+      - [t4, SSE, 0, 1]
+      - [t4, SSW, 0, 1]
+    - [a0, NNW, 0]
+    - [t4, SSE, 3, 4]
+    - hull-around:
+      - [a0, NNE, 0, 1]
+      - [a0, ENE, 0, 1]
+    - hull-around:
+      - [m2, ESE, 3, 4]
+      - [m2, SSE, 3, 4]
     - [m2, ENE, 3, 4]
     - [a0, ENE, 0, 1]
-    - [m2, ENE, 3, 4]
     - [a0, ESE, 0, 1]
   # A triangular southern wall of m2:
   - hull-around:
@@ -549,13 +550,7 @@ case:
     hull-around:
     - [t5, SSW, 0, 1]
     - [t4, SSW, 0, 1]
-    - [a0, NNW, 0]
-    - [t4, SSW, 3, 4]
-    - [a0, NNE, 0, 1]
-  - hull-around:
-    - [a0, WNW, 0]
-    - [a0, WSW, 0]
-    - [t5, WSW, 0, 1]
+    - [a0, WSW, 0, 1]
   # A plate to ground beneath the entire thumb cluster:
   - to-ground: true
     chunk-size: 2
@@ -620,14 +615,14 @@ wrist-rest:
     key-alias: near-right
     offset: [-45, -39.1]
   shape:
-    plinth-base-size: [66, 82, 36]
-    chamfer: 3
-    lip-height: 2
+    plinth-base-size: [69, 78, 14.5]
+    chamfer: 2.5
+    lip-height: 1.5
     pad:
       height:
-        surface-range: 28
-        lip-to-surface: 3
-        below-lip: 4
+        surface-range: 22
+        lip-to-surface: 2.5
+        below-lip: 3
   bottom-plate:
     include: true
     fastener-positions:

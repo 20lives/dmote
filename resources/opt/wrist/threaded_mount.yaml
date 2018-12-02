@@ -10,20 +10,20 @@ wrist-rest:
   style: threaded
   position:
     style: threaded-mount
-    offset: [-4, 4.5]
+    offset: [-3.6, 4.5]
   fasteners:
     angle: -0.5
     amount: 1
     diameter: 6
     length: 25
     height:
-      first: 12
+      first: 4.5
     mounts:
       width: 15
       case-side:
         key-alias: m2
-        offset: [-1, -23.5]
-        depth: 6
+        offset: [-3.5, -30]
+        depth: 5
       plinth-side:
         depth: 9.8
         pocket-height: -100
