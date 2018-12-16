@@ -6,6 +6,7 @@
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/tools.cli "0.3.7"]
                  [org.flatland/ordered "1.5.7"]
+                 [thi.ng/geom "1.0.0-RC3"]
                  [clj-yaml "0.4.0"]
                  [scad-clj "0.5.3"]
                  [scad-tarmi "0.2.0-SNAPSHOT"]]

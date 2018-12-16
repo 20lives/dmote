@@ -9,23 +9,21 @@
             [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.param.base :as base]
             [dactyl-keyboard.param.schema :as schema]
+            [dactyl-keyboard.param.tree.cluster :as cluster]
             [dactyl-keyboard.param.tree.nested :as nested]
-            [dactyl-keyboard.param.tree.cluster :as cluster]))
+            [dactyl-keyboard.param.tree.restmnt :as restmnt]))
 
 
 ;; Though this module describes the main body of parameters, it contains
 ;; within it certain sections specified elsewhere. Validators for these
-;; sections are created from the detailed specifications and applied here.
+;; sections are created from the detailed specifications by delegation.
 
-(spec/def ::parameters
-  #(some? (base/validate-branch (:parameters (base/inflate nested/raws)) %)))
+(spec/def ::parameters (base/delegated-validation nested/raws))
 (spec/def ::individual-row (spec/keys :opt-un [::parameters]))
 (spec/def ::rows (spec/map-of ::flexcoord ::individual-row))
 (spec/def ::individual-column (spec/keys :opt-un [::rows ::parameters]))
 (spec/def ::columns (spec/map-of ::flexcoord ::individual-column))
-(spec/def ::individual-cluster-overrides
-  (spec/keys :opt-un [::columns ::parameters]))
-(spec/def ::clusters ::individual-cluster-overrides)
+(spec/def ::overrides (spec/keys :opt-un [::columns ::parameters]))
 
 (def raws
   "A flat version of the specification for a complete user configuration.
@@ -71,24 +69,45 @@
     {:heading-template "Special section `%s`"
      :default {:main {:matrix-columns [{:rows-below-home 0}]
                       :aliases {:origin [0 0]}}}
-     :parse-fn schema/parse-key-clusters
+     :parse-fn (schema/map-of keyword
+                 (base/delegated-inclusive cluster/raws))
      :validate [(spec/map-of
                   ::schema/key-cluster
-                  #(some? (base/validate-branch (base/inflate cluster/raws) %)))]}
+                  (base/delegated-validation cluster/raws))]}
     "This section describes the general size, shape and position of "
     "the clusters of keys on the keyboard, each in its own subsection. "
     "It is documented in detail [here](options-clusters.md)."]
-   [:parameter [:by-key]
-    {:heading-template "Special nesting section `%s`"
-     :default (base/extract-defaults nested/raws)
-     :parse-fn (schema/map-like {:parameters identity
-                                 :clusters schema/parse-by-key-overrides})
-     :resolve-fn base/soft-defaults
-     :validate [(spec/keys :opt-un [::parameters ::clusters])]}
-    "This section is built like an onion. Each layer of settings inside it "
+   [:section [:by-key]
+    "This section repeats. Each level of settings inside it "
     "is more specific to a smaller part of the keyboard, eventually reaching "
     "the level of individual keys. It’s all documented "
     "[here](options-nested.md)."]
+   [:parameter [:by-key :parameters]
+    {:heading-template "Special recurring section `%s`"
+     :default (base/extract-defaults nested/raws)
+     :parse-fn (base/delegated-inclusive nested/raws)
+     :validate [(base/delegated-validation nested/raws)]}
+    "Default values at the global level."]
+   [:parameter [:by-key :clusters]
+    (let [rep (base/delegated-soft nested/raws)]
+      {:heading-template "Special section `%s` ← overrides go in here"
+       :default {}
+       :parse-fn (schema/map-of
+                   keyword
+                   (schema/map-like
+                     {:parameters rep
+                      :columns
+                       (schema/map-of
+                         schema/keyword-or-integer
+                         (schema/map-like
+                           {:parameters rep
+                            :rows
+                              (schema/map-of
+                                schema/keyword-or-integer
+                                (schema/map-like {:parameters rep}))}))}))
+       :validate [(spec/map-of ::schema/key-cluster ::overrides)]})
+    "Starting here, you gradually descend from the global level "
+    "toward the key level."]
    [:section [:case]
     "Much of the keyboard case is generated from the `wall` parameters "
     "described [here](options-nested.md). "
@@ -199,7 +218,7 @@
     "If `true`, cut nut bosses into the inside wall of the block."]
    [:section [:case :back-plate :position]
     "The block is positioned in relation to a key mount."]
-   [:parameter [:case :back-plate :position :key-alias]
+   [:parameter [:case :back-plate :position :anchor]
     {:default :origin :parse-fn keyword}
     "A named key where the block will attach. The vertical component of its "
     "position will be ignored."]
@@ -412,15 +431,15 @@
    [:parameter [:mcu :position :prefer-rear-housing]
     {:default true :parse-fn boolean}
     "If `true` and `rear-housing` is included, place the MCU in relation to "
-    "the rear housing. Otherwise, place the MCU in relation to a key mount "
-    "identified by `key-alias`."]
-   [:parameter [:mcu :position :key-alias]
+    "the rear housing. Otherwise, place the MCU in relation to a named feature "
+    "identified by `anchor`."]
+   [:parameter [:mcu :position :anchor]
     {:default :origin :parse-fn keyword}
     "The name of a key at which to place the MCU if `prefer-rear-housing` "
     "is `false` or rear housing is not included."]
    [:parameter [:mcu :position :corner]
     {:default "ENE" :parse-fn schema/string-corner :validate [::schema/corner]}
-    "A code for a corner of the rear housing or of `key-alias`. "
+    "A code for a corner of the `anchor` feature. "
     "This determines both the location and facing of the MCU."]
    [:parameter [:mcu :position :offset]
     {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
@@ -497,7 +516,7 @@
     "longer than this."]
    [:section [:mcu :support :stop]
     "Parameters relevant only with a `stop`-style support."]
-   [:parameter [:mcu :support :stop :key-alias]
+   [:parameter [:mcu :support :stop :anchor]
     {:default :origin :parse-fn keyword}
     "The name of a key where a stop will start to attach itself."]
    [:parameter [:mcu :support :stop :direction]
@@ -530,7 +549,7 @@
     "Where to place the socket. Equivalent to `connection` → `mcu`."]
    [:parameter [:connection :position :prefer-rear-housing]
     {:default true :parse-fn boolean}]
-   [:parameter [:connection :position :key-alias]
+   [:parameter [:connection :position :anchor]
     {:default :origin :parse-fn keyword}]
    [:parameter [:connection :position :corner]
     {:default "ENE" :parse-fn schema/string-corner :validate [::schema/corner]}]
@@ -551,16 +570,9 @@
    [:parameter [:wrist-rest :style]
     {:default :threaded :parse-fn keyword :validate [::schema/wrist-rest-style]}
     "The style of the wrist rest. Available styles are:\n\n"
-    "- `threaded`: threaded fasteners connect the case and wrist rest. "
-    "This works with a great variety of keyboard shapes and will allow "
-    "adjusting the position of the wrist rest for different hands.\n"
-    "- `solid`: a printed plastic bridge along the ground as part of the "
-    "model. This has more limitations, both in manufacture and in use. "
-    "It includes a hook on the near outward side of the case, which will only "
-    "be useful if the case wall at that point is short and the wrist rest is "
-    "attached to a key cluster whose third column (column 2) is positioned "
-    "and walled in such a way that the solid bridge can be "
-    "wedged between the hook and the column."]
+    "- `threaded`: threaded fasteners connect the case and wrist rest.\n"
+    "- `solid`: the case and wrist rest are one piece. This option is a work "
+    "in progress."]
    [:parameter [:wrist-rest :preview]
     {:default false :parse-fn boolean}
     "Preview mode. If `true`, this puts a model of the wrist rest in the same "
@@ -568,55 +580,69 @@
     "distance, not for printing."]
    [:section [:wrist-rest :position]
     "The wrist rest is positioned in relation to something."]
-   [:parameter [:wrist-rest :position :style]
-    {:default :key :parse-fn keyword :validate [::schema/wrist-position-style]}
-    "One of:\n\n"
-    "- `key`: The wrist rest is positioned in relation to a specific key, "
-    "which must be named using the `key-alias` parameter below.\n"
-    "- `threaded-mount`: The plinth (main body) of the wrist rest is "
-    "positioned in relation to the plinth-side mount for threaded fasteners, "
-    "as used in the `threaded` style of wrist rest. Using `threaded-mount` "
-    "without `threaded` is an error."]
-   [:parameter [:wrist-rest :position :key-alias]
+   [:parameter [:wrist-rest :position :anchor]
     {:default :origin :parse-fn keyword}
-    "A named key where the wrist rest will attach in the `key` position style. "
+    "A named key where the wrist rest will attach. "
     "The vertical component of its position will be ignored."]
+   [:parameter [:wrist-rest :position :corner]
+    {:default "ENE" :parse-fn schema/string-corner :validate [::schema/corner]}
+    "A corner of the key named in `anchor`."]
    [:parameter [:wrist-rest :position :offset]
     {:default [0 0] :parse-fn vec}
-    "An offset in mm from the selected key (`key` style) or the plinth-side "
-    "mount (`threaded-mount` style) to the nominally northwest corner of the "
-    "plinth, the main body of the wrist rest."]
+    "An offset in mm from the selected key (`key` style) or from the rest-side "
+    "mount (`threaded-mount` style) to the origin of the coordinate system "
+    "used for points that define the shape of the wrist rest."]
+   [:parameter [:wrist-rest :plinth-height]
+    {:default 1 :parse-fn num}
+    "The average height of the plastic plinth in mm, at its upper lip."]
    [:section [:wrist-rest :shape]
     "The wrist rest needs to fit the user’s hand."]
-   [:parameter [:wrist-rest :shape :plinth-base-size]
-    {:default [1 1 1] :parse-fn vec :validate [::schema/point-3d]}
-    "The size of the plinth up to but not including the narrowing upper lip "
-    "and rubber parts."]
-   [:parameter [:wrist-rest :shape :chamfer]
+   [:section [:wrist-rest :shape :spline]
+    "The horizontal outline of the wrist rest is a closed spline."]
+   [:parameter [:wrist-rest :shape :spline :main-points]
+    {:default []
+     :parse-fn schema/nameable-spline
+     :validate [::schema/nameable-spline]}
+    "A list of nameable points, in clockwise order. The spline will pass "
+    "through all of these and then return to the first one. Each point can "
+    "have two properties:\n\n"
+    "- `position`: A pair of coordinates, in mm, relative to other points in "
+    "the list. This property is required.\n"
+    "- `alias`: A name given to the specific point, for the purpose of "
+    "placing yet more things in relation to it. This is optional."]
+   [:parameter [:wrist-rest :shape :spline :resolution]
     {:default 1 :parse-fn num}
-    "A distance in mm. The plinth is shrunk and then regrown by this much to "
-    "chamfer its corners."]
-   [:parameter [:wrist-rest :shape :lip-height]
-    {:default 1 :parse-fn num}
-    "The height of a narrowing, printed lip between the base of the plinth "
-    "and the rubber part."]
+    "The amount of vertices per main point. The default is 1. If 1, only the "
+    "main points themselves will be used, giving you full control. A higher "
+    "number gives you smoother curves.\n\n"
+    "If you want the closing part of the curve to look smooth in high "
+    "resolution, position your main points carefully."]
+   [:section [:wrist-rest :shape :lip]
+    "The lip is the uppermost part of the plinth, lining and supporting the "
+    "edge of the pad. Its dimensions are described here in mm away from the "
+    "pad."]
+   [:parameter [:wrist-rest :shape :lip :height]
+    {:default 1 :parse-fn num} "The vertical extent of the lip."]
+   [:parameter [:wrist-rest :shape :lip :width]
+    {:default 1 :parse-fn num} "The horizontal width of the lip at its top."]
+   [:parameter [:wrist-rest :shape :lip :inset]
+    {:default 0 :parse-fn num}
+    "The difference in width between the top and bottom of the lip. "
+    "A small negative value will make the lip thicker at the bottom. This is "
+    "recommended for fitting a silicone mould."]
    [:section [:wrist-rest :shape :pad]
     "The top of the wrist rest should be printed or cast in a soft material, "
     "such as silicone rubber."]
-   [:parameter [:wrist-rest :shape :pad :surface-heightmap]
-    {:default (file ".." ".." "resources" "heightmap" "default.dat")}
-    "A filepath. The path, and file, will be interpreted by OpenScad, using "
-    "its [`surface()` function](https://en.wikibooks.org/wiki/"
-    "OpenSCAD_User_Manual/Other_Language_Features#Surface).\n\n"
-    "The file should contain a heightmap to describe the surface of the "
-    "rubber pad."]
+   [:section [:wrist-rest :shape :pad :surface]
+    "The upper surface of the pad, which will be in direct contact with "
+    "the user’s palm or wrist."]
    [:section [:wrist-rest :shape :pad :height]
     "The piece of rubber extends a certain distance up into the air and down "
     "into the plinth. All measurements in mm."]
    [:parameter [:wrist-rest :shape :pad :height :surface-range]
     {:default 1 :parse-fn num}
-    "The vertical range of the heightmap. Whatever values are in "
-    "the heightmap will be normalized to this scale."]
+    "The vertical range of the upper surface. Whatever values are in "
+    "a heightmap will be normalized to this scale."]
    [:parameter [:wrist-rest :shape :pad :height :lip-to-surface]
     {:default 1 :parse-fn num}
     "The part of the rubber pad between the top of the lip and the point "
@@ -627,104 +653,49 @@
     {:default 1 :parse-fn num}
     "The depth of the rubber wrist support, measured from the top of the lip, "
     "going down into the plinth. This part of the pad just keeps it in place."]
-   [:section [:wrist-rest :fasteners]
-    "This is only relevant with the `threaded` style of wrist rest."]
-   [:parameter [:wrist-rest :fasteners :angle]
+   [:section [:wrist-rest :shape :pad :surface :edge]
+    "The edge of the pad can be rounded."]
+   [:parameter [:wrist-rest :shape :pad :surface :edge :inset]
     {:default 0 :parse-fn num}
-    "The angle in radians of the fasteners, on the xy plane, from the y axis. "
-    "This parameter is only used with `threaded-mount` as your "
-    "`position` → `style` setting, otherwise the angle is calculated from "
-    "other settings."]
-   [:parameter [:wrist-rest :fasteners :amount]
-    {:default 1 :parse-fn int}
-    "The number of fasteners connecting each case to its wrist rest."]
-   [:parameter [:wrist-rest :fasteners :diameter]
-    {:default 6 :parse-fn int :validate [::threaded/iso-nominal]}
-    "The ISO metric diameter of each fastener."]
-   [:parameter [:wrist-rest :fasteners :length]
-    {:default 1 :parse-fn int} "The length in mm of each fastener."]
-   [:section [:wrist-rest :fasteners :height]
-    "The vertical level of the fasteners."]
-   [:parameter [:wrist-rest :fasteners :height :first]
-    {:default 0 :parse-fn int}
-    "The distance in mm from the bottom of the first fastener "
-    "down to the ground level of the model."]
-   [:parameter [:wrist-rest :fasteners :height :increment]
-    {:default 0 :parse-fn num}
-    "The vertical distance in mm from the center of each fastener to the "
-    "center of the next."]
-   [:section [:wrist-rest :fasteners :mounts]
-    "The mounts, or anchor points, for each fastener on each side."]
-   [:parameter [:wrist-rest :fasteners :mounts :distance]
-    {:default 0 :parse-fn num}
-    "The distance in mm between the two mounts. "
-    "This parameter is only used with `threaded-mount` as your "
-    "`position` → `style` setting, otherwise the distance is a "
-    "consequence of fastener `length` and wrist-rest `offset`."]
-   [:parameter [:wrist-rest :fasteners :mounts :width]
+    "The horizontal extent of softening. This cannot be more than half the "
+    "width of the outline, as determined by `main-points`, at its narrowest "
+    "part."]
+   [:parameter [:wrist-rest :shape :pad :surface :edge :resolution]
     {:default 1 :parse-fn num}
-    "The width in mm of the face or front bezel on each "
-    "connecting block that will anchor a fastener."]
-   [:section [:wrist-rest :fasteners :mounts :case-side]
-    "The side of the keyboard case."]
-   [:parameter [:wrist-rest :fasteners :mounts :case-side :key-alias]
-    {:default :origin :parse-fn keyword}
-    "A named key. A mount point on the case side will be placed near this key."]
-   [:parameter [:wrist-rest :fasteners :mounts :case-side :offset]
-    {:default [0 0] :parse-fn vec}
-    "An two-dimensional vector offset in mm from the key to the mount."]
-   [:parameter [:wrist-rest :fasteners :mounts :case-side :depth]
-    {:default 1 :parse-fn num}
-    "The thickness of the mount in mm along the axis of the fastener(s)."]
-   [:section [:wrist-rest :fasteners :mounts :case-side :nuts]
-    "Extra features for threaded nuts on the case side."]
-   [:section [:wrist-rest :fasteners :mounts :case-side :nuts :bosses]
-    "Nut bosses on the rear (interior) of the mount. You may want this if the "
-    "distance between case and plinth is big enough for a nut. If that "
-    "distance is too small, bosses can be counterproductive."]
-   [:parameter [:wrist-rest :fasteners :mounts :case-side :nuts :bosses :include]
+    "The number of faces on the edge between horizontal points."]
+   [:section [:wrist-rest :shape :pad :surface :heightmap]
+    "The surface can optionally be modified by the [`surface()` function]"
+    "(https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/"
+    "Other_Language_Features#Surface), which requires a heightmap file."]
+   [:parameter [:wrist-rest :shape :pad :surface :heightmap :include]
     {:default false :parse-fn boolean}
-    "If `true`, include bosses."]
-   [:section [:wrist-rest :fasteners :mounts :plinth-side]
-    "The side of the wrist rest."]
-   [:parameter [:wrist-rest :fasteners :mounts :plinth-side :offset]
-    {:default [0 0] :parse-fn vec}
-    "An offset in mm from the corner of the plinth to the fastener mount "
-    "point attached to the plinth. This is ignored with `threaded-mount` as "
-    "your `position` → `style` setting."]
-   [:parameter [:wrist-rest :fasteners :mounts :plinth-side :depth]
-    {:default 1 :parse-fn num}
-    "The thickness of the mount in mm along the axis of the fastener(s). "
-    "This is typically larger than the case-side depth to allow adjustment."]
-   [:parameter [:wrist-rest :fasteners :mounts :plinth-side :pocket-height]
+    "If `true`, use a heightmap. The map will intersect the basic pad "
+    "polyhedron."]
+   [:parameter [:wrist-rest :shape :pad :surface :heightmap :filepath]
+    {:default (file ".." ".." "resources" "heightmap" "default.dat")}
+    "The file identified here should contain a heightmap in a format OpenSCAD "
+    "can understand. The path should also be resolvable by OpenSCAD."]
+   [:section [:wrist-rest :rotation]
+    "The wrist rest can be rotated to align its pad with the user’s palm."]
+   [:parameter [:wrist-rest :rotation :pitch]
     {:default 0 :parse-fn num}
-    "The height of the nut pocket inside the mounting plate, in mm.\n\n"
-    "With a large positive value, this will provide a chute for the nut(s) "
-    "to go in from the top of the plinth, which allows you to hide the hole "
-    "beneath the pad. With a large negative value, the pocket will "
-    "instead open from the bottom, which is convenient if `depth` is small. "
-    "With a small value or the default value of zero, it will be necessary to "
-    "pause printing in order to insert the nut(s); this last option is "
-    "therefore recommended for advanced users only."]
-   [:section [:wrist-rest :solid-bridge]
-    "This is only relevant with the `solid` style of wrist rest."]
-   [:parameter [:wrist-rest :solid-bridge :width]
-    {:default 1 :parse-fn num}
-    "The width in mm of the land bridge between the case and the plinth.\n"
-    "\n"
-    "On the right-hand side of the keyboard, the bridge starts from the wrist "
-    "rest `key-alias` and extends this many mm to the left.\n"
-    "\n"
-    "The value of this parameter, and the shape of the keyboard case, should "
-    "be arranged in a such a way that the land bridge is wedged in place by a "
-    "vertical wall on that left side."]
-   [:parameter [:wrist-rest :solid-bridge :height]
-    {:default 1 :parse-fn num}
-    "The height in mm of the land bridge between the case and the plinth."]
+    "Tait-Bryan pitch."]
+   [:parameter [:wrist-rest :rotation :roll]
+    {:default 0 :parse-fn num}
+    "Tait-Bryan roll."]
+   [:parameter [:wrist-rest :mounts]
+    {:heading-template "Special section `%s`"
+     :default []
+     :parse-fn (schema/tuple-of (base/delegated-inclusive restmnt/raws))
+     :validate [(spec/coll-of (base/delegated-validation restmnt/raws))]}
+    "A list of mounts for threaded fasteners. Each such mount will include at "
+    "least one cuboid block for at least one screw that connects the wrist "
+    "rest to the case. "
+    "This section is used only with the `threaded` style of wrist rest."]
    [:section [:wrist-rest :bottom-plate]
     "The equivalent of the case `bottom-plate` parameter. If included, "
-    "bottom plates for the wrist rests use the `thickness` configured for "
-    "those of the case.\n"
+    "a bottom plate for a wrist rest uses the `thickness` configured for "
+    "the bottom of the case.\n"
     "\n"
     "Bottom plates for the wrist rests have no ESDS electronics to "
     "protect but serve other purposes: Covering nut pockets, silicone "
@@ -733,14 +704,26 @@
    [:parameter [:wrist-rest :bottom-plate :include]
     {:default false :parse-fn boolean}
     "Whether to include a bottom plate for each wrist rest."]
+   [:parameter [:wrist-rest :bottom-plate :inset]
+    {:default 0 :parse-fn num}
+    "The horizontal distance between the perimeter of the wrist rest and the "
+    "default position of each threaded fastener connecting it to its "
+    "bottom plate."]
    [:parameter [:wrist-rest :bottom-plate :fastener-positions]
     {:default [] :parse-fn schema/anchored-2d-positions
      :validate [::schema/plate-screw-positions]}
     "The positions of threaded fasteners used to attach the bottom plate to "
     "its wrist rest. The syntax of this parameter is precisely the same as "
-    "for the case’s bottom-plate fasteners. Other properties used for these "
-    "fasteners are determined by settings for the case, except that no "
-    "positive housings will be created because the plinth itself is solid."]
+    "for the case’s bottom-plate fasteners. Corners are ignored and the "
+    "starting position is inset from the perimeter of the wrist rest by the "
+    "`inset` parameter above, before any offset stated here is applied.\n\n"
+    "Other properties of these fasteners are determined by settings for the "
+    "case, though no positive housings will be created because the "
+    "plinth itself is solid."]
+   [:parameter [:wrist-rest :mould-thickness]
+    {:default 1 :parse-fn num}
+    "The thickness in mm of the walls and floor of the mould to be used for "
+    "casting the rubber pad."]
    [:section [:dfm]
     "Settings for design for manufacturability (DFM)."]
    [:parameter [:dfm :error]
@@ -754,7 +737,7 @@
     "This application will try to compensate for the error, though only for "
     "certain sensitive inserts, not for the case as a whole."]
    [:section [:mask]
-    "A box limits the entire shape, cutting off any projecting byproducts of "
+    "A box limits the entire shape, cutting off any projecting by-products of "
     "the algorithms. By resizing and moving this box, you can select a "
     "subsection for printing. You might want this while you are printing "
     "prototypes for a new style of switch, MCU support etc."]

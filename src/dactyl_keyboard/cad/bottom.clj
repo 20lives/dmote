@@ -16,7 +16,8 @@
             [dactyl-keyboard.cad.key :as key]
             [dactyl-keyboard.cad.body :as body]
             [dactyl-keyboard.cad.wrist :as wrist]
-            [dactyl-keyboard.param.access :refer [most-specific]]))
+            [dactyl-keyboard.param.access :refer [most-specific
+                                                  get-key-alias]]))
 
 
 ;;;;;;;;;;;
@@ -85,8 +86,11 @@
   "Place instances of named module according to user configuration."
   [getopt part module-name]
   (apply maybe/union
-    (map (fn [position]
-           (model/translate (conj (place/reckon-2d-offset getopt position) 0)
+    (map (fn [raw]
+           (model/translate
+             (misc/z0 (place/offset-from-anchor getopt
+                        (assoc raw :outline-key :bottom)
+                        2))
              (model/call-module module-name)))
          (case part
            :case (getopt :case :bottom-plate :installation :fasteners :positions)
@@ -152,8 +156,7 @@
   [getopt segment-picker bottom
    [key-alias directions first-segment last-segment]]
   {:post [(spec/valid? ::point-2d %)]}
-  (let [keyinfo (getopt :key-clusters :derived :aliases key-alias)
-        {:keys [cluster coordinates]} keyinfo
+  (let [{:keys [cluster coordinates]} (get-key-alias getopt key-alias)
         segment (segment-picker (range first-segment (inc last-segment)))]
     (take 2 (place/cluster-segment-reckon
               getopt cluster coordinates directions segment bottom))))
@@ -209,7 +212,7 @@
       (housing-floor-polygon getopt))
     (when (and (getopt :wrist-rest :include)
                (= (getopt :wrist-rest :style) :threaded))
-      (model/cut (wrist/case-plate getopt)))))
+      (model/cut (wrist/all-case-blocks getopt)))))
 
 (defn case-positive
   "A model of a bottom plate for the entire case but not the wrist rests.
@@ -220,7 +223,7 @@
       (case-positive-2d getopt)
       (when (and (getopt :wrist-rest :include)
                  (= (getopt :wrist-rest :style) :threaded))
-        (model/cut (wrist/case-plate getopt))))))
+        (model/cut (wrist/all-case-blocks getopt))))))
 
 (defn case-negative
   "Just the holes that go into both the case bottom plate and the case body."
@@ -240,10 +243,10 @@
 ;;;;;;;;;;;;;;;;;
 
 (defn- wrist-positive-2d [getopt]
-  (model/cut (wrist/plinth-maquette getopt)))
+  (model/cut (wrist/unified-preview getopt)))
 
 (defn wrist-positive
-  "3d wrist-rest bottom plate without screw holes."
+  "3D wrist-rest bottom plate without screw holes."
   [getopt]
   (to-3d getopt (wrist-positive-2d getopt)))
 
@@ -274,9 +277,12 @@
   (to-3d getopt
     (model/union
       (case-positive-2d getopt)
-      (model/hull
-        (model/cut (wrist/case-plate getopt))
-        (model/cut (wrist/plinth-plate getopt)))
+      (apply model/union
+        (reduce
+          (fn [coll pair]
+            (conj coll (apply model/hull (map model/cut pair))))
+          []
+          (wrist/block-pairs getopt)))
       (wrist-positive-2d getopt))))
 
 (defn combined-negative

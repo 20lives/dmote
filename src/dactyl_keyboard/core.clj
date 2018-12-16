@@ -42,6 +42,7 @@
       :main dactyl-keyboard.param.tree.main/raws
       :clusters dactyl-keyboard.param.tree.cluster/raws
       :nested dactyl-keyboard.param.tree.nested/raws
+      :wrist-rest-mounts dactyl-keyboard.param.tree.restmnt/raws
       (do (println "ERROR: Unknown section of parameters.")
           (System/exit 1))))
   (println)
@@ -68,10 +69,9 @@
               (key/metacluster key/cluster-plates getopt)
               (key/metacluster body/cluster-web getopt)
               (key/metacluster body/cluster-wall getopt)
-              (when (getopt :wrist-rest :include)
-                (case (getopt :wrist-rest :style)
-                  :solid (wrist/case-hook getopt)
-                  :threaded (wrist/case-plate getopt)))
+              (when (and (getopt :wrist-rest :include)
+                         (= (getopt :wrist-rest :style) :threaded))
+                (wrist/all-case-blocks getopt))
               (when (= (getopt :mcu :support :style) :stop)
                 (aux/mcu-stop getopt))
               (aux/connection-positive getopt)
@@ -115,7 +115,7 @@
             (aux/backplate-fastener-holes getopt))
           (when (and (getopt :wrist-rest :include)
                      (= (getopt :wrist-rest :style) :threaded))
-            (wrist/threaded-fasteners getopt))
+            (wrist/all-fasteners getopt))
           (sandbox/negative getopt))
         ;; Outer positives, subject only to outer negatives:
         (when (= (getopt :switches :style) :mx)
@@ -151,6 +151,34 @@
     (when (getopt :wrist-rest :bottom-plate :include)
       (bottom/wrist-negative getopt))))
 
+(defn- collect-anchors
+  "Gather names and properties for the placement of keyboard features relative
+  to one another."
+  [getopt]
+  {:anchors (merge {:origin {:type :origin}
+                    :rear-housing {:type :rear-housing}}
+                   (key/collect-key-aliases getopt)
+                   (wrist/collect-point-aliases getopt)
+                   (wrist/collect-block-aliases getopt))})
+
+(def derivers-static
+  "A vector of configuration locations and functions for expanding them."
+  ;; Mind the order. One of these may depend upon earlier steps.
+  [[[:dfm] (fn [getopt] {:compensator (error-fn (getopt :dfm :error))})]
+   [[:key-clusters] key/derive-cluster-properties]
+   [[] collect-anchors]
+   [[:keycaps] key/keycap-properties]
+   [[:switches] key/keyswitch-dimensions]
+   [[:case :rear-housing] body/housing-properties]
+   [[:mcu] aux/derive-mcu-properties]
+   [[:wrist-rest] wrist/derive-properties]])
+
+(defn derivers-dynamic
+  "Additions for more varied parts of a configuration."
+  [getopt]
+  (for [i (range (count (getopt :wrist-rest :mounts)))]
+       [[:wrist-rest :mounts i] #(wrist/derive-mount-properties % i)]))
+
 (defn enrich-option-metadata
   "Derive certain properties that are implicit in the user configuration.
   Use a gradually expanding but temporary build option accessor.
@@ -163,15 +191,8 @@
         (assoc-in coll (conj path :derived)
                        (callable (access/option-accessor coll)))))
     build-options
-    ;; Mind the order. One of these may depend upon earlier steps.
-    [[[:dfm] (fn [getopt] {:compensator (error-fn (getopt :dfm :error))})]
-     [[:key-clusters] key/derive-cluster-properties]
-     [[:key-clusters] key/derive-resolved-aliases]
-     [[:keycaps] key/keycap-properties]
-     [[:switches] key/keyswitch-dimensions]
-     [[:case :rear-housing] body/housing-properties]
-     [[:mcu] aux/derive-mcu-properties]
-     [[:wrist-rest] wrist/derive-properties]]))
+    (concat derivers-static
+            (derivers-dynamic (access/option-accessor build-options)))))
 
 (defn- from-file
   "Parse raw settings out of a YAML file."
@@ -189,7 +210,7 @@
                (map from-file (:configuration-file options)))]
    (if debug
      (pprint-settings "Received settings without built-in defaults:" raws))
-   (let [validated (access/validate-configuration raws)]
+   (let [validated (access/checked-configuration raws)]
     (if debug (pprint-settings "Resolved and validated settings:" validated))
     (access/option-accessor (enrich-option-metadata validated)))))
 

@@ -1,0 +1,9 @@
+# Configuration fragment for enabling the bundled wrist-rest height map.
+
+wrist-rest:
+  shape:
+    pad:
+      surface:
+        heightmap:
+          include:
+            true

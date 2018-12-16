@@ -1,0 +1,29 @@
+# Configuration fragment for mutual anchoring.
+
+wrist-rest:
+  include: true
+  style: threaded
+  mounts:
+  - fasteners:
+      diameter: 6
+      length: 50
+      height:
+        first: 4
+        increment: 16
+    anchoring: mutual
+    blocks:
+      width: 15
+      case-side:
+        position:
+          anchor: a0
+          offset: [8, 10]
+        depth: 15
+      plinth-side:
+        position:
+          anchor: plinth-left
+          offset: [10, 4]
+        depth: 9.8
+        pocket-height: -100
+      aliases:
+        wr0c: case-side
+        wr0p: plinth-side

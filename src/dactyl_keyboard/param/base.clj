@@ -24,7 +24,21 @@
     :parameter
       (assoc-in coll path
         (assoc (first metadata) :help (apply str (rest metadata))))
-    (throw (Exception. "Bad type in configuration master."))))
+    (throw (Exception.
+             (format "Bad type in ‘%s’ configuration master." type)))))
+
+(defn inclusive-or
+  "A merge strategy for configuration keys. Use everything.
+  Exposed for unit testing."
+  [nominal candidate]
+  (apply concat (map keys [nominal candidate])))
+
+(defn- explicit-only
+  "A merge strategy using only what the user provides."
+  [nominal candidate]
+  (keys candidate))
+
+(defn- leaf? [node] (spec/valid? ::schema/parameter-spec node))
 
 (defn- hard-defaults
   "Pick a user-supplied value over a default value.
@@ -32,6 +46,20 @@
   and the user configuration, at the leaf level."
   [nominal candidate]
   (or candidate (:default nominal)))
+
+(defn- expand-exception
+  [exception key]
+  (let [data (ex-data exception)
+        new-data (assoc data :keys (cons key (get data :keys ())))]
+   (throw (ex-info (.getMessage exception) new-data))))
+
+(defmacro expand-any-exception
+  [key call]
+  (let [sym (gensym)]
+    `(try
+       ~call
+       (catch clojure.lang.ExceptionInfo ~sym
+         (expand-exception ~sym ~key)))))
 
 
 ;;;;;;;;;;;;;;;
@@ -43,6 +71,7 @@
   This is an alternate method for resolving overlap, intended for use with
   defaults that are so complicated the user will not want to write a complete,
   explicit replacement every time."
+  ;; WARNING: Unused as of v0.3.0 but preserved for possible reuse.
   [nominal candidate]
   (generics/soft-merge (:default nominal) candidate))
 
@@ -52,10 +81,14 @@
   [flat]
   (reduce coalesce (ordered-map) (rest flat)))
 
+
+;; Parsing:
+
 (defn parse-leaf
   "Resolve differences between default values and user-supplied values.
   Run the result through a specified parsing function and return it."
   [nominal candidate]
+  {:pre [(spec/valid? ::schema/parameter-spec nominal)]}
   (let [resolve-fn (get nominal :resolve-fn hard-defaults)
         parse-fn (get nominal :parse-fn identity)
         merged (resolve-fn nominal candidate)]
@@ -63,33 +96,53 @@
      (parse-fn merged)
      (catch Exception e
        (throw (ex-info "Could not cast value to correct data type"
-                        {:type :parsing-error
-                         :raw-value candidate
-                         :merged-value merged
-                         :original-exception e}))))))
+                       {:type :parsing-error
+                        :raw-value candidate
+                        :merged-value merged
+                        :parser parse-fn
+                        :original-exception e}))))))
+
+(declare parse-node)
+
+(defn parse-branch
+  "Parse a section of a configuration received through the UI."
+  [key-picker nominal candidate]
+  (if (map? candidate)
+    (reduce (partial parse-node key-picker nominal)
+            candidate
+            (remove #(= :metadata %) (distinct (key-picker nominal candidate))))
+    (throw (ex-info "Non-mapping section in configuration file"
+                    {:type :structural-error
+                     :raw-value candidate}))))
+
+(defn parse-node
+  "Parse a branch or leaf. Raise an exception on superfluous entries."
+  [key-picker nominal candidate key]
+  {:pre [(not (spec/valid? ::schema/descriptor key))]}
+  (if (contains? nominal key)
+    (expand-any-exception key
+      (assoc candidate key
+        (if (leaf? (key nominal))
+          (parse-leaf (key nominal) (key candidate))
+          (parse-branch key-picker (key nominal) (get candidate key {})))))
+    (throw (ex-info "Superfluous configuration key"
+                    {:type :superfluous-key
+                     :keys (list key)
+                     :accepted-keys (keys nominal)}))))
+
+
+;; Validation:
 
 (declare validate-leaf validate-branch)
 
 (defn validate-node
   "Validate a fragment of a configuration received through the UI."
   [nominal candidate key]
-  (assert (not (spec/valid? ::schema/descriptor key)))
-  (if (contains? nominal key)
-    (if (spec/valid? ::schema/parameter-spec (key nominal))
-      (try
-        (assoc candidate key (validate-leaf (key nominal) (key candidate)))
-        (catch clojure.lang.ExceptionInfo e
-          ;; Add the current key for richer logging at a higher level.
-          ;; This would work better if the call stack were deep.
-          (let [data (ex-data e)
-                keys (get data :keys ())
-                new-data (assoc data :keys (conj keys key))]
-           (throw (ex-info (.getMessage e) new-data)))))
-      (assoc candidate key (validate-branch (key nominal) (key candidate))))
-    (throw (ex-info "Superfluous configuration key"
-                    {:type :superfluous-key
-                     :keys (list key)
-                     :accepted-keys (keys nominal)}))))
+  {:pre [(not (spec/valid? ::schema/descriptor key))]}
+  (expand-any-exception key
+    (if (leaf? (key nominal))
+      (validate-leaf (key nominal) (key candidate))
+      (validate-branch (key nominal) (key candidate)))))
 
 (defn validate-branch
   "Validate a section of a configuration received through the UI."
@@ -103,7 +156,7 @@
   "Validate a specific parameter received through the UI."
   ;; Exposed for unit testing.
   [nominal candidate]
-  (assert (spec/valid? ::schema/parameter-spec nominal))
+  {:pre [(spec/valid? ::schema/parameter-spec nominal)]}
   (reduce
     (fn [unvalidated validator]
       (if (spec/valid? validator unvalidated)
@@ -116,7 +169,33 @@
     (parse-leaf nominal candidate)
     (get nominal :validate [some?])))
 
+
+;; Both/other:
+
+(defn consume-branch
+  "Parse a branch and then validate it.
+  Trust validation failure to raise an exception."
+  [nominal candidate]
+  (let [parsed (parse-branch inclusive-or nominal candidate)]
+    (validate-branch nominal parsed)
+    parsed))
+
+(defn delegated-inclusive
+  "Make a function to parse a branch. Close over its raw specifications."
+  [raws]
+  (fn [candidate] (parse-branch inclusive-or (inflate raws) candidate)))
+
+(defn delegated-soft
+  "Make a function to delegate the parsing of a branch without its defaults."
+  [raws]
+  (fn [candidate] (parse-branch explicit-only (inflate raws) candidate)))
+
+(defn delegated-validation
+  "Make a function to delegate the validation of a branch."
+  [raws]
+  (fn [candidate] (validate-branch (inflate raws) candidate)))
+
 (defn extract-defaults
   "Fetch default values for a broad section of the configuration."
   [flat]
-  (validate-branch (inflate flat) {}))
+  (parse-branch inclusive-or (inflate flat) {}))

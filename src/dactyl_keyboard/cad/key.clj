@@ -124,21 +124,21 @@
   (let [by-cluster (fn [coll key] (assoc coll key (chart-cluster key getopt)))]
    {:by-cluster (reduce by-cluster {} (all-clusters getopt))}))
 
-(defn derive-resolved-aliases
+(defn collect-key-aliases
   "Unify cluster-specific key aliases into a single global map that preserves
   their cluster of origin and resolves symbolic coordinates to absolute values."
   [getopt]
-  {:aliases
-    (into {}
-      (mapcat
-        (fn [cluster]
-          (into {}
-            (map
-              (fn [[alias flex]]
-                [alias {:cluster cluster
-                        :coordinates (resolve-flex getopt cluster flex)}]))
-            (getopt :key-clusters cluster :aliases)))
-        (all-clusters getopt)))})
+  (into {}
+    (mapcat
+      (fn [cluster]
+        (into {}
+          (map
+            (fn [[alias flex]]
+              [alias {:type :key
+                      :cluster cluster
+                      :coordinates (resolve-flex getopt cluster flex)}]))
+          (getopt :key-clusters cluster :aliases)))
+      (all-clusters getopt))))
 
 (defn print-matrix
   "Print a schematic picture of a key cluster. For your REPL."

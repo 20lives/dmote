@@ -10,6 +10,7 @@ switches:
 key-clusters:
   main:
     position:
+      anchor: origin
       offset: [0, 0, 10]
     matrix-columns:
     - rows-above-home: 1
@@ -32,7 +33,7 @@ key-clusters:
       near-right: [last, first]
   thumb:
     position:
-      key-alias: m1
+      anchor: m1
       offset: [-8, -20, 16]
     matrix-columns:
     - rows-above-home: 1
@@ -49,7 +50,7 @@ key-clusters:
       t5: [0, first]
   aux0:
     position:
-      key-alias: t5
+      anchor: t5
       offset: [13, -17, 1]
     matrix-columns:
     - rows-above-home: 0
@@ -394,7 +395,7 @@ case:
       diameter: 6
       distance: 30
     position:
-      key-alias: back
+      anchor: back
       offset: [0, 0, 0]
   bottom-plate:
     include: true
@@ -410,16 +411,16 @@ case:
         - anchor: rear-housing
           corner: NNE
           offset: [-2, -12]
-        - key-alias: far-right
+        - anchor: far-right
           corner: ENE
           offset: [-3, -2]
-        - key-alias: near-right
+        - anchor: near-right
           corner: ESE
           offset: [-3, 2]
-        - key-alias: t5
+        - anchor: t5
           corner: SSW
           offset: [-4, 1]
-        - key-alias: t1
+        - anchor: t1
           corner: NNW
           offset: [1, -4]
   leds:
@@ -577,7 +578,7 @@ mcu:
   margin: 0.25
   position:
     prefer-rear-housing: true
-    key-alias: back
+    anchor: back
     corner: ENE
     offset: [-1, 0, 2]
   support:
@@ -595,7 +596,7 @@ mcu:
         mount-length: 10
         mount-thickness: 6
     stop:
-      key-alias: back
+      anchor: back
       direction: east
       gripper:
         notch-depth: 0.4
@@ -605,35 +606,55 @@ connection:
   socket-size: [10, 11, 17.7]  # 616E minus the vertical bar is 10 mm wide.
   position:
     prefer-rear-housing: true
-    key-alias: back
+    anchor: back
     corner: ENE
     raise: true
 wrist-rest:
   include: false
   position:
-    style: key
-    key-alias: near-right
-    offset: [-45, -39.1]
+    anchor: near-right
+    corner: SSE
+    offset: [20, -45]
+  plinth-height: 2
   shape:
-    plinth-base-size: [69, 78, 14.5]
-    chamfer: 2.5
-    lip-height: 1.5
+    spline:
+      main-points:
+      - position: [0, 22]
+        alias: plinth-left
+      - position: [20, 30]
+      - position: [35, 28]
+      - position: [41, 50]
+      - position: [57, 64]
+      - position: [70, 62]
+        alias: plinth-right
+      - position: [74, 47]
+      - position: [63, 20]
+      - position: [50, 5]
+        alias: plinth-near
+      - position: [30, 0]
+      - position: [3, 2]
+      resolution: 2
+    lip:
+      inset: -0.6
+      height: 1.5
     pad:
       height:
-        surface-range: 22
-        lip-to-surface: 2.5
-        below-lip: 3
+        surface-range: 2
+        lip-to-surface: 3
+        below-lip: 2
+      surface:
+        edge:
+          inset: 8
+          resolution: 5
+  rotation:
+    pitch: 0.05
+    roll: 0.05
   bottom-plate:
     include: true
+    inset: 4
     fastener-positions:
-    - anchor: wrist-rest
-      corner: NNE
-      offset: [-4, -4]
-    - anchor: wrist-rest
-      corner: SSE
-      offset: [-4, 4]
-    - anchor: wrist-rest
-      corner: SSW
-      offset: [4, 4]
+    - anchor: plinth-left
+    - anchor: plinth-near
+    - anchor: plinth-right
 dfm:
   error: -0.5

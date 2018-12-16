@@ -9,14 +9,17 @@
 ;;; a high-level, delegating placement utility that builds on the rest.
 
 (ns dactyl-keyboard.cad.place
-  (:require [scad-clj.model :as model]
+  (:require [clojure.spec.alpha :as spec]
+            [scad-clj.model :as model]
             [scad-tarmi.core :refer [abs]]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.reckon :as reckon]
             [dactyl-keyboard.generics :refer [directions-to-unordered-corner]]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.misc :as misc]
-            [dactyl-keyboard.param.access :refer [most-specific]]))
+            [dactyl-keyboard.param.access :refer [most-specific
+                                                  resolve-anchor]]
+            [dactyl-keyboard.param.schema :as schema]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -97,41 +100,35 @@
    (curver :column 0 :roll #(- %2 %1) (= style :orthographic)
            translate-fn rot-ax-fn getopt cluster coord obj)))
 
-(declare cluster-position)
+(declare reckon-feature)
 
 (defn- cluster-origin-finder
   "Compute 3D coordinates for the middle of a key cluster.
   Return a unary function: A partial translator."
   [translate-fn getopt subject-cluster]
   (let [settings (getopt :key-clusters subject-cluster)
-        {:keys [key-alias offset], :or {offset [0 0 0]}} (:position settings {})
-        from-alias
-          (if key-alias
-            (let [properties (getopt :key-clusters :derived :aliases key-alias)
-                  {:keys [cluster coordinates]} properties]
-             (cluster-position getopt cluster coordinates [0 0 0]))
-            [0 0 0])
-        origin (vec (map + from-alias offset))]
-   (partial translate-fn origin)))
+        {:keys [anchor offset] :or {offset [0 0 0]}} (:position settings)
+        feature (reckon-feature getopt (resolve-anchor getopt anchor))]
+   (partial translate-fn (mapv + feature offset))))
 
 (defn- cluster-base
   "Place and tilt passed ‘subject’ as if into a key cluster."
-  [translate-fn rot-fn getopt cluster coord subject]
+  [translate-fn rotate-fn getopt cluster coord subject]
   (let [[column row] coord
         most #(most-specific getopt (concat [:layout] %) cluster coord)
         center (most [:matrix :neutral :row])
         bridge (cluster-origin-finder translate-fn getopt cluster)]
     (->> subject
          (translate-fn (most [:translation :early]))
-         (rot-fn [(most [:pitch :intrinsic])
-                  (most [:roll :intrinsic])
-                  (most [:yaw :intrinsic])])
-         (put-in-column translate-fn #(rot-fn [%1 0 0] %2) getopt cluster coord)
-         (put-in-row translate-fn #(rot-fn [0 %1 0] %2) getopt cluster coord)
+         (rotate-fn [(most [:pitch :intrinsic])
+                     (most [:roll :intrinsic])
+                     (most [:yaw :intrinsic])])
+         (put-in-column translate-fn #(rotate-fn [%1 0 0] %2) getopt cluster coord)
+         (put-in-row translate-fn #(rotate-fn [0 %1 0] %2) getopt cluster coord)
          (translate-fn (most [:translation :mid]))
-         (rot-fn [(most [:pitch :base])
-                  (most [:roll :base])
-                  (most [:yaw :base])])
+         (rotate-fn [(most [:pitch :base])
+                     (most [:roll :base])
+                     (most [:yaw :base])])
          (translate-fn [0 (* mount-1u center) 0])
          (translate-fn (most [:translation :late]))
          (bridge))))
@@ -189,24 +186,25 @@
   [getopt cluster coordinates
    {:keys [directions segment vertex]
     :or {segment 3, vertex false} :as keyopts}]
-  (vec
-    (map +
-      (if directions
-        (mount-corner-offset getopt directions)
-        [0 0 0])
-      (if directions
-        (wall-segment-offset
-          getopt cluster coordinates (first directions) segment)
-        [0 0 0])
-      (if (and directions vertex)
-        (wall-vertex-offset getopt directions keyopts)
-        [0 0 0]))))
+  (mapv +
+    (if directions
+      (mount-corner-offset getopt directions)
+      [0 0 0])
+    (if directions
+      (wall-segment-offset
+        getopt cluster coordinates (first directions) segment)
+      [0 0 0])
+    (if (and directions vertex)
+      (wall-vertex-offset getopt directions keyopts)
+      [0 0 0])))
 
 (defn wall-corner-position
   "Absolute position of the lower wall around a key mount."
   ([getopt cluster coordinates]
    (wall-corner-position getopt cluster coordinates {}))
   ([getopt cluster coordinates keyopts]
+   {:post [(vector? %)
+           (spec/valid? ::schema/point-3d %)]}
    (cluster-position getopt cluster coordinates
      (wall-corner-offset getopt cluster coordinates keyopts))))
 
@@ -301,7 +299,7 @@
 
 (def housing-reckon
   "Akin to cluster-position but with a rear housing wall segment."
-  (partial housing-placement (partial map +)))
+  (partial housing-placement reckon/translate))
 
 (defn housing-vertex-reckon
   "Find the exact position of a vertex on a housing cube."
@@ -323,47 +321,142 @@
 
 ;; Wrist rests.
 
-(defn wrist-reckon
-  "The position of a corner of a wrist rest’s plinth.
-  Translate the segment range used for keys into a very rough equivalent
-  for the plinth, pretending that, as with the rear housing and key clusters,
-  segments extend outward and downward."
-  [getopt corner segment start]
-  (let [prop (partial getopt :wrist-rest :derived)
-        base (prop (directions-to-unordered-corner corner))
-        {:keys [dx dy]} (matrix/compass-to-grid corner)
-        chamfer (getopt :wrist-rest :shape :chamfer)]
-    (vec (map + start
-                (conj base (case segment, 0 (prop :z2), 1 (prop :z1), 0))
-                (if (= segment 0)
-                  [(* -1 dx chamfer) (* -1 dy chamfer) 0]
-                  [0 0 0])))))
+(defn- wrist-placement
+  "Place passed object like the plinth of the wrist rest."
+  [translate-fn rotate-fn getopt obj]
+  (->>
+    obj
+    (rotate-fn [(getopt :wrist-rest :rotation :pitch)
+                (getopt :wrist-rest :rotation :roll)
+                0])
+    (translate-fn (conj (getopt :wrist-rest :derived :center-2d)
+                        (getopt :wrist-rest :plinth-height)))))
 
+(def wrist-place (partial wrist-placement maybe/translate maybe/rotate))
+
+(def wrist-reckon (partial wrist-placement reckon/translate reckon/rotate))
+
+(defn- remap-outline
+  [getopt base-xy outline-key]
+  (let [index (.indexOf (getopt :wrist-rest :derived :outline :base) base-xy)]
+    (nth (getopt :wrist-rest :derived :outline outline-key) index)))
+
+(defn- wrist-lip-coord
+  [getopt xy outline-key]
+  {:post [(spec/valid? ::schema/point-3d %)]}
+  (let [nxy (remap-outline getopt xy outline-key)]
+    (wrist-reckon getopt (conj nxy (getopt :wrist-rest :derived :z1)))))
+
+(defn wrist-segment-coord
+  "Take an xy coordinate pair as in the 2D wrist-rest spline outline and a
+  segment ID number as for a case wall.
+  Return vertex coordinates for the corresponding point on the plastic plinth
+  of a wrist rest, in its final position.
+  Segments extend outward and downward. Specifically, segment 0 is at
+  the top of the lip, segment 1 is at the base of the lip, segment 2 is at
+  global floor level, and all other segments are well below floor level to
+  ensure that they fall below segment 1 even on a low and tilted rest."
+  [getopt xy segment]
+  {:pre [(vector? xy), (integer? segment)]
+   :post [(spec/valid? ::schema/point-3d %)]}
+  (case segment
+    0 (wrist-reckon getopt (conj xy (getopt :wrist-rest :derived :z2)))
+    1 (wrist-lip-coord getopt xy :lip)
+    (let [[x y z] (wrist-segment-coord getopt xy 1)]
+      [x y (if (= segment 2) 0.0 -100.0)])))
+
+(defn wrist-segment-naive
+  "Use wrist-segment-coord with a layer of translation from the naïve/relative
+  coordinates initially supplied by the user to the derived base.
+  Also support outline keys as an alternative to segment IDs, for bottom-plate
+  fasteners."
+  [getopt naive-xy outline-key segment]
+  (let [translator (getopt :wrist-rest :derived :relative-to-base-fn)
+        aware-xy (translator naive-xy)]
+    (if (some? outline-key)
+      (wrist-lip-coord getopt aware-xy outline-key)
+      (wrist-segment-coord getopt aware-xy segment))))
+
+(defn- wrist-block-placement
+  "Place a block for a wrist-rest mount."
+  ;; TODO: Rework the block model to provide meaningful support for corner and
+  ;; segment. Those parameters are currently ignored.
+  [translate-fn rotate-fn getopt mount-index side-key corner segment obj]
+  {:pre [(integer? mount-index) (keyword? side-key)]}
+  (let [prop (partial getopt :wrist-rest :mounts mount-index :derived)]
+    (->>
+      obj
+      (rotate-fn [0 0 (prop :angle)])
+      (translate-fn (prop side-key)))))
+
+(def wrist-block-place
+  (partial wrist-block-placement maybe/translate maybe/rotate))
+
+(def wrist-block-reckon
+  (partial wrist-block-placement reckon/translate reckon/rotate))
 
 ;; Generalizations.
 
-(defn- key-anchor
-  [getopt {:keys [key-alias corner]}]
-  (let [key (getopt :key-clusters :derived :aliases key-alias)
-        {:keys [cluster coordinates]} key]
-    (wall-corner-position getopt cluster coordinates {:directions corner})))
-
-(defn- reckon-2d-anchor
+(defn- reckon-feature
   "A convenience for placing stuff in relation to other features.
-  Return a vec, for predictably conj’ing a zero onto.
-  The position refers to what would be the middle of the outer wall post of the
-  anchor."
-  [getopt {:keys [anchor corner] :or {anchor :key, segment 0} :as opts}]
-  (vec (take 2
-         (case anchor
-           :key (key-anchor getopt opts)
-           :rear-housing (housing-reckon getopt corner 1 [0 0 0])
-           :wrist-rest (wrist-reckon getopt corner 1 [0 0 0])))))
+  Differents parts of a feature can be targeted with keyword parameters.
+  Return a vector of three numbers.
+  Generally, the vector refers to what would be the middle of the outer wall
+  of a feature. For keys, rear housing and wrist-rest mount blocks, this
+  is the middle of a wall post. For the perimeter of the wrist rest, it’s a
+  vertex on the surface and the corner argument is ignored.
+  Any offset passed to this function will be interpreted in the native context
+  of each feature placement function, with varying results."
+  [getopt {:keys [type  ; Mandatory in all cases.
+                  cluster  ; Keys only.
+                  mount-index side-key  ; Wrist-rest mounts only.
+                  coordinates  ; Keys and wrist-rest perimeter.
+                  outline-key  ; Wrist-rest perimeter only.
+                  corner segment offset]
+           :or {segment 3, offset [0 0 0]}}]
+  {:pre [(keyword? type)
+         (integer? segment)
+         (vector? offset)
+         (spec/valid? ::schema/point-3d offset)]
+   :post [(vector? %)
+          (spec/valid? ::schema/point-3d %)]}
+  (case type
+    :origin offset
+    :rear-housing (housing-reckon getopt corner segment offset)
+    :wr-perimeter (wrist-segment-naive getopt coordinates outline-key segment)
+    :wr-block (wrist-block-reckon getopt mount-index side-key corner segment offset)
+    :key
+      (if (some? corner)
+        ;; Corner named. By default, the target feature is the outermost wall.
+        (wall-corner-position getopt cluster coordinates
+          {:directions corner :segment segment})
+        ;; No corner named. The target feature is the middle of the key mounting plate.
+        (cluster-position getopt cluster coordinates offset))))
 
-(defn reckon-2d-offset
-  "Determine xy coordinates of some other feature with an offset."
-  [getopt {:keys [offset] :or {offset [0 0]} :as opts}]
-  (vec (map + (reckon-2d-anchor getopt opts) offset)))
+(defn reckon-from-anchor
+  "Find a position corresponding to a named point."
+  [getopt anchor extras]
+  {:pre [(keyword? anchor) (map? extras)]}
+  (reckon-feature getopt (merge (resolve-anchor getopt anchor) extras)))
+
+(defn reckon-with-anchor
+  "Produce coordinates for a specific feature using a single map that names
+  an anchor."
+  [getopt {:keys [anchor] :as opts}]
+  {:pre [(keyword? anchor)]}
+  (reckon-from-anchor getopt anchor opts))
+
+(defn offset-from-anchor
+  "Apply an offset from a user configuration to the output of
+  reckon-with-anchor, instead of passing it as an input.
+  The results are typically more predictable than passing the offset to
+  reckon-with-anchor, being simple addition at a late stage.
+  This function also supports explicit 2-dimensional inputs and outputs."
+  [getopt opts dimensions]
+  (let [base-3d (reckon-with-anchor getopt (dissoc opts :offset))
+        base-nd (subvec base-3d 0 dimensions)
+        offset-nd (get opts :offset (take dimensions (repeat 0)))]
+    (mapv + base-nd offset-nd)))
 
 (defn into-nook
   "Produce coordinates for translation into requested corner.
@@ -374,10 +467,9 @@
         use-housing (and (getopt :case :rear-housing :include)
                          (getopt field :position :prefer-rear-housing))
         general
-          (reckon-2d-anchor getopt
-             {:anchor (if use-housing :rear-housing :key)
-              :key-alias (getopt field :position :key-alias)
-              :corner corner})
+          (reckon-from-anchor getopt
+            (if use-housing :rear-housing (getopt field :position :anchor))
+            {:corner corner})
         to-nook
           (if use-housing
             (let [{dxs :dx dys :dy} (matrix/compass-to-grid (second corner))]
@@ -385,4 +477,4 @@
             ;; Else don’t bother.
             [0 0 0])
         offset (getopt field :position :offset)]
-   (vec (map + (conj general 0) to-nook offset))))
+   (mapv + (misc/z0 general) to-nook offset)))

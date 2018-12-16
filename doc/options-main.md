@@ -39,9 +39,17 @@ The distance in mm that a keycap can travel vertically when mounted on a switch.
 
 This section describes the general size, shape and position of the clusters of keys on the keyboard, each in its own subsection. It is documented in detail [here](options-clusters.md).
 
-## Special nesting section `by-key`
+## Section `by-key`
 
-This section is built like an onion. Each layer of settings inside it is more specific to a smaller part of the keyboard, eventually reaching the level of individual keys. It’s all documented [here](options-nested.md).
+This section repeats. Each level of settings inside it is more specific to a smaller part of the keyboard, eventually reaching the level of individual keys. It’s all documented [here](options-nested.md).
+
+### Special recurring section `parameters`
+
+Default values at the global level.
+
+### Special section `clusters` ← overrides go in here
+
+Starting here, you gradually descend from the global level toward the key level.
 
 ## Section `case`
 
@@ -171,7 +179,7 @@ If `true`, cut nut bosses into the inside wall of the block.
 
 The block is positioned in relation to a key mount.
 
-##### Parameter `key-alias`
+##### Parameter `anchor`
 
 A named key where the block will attach. The vertical component of its position will be ignored.
 
@@ -371,15 +379,15 @@ Where to place the MCU.
 
 #### Parameter `prefer-rear-housing`
 
-If `true` and `rear-housing` is included, place the MCU in relation to the rear housing. Otherwise, place the MCU in relation to a key mount identified by `key-alias`.
+If `true` and `rear-housing` is included, place the MCU in relation to the rear housing. Otherwise, place the MCU in relation to a named feature identified by `anchor`.
 
-#### Parameter `key-alias`
+#### Parameter `anchor`
 
 The name of a key at which to place the MCU if `prefer-rear-housing` is `false` or rear housing is not included.
 
 #### Parameter `corner`
 
-A code for a corner of the rear housing or of `key-alias`. This determines both the location and facing of the MCU.
+A code for a corner of the `anchor` feature. This determines both the location and facing of the MCU.
 
 #### Parameter `offset`
 
@@ -460,7 +468,7 @@ The thickness of the mount. You will need a threaded fastener slightly longer th
 
 Parameters relevant only with a `stop`-style support.
 
-##### Parameter `key-alias`
+##### Parameter `anchor`
 
 The name of a key where a stop will start to attach itself.
 
@@ -502,7 +510,7 @@ Where to place the socket. Equivalent to `connection` → `mcu`.
 
 
 
-#### Parameter `key-alias`
+#### Parameter `anchor`
 
 
 
@@ -534,8 +542,8 @@ If `true`, include a wrist rest with the keyboard.
 
 The style of the wrist rest. Available styles are:
 
-- `threaded`: threaded fasteners connect the case and wrist rest. This works with a great variety of keyboard shapes and will allow adjusting the position of the wrist rest for different hands.
-- `solid`: a printed plastic bridge along the ground as part of the model. This has more limitations, both in manufacture and in use. It includes a hook on the near outward side of the case, which will only be useful if the case wall at that point is short and the wrist rest is attached to a key cluster whose third column (column 2) is positioned and walled in such a way that the solid bridge can be wedged between the hook and the column.
+- `threaded`: threaded fasteners connect the case and wrist rest.
+- `solid`: the case and wrist rest are one piece. This option is a work in progress.
 
 ### Parameter `preview`
 
@@ -545,46 +553,90 @@ Preview mode. If `true`, this puts a model of the wrist rest in the same OpenSCA
 
 The wrist rest is positioned in relation to something.
 
-#### Parameter `style`
+#### Parameter `anchor`
 
-One of:
+A named key where the wrist rest will attach. The vertical component of its position will be ignored.
 
-- `key`: The wrist rest is positioned in relation to a specific key, which must be named using the `key-alias` parameter below.
-- `threaded-mount`: The plinth (main body) of the wrist rest is positioned in relation to the plinth-side mount for threaded fasteners, as used in the `threaded` style of wrist rest. Using `threaded-mount` without `threaded` is an error.
+#### Parameter `corner`
 
-#### Parameter `key-alias`
-
-A named key where the wrist rest will attach in the `key` position style. The vertical component of its position will be ignored.
+A corner of the key named in `anchor`.
 
 #### Parameter `offset`
 
-An offset in mm from the selected key (`key` style) or the plinth-side mount (`threaded-mount` style) to the nominally northwest corner of the plinth, the main body of the wrist rest.
+An offset in mm from the selected key (`key` style) or from the rest-side mount (`threaded-mount` style) to the origin of the coordinate system used for points that define the shape of the wrist rest.
+
+### Parameter `plinth-height`
+
+The average height of the plastic plinth in mm, at its upper lip.
 
 ### Section `shape`
 
 The wrist rest needs to fit the user’s hand.
 
-#### Parameter `plinth-base-size`
+#### Section `spline`
 
-The size of the plinth up to but not including the narrowing upper lip and rubber parts.
+The horizontal outline of the wrist rest is a closed spline.
 
-#### Parameter `chamfer`
+##### Parameter `main-points`
 
-A distance in mm. The plinth is shrunk and then regrown by this much to chamfer its corners.
+A list of nameable points, in clockwise order. The spline will pass through all of these and then return to the first one. Each point can have two properties:
 
-#### Parameter `lip-height`
+- `position`: A pair of coordinates, in mm, relative to other points in the list. This property is required.
+- `alias`: A name given to the specific point, for the purpose of placing yet more things in relation to it. This is optional.
 
-The height of a narrowing, printed lip between the base of the plinth and the rubber part.
+##### Parameter `resolution`
+
+The amount of vertices per main point. The default is 1. If 1, only the main points themselves will be used, giving you full control. A higher number gives you smoother curves.
+
+If you want the closing part of the curve to look smooth in high resolution, position your main points carefully.
+
+#### Section `lip`
+
+The lip is the uppermost part of the plinth, lining and supporting the edge of the pad. Its dimensions are described here in mm away from the pad.
+
+##### Parameter `height`
+
+The vertical extent of the lip.
+
+##### Parameter `width`
+
+The horizontal width of the lip at its top.
+
+##### Parameter `inset`
+
+The difference in width between the top and bottom of the lip. A small negative value will make the lip thicker at the bottom. This is recommended for fitting a silicone mould.
 
 #### Section `pad`
 
 The top of the wrist rest should be printed or cast in a soft material, such as silicone rubber.
 
-##### Parameter `surface-heightmap`
+##### Section `surface`
 
-A filepath. The path, and file, will be interpreted by OpenScad, using its [`surface()` function](https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#Surface).
+The upper surface of the pad, which will be in direct contact with the user’s palm or wrist.
 
-The file should contain a heightmap to describe the surface of the rubber pad.
+###### Section `edge`
+
+The edge of the pad can be rounded.
+
+###### Parameter `inset` at level 7
+
+The horizontal extent of softening. This cannot be more than half the width of the outline, as determined by `main-points`, at its narrowest part.
+
+###### Parameter `resolution` at level 7
+
+The number of faces on the edge between horizontal points.
+
+###### Section `heightmap`
+
+The surface can optionally be modified by the [`surface()` function](https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#Surface), which requires a heightmap file.
+
+###### Parameter `include` at level 7
+
+If `true`, use a heightmap. The map will intersect the basic pad polyhedron.
+
+###### Parameter `filepath` at level 7
+
+The file identified here should contain a heightmap in a format OpenSCAD can understand. The path should also be resolvable by OpenSCAD.
 
 ##### Section `height`
 
@@ -592,7 +644,7 @@ The piece of rubber extends a certain distance up into the air and down into the
 
 ###### Parameter `surface-range`
 
-The vertical range of the heightmap. Whatever values are in the heightmap will be normalized to this scale.
+The vertical range of the upper surface. Whatever values are in a heightmap will be normalized to this scale.
 
 ###### Parameter `lip-to-surface`
 
@@ -602,115 +654,25 @@ The part of the rubber pad between the top of the lip and the point where the he
 
 The depth of the rubber wrist support, measured from the top of the lip, going down into the plinth. This part of the pad just keeps it in place.
 
-### Section `fasteners`
+### Section `rotation`
 
-This is only relevant with the `threaded` style of wrist rest.
+The wrist rest can be rotated to align its pad with the user’s palm.
 
-#### Parameter `angle`
+#### Parameter `pitch`
 
-The angle in radians of the fasteners, on the xy plane, from the y axis. This parameter is only used with `threaded-mount` as your `position` → `style` setting, otherwise the angle is calculated from other settings.
+Tait-Bryan pitch.
 
-#### Parameter `amount`
+#### Parameter `roll`
 
-The number of fasteners connecting each case to its wrist rest.
+Tait-Bryan roll.
 
-#### Parameter `diameter`
+### Special section `mounts`
 
-The ISO metric diameter of each fastener.
-
-#### Parameter `length`
-
-The length in mm of each fastener.
-
-#### Section `height`
-
-The vertical level of the fasteners.
-
-##### Parameter `first`
-
-The distance in mm from the bottom of the first fastener down to the ground level of the model.
-
-##### Parameter `increment`
-
-The vertical distance in mm from the center of each fastener to the center of the next.
-
-#### Section `mounts`
-
-The mounts, or anchor points, for each fastener on each side.
-
-##### Parameter `distance`
-
-The distance in mm between the two mounts. This parameter is only used with `threaded-mount` as your `position` → `style` setting, otherwise the distance is a consequence of fastener `length` and wrist-rest `offset`.
-
-##### Parameter `width`
-
-The width in mm of the face or front bezel on each connecting block that will anchor a fastener.
-
-##### Section `case-side`
-
-The side of the keyboard case.
-
-###### Parameter `key-alias`
-
-A named key. A mount point on the case side will be placed near this key.
-
-###### Parameter `offset`
-
-An two-dimensional vector offset in mm from the key to the mount.
-
-###### Parameter `depth`
-
-The thickness of the mount in mm along the axis of the fastener(s).
-
-###### Section `nuts`
-
-Extra features for threaded nuts on the case side.
-
-###### Section `bosses` at level 7
-
-Nut bosses on the rear (interior) of the mount. You may want this if the distance between case and plinth is big enough for a nut. If that distance is too small, bosses can be counterproductive.
-
-###### Parameter `include` at level 8
-
-If `true`, include bosses.
-
-##### Section `plinth-side`
-
-The side of the wrist rest.
-
-###### Parameter `offset`
-
-An offset in mm from the corner of the plinth to the fastener mount point attached to the plinth. This is ignored with `threaded-mount` as your `position` → `style` setting.
-
-###### Parameter `depth`
-
-The thickness of the mount in mm along the axis of the fastener(s). This is typically larger than the case-side depth to allow adjustment.
-
-###### Parameter `pocket-height`
-
-The height of the nut pocket inside the mounting plate, in mm.
-
-With a large positive value, this will provide a chute for the nut(s) to go in from the top of the plinth, which allows you to hide the hole beneath the pad. With a large negative value, the pocket will instead open from the bottom, which is convenient if `depth` is small. With a small value or the default value of zero, it will be necessary to pause printing in order to insert the nut(s); this last option is therefore recommended for advanced users only.
-
-### Section `solid-bridge`
-
-This is only relevant with the `solid` style of wrist rest.
-
-#### Parameter `width`
-
-The width in mm of the land bridge between the case and the plinth.
-
-On the right-hand side of the keyboard, the bridge starts from the wrist rest `key-alias` and extends this many mm to the left.
-
-The value of this parameter, and the shape of the keyboard case, should be arranged in a such a way that the land bridge is wedged in place by a vertical wall on that left side.
-
-#### Parameter `height`
-
-The height in mm of the land bridge between the case and the plinth.
+A list of mounts for threaded fasteners. Each such mount will include at least one cuboid block for at least one screw that connects the wrist rest to the case. This section is used only with the `threaded` style of wrist rest.
 
 ### Section `bottom-plate`
 
-The equivalent of the case `bottom-plate` parameter. If included, bottom plates for the wrist rests use the `thickness` configured for those of the case.
+The equivalent of the case `bottom-plate` parameter. If included, a bottom plate for a wrist rest uses the `thickness` configured for the bottom of the case.
 
 Bottom plates for the wrist rests have no ESDS electronics to protect but serve other purposes: Covering nut pockets, silicone mould-pour cavities, and plaster or other dense material poured into plinths printed without a bottom shell.
 
@@ -718,9 +680,19 @@ Bottom plates for the wrist rests have no ESDS electronics to protect but serve 
 
 Whether to include a bottom plate for each wrist rest.
 
+#### Parameter `inset`
+
+The horizontal distance between the perimeter of the wrist rest and the default position of each threaded fastener connecting it to its bottom plate.
+
 #### Parameter `fastener-positions`
 
-The positions of threaded fasteners used to attach the bottom plate to its wrist rest. The syntax of this parameter is precisely the same as for the case’s bottom-plate fasteners. Other properties used for these fasteners are determined by settings for the case, except that no positive housings will be created because the plinth itself is solid.
+The positions of threaded fasteners used to attach the bottom plate to its wrist rest. The syntax of this parameter is precisely the same as for the case’s bottom-plate fasteners. Corners are ignored and the starting position is inset from the perimeter of the wrist rest by the `inset` parameter above, before any offset stated here is applied.
+
+Other properties of these fasteners are determined by settings for the case, though no positive housings will be created because the plinth itself is solid.
+
+### Parameter `mould-thickness`
+
+The thickness in mm of the walls and floor of the mould to be used for casting the rubber pad.
 
 ## Section `dfm`
 
@@ -736,7 +708,7 @@ This application will try to compensate for the error, though only for certain s
 
 ## Section `mask`
 
-A box limits the entire shape, cutting off any projecting byproducts of the algorithms. By resizing and moving this box, you can select a subsection for printing. You might want this while you are printing prototypes for a new style of switch, MCU support etc.
+A box limits the entire shape, cutting off any projecting by-products of the algorithms. By resizing and moving this box, you can select a subsection for printing. You might want this while you are printing prototypes for a new style of switch, MCU support etc.
 
 ### Parameter `size`
 

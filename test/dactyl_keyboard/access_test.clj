@@ -4,4 +4,4 @@
 
 (deftest test-parser-defaults
   (testing "validation of configuraton parser defaults"
-    (access/validate-configuration {})))
+    (access/checked-configuration {})))

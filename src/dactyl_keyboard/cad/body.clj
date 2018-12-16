@@ -12,7 +12,8 @@
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.place :as place]
             [dactyl-keyboard.cad.key :as key]
-            [dactyl-keyboard.param.access :refer [most-specific]]))
+            [dactyl-keyboard.param.access :refer [most-specific
+                                                  get-key-alias]]))
 
 
 ;;;;;;;;;;;;;
@@ -299,8 +300,8 @@
         [sign base] (case side
                       :west [+ (getopt :case :rear-housing :derived :sw)]
                       :east [- (getopt :case :rear-housing :derived :se)])
-        near (vec (map + base [(+ (- (sign offset)) (sign d)) d (/ (+ t h) -2)]))
-        far (vec (map + near [0 (- n d d) 0]))]
+        near (mapv + base [(+ (- (sign offset)) (sign d)) d (/ (+ t h) -2)])
+        far (mapv + near [0 (- n d d) 0])]
    (hull
      (translate near shape)
      (translate far shape))))
@@ -347,8 +348,7 @@
   "(The hull of) one or more corner posts from a single key mount."
   [getopt key-alias directions first-segment last-segment]
   (if (= first-segment last-segment)
-    (let [keyinfo (getopt :key-clusters :derived :aliases key-alias)
-          {:keys [cluster coordinates]} keyinfo
+    (let [{:keys [cluster coordinates]} (get-key-alias getopt key-alias)
           poster (place/cluster-segment-placer key/web-post)
           placer (poster getopt cluster coordinates directions)]
       (placer first-segment))

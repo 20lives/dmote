@@ -10,6 +10,22 @@
             [scad-tarmi.maybe :as maybe]))
 
 
+(defn pad-to-3d
+  "Pad a coordinate vector to three dimensions."
+  ([coordinates] (pad-to-3d coordinates 0))
+  ([coordinates padding]
+   {:pre [(vector? coordinates)
+          (<= (count coordinates) 3)]}
+   (if (= (count coordinates) 3)
+     coordinates
+     (pad-to-3d (conj coordinates padding) padding))))
+
+(defn z0
+  "No relation to Cicero."
+  [coordinates]
+  {:pre [(vector? coordinates)]}
+  (pad-to-3d (subvec coordinates 0 2) 0))
+
 (defn pairwise-hulls [& shapes]
   (apply maybe/union (map (partial apply model/hull) (partition 2 1 shapes))))
 

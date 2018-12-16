@@ -32,11 +32,16 @@ A map of short names to specific keys by coordinate pair. Such aliases are for u
 
 ## Section `position`
 
-If this section is omitted, the key clusters will be positioned at the origin of the coordinate system.
+The position of the key cluster relative to something else.
 
-### Parameter `key-alias`
+### Parameter `anchor`
 
-A key as named under any of the `aliases` sections described above. Take care to name a key in a different cluster, and don’t create circular dependencies between clusters.
+One of:
+
+- `origin`: The origin of the coordinate system.
+- A key in some other cluster, as named in any of the `aliases` sections described above.
+
+Take care not to create circular dependencies between clusters.
 
 ### Parameter `offset`
 

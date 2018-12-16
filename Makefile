@@ -18,20 +18,14 @@ orthographic: target/dmote.jar
 flat: target/dmote.jar
 	java -jar target/dmote.jar -c resources/opt/flat_layout.yaml
 
-threaded-mount: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/wrist/threaded_mount.yaml
+threaded-mutual: target/dmote.jar
+	java -jar target/dmote.jar -c resources/opt/wrist/threaded_mutual.yaml
 
-threaded-key: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/wrist/threaded_key.yaml
+threaded-caseside: target/dmote.jar
+	java -jar target/dmote.jar -c resources/opt/wrist/threaded_caseside.yaml
 
 threaded-visualization: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/wrist/threaded_mount.yaml -c resources/opt/visualization.yaml
-
-solid: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/wrist/solid.yaml
-
-solid-visualization: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/wrist/solid.yaml -c resources/opt/visualization.yaml
+	java -jar target/dmote.jar -c resources/opt/wrist/threaded_caseside.yaml -c resources/opt/visualization.yaml
 
 doc/options-main.md: target/dmote.jar
 	java -jar target/dmote.jar --describe-parameters main > doc/options-main.md
@@ -42,10 +36,13 @@ doc/options-clusters.md: target/dmote.jar
 doc/options-nested.md: target/dmote.jar
 	java -jar target/dmote.jar --describe-parameters nested > doc/options-nested.md
 
+doc/options-wrist-rest-mounts.md: target/dmote.jar
+	java -jar target/dmote.jar --describe-parameters wrist-rest-mounts > doc/options-wrist-rest-mounts.md
+
 target/dmote.jar: $(OBJECTS)
 	lein uberjar
 
-docs: doc/options-main.md doc/options-clusters.md doc/options-nested.md
+docs: doc/options-main.md doc/options-clusters.md doc/options-nested.md doc/options-wrist-rest-mounts.md
 
 test:
 	lein test

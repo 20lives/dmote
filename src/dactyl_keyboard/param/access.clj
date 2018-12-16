@@ -103,21 +103,24 @@
   (println (apply str (first flat)))
   (print-markdown-fragment (base/inflate flat) 2))
 
-(defn validate-configuration
+(defn checked-configuration
   "Attempt to describe any errors in the user configuration."
   [candidate]
   (try
-    (base/validate-branch (base/inflate main/raws) candidate)
+    (base/consume-branch (base/inflate main/raws) candidate)
     (catch clojure.lang.ExceptionInfo e
       (let [data (ex-data e)]
-       (println "Validation error:" (.getMessage e))
-       (println "    At key(s):" (string/join " >> " (:keys data)))
+       (println "Configuration error:" (.getMessage e))
+       (println "    At key(s):" (string/join " → " (map name (:keys data))))
        (if (:accepted-keys data)
-         (println "    Accepted key(s) there:" (:accepted-keys data)))
-       (if (:raw-value data)
+         (println "    Accepted key(s) there:"
+                  (string/join ", " (map name (:accepted-keys data)))))
+       (if (contains? data :raw-value)
          (println "    Value before parsing:" (:raw-value data)))
-       (if (:parsed-value data)
+       (if (contains? data :parsed-value)
          (println "    Value after parsing:" (:parsed-value data)))
+       (if (contains? data :parser)
+         (println "    Parser:" (:parser data)))
        (if (:spec-explanation data)
          (println "    Validator output:" (:spec-explanation data)))
        (if (:original-exception data)
@@ -153,3 +156,18 @@
 
 (defn most-specific [getopt end-path cluster coord]
   ((specific-getter getopt end-path) cluster coord))
+
+(defn resolve-anchor
+  "Resolve the name of a feature using derived settings."
+  ([getopt name]
+   {:pre [(keyword? name)]}
+   (getopt :derived :anchors name))
+  ([getopt name predicate]
+   (let [properties (resolve-anchor getopt name)]
+     (if (predicate properties)
+       properties
+       (throw (ex-info "Named anchor cannot be used for subject feature"
+                       {:name name, :properties properties}))))))
+
+(defn get-key-alias [getopt alias]
+  (resolve-anchor getopt alias #(= (:type %) :key)))

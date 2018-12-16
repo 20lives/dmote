@@ -70,15 +70,14 @@
     "A map of short names to specific keys by coordinate pair. "
     "Such aliases are for use elsewhere in the configuration."]
    [:section [:position]
-    "If this section is omitted, the key clusters will be positioned at the "
-    "origin of the coordinate system."]
-   [:parameter [:position :key-alias]
-    {:default :origin
-     :parse-fn keyword
-     :validate [::schema/key-alias]}
-    "A key as named under any of the `aliases` sections described above. "
-    "Take care to name a key in a different cluster, and don’t create "
-    "circular dependencies between clusters."]
+    "The position of the key cluster relative to something else."]
+   [:parameter [:position :anchor]
+    {:default :origin :parse-fn keyword :validate [::schema/cluster-anchor]}
+    "One of:\n\n"
+    "- `origin`: The origin of the coordinate system.\n"
+    "- A key in some other cluster, as named in any of the `aliases` sections "
+    "described above.\n\n"
+    "Take care not to create circular dependencies between clusters."]
    [:parameter [:position :offset]
     {:default [0 0 0]
      :parse-fn (schema/tuple-of num)

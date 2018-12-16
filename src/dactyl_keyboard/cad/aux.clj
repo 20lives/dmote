@@ -12,7 +12,8 @@
             [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.key :as key]
-            [dactyl-keyboard.cad.place :as place]))
+            [dactyl-keyboard.cad.place :as place]
+            [dactyl-keyboard.param.access :as access]))
 
 
 ;;;;;;;;;;;;;;;;;;;
@@ -129,8 +130,8 @@
   [getopt]
   (let [prop (partial getopt :mcu :derived)
         {pcb-x :thickness pcb-y :length pcb-z :width} (prop :pcb)
-        alias (getopt :mcu :support :stop :key-alias)
-        keyinfo (getopt :key-clusters :derived :aliases alias)
+        alias (getopt :mcu :support :stop :anchor)
+        keyinfo (access/get-key-alias alias)
         {cluster :cluster coordinates0 :coordinates} keyinfo
         direction (getopt :mcu :support :stop :direction)
         opposite (matrix/left (matrix/left direction))
@@ -254,18 +255,13 @@
 
 ;; Plate for a connecting beam, rod etc.
 
-(defn backplate-place [getopt shape]
-  (let [position (getopt :case :back-plate :position)
-        {alias :key-alias offset :offset} position
-        keyinfo (getopt :key-clusters :derived :aliases alias)
-        {cluster :cluster coordinates :coordinates} keyinfo]
-   (->>
-     shape
-     (translate (place/cluster-position getopt cluster coordinates
-                  (place/wall-slab-center-offset
-                    getopt cluster coordinates :north)))
-     (translate [0 0 (/ (getopt :case :back-plate :beam-height) -2)])
-     (translate offset))))
+(defn backplate-place
+  [getopt shape]
+  (->>
+    shape
+    (translate
+      (place/offset-from-anchor getopt (getopt :case :back-plate :position) 3))
+    (translate [0 0 (/ (getopt :case :back-plate :beam-height) -2)])))
 
 (defn backplate-shape
   "A mounting plate for a connecting beam."
@@ -372,14 +368,14 @@
           ;; Line up with the (rear housing) wall and a metasocket base plate.
           (case (getopt :connection :position :raise)
             true
-              (vec (map +
-                     [0 (/ thickness 2) (- thickness)]
-                     (vec (map * [0 -0.5 -0.5] socket-size))
-                     [0 0 (getopt :case :rear-housing :height)]))
+              (mapv +
+                [0 (/ thickness 2) (- thickness)]
+                (mapv * [0 -0.5 -0.5] socket-size)
+                [0 0 (getopt :case :rear-housing :height)])
             false
-              (vec (map +
-                     [0 (/ thickness 2) thickness]
-                     (vec (map * [0 -0.5 0.5] socket-size)))))
+              (mapv +
+                [0 (/ thickness 2) thickness]
+                (mapv * [0 -0.5 0.5] socket-size)))
         corner (getopt :connection :position :corner)]
    (->> shape
         (maybe/rotate (getopt :connection :position :rotation))
@@ -402,7 +398,7 @@
         thickness (getopt :case :web-thickness)
         double (* thickness 2)]
    (translate [0 (/ thickness -2) 0]
-     (apply cube (vec (map + socket-size [double thickness double]))))))
+     (apply cube (mapv + socket-size [double thickness double])))))
 
 (defn connection-socket
   "Negative space for a port, with a hole for wires leading out of the port and
@@ -426,12 +422,15 @@
 ;; Minor Features ;;
 ;;;;;;;;;;;;;;;;;;;;
 
+(defn- foot-point
+  [getopt point-spec]
+  (place/offset-from-anchor getopt point-spec 2))
+
 (defn- foot-plate
   [getopt polygon-spec]
   (extrude-linear
     {:height (getopt :case :foot-plates :height), :center false}
-    (polygon (map (partial place/reckon-2d-offset getopt)
-                  (:points polygon-spec)))))
+    (polygon (map (partial foot-point getopt) (:points polygon-spec)))))
 
 (defn foot-plates
   "Model plates from polygons.

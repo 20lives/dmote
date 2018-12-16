@@ -1,0 +1,49 @@
+# Configuration fragment for case-side anchoring of a wrist rest,
+# demonstrating the use of multiple mounts with a consistent angle to allow
+# the position of the wrist rest to be adjusted.
+
+wrist-rest:
+  include: true
+  style: threaded
+  mounts:
+  - fasteners:
+      diameter: 4
+      length: 55
+      height:
+        first: 3
+    angle: -1.2
+    blocks:
+      distance: 32
+      width: 10
+      case-side:
+        position:
+          anchor: a0
+          offset: [5, 0]
+        depth: 13
+      plinth-side:
+        depth: 7
+        pocket-height: -100
+      aliases:
+        wr0c: case-side
+        wr0p: plinth-side
+  - fasteners:
+      diameter: 4
+      length: 45
+      height:
+        first: 3
+    angle: -1.2
+    blocks:
+      distance: 30
+      width: 10
+      case-side:
+        position:
+          anchor: near-right
+          corner: SSW
+          offset: [-5, 0]
+        depth: 7
+      plinth-side:
+        depth: 7
+        pocket-height: -100
+      aliases:
+        wr1c: case-side
+        wr1p: plinth-side

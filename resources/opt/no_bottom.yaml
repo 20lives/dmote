@@ -19,23 +19,23 @@ case:
         corner: NNW
         offset: [0, -10]
     - points:
-      - key-alias: far-right
+      - anchor: far-right
         corner: WNW
         offset: [7, 0]
-      - key-alias: far-right
+      - anchor: far-right
         corner: NNE
-      - key-alias: far-right
+      - anchor: far-right
         corner: ESE
         offset: [0, -2]
     - points:
-      - key-alias: near-right
+      - anchor: near-right
         corner: SSW
         offset: [4, 1]
-      - key-alias: near-right
+      - anchor: near-right
         corner: NNE
         offset: [1, -5]
-      - key-alias: near-right
+      - anchor: near-right
         corner: ESE
-case:
+wrist-rest:
   bottom-plate:
     include: false

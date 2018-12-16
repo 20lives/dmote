@@ -53,39 +53,6 @@
         (catch java.lang.NumberFormatException _
           (keyword candidate))))))           ; Input like “:first” or “"first"”.
 
-(def parse-key-clusters
-  "A function to parse input for the [:key-clusters] parameter."
-  (map-of
-    keyword
-    (map-like
-      {:matrix-columns
-         (tuple-of
-           (map-like
-             {:rows-below-home int
-              :rows-above-home int}))
-       :position
-         (map-like
-           {:key-alias keyword
-            :offset (tuple-of num)})
-       :style keyword
-       :aliases (map-of keyword (tuple-of keyword-or-integer))})))
-
-(def parse-by-key-overrides
-  "A function to parse input for the [:by-key :clusters] section."
-  (map-of
-    keyword
-    (map-like
-      {:parameters identity
-       :columns
-        (map-of
-          keyword-or-integer
-          (map-like
-            {:parameters identity
-             :rows
-               (map-of
-                 keyword-or-integer
-                 (map-like {:parameters identity}))}))})))
-
 (defn case-tweak-corner
   "Parse notation for a range of wall segments off a specific key corner."
   ([alias corner s0]
@@ -111,7 +78,6 @@
   (tuple-of
     (map-like
       {:anchor keyword
-       :key-alias keyword
        :corner string-corner
        :offset vec})))
 
@@ -120,6 +86,12 @@
     (map-like
       {:points anchored-2d-positions})))
 
+(def nameable-spline
+  (tuple-of
+    (map-like
+      {:position (tuple-of num)
+       :alias keyword})))
+
 
 ;;;;;;;;;;;;;;;;
 ;; Validators ;;
@@ -127,24 +99,31 @@
 
 ;; Used with spec/keys, making the names sensitive:
 (spec/def ::anchor #{:key :rear-housing :wrist-rest})
-(spec/def ::key-alias keyword)
-(spec/def ::points (spec/coll-of ::anchored-2d-position))
+(spec/def ::alias (spec/and keyword?
+                            #(not (= :origin %))
+                            #(not (= :rear-housing %))))
 (spec/def ::highlight boolean?)
 (spec/def ::to-ground boolean?)
 (spec/def ::chunk-size (spec/and int? #(> % 1)))
 (spec/def ::hull-around (spec/coll-of (spec/or :leaf ::tweak-plate-leaf
                                                :map ::tweak-plate-map)))
+(spec/def ::spline-point
+  (spec/keys :req-un [::position]
+             :opt-un [::alias]))
 
 ;; Users thereof:
 (spec/def ::foot-plate (spec/keys :req-un [::points]))
 (spec/def ::anchored-2d-position
-  (spec/keys :opt-un [::anchor ::key-alias ::corner ::offset]))
+  (spec/keys :opt-un [::anchor ::corner ::offset]))
+(spec/def ::points (spec/coll-of ::anchored-2d-position))
 (spec/def ::tweak-plate-map
   (spec/keys :req-un [::hull-around]
              :opt-un [::highlight ::chunk-size ::to-ground]))
+(spec/def ::nameable-spline (spec/coll-of ::spline-point))
 
 ;; Other:
 (spec/def ::key-cluster #(not (= :derived %)))
+(spec/def ::cluster-anchor (spec/or :origin #(= :origin %) :alias ::alias))
 (spec/def ::switch-style #{:alps :mx})
 (spec/def ::cluster-style #{:standard :orthographic})
 (spec/def ::cap-style #{:flat :socket :button})
@@ -152,7 +131,8 @@
 (spec/def ::mcu-type #{:promicro})
 (spec/def ::mcu-support-style #{:lock :stop})
 (spec/def ::wrist-rest-style #{:threaded :solid})
-(spec/def ::wrist-position-style #{:key :threaded-mount})
+(spec/def ::wrist-position-style #{:case-side :mutual})
+(spec/def ::wrist-block #{:case-side :plinth-side})
 (spec/def ::column-disposition
   (spec/keys ::opt-un [::rows-below-home ::rows-above-home]))
 (spec/def ::flexcoord (spec/or :absolute int? :extreme #{:first :last}))
