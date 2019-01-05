@@ -23,6 +23,14 @@
   (testing "nested"
     (is (= (spec/valid? ::schema/parameter-spec {:k {:default 1}}) false))))
 
+(deftest test-parse-anchored-2d-positions
+  (testing "parsing anchored 2D positions"
+    (is (= (schema/anchored-2d-positions [])
+           []))
+    (is (= (schema/anchored-2d-positions
+             [{:anchor "a", :corner "SSW", :offset [0 -1]}])
+           [{:anchor :a, :corner [:south :west], :offset [0 -1]}]))))
+
 (deftest test-coordinate-validator
   (testing "empty"
     (is (= (spec/valid? ::schema/key-coordinates [])

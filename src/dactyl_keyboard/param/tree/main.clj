@@ -20,9 +20,9 @@
 
 (spec/def ::parameters (base/delegated-validation nested/raws))
 (spec/def ::individual-row (spec/keys :opt-un [::parameters]))
-(spec/def ::rows (spec/map-of ::flexcoord ::individual-row))
+(spec/def ::rows (spec/map-of ::schema/flexcoord ::individual-row))
 (spec/def ::individual-column (spec/keys :opt-un [::rows ::parameters]))
-(spec/def ::columns (spec/map-of ::flexcoord ::individual-column))
+(spec/def ::columns (spec/map-of ::schema/flexcoord ::individual-column))
 (spec/def ::overrides (spec/keys :opt-un [::columns ::parameters]))
 
 (def raws
@@ -70,7 +70,7 @@
      :default {:main {:matrix-columns [{:rows-below-home 0}]
                       :aliases {:origin [0 0]}}}
      :parse-fn (schema/map-of keyword
-                 (base/delegated-inclusive cluster/raws))
+                 (base/parser-with-defaults cluster/raws))
      :validate [(spec/map-of
                   ::schema/key-cluster
                   (base/delegated-validation cluster/raws))]}
@@ -85,11 +85,11 @@
    [:parameter [:by-key :parameters]
     {:heading-template "Special recurring section `%s`"
      :default (base/extract-defaults nested/raws)
-     :parse-fn (base/delegated-inclusive nested/raws)
+     :parse-fn (base/parser-with-defaults nested/raws)
      :validate [(base/delegated-validation nested/raws)]}
     "Default values at the global level."]
    [:parameter [:by-key :clusters]
-    (let [rep (base/delegated-soft nested/raws)]
+    (let [rep (base/parser-wo-defaults nested/raws)]
       {:heading-template "Special section `%s` ← overrides go in here"
        :default {}
        :parse-fn (schema/map-of
@@ -307,7 +307,8 @@
     "The length in mm of each fastener. In the `threads` style, this refers "
     "to the part of the screw that is itself threaded: It excludes the head."]
    [:parameter [:case :bottom-plate :installation :fasteners :positions]
-    {:default [] :parse-fn schema/anchored-2d-positions
+    {:default []
+     :parse-fn schema/anchored-2d-positions
      :validate [::schema/plate-screw-positions]}
     "A list of places where threaded fasteners will connect the bottom plate "
     "to the rest of the case."]
@@ -686,7 +687,7 @@
    [:parameter [:wrist-rest :mounts]
     {:heading-template "Special section `%s`"
      :default []
-     :parse-fn (schema/tuple-of (base/delegated-inclusive restmnt/raws))
+     :parse-fn (schema/tuple-of (base/parser-with-defaults restmnt/raws))
      :validate [(spec/coll-of (base/delegated-validation restmnt/raws))]}
     "A list of mounts for threaded fasteners. Each such mount will include at "
     "least one cuboid block for at least one screw that connects the wrist "

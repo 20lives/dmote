@@ -28,13 +28,13 @@
              (format "Bad type in ‘%s’ configuration master." type)))))
 
 (defn inclusive-or
-  "A merge strategy for configuration keys. Use everything.
+  "A merge strategy for configuration keys. Take everything.
   Exposed for unit testing."
   [nominal candidate]
   (apply concat (map keys [nominal candidate])))
 
 (defn- explicit-only
-  "A merge strategy using only what the user provides."
+  "A merge strategy for configuration keys. Take only what the user provides."
   [nominal candidate]
   (keys candidate))
 
@@ -88,7 +88,7 @@
   "Resolve differences between default values and user-supplied values.
   Run the result through a specified parsing function and return it."
   [nominal candidate]
-  {:pre [(spec/valid? ::schema/parameter-spec nominal)]}
+  {:pre [(leaf? nominal)]}
   (let [resolve-fn (get nominal :resolve-fn hard-defaults)
         parse-fn (get nominal :parse-fn identity)
         merged (resolve-fn nominal candidate)]
@@ -107,13 +107,14 @@
 (defn parse-branch
   "Parse a section of a configuration received through the UI."
   [key-picker nominal candidate]
-  (if (map? candidate)
-    (reduce (partial parse-node key-picker nominal)
-            candidate
-            (remove #(= :metadata %) (distinct (key-picker nominal candidate))))
+  (if-not (map? candidate)
     (throw (ex-info "Non-mapping section in configuration file"
                     {:type :structural-error
-                     :raw-value candidate}))))
+                     :raw-value candidate})))
+  (reduce
+    (partial parse-node key-picker nominal)
+    candidate
+    (remove #(= :metadata %) (distinct (key-picker nominal candidate)))))
 
 (defn parse-node
   "Parse a branch or leaf. Raise an exception on superfluous entries."
@@ -145,29 +146,30 @@
       (validate-branch (key nominal) (key candidate)))))
 
 (defn validate-branch
-  "Validate a section of a configuration received through the UI."
+  "Validate a section of a configuration received through the UI.
+  The return value should not be used."
   [nominal candidate]
-  (reduce (partial validate-node nominal)
-          candidate
-          (remove #(= :metadata %)
-            (distinct (apply concat (map keys [nominal candidate]))))))
+  (mapv #(validate-node nominal candidate %) (keys candidate)))
 
 (defn validate-leaf
-  "Validate a specific parameter received through the UI."
+  "Validate a specific parameter received through the UI.
+  The return value should not be used."
   ;; Exposed for unit testing.
   [nominal candidate]
-  {:pre [(spec/valid? ::schema/parameter-spec nominal)]}
-  (reduce
-    (fn [unvalidated validator]
-      (if (spec/valid? validator unvalidated)
-        unvalidated
+  {:pre [(leaf? nominal)]}
+  (mapv
+    (fn [validator]
+      (if-not (spec/valid? validator candidate)
         (throw (ex-info "Value out of range"
                         {:type :validation-error
-                         :parsed-value unvalidated
-                         :raw-value candidate
-                         :spec-explanation (spec/explain-str validator unvalidated)}))))
-    (parse-leaf nominal candidate)
+                         :parsed-value candidate
+                         :spec-explanation (spec/explain-str validator candidate)}))))
     (get nominal :validate [some?])))
+
+(defn delegated-validation
+  "Make a function to delegate the validation of a branch."
+  [raws]
+  (fn [candidate] (validate-branch (inflate raws) candidate)))
 
 
 ;; Both/other:
@@ -180,22 +182,18 @@
     (validate-branch nominal parsed)
     parsed))
 
-(defn delegated-inclusive
+(defn parser-with-defaults
   "Make a function to parse a branch. Close over its raw specifications."
   [raws]
   (fn [candidate] (parse-branch inclusive-or (inflate raws) candidate)))
 
-(defn delegated-soft
-  "Make a function to delegate the parsing of a branch without its defaults."
+(defn parser-wo-defaults
+  "Make a function to parse a branch without its default values.
+  This is useful for parts of the configuration that can be overridden."
   [raws]
   (fn [candidate] (parse-branch explicit-only (inflate raws) candidate)))
 
-(defn delegated-validation
-  "Make a function to delegate the validation of a branch."
-  [raws]
-  (fn [candidate] (validate-branch (inflate raws) candidate)))
-
 (defn extract-defaults
   "Fetch default values for a broad section of the configuration."
-  [flat]
-  (parse-branch inclusive-or (inflate flat) {}))
+  [raws]
+  ((parser-with-defaults raws) {}))

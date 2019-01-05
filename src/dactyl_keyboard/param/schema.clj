@@ -98,7 +98,7 @@
 ;;;;;;;;;;;;;;;;
 
 ;; Used with spec/keys, making the names sensitive:
-(spec/def ::anchor #{:key :rear-housing :wrist-rest})
+(spec/def ::anchor keyword?)
 (spec/def ::alias (spec/and keyword?
                             #(not (= :origin %))
                             #(not (= :rear-housing %))))
