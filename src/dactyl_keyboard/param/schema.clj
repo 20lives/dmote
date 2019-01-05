@@ -123,7 +123,6 @@
 
 ;; Other:
 (spec/def ::key-cluster #(not (= :derived %)))
-(spec/def ::cluster-anchor (spec/or :origin #(= :origin %) :alias ::alias))
 (spec/def ::switch-style #{:alps :mx})
 (spec/def ::cluster-style #{:standard :orthographic})
 (spec/def ::cap-style #{:flat :socket :button})
@@ -138,6 +137,7 @@
 (spec/def ::flexcoord (spec/or :absolute int? :extreme #{:first :last}))
 (spec/def ::flexcoord-2d (spec/coll-of ::flexcoord :count 2))
 (spec/def ::key-coordinates ::flexcoord-2d)  ; Exposed for unit testing.
+(spec/def ::point-2d (spec/coll-of number? :count 2))
 (spec/def ::point-3d (spec/coll-of number? :count 3))
 (spec/def ::corner (set (vals generics/keyword-to-directions)))
 (spec/def ::direction (set (map first (vals generics/keyword-to-directions))))

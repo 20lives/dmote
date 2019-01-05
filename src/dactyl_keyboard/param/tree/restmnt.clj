@@ -71,8 +71,8 @@
    [:section [:blocks :case-side :position]
     "Where to place the block."]
    [:parameter [:blocks :case-side :position :anchor]
-    {:default :origin :parse-fn keyword}
-    "An alias referring to a key or similar feature that anchors the block."]
+    {:default :origin :parse-fn keyword :validate [::schema/anchor]}
+    "An alias referring to a feature that anchors the block."]
    [:parameter [:blocks :case-side :position :corner]
     {:default "SSE" :parse-fn schema/string-corner :validate [::schema/corner]}
     "A corner of the anchor. By default: `SSE` for south-by-southeast."]
@@ -92,12 +92,12 @@
     {:default false :parse-fn boolean}
     "If `true`, include bosses."]
    [:section [:blocks :plinth-side]
-    "A block on the side of the wrist rest is optional."]
+    "A block on the side of the wrist rest."]
    [:section [:blocks :plinth-side :position]
     "Where to place the block. This entire section is ignored in the "
     "`case-side` style of anchoring."]
    [:parameter [:blocks :plinth-side :position :anchor]
-    {:default :origin :parse-fn keyword}
+    {:default :origin :parse-fn keyword :validate [::schema/anchor]}
     "An alias referring to a feature that anchors the block. Whereas the "
     "case-side mount is typically anchored to a key, the plinth-side mount "
     "is typically anchored to a named point on the plinth."]

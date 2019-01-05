@@ -612,9 +612,7 @@ connection:
 wrist-rest:
   include: false
   position:
-    anchor: near-right
-    corner: SSE
-    offset: [20, -45]
+    offset: [83, -90]
   plinth-height: 2
   shape:
     spline:

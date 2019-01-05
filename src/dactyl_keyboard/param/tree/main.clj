@@ -68,7 +68,7 @@
    [:parameter [:key-clusters]
     {:heading-template "Special section `%s`"
      :default {:main {:matrix-columns [{:rows-below-home 0}]
-                      :aliases {:origin [0 0]}}}
+                      :aliases {}}}
      :parse-fn (schema/map-of keyword
                  (base/parser-with-defaults cluster/raws))
      :validate [(spec/map-of
@@ -217,15 +217,14 @@
     {:default false :parse-fn boolean}
     "If `true`, cut nut bosses into the inside wall of the block."]
    [:section [:case :back-plate :position]
-    "The block is positioned in relation to a key mount."]
+    "The block is positioned in relation to a named feature."]
    [:parameter [:case :back-plate :position :anchor]
-    {:default :origin :parse-fn keyword}
-    "A named key where the block will attach. The vertical component of its "
-    "position will be ignored."]
+    {:default :origin :parse-fn keyword :validate [::schema/anchor]}
+    "The name of a feature where the block will attach."]
    [:parameter [:case :back-plate :position :offset]
-    {:default [0 0 0] :parse-fn vec}
-    "An offset in mm from the middle of the north wall of the selected key, "
-    "at ground level, to the middle of the base of the back plate block."]
+    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
+    "An offset in mm from the named feature to the middle of the base of the
+    back plate block."]
    [:section [:case :bottom-plate]
     "A bottom plate can be added to close the case. This is useful mainly to "
     "simplify transportation.\n"
@@ -435,9 +434,11 @@
     "the rear housing. Otherwise, place the MCU in relation to a named feature "
     "identified by `anchor`."]
    [:parameter [:mcu :position :anchor]
-    {:default :origin :parse-fn keyword}
+    {:default :origin :parse-fn keyword :validate [::schema/anchor]}
     "The name of a key at which to place the MCU if `prefer-rear-housing` "
     "is `false` or rear housing is not included."]
+    ;; NOTE: The default value here, :origin, is intentionally invalid.
+    ;; A key alias is required but none are defined by default.
    [:parameter [:mcu :position :corner]
     {:default "ENE" :parse-fn schema/string-corner :validate [::schema/corner]}
     "A code for a corner of the `anchor` feature. "
@@ -518,8 +519,10 @@
    [:section [:mcu :support :stop]
     "Parameters relevant only with a `stop`-style support."]
    [:parameter [:mcu :support :stop :anchor]
-    {:default :origin :parse-fn keyword}
+    {:default :origin :parse-fn keyword :validate [::schema/anchor]}
     "The name of a key where a stop will start to attach itself."]
+    ;; NOTE: The default value here, :origin, is intentionally invalid.
+    ;; A key alias is required but none are defined by default.
    [:parameter [:mcu :support :stop :direction]
     {:default :south :parse-fn keyword :validate [::schema/direction]}
     "A direction in the matrix from the named key. The stop will attach "
@@ -551,7 +554,7 @@
    [:parameter [:connection :position :prefer-rear-housing]
     {:default true :parse-fn boolean}]
    [:parameter [:connection :position :anchor]
-    {:default :origin :parse-fn keyword}]
+    {:default :origin :parse-fn keyword :validate [::schema/anchor]}]
    [:parameter [:connection :position :corner]
     {:default "ENE" :parse-fn schema/string-corner :validate [::schema/corner]}]
    [:parameter [:connection :position :raise]
@@ -580,19 +583,17 @@
     "OpenSCAD file as the case. That model is simplified, intended for gauging "
     "distance, not for printing."]
    [:section [:wrist-rest :position]
-    "The wrist rest is positioned in relation to something."]
+    "The wrist rest is positioned in relation to a named feature."]
    [:parameter [:wrist-rest :position :anchor]
-    {:default :origin :parse-fn keyword}
-    "A named key where the wrist rest will attach. "
+    {:default :origin :parse-fn keyword :validate [::schema/anchor]}
+    "The name of a feature where the wrist rest will attach. "
     "The vertical component of its position will be ignored."]
    [:parameter [:wrist-rest :position :corner]
     {:default "ENE" :parse-fn schema/string-corner :validate [::schema/corner]}
-    "A corner of the key named in `anchor`."]
+    "A corner of the feature named in `anchor`."]
    [:parameter [:wrist-rest :position :offset]
-    {:default [0 0] :parse-fn vec}
-    "An offset in mm from the selected key (`key` style) or from the rest-side "
-    "mount (`threaded-mount` style) to the origin of the coordinate system "
-    "used for points that define the shape of the wrist rest."]
+    {:default [0 0] :parse-fn vec :validate [::schema/point-2d]}
+    "An offset in mm from the feature named in `anchor`."]
    [:parameter [:wrist-rest :plinth-height]
     {:default 1 :parse-fn num}
     "The average height of the plastic plinth in mm, at its upper lip."]

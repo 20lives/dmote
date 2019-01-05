@@ -36,10 +36,10 @@ The position of the key cluster relative to something else.
 
 ### Parameter `anchor`
 
-One of:
+A named feature. More specifically, one of:
 
 - `origin`: The origin of the coordinate system.
-- A key in some other cluster, as named in any of the `aliases` sections described above.
+- A named key in some other cluster, as named in any of the `aliases` sections described above.
 
 Take care not to create circular dependencies between clusters.
 

@@ -64,7 +64,7 @@ Where to place the block.
 
 ##### Parameter `anchor`
 
-An alias referring to a key or similar feature that anchors the block.
+An alias referring to a feature that anchors the block.
 
 ##### Parameter `corner`
 
@@ -92,7 +92,7 @@ If `true`, include bosses.
 
 ### Section `plinth-side`
 
-A block on the side of the wrist rest is optional.
+A block on the side of the wrist rest.
 
 #### Section `position`
 

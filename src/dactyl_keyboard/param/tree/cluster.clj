@@ -53,9 +53,7 @@
     "On the left-hand side of a DMOTE, everything is mirrored so that [0, 0] "
     "will be G instead of H in QWERTY, [1, 0] will be F instead of J, and so on."]
    [:parameter [:style]
-    {:default :standard
-     :parse-fn keyword
-     :validate [::schema/cluster-style]}
+    {:default :standard :parse-fn keyword :validate [::schema/cluster-style]}
     "Cluster layout style. One of:\n\n"
     "- `standard`: Both columns and rows have the same type of curvature "
     "applied in a logically consistent manner.\n"
@@ -63,7 +61,7 @@
     "more space between columns and may prevent key mounts from fusing "
     "together if you have a broad matrix."]
    [:parameter [:aliases]
-    {:default {:origin [0 0]}
+    {:default {}
      :parse-fn (schema/map-of keyword
                               (schema/tuple-of schema/keyword-or-integer))
      :validate [(spec/map-of keyword? ::schema/flexcoord-2d)]}
@@ -72,16 +70,14 @@
    [:section [:position]
     "The position of the key cluster relative to something else."]
    [:parameter [:position :anchor]
-    {:default :origin :parse-fn keyword :validate [::schema/cluster-anchor]}
-    "One of:\n\n"
+    {:default :origin :parse-fn keyword :validate [::schema/anchor]}
+    "A named feature. More specifically, one of:\n\n"
     "- `origin`: The origin of the coordinate system.\n"
-    "- A key in some other cluster, as named in any of the `aliases` sections "
-    "described above.\n\n"
+    "- A named key in some other cluster, as named in any of the `aliases` "
+    "sections described above.\n\n"
     "Take care not to create circular dependencies between clusters."]
    [:parameter [:position :offset]
-    {:default [0 0 0]
-     :parse-fn (schema/tuple-of num)
-     :validate [::schema/point-3d]}
+    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
     "A 3-dimensional offset in mm from the indicated key or else from the "
     "origin of the coordinate system.\n"
     "\n"

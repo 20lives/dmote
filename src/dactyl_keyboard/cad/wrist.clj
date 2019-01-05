@@ -322,13 +322,8 @@
         pad-above (edge-elevation getopt (last (edge-angles getopt)))
         z4 (+ z3 pad-above)
         z5 (+ z4 (getopt :wrist-rest :mould-thickness))
-        key (access/get-key-alias getopt (getopt :wrist-rest :position :anchor))
         absolute-ne
-          (mapv +
-            (take 2
-              (place/wall-corner-position
-                getopt (:cluster key) (:coordinates key)))
-            (getopt :wrist-rest :position :offset))
+          (place/offset-from-anchor getopt (getopt :wrist-rest :position) 2)
         absolute-center (mapv - absolute-ne bound-center)]
    {:base-polygon (polygon2 raw-outline)
     :relative-to-base-fn around-origin
@@ -532,9 +527,11 @@
 (defn rubber-insert
   "The upper portion of a wrist rest, to be cast or printed in a soft material."
   [getopt]
-  (color (:rubber colours)
-    (place/wrist-place getopt
-      (rubber-body getopt))))
+  (maybe/difference
+    (color (:rubber colours)
+      (place/wrist-place getopt
+        (rubber-body getopt)))
+    (all-mounts getopt plinth-block)))
 
 (defn unified-preview
   "A merged view of a wrist rest. This might be printed in hard plastic for a

@@ -177,15 +177,16 @@ If `true`, cut nut bosses into the inside wall of the block.
 
 #### Section `position`
 
-The block is positioned in relation to a key mount.
+The block is positioned in relation to a named feature.
 
 ##### Parameter `anchor`
 
-A named key where the block will attach. The vertical component of its position will be ignored.
+The name of a feature where the block will attach.
 
 ##### Parameter `offset`
 
-An offset in mm from the middle of the north wall of the selected key, at ground level, to the middle of the base of the back plate block.
+An offset in mm from the named feature to the middle of the base of the
+    back plate block.
 
 ### Section `bottom-plate`
 
@@ -551,19 +552,19 @@ Preview mode. If `true`, this puts a model of the wrist rest in the same OpenSCA
 
 ### Section `position`
 
-The wrist rest is positioned in relation to something.
+The wrist rest is positioned in relation to a named feature.
 
 #### Parameter `anchor`
 
-A named key where the wrist rest will attach. The vertical component of its position will be ignored.
+The name of a feature where the wrist rest will attach. The vertical component of its position will be ignored.
 
 #### Parameter `corner`
 
-A corner of the key named in `anchor`.
+A corner of the feature named in `anchor`.
 
 #### Parameter `offset`
 
-An offset in mm from the selected key (`key` style) or from the rest-side mount (`threaded-mount` style) to the origin of the coordinate system used for points that define the shape of the wrist rest.
+An offset in mm from the feature named in `anchor`.
 
 ### Parameter `plinth-height`
 
