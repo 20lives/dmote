@@ -308,7 +308,7 @@
    [:parameter [:case :bottom-plate :installation :fasteners :positions]
     {:default []
      :parse-fn schema/anchored-2d-positions
-     :validate [::schema/plate-screw-positions]}
+     :validate [::schema/anchored-2d-list]}
     "A list of places where threaded fasteners will connect the bottom plate "
     "to the rest of the case."]
    [:section [:case :leds]
@@ -694,6 +694,28 @@
     "least one cuboid block for at least one screw that connects the wrist "
     "rest to the case. "
     "This section is used only with the `threaded` style of wrist rest."]
+   [:section [:wrist-rest :sprues]
+    "Holes in the bottom of the plinth. You pour liquid rubber through these "
+    "holes when you make the rubber pad. Sprues are optional, but the general "
+    "recommendation is to have two of them if you’re going to be casting your "
+    "own pads. That way, air can escape even if you accidentally block one "
+    "sprue with a low-viscosity silicone."]
+   [:parameter [:wrist-rest :sprues :include]
+    {:default false :parse-fn boolean}
+    "If `true`, include sprues."]
+   [:parameter [:wrist-rest :sprues :inset]
+    {:default 0 :parse-fn num}
+    "The horizontal distance between the perimeter of the wrist rest and the "
+    "default position of each sprue."]
+   [:parameter [:wrist-rest :sprues :diameter]
+    {:default 1 :parse-fn num}
+    "The diameter of each sprue."]
+   [:parameter [:wrist-rest :sprues :positions]
+    {:default [] :parse-fn schema/anchored-2d-positions
+     :validate [::schema/anchored-2d-list]}
+    "The positions of all sprues. This is a list where each item needs an "
+    "`anchor` naming a main point in the spline. You can add an optional "
+    "two-dimensional `offset`."]
    [:section [:wrist-rest :bottom-plate]
     "The equivalent of the case `bottom-plate` parameter. If included, "
     "a bottom plate for a wrist rest uses the `thickness` configured for "
@@ -713,7 +735,7 @@
     "bottom plate."]
    [:parameter [:wrist-rest :bottom-plate :fastener-positions]
     {:default [] :parse-fn schema/anchored-2d-positions
-     :validate [::schema/plate-screw-positions]}
+     :validate [::schema/anchored-2d-list]}
     "The positions of threaded fasteners used to attach the bottom plate to "
     "its wrist rest. The syntax of this parameter is precisely the same as "
     "for the case’s bottom-plate fasteners. Corners are ignored and the "

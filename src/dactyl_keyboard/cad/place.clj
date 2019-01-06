@@ -395,6 +395,7 @@
 (def wrist-block-reckon
   (partial wrist-block-placement reckon/translate reckon/rotate))
 
+
 ;; Generalizations.
 
 (defn- reckon-feature
@@ -478,3 +479,14 @@
             [0 0 0])
         offset (getopt field :position :offset)]
    (mapv + (misc/z0 general) to-nook offset)))
+
+(defn wrist-module-placer
+  "Produce a function that places a named module in relation to a named inset
+  from the outline of the wrist rest."
+  [getopt outline-key module-name]
+  (fn [configuration]
+    (model/translate
+      (misc/z0 (offset-from-anchor getopt
+                 (assoc configuration :outline-key :sprue)
+                 2))
+      (model/call-module module-name))))

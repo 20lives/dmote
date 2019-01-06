@@ -52,7 +52,8 @@
 
 (def module-map
   "A mapping naming OpenSCAD modules and the functions that make them."
-  {"bottom_plate_anchor_positive" {:model-fn bottom/anchor-positive}
+  {"sprue_negative" {:model-fn wrist/sprue-negative}
+   "bottom_plate_anchor_positive" {:model-fn bottom/anchor-positive}
    "bottom_plate_anchor_negative" {:model-fn bottom/anchor-negative,
                                    :chiral true}})
 
@@ -284,7 +285,9 @@
        :modules [[(getopt :case :bottom-plate :include)
                   "bottom_plate_anchor_positive"]
                  [(getopt :case :bottom-plate :include)
-                  "bottom_plate_anchor_negative"]]
+                  "bottom_plate_anchor_negative"]
+                 [(getopt :wrist-rest :sprues :include)
+                  "sprue_negative"]]
        :model-fn build-keyboard-right}
       {:condition (= (getopt :mcu :support :style) :lock)
        :basename "mcu-lock-bolt"
@@ -301,7 +304,9 @@
       {:condition (getopt :wrist-rest :include)
        :basename "wrist-rest-main"
        :modules [[(getopt :wrist-rest :bottom-plate :include)
-                  "bottom_plate_anchor_negative"]]
+                  "bottom_plate_anchor_negative"]
+                 [(getopt :wrist-rest :sprues :include)
+                  "sprue_negative"]]
        :model-fn build-plinth-right}
       ;; Bottom plate(s):
       {:condition (and (getopt :case :bottom-plate :include)

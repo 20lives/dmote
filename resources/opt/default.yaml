@@ -647,6 +647,14 @@ wrist-rest:
   rotation:
     pitch: 0.05
     roll: 0.05
+  sprues:
+    include: true
+    inset: 10
+    diameter: 12
+    positions:
+    - anchor: plinth-left
+      offset: [9, -3]
+    - anchor: plinth-right
   bottom-plate:
     include: true
     inset: 4

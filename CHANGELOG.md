@@ -53,10 +53,12 @@ version 0.2.0, thus covering only a fraction of the project’s history.
     - Tilting.
     - Support for placing wrist rests in relation to their point
       of attachment to the case using a new `anchoring` parameter.
+    - Support for multiple mount points.
     - Support for naming the individual blocks that anchor a wrist rest.
     - Support for placing wrist rests in relation to a specific corner of a key.
       In the previous version, the attachment would be to the middle of the key.
     - Parametrization of mould wall thickness.
+    - Parametrization of sprues.
 - Support for naming your key clusters much more freely, and/or adding
   additional clusters. Even the new ‘main’ cluster is optional.
     - Support for a `cluster` parameter to `case` → `rear-housing` →

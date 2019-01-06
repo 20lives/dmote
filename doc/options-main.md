@@ -671,6 +671,26 @@ Tait-Bryan roll.
 
 A list of mounts for threaded fasteners. Each such mount will include at least one cuboid block for at least one screw that connects the wrist rest to the case. This section is used only with the `threaded` style of wrist rest.
 
+### Section `sprues`
+
+Holes in the bottom of the plinth. You pour liquid rubber through these holes when you make the rubber pad. Sprues are optional, but the general recommendation is to have two of them if you’re going to be casting your own pads. That way, air can escape even if you accidentally block one sprue with a low-viscosity silicone.
+
+#### Parameter `include`
+
+If `true`, include sprues.
+
+#### Parameter `inset`
+
+The horizontal distance between the perimeter of the wrist rest and the default position of each sprue.
+
+#### Parameter `diameter`
+
+The diameter of each sprue.
+
+#### Parameter `positions`
+
+The positions of all sprues. This is a list where each item needs an `anchor` naming a main point in the spline. You can add an optional two-dimensional `offset`.
+
 ### Section `bottom-plate`
 
 The equivalent of the case `bottom-plate` parameter. If included, a bottom plate for a wrist rest uses the `thickness` configured for the bottom of the case.

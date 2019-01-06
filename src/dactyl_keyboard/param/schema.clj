@@ -115,7 +115,8 @@
 (spec/def ::foot-plate (spec/keys :req-un [::points]))
 (spec/def ::anchored-2d-position
   (spec/keys :opt-un [::anchor ::corner ::offset]))
-(spec/def ::points (spec/coll-of ::anchored-2d-position))
+(spec/def ::anchored-2d-list (spec/coll-of ::anchored-2d-position))
+(spec/def ::points ::anchored-2d-list)
 (spec/def ::tweak-plate-map
   (spec/keys :req-un [::hull-around]
              :opt-un [::highlight ::chunk-size ::to-ground]))
@@ -147,7 +148,6 @@
   (spec/or :short (spec/tuple keyword? ::corner ::wall-segment)
            :long (spec/tuple keyword? ::corner ::wall-segment ::wall-segment)))
 (spec/def ::foot-plate-polygons (spec/coll-of ::foot-plate))
-(spec/def ::plate-screw-positions (spec/coll-of ::anchored-2d-position))
 
 (spec/def ::descriptor  ; Parameter metadata descriptor.
   #{:heading-template :help :default :parse-fn :validate :resolve-fn})

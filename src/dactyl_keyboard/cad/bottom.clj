@@ -86,12 +86,7 @@
   "Place instances of named module according to user configuration."
   [getopt part module-name]
   (apply maybe/union
-    (map (fn [raw]
-           (model/translate
-             (misc/z0 (place/offset-from-anchor getopt
-                        (assoc raw :outline-key :bottom)
-                        2))
-             (model/call-module module-name)))
+    (map (place/wrist-module-placer getopt :bottom module-name)
          (case part
            :case (getopt :case :bottom-plate :installation :fasteners :positions)
            :wrist-rest (getopt :wrist-rest :bottom-plate :fastener-positions)))))

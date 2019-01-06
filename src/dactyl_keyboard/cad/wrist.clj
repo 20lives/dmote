@@ -20,9 +20,9 @@
             [dactyl-keyboard.param.access :as access]))
 
 
-;;;;;;;;;;;;;;
-;; Generics ;;
-;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Plinth and Pad Polyhedrons ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def first-elevation 0.0)
 
@@ -259,6 +259,41 @@
   (let [res (getopt :wrist-rest :shape :spline :resolution)]
     (butlast (vertices (auto-spline2 (mapv vec2 points) true) res))))
 
+
+;;;;;;;;;;;;;;;;;;;
+;; Miscellaneous ;;
+;;;;;;;;;;;;;;;;;;;
+
+
+(defn sprues
+  "Place the sprue module according to user configuration."
+  [getopt]
+  (apply maybe/union
+    (map (place/wrist-module-placer getopt :sprue "sprue_negative")
+         (getopt :wrist-rest :sprues :positions))))
+
+(defn sprue-negative
+  [getopt]
+  (cylinder (/ (getopt :wrist-rest :sprues :diameter) 2)
+            10))
+
+(defn- get-block-alias
+  [getopt mount-index]
+  (reduce
+    (fn [coll [alias side-key]]
+      (merge coll
+        {alias {:type :wr-block
+                :mount-index mount-index
+                :side-key side-key}}))
+    {}
+    (getopt :wrist-rest :mounts mount-index :blocks :aliases)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Configuration Interface ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 (defn collect-point-aliases
   "Collect naïve coordinates of named main points. These coordinates will
   require mapping onto the splined outline later. This is an awkward
@@ -274,17 +309,6 @@
         coll))
     {}
     (getopt :wrist-rest :shape :spline :main-points)))
-
-(defn- get-block-alias
-  [getopt mount-index]
-  (reduce
-    (fn [coll [alias side-key]]
-      (merge coll
-        {alias {:type :wr-block
-                :mount-index mount-index
-                :side-key side-key}}))
-    {}
-    (getopt :wrist-rest :mounts mount-index :blocks :aliases)))
 
 (defn collect-block-aliases
   [getopt]
@@ -331,6 +355,7 @@
       {:base (inset 0)
        :lip (inset lip-inset)
        :mould (inset (+ lip-inset (- (getopt :wrist-rest :mould-thickness))))
+       :sprue (inset (getopt :wrist-rest :sprues :inset))
        :bottom (inset (getopt :wrist-rest :bottom-plate :inset))}
     :bound-size bound-size
     :center-2d absolute-center
@@ -521,8 +546,9 @@
     (when (= (getopt :wrist-rest :style) :threaded)
       (union
         (all-fasteners getopt)
-        (all-mounts getopt plinth-nut-pockets)))))
-    ;; TODO: Reimplement sprues.
+        (all-mounts getopt plinth-nut-pockets)))
+    (when (getopt :wrist-rest :sprues :include)
+      (sprues getopt))))
 
 (defn rubber-insert
   "The upper portion of a wrist rest, to be cast or printed in a soft material."
