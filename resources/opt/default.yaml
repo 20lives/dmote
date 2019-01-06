@@ -11,7 +11,7 @@ key-clusters:
   main:
     position:
       anchor: origin
-      offset: [0, 0, 10]
+      offset: [0, 0, 17]
     matrix-columns:
     - rows-above-home: 1
       rows-below-home: 1
@@ -34,7 +34,7 @@ key-clusters:
   thumb:
     position:
       anchor: m1
-      offset: [-8, -20, 16]
+      offset: [-8, -20, 06]
     matrix-columns:
     - rows-above-home: 1
     - rows-above-home: 1
@@ -51,7 +51,7 @@ key-clusters:
   aux0:
     position:
       anchor: t5
-      offset: [13, -17, 1]
+      offset: [13, -17, 2]
     matrix-columns:
     - rows-above-home: 0
     aliases:
@@ -88,7 +88,7 @@ by-key:
             progressive: 0.3
             intrinsic: -0.1
           roll:
-            base: 0.1
+            base: 0.2
             progressive: 0.06
           yaw:
             base: 0.03
@@ -106,7 +106,7 @@ by-key:
             wall:
               south:
                 extent: 3
-                perpendicular: 4
+                perpendicular: 1
           rows:
             first:
               parameters:
@@ -114,8 +114,11 @@ by-key:
                   pitch:
                     intrinsic:
                       -0.2
+                  yaw:
+                    intrinsic:
+                      -0.15
                   translation:
-                    early: [-4.5, -4, 1]
+                    mid: [0, -1, 4]
             last:
               parameters:
                 wall:
@@ -144,6 +147,11 @@ by-key:
                     early: [-1, -4, 8]
                 channel:
                   top-width: 15
+            "-1":
+              parameters:
+                layout:
+                  translation:
+                    early: [0, 0, 2]
             last:
               parameters:
                 wall:
@@ -258,7 +266,7 @@ by-key:
             base: -1.3
             progressive: 0.45
           pitch:
-            base: -0.3
+            base: -0.2
             progressive: 0.25
           yaw:
             base: 1
@@ -376,9 +384,10 @@ case:
     position:
       offsets:
         north: 15
-        east: -0.7
+        east: -1.5
         south: 3
-    height: 43.7
+        west: 2
+    height: 53.5
     fasteners:
       diameter: 6
       bosses: true
@@ -417,12 +426,12 @@ case:
         - anchor: near-right
           corner: ESE
           offset: [-3, 2]
-        - anchor: t5
-          corner: SSW
-          offset: [-4, 1]
+        - anchor: a0
+          corner: WSW
+          offset: [-1, 0]
         - anchor: t1
           corner: NNW
-          offset: [1, -4]
+          offset: [2, -4]
   leds:
     include: true
     amount: 3
@@ -520,10 +529,8 @@ case:
   # The low eastern plate:
   - chunk-size: 3
     hull-around:
-    - hull-around:
-      - [t4, SSE, 0, 1]
-      - [t4, SSW, 0, 1]
-    - [a0, NNW, 0]
+    - [t4, SSE, 0, 1]
+    - [t4, SSW, 0, 1]
     - [t4, SSE, 3, 4]
     - hull-around:
       - [a0, NNE, 0, 1]
@@ -542,16 +549,16 @@ case:
   # Webbing at the lower near corner of the thumb cluster:
   - chunk-size: 3
     hull-around:
-    - [t5, SSW, 0]
+    - [t4, WNW, 0]
     - [t4, WSW, 0]
     - [t5, SSE, 0]
-    - [t4, WNW, 0]
+    - [a0, NNW, 0]
+    - [t5, SSW, 0]
   # Webbing between the thumb and aux0 clusters:
-  - chunk-size: 3
-    hull-around:
-    - [t5, SSW, 0, 1]
+  - hull-around:
     - [t4, SSW, 0, 1]
-    - [a0, WSW, 0, 1]
+    - [a0, WNW, 0]
+    - [a0, ENE, 0]
   # A plate to ground beneath the entire thumb cluster:
   - to-ground: true
     chunk-size: 2
@@ -622,10 +629,10 @@ wrist-rest:
       - position: [20, 30]
       - position: [35, 28]
       - position: [41, 50]
-      - position: [57, 64]
-      - position: [70, 62]
+      - position: [50, 63]
+      - position: [68, 62]
         alias: plinth-right
-      - position: [74, 47]
+      - position: [74, 42]
       - position: [63, 20]
       - position: [50, 5]
         alias: plinth-near
@@ -653,8 +660,9 @@ wrist-rest:
     diameter: 12
     positions:
     - anchor: plinth-left
-      offset: [9, -3]
+      offset: [17, -3]
     - anchor: plinth-right
+      offset: [-8, -16]
   bottom-plate:
     include: true
     inset: 4

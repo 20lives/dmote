@@ -8,17 +8,17 @@ wrist-rest:
   mounts:
   - fasteners:
       diameter: 4
-      length: 55
+      length: 60
       height:
         first: 3
     angle: -1.2
     blocks:
-      distance: 32
+      distance: 33
       width: 10
       case-side:
         position:
           anchor: a0
-          offset: [5, 0]
+          offset: [5, 2]
         depth: 13
       plinth-side:
         depth: 7
@@ -33,7 +33,7 @@ wrist-rest:
         first: 3
     angle: -1.2
     blocks:
-      distance: 30
+      distance: 28
       width: 10
       case-side:
         position:
