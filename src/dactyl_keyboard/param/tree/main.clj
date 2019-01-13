@@ -742,8 +742,7 @@
     "starting position is inset from the perimeter of the wrist rest by the "
     "`inset` parameter above, before any offset stated here is applied.\n\n"
     "Other properties of these fasteners are determined by settings for the "
-    "case, though no positive housings will be created because the "
-    "plinth itself is solid."]
+    "case."]
    [:parameter [:wrist-rest :mould-thickness]
     {:default 1 :parse-fn num}
     "The thickness in mm of the walls and floor of the mould to be used for "

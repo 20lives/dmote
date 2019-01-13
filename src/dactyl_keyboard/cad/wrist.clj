@@ -247,17 +247,6 @@
       {}
       tmp-points)))
 
-(defn- mould-polyhedron
-  "An OpenSCAD polyhedron describing the exterior of the casting mould.
-  This could be simplified to an OpenSCAD extrusion of an OpenSCAD polygon,
-  since it is presently just one level with straight edges."
-  [getopt]
-  (let [[points faces] (temporary-polygon getopt [0 1])]
-    (polyhedron
-      (move-points points (mould-mapping getopt points))
-      faces
-      :convexity 2)))
-
 (defn- splined
   "The 2D coordinates along a closed spline through passed points."
   [getopt points]
@@ -281,9 +270,9 @@
   "A model of a sprue. This assumes that wrist-rest rotation is modest."
   [getopt]
   (let [height (getopt :wrist-rest :derived :z5)]
-    (-# (translate [0 0 (/ height 2)]
-          (cylinder (/ (getopt :wrist-rest :sprues :diameter) 2)
-                height)))))
+    (translate [0 0 (/ height 2)]
+      (cylinder (/ (getopt :wrist-rest :sprues :diameter) 2)
+                height))))
 
 (defn- get-block-alias
   [getopt mount-index]
@@ -563,8 +552,9 @@
     (when (getopt :wrist-rest :sprues :include)
       (sprues getopt))))
 
-(defn rubber-insert
-  "The upper portion of a wrist rest, to be cast or printed in a soft material."
+(defn rubber-insert-positive
+  "The upper portion of a wrist rest, to be cast or printed in a soft material.
+  This model is not fully featured."
   [getopt]
   (maybe/difference
     (color (:rubber colours)
@@ -578,21 +568,16 @@
   hard for ergonomy and does not have all the details."
   [getopt]
   (union
-    (rubber-insert getopt)
+    (rubber-insert-positive getopt)
     (plinth-positive getopt)))
 
-(defn rubber-casting-mould
-  "A thin shell that goes on top of a wrist plinth temporarily.
-  This is for casting silicone into, “in place”. If the wrist rest has
-  180° rotational symmetry around the z axis, one mould should
-  be enough for both halves’ wrist rests. It’s printed upside down."
-  ;; WARNING: This will not render correctly in OpenSCAD 2015. It will in
-  ;; a nightly build as of 2018-12-17.
+(defn mould-polyhedron
+  "An OpenSCAD polyhedron describing the exterior of the casting mould.
+  This could be simplified to an OpenSCAD extrusion of an OpenSCAD polygon,
+  since it is presently just one level with straight edges."
   [getopt]
-  (let [pitch (partial getopt :wrist-rest :derived)]
-   (rotate [(- π (getopt :wrist-rest :rotation :pitch))
-            (getopt :wrist-rest :rotation :roll)
-            0]
-     (difference
-       (mould-polyhedron getopt)
-       (unified-preview getopt)))))
+  (let [[points faces] (temporary-polygon getopt [0 1])]
+    (polyhedron
+      (move-points points (mould-mapping getopt points))
+      faces
+      :convexity 2)))

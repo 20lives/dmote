@@ -635,8 +635,8 @@ wrist-rest:
       - position: [74, 42]
       - position: [63, 20]
       - position: [50, 5]
-        alias: plinth-near
       - position: [30, 0]
+        alias: plinth-near
       - position: [3, 2]
       resolution: 2
     lip:
@@ -644,7 +644,7 @@ wrist-rest:
       height: 1.5
     pad:
       height:
-        surface-range: 2
+        surface-range: 5
         lip-to-surface: 3
         below-lip: 2
       surface:
@@ -665,10 +665,11 @@ wrist-rest:
       offset: [-8, -16]
   bottom-plate:
     include: true
-    inset: 4
+    inset: 2
     fastener-positions:
     - anchor: plinth-left
     - anchor: plinth-near
+      offset: [0, 4]
     - anchor: plinth-right
 dfm:
   error: -0.5

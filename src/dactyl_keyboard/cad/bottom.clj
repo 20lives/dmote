@@ -237,6 +237,11 @@
 ;; Wrist Rests ;;
 ;;;;;;;;;;;;;;;;;
 
+(defn wrist-anchors-positive
+  "The parts of the wrist-rest plinth that receive bottom-plate fasteners."
+  [getopt]
+  (fastener-positions getopt :wrist-rest "bottom_plate_anchor_positive"))
+
 (defn- wrist-positive-2d [getopt]
   (model/cut (wrist/unified-preview getopt)))
 

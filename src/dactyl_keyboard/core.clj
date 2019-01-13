@@ -21,9 +21,10 @@
             [dactyl-keyboard.param.tree.nested]
             [dactyl-keyboard.param.tree.main]
             [dactyl-keyboard.cad.aux :as aux]
-            [dactyl-keyboard.cad.key :as key]
             [dactyl-keyboard.cad.body :as body]
             [dactyl-keyboard.cad.bottom :as bottom]
+            [dactyl-keyboard.cad.key :as key]
+            [dactyl-keyboard.cad.place :as place]
             [dactyl-keyboard.cad.wrist :as wrist])
   (:gen-class :main true))
 
@@ -146,11 +147,38 @@
     (maybe/union
       (body/mask getopt (getopt :wrist-rest :bottom-plate :include)
         (wrist/plinth-plastic getopt))
+      (bottom/wrist-anchors-positive getopt)
       (when (and (getopt :wrist-rest :preview)
                  (getopt :wrist-rest :bottom-plate :include))
         (bottom/wrist-positive getopt)))
     (when (getopt :wrist-rest :bottom-plate :include)
       (bottom/wrist-negative getopt))))
+
+(defn build-rubber-casting-mould-right
+  "A thin shell that fits on top of the right-hand-side wrist-rest model.
+  This is for casting silicone into, “in place”. If the wrist rest has
+  180° rotational symmetry around the z axis, one mould should
+  be enough for both halves’ wrist rests. It’s printed upside down."
+  ;; WARNING: This will not render correctly in OpenSCAD 2015. It will in
+  ;; a nightly build as of 2018-12-17.
+  [getopt]
+  (maybe/rotate [π 0 0]
+    (place/wrist-undo getopt
+      (model/difference
+        (wrist/mould-polyhedron getopt)
+        (wrist/unified-preview getopt)
+        (bottom/wrist-anchors-positive getopt)))))
+
+(defn build-rubber-pad-right
+  "Right-hand-side wrist-rest pad model. Useful in visualization and
+  prototyping, but you would not normally include a print of this in your
+  final product, at least not in a hard plastic."
+  [getopt]
+  (place/wrist-undo getopt
+    (maybe/difference
+      (body/mask getopt (getopt :wrist-rest :bottom-plate :include)
+        (wrist/rubber-insert-positive getopt))
+      (bottom/wrist-anchors-positive getopt))))
 
 (defn- collect-anchors
   "Gather names and properties for the placement of keyboard features relative
@@ -297,13 +325,19 @@
       ;; Wrist rest:
       {:condition (getopt :wrist-rest :include)
        :basename "pad-mould"
-       :model-fn wrist/rubber-casting-mould}
+       :modules [[(getopt :case :bottom-plate :include)
+                  "bottom_plate_anchor_positive"]]
+       :model-fn build-rubber-casting-mould-right}
       {:condition (getopt :wrist-rest :include)
        :basename "pad-shape"
-       :model-fn wrist/rubber-insert}
+       :modules [[(getopt :case :bottom-plate :include)
+                  "bottom_plate_anchor_positive"]]
+       :model-fn build-rubber-pad-right}
       {:condition (getopt :wrist-rest :include)
        :basename "wrist-rest-main"
-       :modules [[(getopt :wrist-rest :bottom-plate :include)
+       :modules [[(getopt :case :bottom-plate :include)
+                  "bottom_plate_anchor_positive"]
+                 [(getopt :wrist-rest :bottom-plate :include)
                   "bottom_plate_anchor_negative"]
                  [(getopt :wrist-rest :sprues :include)
                   "sprue_negative"]]

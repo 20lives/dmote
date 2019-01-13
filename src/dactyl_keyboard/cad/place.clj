@@ -11,7 +11,7 @@
 (ns dactyl-keyboard.cad.place
   (:require [clojure.spec.alpha :as spec]
             [scad-clj.model :as model]
-            [scad-tarmi.core :refer [abs]]
+            [scad-tarmi.core :refer [abs π]]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.reckon :as reckon]
             [dactyl-keyboard.generics :refer [directions-to-unordered-corner]]
@@ -336,6 +336,16 @@
 
 (def wrist-reckon (partial wrist-placement reckon/translate reckon/rotate))
 
+(defn wrist-undo
+  "Reverse the rotation aspect of wrist-placement by repeating it in the negative.
+  This is intended solely as a convenience to avoid having to rebalance models
+  in the slicer."
+  [getopt obj]
+  (maybe/rotate [(- (getopt :wrist-rest :rotation :pitch))
+                 (- (getopt :wrist-rest :rotation :roll))
+                 0]
+    obj))
+
 (defn- remap-outline
   [getopt base-xy outline-key]
   (let [index (.indexOf (getopt :wrist-rest :derived :outline :base) base-xy)]
@@ -487,6 +497,6 @@
   (fn [configuration]
     (model/translate
       (misc/z0 (offset-from-anchor getopt
-                 (assoc configuration :outline-key :sprue)
+                 (assoc configuration :outline-key outline-key)
                  2))
       (model/call-module module-name))))

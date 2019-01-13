@@ -709,7 +709,7 @@ The horizontal distance between the perimeter of the wrist rest and the default 
 
 The positions of threaded fasteners used to attach the bottom plate to its wrist rest. The syntax of this parameter is precisely the same as for the case’s bottom-plate fasteners. Corners are ignored and the starting position is inset from the perimeter of the wrist rest by the `inset` parameter above, before any offset stated here is applied.
 
-Other properties of these fasteners are determined by settings for the case, though no positive housings will be created because the plinth itself is solid.
+Other properties of these fasteners are determined by settings for the case.
 
 ### Parameter `mould-thickness`
 
