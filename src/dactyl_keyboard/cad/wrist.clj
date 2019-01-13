@@ -138,7 +138,8 @@
               (find-face points (to-3d floor-triangles first-elevation))
               ;; Additional faces for the ceiling (reversed to go clockwise).
               (find-face points
-                (mapv reverse (to-3d ceiling-triangles last-elevation)))))))
+                (mapv reverse (to-3d ceiling-triangles last-elevation))))
+      :convexity 2)))
 
 (defn- rubber-surface-heightmap
   "A heightmap horizontally centered on the world origin."
@@ -225,7 +226,8 @@
         [points faces] (temporary-polygon getopt (vec (range (count segments))))]
     (polyhedron
       (move-points points (plinth-mapping getopt points segments))
-      faces)))
+      faces
+      :convexity 2)))
 
 (defn- mould-mapping
   "Like plinth-mapping but for the exterior of the mould."
@@ -251,7 +253,10 @@
   since it is presently just one level with straight edges."
   [getopt]
   (let [[points faces] (temporary-polygon getopt [0 1])]
-    (polyhedron (move-points points (mould-mapping getopt points)) faces)))
+    (polyhedron
+      (move-points points (mould-mapping getopt points))
+      faces
+      :convexity 2)))
 
 (defn- splined
   "The 2D coordinates along a closed spline through passed points."
