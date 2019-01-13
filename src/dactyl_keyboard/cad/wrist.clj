@@ -273,6 +273,7 @@
          (getopt :wrist-rest :sprues :positions))))
 
 (defn sprue-negative
+  "A model of a sprue."
   [getopt]
   (cylinder (/ (getopt :wrist-rest :sprues :diameter) 2)
             10))
@@ -532,17 +533,22 @@
   [getopt]
   (all-mounts getopt mount-fasteners))
 
+(defn plinth-positive
+  "A maquette of the plastic, rigid portion of wrist rest."
+  [getopt]
+  (maybe/union
+    (difference
+      (plinth-polyhedron getopt)
+      (place/wrist-place getopt (rubber-bottom getopt)))
+    (when (= (getopt :wrist-rest :style) :threaded)
+      (all-mounts getopt plinth-block))))
+
 (defn plinth-plastic
   "The lower portion of a wrist rest, to be printed in a rigid material.
   This is complete except for masking and holes for a bottom plate."
   [getopt]
   (maybe/difference
-    (maybe/union
-      (difference
-        (plinth-polyhedron getopt)
-        (place/wrist-place getopt (rubber-bottom getopt)))
-      (when (= (getopt :wrist-rest :style) :threaded)
-        (all-mounts getopt plinth-block)))
+    (plinth-positive getopt)
     (when (= (getopt :wrist-rest :style) :threaded)
       (union
         (all-fasteners getopt)
@@ -562,12 +568,11 @@
 (defn unified-preview
   "A merged view of a wrist rest. This might be printed in hard plastic for a
   prototype but is not suitable for long-term use: It would typically be too
-  hard for ergonomy and does not have a nut pocket for threaded rods, nor
-  holes for mounting a bottom plate."
+  hard for ergonomy and does not have all the details."
   [getopt]
   (union
     (rubber-insert getopt)
-    (plinth-plastic getopt)))
+    (plinth-positive getopt)))
 
 (defn rubber-casting-mould
   "A thin shell that goes on top of a wrist plinth temporarily.
