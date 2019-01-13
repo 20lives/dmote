@@ -278,10 +278,12 @@
          (getopt :wrist-rest :sprues :positions))))
 
 (defn sprue-negative
-  "A model of a sprue."
+  "A model of a sprue. This assumes that wrist-rest rotation is modest."
   [getopt]
-  (cylinder (/ (getopt :wrist-rest :sprues :diameter) 2)
-            10))
+  (let [height (getopt :wrist-rest :derived :z5)]
+    (-# (translate [0 0 (/ height 2)]
+          (cylinder (/ (getopt :wrist-rest :sprues :diameter) 2)
+                height)))))
 
 (defn- get-block-alias
   [getopt mount-index]
