@@ -2,9 +2,6 @@
 # This is not the full set of available parameters.
 # Read the project documentation.
 
-keycaps:
-  body-height: 7.3  # DSA-profile caps.
-  resting-clearance: 6.5  # DSA on Matias switches.
 switches:
   travel: 3.5
 key-clusters:
@@ -58,6 +55,9 @@ key-clusters:
       a0: [0, 0]
 by-key:
   parameters:
+    keycap:
+      body-height: 7.3        # DSA profile.
+      resting-clearance: 6.5  # DSA on Matias switches.
     channel:
       height: 20
       top-width: 10

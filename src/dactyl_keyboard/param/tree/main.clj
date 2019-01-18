@@ -33,23 +33,13 @@
     "in the main body of a YAML file for a DMOTE variant. Other documents "
     "cover special sections of this one in more detail."]
    [:section [:keycaps]
-    "Keycaps are the plastic covers placed over the switches. Their shape will "
-    "help determine the spacing between key mounts if the keyboard is curved. "
-    "Negative space is also reserved for the caps."]
+    "Keycaps are the plastic covers placed over the switches. Their shape is "
+    "determined [here](options-nested.md), not in this section."]
    [:parameter [:keycaps :preview]
     {:default false :parse-fn boolean}
     "If `true`, include models of the keycaps. This is intended for "
     "illustration in development. The models are not good enough for "
     "printing."]
-   [:parameter [:keycaps :body-height]
-    {:default 1 :parse-fn num}
-    "The height in mm of each keycap, measured from top to bottom of the "
-    "entire cap by itself.\n\n"
-    "An SA cap would be about 11.6 mm, DSA 7.3 mm."]
-   [:parameter [:keycaps :resting-clearance]
-    {:default 1 :parse-fn num}
-    "The height in mm of the air gap between keycap and switch mount, "
-    "in a resting state."]
    [:section [:switches]
     "Electrical switches close a circuit when pressed. They cannot be "
     "printed. This section specifies how much space they need to be "
@@ -240,7 +230,7 @@
     "for each of the first-level case `tweaks` that use `to-ground`, ignoring "
     "chunk size and almost ignoring nested tweaks.\n"
     "\n"
-    "This methodology is mentioned here because its results are not perfect."
+    "This methodology is mentioned here because its results are not perfect. "
     "Pending future features in OpenSCAD, a future version may be based on a "
     "more exact projection of the case, but as of 2018, such a projection is "
     "hollow and cannot be convex-hulled without escaping the case, unless "

@@ -4,21 +4,11 @@ Each heading in this document represents a recognized configuration key in the m
 
 ## Section `keycaps`
 
-Keycaps are the plastic covers placed over the switches. Their shape will help determine the spacing between key mounts if the keyboard is curved. Negative space is also reserved for the caps.
+Keycaps are the plastic covers placed over the switches. Their shape is determined [here](options-nested.md), not in this section.
 
 ### Parameter `preview`
 
 If `true`, include models of the keycaps. This is intended for illustration in development. The models are not good enough for printing.
-
-### Parameter `body-height`
-
-The height in mm of each keycap, measured from top to bottom of the entire cap by itself.
-
-An SA cap would be about 11.6 mm, DSA 7.3 mm.
-
-### Parameter `resting-clearance`
-
-The height in mm of the air gap between keycap and switch mount, in a resting state.
 
 ## Section `switches`
 
@@ -198,7 +188,7 @@ The bottom plate is largely two-dimensional. The application builds it from a se
 
 Specifically, there is one polygon per key cluster, limited to `full` wall edges, one polygon for the rear housing, and one set of polygons for each of the first-level case `tweaks` that use `to-ground`, ignoring chunk size and almost ignoring nested tweaks.
 
-This methodology is mentioned here because its results are not perfect.Pending future features in OpenSCAD, a future version may be based on a more exact projection of the case, but as of 2018, such a projection is hollow and cannot be convex-hulled without escaping the case, unless your case is convex to start with.
+This methodology is mentioned here because its results are not perfect. Pending future features in OpenSCAD, a future version may be based on a more exact projection of the case, but as of 2018, such a projection is hollow and cannot be convex-hulled without escaping the case, unless your case is convex to start with.
 
 If you require an exact match for the case, do the projection, save it as DXF/SVG etc. and post-process that file to fill the interior gap.
 

@@ -158,6 +158,32 @@
     {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
     "“Late” translation is the last step in key placement and therefore "
     "interacts very little with other steps."]
+   [:section [:keycap]
+    "There are general keycap settings in the main section. "
+    "Settings here control only the shape of each cap. This will help "
+    "determine the spacing between key mounts if the keyboard is curved. "
+    "Negative space is also reserved for the cap.\n\n"
+    "Horizontal cap size is specified in u, a unit that equates to 19.05 mm "
+    "(0.75”) per key mount. A 1 u cap is smaller at about 18.25 mm, "
+    "to allow for space between caps. Note that plates for key mounts are all "
+    "1 u, not currently configurable."]
+   [:parameter [:keycap :width]
+    {:default 1 :parse-fn num}
+    "The width of the cap in u. On a traditional ISO keyboard, this varies "
+    "from 1 for most keys to about 6 for a space bar."]
+   [:parameter [:keycap :depth]
+    {:default 1 :parse-fn num}
+    "The depth of the cap in u. On a traditional ISO keyboard, this is 2 for "
+    "the Enter key and 1 for all other keys."]
+   [:parameter [:keycap :body-height]
+    {:default 1 :parse-fn num}
+    "The height in mm of each keycap, measured from top to bottom of the "
+    "entire cap by itself.\n\n"
+    "An SA cap would be about 11.6 mm, DSA 7.3 mm."]
+   [:parameter [:keycap :resting-clearance]
+    {:default 1 :parse-fn num}
+    "The height in mm of the air gap between keycap and switch mount, "
+    "in the switch’s resting state."]
    [:section [:channel]
     "Above each switch mount, there is a channel of negative space for the "
     "user’s finger and the keycap to move inside. This is only useful in those "

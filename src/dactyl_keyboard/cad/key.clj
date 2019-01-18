@@ -153,47 +153,54 @@
 ;; Keycap Models ;;
 ;;;;;;;;;;;;;;;;;;;
 
-(defn keycap-properties [getopt]
-  (let [height (getopt :keycaps :body-height)
-        travel (getopt :switches :travel)
-        resting-clearance (getopt :keycaps :resting-clearance)
-        plate (getopt :case :key-mount-thickness)
-        coll {:pressed-cap-bottom (- resting-clearance travel)
-              :resting-cap-bottom resting-clearance}]
-   {:from-plate-top coll
-    :from-plate-bottom (into {} (map (fn [[k v]] [k (+ plate v)]) coll))}))
+(defn- cap-clearance
+  "Compute keycap clearance from key mounting plate."
+  [getopt cluster coord
+   & {:keys [from state] :or {from :plate-top, state :resting}}]
+  (case from
+    :plate-top
+      (case state
+        :resting
+          (most-specific getopt [:keycap :resting-clearance] cluster coord)
+        :pressed (- (cap-clearance getopt cluster coord)
+                    (getopt :switches :travel)))
+    :plate-bottom
+      (+ (cap-clearance getopt cluster coord :from :plate-top :state state)
+         (getopt :case :key-mount-thickness))))
 
-(defn negative-cap-shape
+(defn cap-channel-negative
   "The shape of a channel for a keycap to move in."
-  [getopt {h3 :height w3 :top-width m :margin}]
-  (let [step (fn [h w] (translate [0 0 h] (cube w w 1)))
-        h1 (getopt :keycaps :derived :from-plate-top :pressed-cap-bottom)
-        w1 (+ place/key-width-1u m)
-        h2 (getopt :keycaps :derived :from-plate-top :resting-cap-bottom)
+  [getopt cluster coord {h3 :height wd3 :top-width m :margin}]
+  (let [step (fn [w d h] (translate [0 0 h] (cube w d 1)))
         keyswitch-hole-x (getopt :switches :derived :keyswitch-hole-x)
-        keyswitch-hole-y (getopt :switches :derived :keyswitch-hole-y)]
+        keyswitch-hole-y (getopt :switches :derived :keyswitch-hole-y)
+        ws (max keyswitch-hole-x keyswitch-hole-y)
+        most #(most-specific getopt % cluster coord)
+        waist #(+ (place/key-length (most [:keycap %])) m)
+        w1 (waist :width)
+        d1 (waist :depth)
+        h1 (cap-clearance getopt cluster coord :state :pressed)
+        h2 (cap-clearance getopt cluster coord :from :plate-top :state :pressed)]
    (color (:cap-negative generics/colours)
      (translate [0 0 (getopt :case :key-mount-thickness)]
        (misc/pairwise-hulls
          ;; A bottom plate for ease of mounting a switch:
-         (step 0.5 (max keyswitch-hole-x keyswitch-hole-y))
+         (step ws ws 0.5)
          ;; Space for the keycap’s edges in travel:
-         (step h1 w1)
-         (step h2 w1)
+         (step w1 d1 h1)
+         (step w1 d1 h2)
          ;; Space for the upper body of a keycap at rest:
-         (step h3 w3))))))
+         (step wd3 wd3 h3))))))
 
-(defn keycap-model
-  "The shape of one keycap, rectangular base, ’units’ in width, at rest."
-  [getopt units]
-  (let [base-width (place/key-length units)
-        base-depth (place/key-length 1)
-        z (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)]
+(defn cap-positive
+  "The shape of one keycap. Rectangular base, at rest, size measured in units."
+  [getopt cluster coord]
+  (let [most #(most-specific getopt [:keycap %] cluster coord)]
    (->>
-     (square base-width base-depth)
-     (extrude-linear {:height (getopt :keycaps :body-height)
-                      :center false :scale 0.73})  ; Based on DSA.
-     (translate [0 0 z])
+     (apply square (map place/key-length [(most :width) (most :depth)]))
+     (extrude-linear  ; Scale based on DSA incline.
+       {:height (most :body-height), :center false, :scale 0.73})
+     (translate [0 0 (cap-clearance getopt cluster coord)])
      (color (:cap-body generics/colours)))))
 
 
@@ -236,13 +243,13 @@
   (let [t (getopt :case :key-mount-thickness)
         keyswitch-hole-x (getopt :switches :derived :keyswitch-hole-x)
         keyswitch-hole-y (getopt :switches :derived :keyswitch-hole-y)
-        nub (->> (binding [*fn* 30] (cylinder 1 2.75))
-                 (rotate (/ π 2) [1 0 0])
+        nub (->> (cylinder 1 2.75)
+                 (with-fn 20)
+                 (rotate [(/ π 2) 0 0])
                  (translate [(+ (/ keyswitch-hole-x 2)) 0 1])
-                 (hull (->> (cube 1.5 2.75 t)
-                            (translate [(+ (/ 1.5 2) (/ keyswitch-hole-y 2))
-                                        0
-                                        (/ t 2)]))))]
+                 (hull
+                   (translate [(+ 3/4 (/ keyswitch-hole-y 2)) 0 (/ t 2)]
+                     (cube 1.5 2.75 t))))]
     (union nub
            (->> nub
                 (mirror [1 0 0])
@@ -284,7 +291,7 @@
   (letfn [(modeller [coord]
             (letfn [(most [path]
                       (most-specific getopt path cluster coord))]
-              (negative-cap-shape getopt
+              (cap-channel-negative getopt cluster coord
                 {:top-width (most [:channel :top-width])
                  :height (most [:channel :height])
                  :margin (most [:channel :margin])})))]
@@ -293,7 +300,7 @@
 
 (defn cluster-keycaps [getopt cluster]
   (apply union (map #(place/cluster-place getopt cluster %
-                       (keycap-model getopt 1))
+                       (cap-positive getopt cluster %))
                     (derived getopt cluster :key-coordinates))))
 
 (defn metacluster

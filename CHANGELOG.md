@@ -6,6 +6,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 ## [Unreleased]
 ### Changed
 - Moved and replaced some options:
+    - Dimensions of `keycaps` have moved into nestable `parameters` under
+      `by-key`.
     - `key-alias` settings have been merged into `anchor`. `anchor` can now
       refer to a variety of features either by alias or by a built-in and
       reserved name like `rear-housing` or `origin`. In some cases, it is now
@@ -67,6 +69,9 @@ version 0.2.0, thus covering only a fraction of the project’s history.
     - Support for a `cluster` parameter to `case` → `leds` → `position`.
       LEDs would previously be attached to the finger cluster.
     - Support for anchoring any cluster to any other, within logical limits.
+- Parametrization of keycap sizes, adding support for sizes other than 1u in
+  both horizontal dimensions, as well as diversity in keycap height and
+  clearance.
 - Support for a filename whitelist in the CLI.
 - Support for placing `foot-plates` in relation to objects other than keys.
 - Support for generic compensation for slicer and printer inaccuracies in the

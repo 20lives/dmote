@@ -196,7 +196,6 @@
   [[[:dfm] (fn [getopt] {:compensator (error-fn (getopt :dfm :error))})]
    [[:key-clusters] key/derive-cluster-properties]
    [[] collect-anchors]
-   [[:keycaps] key/keycap-properties]
    [[:switches] key/keyswitch-dimensions]
    [[:case :rear-housing] body/housing-properties]
    [[:mcu] aux/derive-mcu-properties]

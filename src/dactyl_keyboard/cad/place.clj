@@ -71,9 +71,8 @@
         delta-r (delta-fn neutral index)
         angle-product (* angle-factor delta-f)
         flat-distance (* mount-1u (- index neutral))
-        cap-height
-          (getopt :keycaps :derived :from-plate-bottom :resting-cap-bottom)
-        radius (+ cap-height
+        radius (+ (getopt :case :key-mount-thickness)
+                  (most [:keycap :resting-clearance])
                   (/ (/ (+ mount-1u separation) 2)
                      (Math/sin (/ angle-factor 2))))
         ortho-x (- (* delta-r (+ -1 (- (* radius (Math/sin angle-factor))))))
