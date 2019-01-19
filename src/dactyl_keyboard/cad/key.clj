@@ -27,36 +27,23 @@
   [getopt & keys]
   (apply (partial getopt :key-clusters :derived :by-cluster) keys))
 
-;; ALPS-style switches:
-(def alps-hole-x 15.5)
-(def alps-hole-y 12.6)
-(def alps-overhang-x 17.25)  ; Width of notches.
-(def alps-overhang-y 14.25)
-(def alps-overhang-z 1)  ; Height of notch above hole/plate.
-(def alps-underhang-z 4.5)  ; Height of body up to plate top.
-
-;; MX-style switches:
-(def mx-hole-x 13.9954)
-(def mx-hole-y 13.9954)
-(def mx-overhang-x 15.494)
-(def mx-overhang-y 15.494)
-(def mx-overhang-z 1)  ; Estimated, dimension not included in datasheet.
-(def mx-underhang-z 5.004)
-
 (defn keyswitch-dimensions [getopt]
   (case (getopt :switches :style)
-    :alps {:keyswitch-hole-x alps-hole-x
-           :keyswitch-hole-y alps-hole-y
-           :keyswitch-overhang-x alps-overhang-x
-           :keyswitch-overhang-y alps-overhang-y
-           :keyswitch-overhang-z alps-overhang-z
-           :keyswitch-cutout-height alps-underhang-z}
-    :mx   {:keyswitch-hole-x mx-hole-x
-           :keyswitch-hole-y mx-hole-y
-           :keyswitch-overhang-x mx-overhang-x
-           :keyswitch-overhang-y mx-overhang-y
-           :keyswitch-overhang-z mx-overhang-z
-           :keyswitch-cutout-height mx-underhang-z}))
+    :alps {:hole-x 15.5
+           :hole-y 12.6
+           :overhang-x 17.25    ; Width of notches.
+           :overhang-y 14.25
+           :overhang-z 1        ; Height of notch above hole/plate.
+           :cutout-height 4.5}  ; Height of body up to plate top.
+    :mx
+      (let [hole 13.9954
+            overhang 15.494]
+       {:hole-x hole
+        :hole-y hole
+        :overhang-x overhang
+        :overhang-y overhang
+        :overhang-z 1  ; Needs confirmation. Absent in datasheet.
+        :cutout-height 5.004})))
 
 (defn resolve-flex
   "Resolve supported keywords in a coordinate pair to names.
@@ -172,8 +159,8 @@
   "The shape of a channel for a keycap to move in."
   [getopt cluster coord {h3 :height wd3 :top-width m :margin}]
   (let [step (fn [w d h] (translate [0 0 h] (cube w d 1)))
-        keyswitch-hole-x (getopt :switches :derived :keyswitch-hole-x)
-        keyswitch-hole-y (getopt :switches :derived :keyswitch-hole-y)
+        keyswitch-hole-x (getopt :switches :derived :hole-x)
+        keyswitch-hole-y (getopt :switches :derived :hole-y)
         ws (max keyswitch-hole-x keyswitch-hole-y)
         most #(most-specific getopt % cluster coord)
         waist #(+ (place/key-length (most [:keycap %])) m)
@@ -217,38 +204,38 @@
   "Negative space for the insertion of a key switch through a mounting plate."
   [getopt]
   (let [t (getopt :case :key-mount-thickness)
-        keyswitch-style (getopt :switches :style)
-        keyswitch-hole-x (getopt :switches :derived :keyswitch-hole-x)
-        keyswitch-hole-y (getopt :switches :derived :keyswitch-hole-y)
-        keyswitch-overhang-x (getopt :switches :derived :keyswitch-overhang-x)
-        keyswitch-overhang-y (getopt :switches :derived :keyswitch-overhang-y)
-        keyswitch-cutout-height (getopt :switches :derived :keyswitch-cutout-height)
-        h (- (* 2 keyswitch-cutout-height) t)
+        style (getopt :switches :style)
+        hole-x (getopt :switches :derived :hole-x)
+        hole-y (getopt :switches :derived :hole-y)
+        overhang-x (getopt :switches :derived :overhang-x)
+        overhang-y (getopt :switches :derived :overhang-y)
+        cutout-height (getopt :switches :derived :cutout-height)
+        h (- (* 2 cutout-height) t)
         trench-scale 2.5]
    (translate [0 0 (/ t 2)]
      (union
        ;; Space for the part of a switch above the mounting hole.
        (translate [0 0 t]
-         (cube keyswitch-overhang-x keyswitch-overhang-y t))
+         (cube overhang-x overhang-y t))
        ;; The hole through the plate.
-       (cube keyswitch-hole-x keyswitch-hole-y h)
+       (cube hole-x hole-y h)
        ;; ALPS-specific space for wings to flare out.
-       (if (= keyswitch-style :alps)
+       (if (= style :alps)
          (translate [0 0 -1.5]
-                    (cube (+ keyswitch-hole-x 1) keyswitch-hole-y t)))))))
+                    (cube (+ hole-x 1) hole-y t)))))))
 
 (defn single-switch-nubs
   "MX-specific nubs that hold the keyswitch in place."
   [getopt]
   (let [t (getopt :case :key-mount-thickness)
-        keyswitch-hole-x (getopt :switches :derived :keyswitch-hole-x)
-        keyswitch-hole-y (getopt :switches :derived :keyswitch-hole-y)
+        hole-x (getopt :switches :derived :hole-x)
+        hole-y (getopt :switches :derived :hole-y)
         nub (->> (cylinder 1 2.75)
                  (with-fn 20)
                  (rotate [(/ π 2) 0 0])
-                 (translate [(+ (/ keyswitch-hole-x 2)) 0 1])
+                 (translate [(+ (/ hole-x 2)) 0 1])
                  (hull
-                   (translate [(+ 3/4 (/ keyswitch-hole-y 2)) 0 (/ t 2)]
+                   (translate [(+ 3/4 (/ hole-y 2)) 0 (/ t 2)]
                      (cube 1.5 2.75 t))))]
     (union nub
            (->> nub
