@@ -120,8 +120,6 @@
             (wrist/all-fasteners getopt))
           (sandbox/negative getopt))
         ;; Outer positives, subject only to outer negatives:
-        (when (= (getopt :switches :style) :mx)
-          (key/metacluster key/cluster-nubs getopt))
         (when (= (getopt :mcu :support :style) :lock) ; Outside the alcove.
           (aux/mcu-lock-fixture-composite getopt)))
       ;; Outer negatives:
@@ -196,7 +194,7 @@
   [[[:dfm] (fn [getopt] {:compensator (error-fn (getopt :dfm :error))})]
    [[:key-clusters] key/derive-cluster-properties]
    [[] collect-anchors]
-   [[:switches] key/keyswitch-dimensions]
+   [[:switches] key/derive-switch-properties]
    [[:case :rear-housing] body/housing-properties]
    [[:mcu] aux/derive-mcu-properties]
    [[:wrist-rest] wrist/derive-properties]])
