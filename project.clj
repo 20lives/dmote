@@ -1,4 +1,4 @@
-(defproject dactyl-keyboard "0.3.0"
+(defproject dactyl-keyboard "0.4.0-SNAPSHOT"
   :description "A parametrized, split-hand, concave, columnar, ergonomic keyboard"
   :url "http://viktor.eikman.se/article/the-dmote/"
   :license {:name "GNU Affero General Public License"
@@ -8,6 +8,7 @@
                  [org.flatland/ordered "1.5.7"]
                  [thi.ng/geom "1.0.0-RC3"]
                  [clj-yaml "0.4.0"]
+                 [scad-app "0.1.0"]
                  [scad-clj "0.5.3"]
                  [scad-tarmi "0.2.0"]]
   :main dactyl-keyboard.core

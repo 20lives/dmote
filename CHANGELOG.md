@@ -4,9 +4,11 @@ This log follows the conventions of
 version 0.2.0, thus covering only a fraction of the project’s history.
 
 ## [Unreleased]
-Nothing yet.
+### Developer
+- Outsourced file authoring to `scad-app` for improved CPU thread scaling and
+  rendering feedback.
 
-## [Version 0.3.0]
+## [Version 0.3.0] - 2019-02-18
 ### Changed
 - Moved and replaced some options:
     - Dimensions of `keycaps` have moved into nestable `parameters` under

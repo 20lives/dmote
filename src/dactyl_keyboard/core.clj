@@ -6,11 +6,12 @@
 (ns dactyl-keyboard.core
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.pprint :refer [pprint]]
-            [clojure.java.shell :refer [sh]]
-            [clojure.java.io :refer [file make-parents]]
+            [clojure.java.io :as io]
             [clj-yaml.core :as yaml]
             [scad-clj.scad :refer [write-scad]]
             [scad-clj.model :as model]
+            [scad-app.core :refer [filter-by-name
+                                   refine-asset refine-all build-all]]
             [scad-tarmi.core :refer [π]]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.dfm :refer [error-fn]]
@@ -50,13 +51,6 @@
   (println "⸻")
   (println)
   (println "This document was generated from the application CLI."))
-
-(def module-map
-  "A mapping naming OpenSCAD modules and the functions that make them."
-  {"sprue_negative" {:model-fn wrist/sprue-negative}
-   "bottom_plate_anchor_positive" {:model-fn bottom/anchor-positive}
-   "bottom_plate_anchor_negative" {:model-fn bottom/anchor-negative,
-                                   :chiral true}})
 
 (defn build-keyboard-right
   "Right-hand-side keyboard model."
@@ -229,6 +223,12 @@
       (do (println (format "Failed to load file “%s”." filepath))
           (System/exit 1)))))
 
+(defn- output-filepath-fn
+  [base suffix]
+  "Produce a relative file path for e.g. SCAD or STL.
+  This upholds Dactyl tradition with “things” over the scad-app default."
+  (io/file "things" suffix (str base "." suffix)))
+
 (defn- parse-build-opts
   "Parse model parameters. Return an accessor for them."
   [{:keys [debug] :as options}]
@@ -240,134 +240,128 @@
     (if debug (pprint-settings "Resolved and validated settings:" validated))
     (access/option-accessor (enrich-option-metadata validated)))))
 
-(defn- render-to-stl
-  "Call OpenSCAD to render an SCAD file to STL."
-  [renderer path-scad path-stl]
-  (make-parents path-stl)
-  (if (zero? (:exit (sh renderer "-o" path-stl path-scad)))
-    (println "Rendered" path-stl)
-    (do
-      (println "Rendering" path-stl "failed")
-      (System/exit 1))))
+(def module-asset-list
+  "OpenSCAD modules and the functions that make them."
+  [{:name "sprue_negative"
+    :model-precursor wrist/sprue-negative}
+   {:name "bottom_plate_anchor_positive"
+    :model-precursor bottom/anchor-positive}
+   {:name "bottom_plate_anchor_negative"
+    :model-precursor bottom/anchor-negative,
+    :chiral true}])
 
-(defn- author
-  "Describe a model in one or more output files."
-  [[basename modules model {:keys [debug render renderer]}]]
-  (let [scad (file "things" "scad" (str basename ".scad"))
-        stl (file "things" "stl" (str basename ".stl"))]
-    (if debug (println "Started" scad))
-    (make-parents scad)
-    (spit scad (apply write-scad (conj modules model)))
-    (if render (render-to-stl renderer (str scad) (str stl)))
-    (if debug (println "Finished" scad))))
+(defn module-asset-map [getopt]
+  "Convert module-asset-list to a hash map with fully resolved models."
+  (reduce
+    (fn [coll {:keys [name model-precursor] :as asset}]
+      (assoc coll name
+        (assoc asset :model-main (model-precursor getopt))))
+    {}
+    module-asset-list))
 
-(defn- maybe-flip [mirrored model]
-  (if mirrored (model/mirror [-1 0 0] model) model))
+(defn get-precursors
+  "Make the central roster of files and the models that go into each.
+  The schema used to describe them is a superset of the scad-app
+  asset schema, adding dependencies on special configuration values and
+  rotation for ease of printing. The models themselves are described with
+  unary precursors and their module dependencies with 2-tuples of conditions
+  and names."
+  [getopt]
+  [{:name "preview-keycap"
+    :model-precursor (partial key/metacluster key/cluster-keycaps)}
+   {:name "case-main"
+    :modules [(when (getopt :case :bottom-plate :include)
+                "bottom_plate_anchor_positive")
+              (when (getopt :case :bottom-plate :include)
+                "bottom_plate_anchor_negative")
+              (when (getopt :wrist-rest :sprues :include)
+                "sprue_negative")]
+    :model-precursor build-keyboard-right
+    :chiral true}
+   (when (= (getopt :mcu :support :style) :lock)
+     {:name "mcu-lock-bolt"
+      :model-precursor aux/mcu-lock-bolt
+      :rotation [(/ π 2) 0 0]})
+   ;; Wrist rest:
+   (when (getopt :wrist-rest :include)
+     {:name "pad-mould"
+      :modules [(when (getopt :case :bottom-plate :include)
+                  "bottom_plate_anchor_positive")]
+      :model-precursor build-rubber-casting-mould-right
+      :chiral true})
+   (when (getopt :wrist-rest :include)
+     {:name "pad-shape"
+      :modules [(when (getopt :case :bottom-plate :include)
+                  "bottom_plate_anchor_positive")]
+      :model-precursor build-rubber-pad-right
+      :chiral true})
+   (when (getopt :wrist-rest :include)
+     {:name "wrist-rest-main"
+      :modules [(when (getopt :case :bottom-plate :include)
+                  "bottom_plate_anchor_positive")
+                (when (getopt :wrist-rest :bottom-plate :include)
+                  "bottom_plate_anchor_negative")
+                (when (getopt :wrist-rest :sprues :include)
+                  "sprue_negative")]
+      :model-precursor build-plinth-right
+      :chiral true})
+   ;; Bottom plate(s):
+   (when (and (getopt :case :bottom-plate :include)
+              (not (and (getopt :case :bottom-plate :combine)
+                        (getopt :wrist-rest :bottom-plate :include))))
+     {:name "bottom-plate-case"
+      :modules ["bottom_plate_anchor_negative"]
+      :model-precursor bottom/case-complete
+      :rotation [0 π 0]
+      :chiral true})
+   (when (and (getopt :wrist-rest :include)
+              (getopt :wrist-rest :bottom-plate :include)
+              (not (and (getopt :case :bottom-plate :include)
+                        (getopt :case :bottom-plate :combine))))
+     {:name "bottom-plate-wrist-rest"
+      :modules ["bottom_plate_anchor_negative"]
+      :model-precursor bottom/wrist-complete
+      :rotation [0 π 0]
+      :chiral true})
+   (when (and (getopt :case :bottom-plate :include)
+              (getopt :case :bottom-plate :combine)
+              (getopt :wrist-rest :include)
+              (getopt :wrist-rest :bottom-plate :include))
+     {:name "bottom-plate-combined"
+      :modules ["bottom_plate_anchor_negative"]
+      :model-precursor bottom/combined-complete
+      :rotation [0 π 0]
+      :chiral true})])
 
-(defn- produce
-  "Produce SCAD file(s) from a single model."
-  [getopt cli-options
-   {:keys [condition pair rotation basename modules model-fn]
-    :or {condition true, pair true, rotation [0 0 0], modules []}}]
-  (if (and (re-find (:whitelist cli-options) basename) condition)
-    (let [predefine
-            (fn [mirrored [module-condition module-name]]
-              (let [module-properties (get module-map module-name)
-                    basemodule-fn (:model-fn module-properties)
-                    chiral (get module-properties :chiral false)
-                    should-flip (and mirrored chiral)
-                    model (maybe-flip should-flip (basemodule-fn getopt))]
-                (when module-condition
-                  (model/define-module module-name model))))
-          basemodel (maybe/rotate rotation (model-fn getopt))
-          single
-            (fn [prefix mirrored]
-              [(str prefix basename)
-               (vec (map #(predefine mirrored %) modules))
-               (maybe-flip mirrored basemodel)
-               cli-options])]
-      (if pair
-        [(single "right-hand-" false)
-         (single "left-hand-" true)]
-        [(single "" false)]))))
+(defn- finalize-asset
+  "Define scad-app asset(s) from a single proto-asset.
+  Return a vector of one or two assets."
+  [getopt module-map cli-options
+   {:keys [model-precursor rotation modules]
+    :or {rotation [0 0 0], modules []}
+    :as proto-asset}]
+  (let [asset (select-keys proto-asset [:name :chiral])
+        module-names (remove nil? modules)
+        model-main (maybe/rotate rotation (model-precursor getopt))]
+    (refine-asset {:original-fn #(str "right-hand-" %),
+                   :mirrored-fn #(str "left-hand-" %)}
+                  (assoc asset :model-main model-main)
+                  (map (partial get module-map) module-names))))
 
-(defn collect-models
-  "Make an option accessor function and assemble models with it.
-  Return a vector of vectors suitable for calling the author function."
-  [{:keys [debug] :as options}]
-  (let [getopt (parse-build-opts options)]
-   (if debug (pprint-settings "Enriched settings:" (getopt)))
-   (reduce
-     (fn [coll model-info] (concat coll (produce getopt options model-info)))
-     []
-     ;; What follows is the central roster of files and the models that go
-     ;; into each. Some depend on special configuration values and some come
-     ;; in pairs (left and right). Some are rotated for ease of printing.
-     [{:basename "preview-keycap"
-       :model-fn (partial key/metacluster key/cluster-keycaps)
-       :pair false}
-      {:basename "case-main"
-       :modules [[(getopt :case :bottom-plate :include)
-                  "bottom_plate_anchor_positive"]
-                 [(getopt :case :bottom-plate :include)
-                  "bottom_plate_anchor_negative"]
-                 [(getopt :wrist-rest :sprues :include)
-                  "sprue_negative"]]
-       :model-fn build-keyboard-right}
-      {:condition (= (getopt :mcu :support :style) :lock)
-       :basename "mcu-lock-bolt"
-       :model-fn aux/mcu-lock-bolt
-       :pair false
-       :rotation [(/ π 2) 0 0]}
-      ;; Wrist rest:
-      {:condition (getopt :wrist-rest :include)
-       :basename "pad-mould"
-       :modules [[(getopt :case :bottom-plate :include)
-                  "bottom_plate_anchor_positive"]]
-       :model-fn build-rubber-casting-mould-right}
-      {:condition (getopt :wrist-rest :include)
-       :basename "pad-shape"
-       :modules [[(getopt :case :bottom-plate :include)
-                  "bottom_plate_anchor_positive"]]
-       :model-fn build-rubber-pad-right}
-      {:condition (getopt :wrist-rest :include)
-       :basename "wrist-rest-main"
-       :modules [[(getopt :case :bottom-plate :include)
-                  "bottom_plate_anchor_positive"]
-                 [(getopt :wrist-rest :bottom-plate :include)
-                  "bottom_plate_anchor_negative"]
-                 [(getopt :wrist-rest :sprues :include)
-                  "sprue_negative"]]
-       :model-fn build-plinth-right}
-      ;; Bottom plate(s):
-      {:condition (and (getopt :case :bottom-plate :include)
-                       (not (and (getopt :case :bottom-plate :combine)
-                                 (getopt :wrist-rest :bottom-plate :include))))
-       :basename "bottom-plate-case"
-       :modules [[true "bottom_plate_anchor_negative"]]
-       :model-fn bottom/case-complete
-       :rotation [0 π 0]}
-      {:condition (and (getopt :wrist-rest :include)
-                       (getopt :wrist-rest :bottom-plate :include)
-                       (not (and (getopt :case :bottom-plate :include)
-                                 (getopt :case :bottom-plate :combine))))
-       :basename "bottom-plate-wrist-rest"
-       :modules [[true "bottom_plate_anchor_negative"]]
-       :model-fn bottom/wrist-complete
-       :rotation [0 π 0]}
-      {:condition (and (getopt :case :bottom-plate :include)
-                       (getopt :case :bottom-plate :combine)
-                       (getopt :wrist-rest :include)
-                       (getopt :wrist-rest :bottom-plate :include))
-       :basename "bottom-plate-combined"
-       :modules [[true "bottom_plate_anchor_negative"]]
-       :model-fn bottom/combined-complete
-       :rotation [0 π 0]}])))
+(defn- finalize-all
+  [{:keys [debug] :as cli-options}]
+  (let [getopt (parse-build-opts cli-options)
+        precursors (get-precursors getopt)
+        module-map (module-asset-map getopt)
+        requested (remove nil? precursors)]
+    (if debug (pprint-settings "Enriched settings:" (getopt)))
+    (refine-all requested
+      {:refine-fn (partial finalize-asset getopt module-map)})))
 
 (def cli-options
   "Define command-line interface."
   [["-c" "--configuration-file PATH" "Path to parameter file in YAML format"
-    :default [(file "resources" "opt" "default.yaml")]
+    :default [(io/file "resources" "opt" "default.yaml")]
     :assoc-fn (fn [m k new] (update-in m [k] (fn [old] (conj old new))))]
    [nil "--describe-parameters SECTION"
     "Print a Markdown document specifying what a configuration file may contain"
@@ -393,7 +387,10 @@
      (:describe-parameters options) (document-settings options)
      :else
        (try
-         (doall (pmap author (collect-models options)))
+         (build-all (filter-by-name (:whitelist options) (finalize-all options))
+                    {:render (:render options)
+                     :rendering-program (:renderer options)
+                     :filepath-fn output-filepath-fn})
          (catch clojure.lang.ExceptionInfo e
            ;; Likely raised by getopt.
            (println "An exception occurred:" (.getMessage e))
