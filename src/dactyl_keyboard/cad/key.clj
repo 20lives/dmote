@@ -6,8 +6,8 @@
 (ns dactyl-keyboard.cad.key
   (:require [scad-clj.model :exclude [use import] :refer :all]
             [scad-tarmi.core :refer [abs π]]
+            [scad-tarmi.util :refer [loft]]
             [dactyl-keyboard.generics :as generics]
-            [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.place :as place]
             [dactyl-keyboard.param.access :refer [most-specific]]))
@@ -162,14 +162,11 @@
         h2 (cap-clearance getopt cluster coord :from :plate-top :state :pressed)]
    (color (:cap-negative generics/colours)
      (translate [0 0 (getopt :case :key-mount-thickness)]
-       (misc/pairwise-hulls
-         ;; A bottom plate for ease of mounting a switch:
-         (step wk dk 0.5)
-         ;; Space for the keycap’s edges in travel:
-         (step w1 d1 h1)
-         (step w1 d1 h2)
-         ;; Space for the upper body of a keycap at rest:
-         (step wd3 wd3 h3))))))
+       (loft
+         [(step wk dk 0.5) ; A bottom plate for ease of mounting a switch.
+          (step w1 d1 h1) ; Space for the keycap’s edges in travel.
+          (step w1 d1 h2)
+          (step wd3 wd3 h3)]))))) ; Space for the upper body of a keycap at rest.
 
 (defn cap-positive
   "The shape of one keycap. Rectangular base, at rest, size measured in units."

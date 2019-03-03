@@ -10,7 +10,7 @@
                  [clj-yaml "0.4.0"]
                  [scad-app "0.1.0"]
                  [scad-clj "0.5.3"]
-                 [scad-tarmi "0.2.0"]]
+                 [scad-tarmi "0.3.0"]]
   :main dactyl-keyboard.core
   :aot :all
   :uberjar-name "dmote.jar")

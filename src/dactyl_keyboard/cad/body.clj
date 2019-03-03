@@ -7,6 +7,7 @@
   (:require [scad-clj.model :exclude [use import] :refer :all]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.threaded :as threaded]
+            [scad-tarmi.util :refer [loft]]
             [dactyl-keyboard.generics :refer [NNE ENE ESE WSW WNW NNW colours]]
             [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.cad.matrix :as matrix]
@@ -56,25 +57,25 @@
          (conj
            shapes
            ;; Connecting columns.
-           (if (and fill-here fill-east)
-             (misc/triangle-hulls
-              (placer coord-here (corner-finder ENE))
-              (placer coord-east (corner-finder WNW))
-              (placer coord-here (corner-finder ESE))
-              (placer coord-east (corner-finder WSW))))
+           (when (and fill-here fill-east)
+             (loft 3
+               [(placer coord-here (corner-finder ENE))
+                (placer coord-east (corner-finder WNW))
+                (placer coord-here (corner-finder ESE))
+                (placer coord-east (corner-finder WSW))]))
            ;; Connecting rows.
-           (if (and fill-here fill-north)
-             (misc/triangle-hulls
-              (placer coord-here (corner-finder WNW))
-              (placer coord-north (corner-finder WSW))
-              (placer coord-here (corner-finder ENE))
-              (placer coord-north (corner-finder ESE))))
+           (when (and fill-here fill-north)
+             (loft 3
+               [(placer coord-here (corner-finder WNW))
+                (placer coord-north (corner-finder WSW))
+                (placer coord-here (corner-finder ENE))
+                (placer coord-north (corner-finder ESE))]))
            ;; Selectively filling the area between all four possible mounts.
-           (misc/triangle-hulls
-             (if fill-here (placer coord-here (corner-finder ENE)))
-             (if fill-north (placer coord-north (corner-finder ESE)))
-             (if fill-east (placer coord-east (corner-finder WNW)))
-             (if fill-northeast (placer coord-northeast (corner-finder WSW))))))))))
+           (loft 3
+             [(when fill-here (placer coord-here (corner-finder ENE)))
+              (when fill-north (placer coord-north (corner-finder ESE)))
+              (when fill-east (placer coord-east (corner-finder WNW)))
+              (when fill-northeast (placer coord-northeast (corner-finder WSW)))])))))))
 
 (defn walk-and-web [columns rows spotter placer corner-finder]
   (web-shapes (matrix/coordinate-pairs columns rows) spotter placer corner-finder))
@@ -251,7 +252,7 @@
   "The west, north and east walls of the rear housing with connections to the
   ordinary case wall."
   [getopt is-upper-level joiner]
-  (apply misc/pairwise-hulls
+  (loft
     (reduce
       (fn [coll function] (conj coll (joiner (function false is-upper-level))))
       []
@@ -280,7 +281,7 @@
                       (first se))))
         y (second sw)
         z (getopt :case :rear-housing :height)]
-   (apply misc/pairwise-hulls
+   (loft
      (reduce
        (fn [coll [coord corner]]
          (conj coll

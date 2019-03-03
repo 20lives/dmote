@@ -8,6 +8,7 @@
             [scad-tarmi.core :refer [π]]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.threaded :as threaded]
+            [scad-tarmi.util :refer [loft]]
             [dactyl-keyboard.generics :as generics]
             [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.cad.matrix :as matrix]
@@ -231,13 +232,13 @@
                      (- (/ mount-overshoot 2) pcb-y (/ mount-base 2))
                      0]
            (cube mount-x (+ mount-overshoot mount-base) mount-z))
-         (misc/pairwise-hulls
-           (translate [bolt-x0 (- pcb-y) 0]
-             (cube bolt-x-mount 10 mount-z))
-           (translate [bolt-x0 (/ pcb-y -4) 0]
-             (cube bolt-x-mount 1 usb-z))
-           (translate [bolt-x1 (- usb-overshoot usb-y) 0]
-             (cube contact-x 0.01 usb-z))))
+         (loft
+           [(translate [bolt-x0 (- pcb-y) 0]
+              (cube bolt-x-mount 10 mount-z))
+            (translate [bolt-x0 (/ pcb-y -4) 0]
+              (cube bolt-x-mount 1 usb-z))
+            (translate [bolt-x1 (- usb-overshoot usb-y) 0]
+              (cube contact-x 0.01 usb-z))]))
        (mcu-model getopt true 0)  ; Notch the mount.
        (mcu-lock-fasteners-model getopt)))))
 

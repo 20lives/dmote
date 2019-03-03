@@ -26,12 +26,6 @@
   {:pre [(vector? coordinates)]}
   (pad-to-3d (subvec coordinates 0 2) 0))
 
-(defn pairwise-hulls [& shapes]
-  (apply maybe/union (map (partial apply model/hull) (partition 2 1 shapes))))
-
-(defn triangle-hulls [& shapes]
-  (apply maybe/union (map (partial apply model/hull) (partition 3 1 shapes))))
-
 (defn bottom-extrusion [height p]
   (model/extrude-linear {:height height, :twist 0, :convexity 0, :center false}
     (model/project p)))
