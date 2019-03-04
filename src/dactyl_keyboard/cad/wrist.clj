@@ -243,7 +243,7 @@
       (fn [hmap [ox oy oz]]
         (let [[nx ny] (nth mould (.indexOf base [ox oy]))
               nz (prop (if (zero? oz) :z1 :z5))]
-          (assoc hmap [ox oy oz] (place/wrist-reckon getopt [nx ny nz]))))
+          (assoc hmap [ox oy oz] (place/wrist-place getopt [nx ny nz]))))
       {}
       tmp-points)))
 

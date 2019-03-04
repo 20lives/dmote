@@ -179,7 +179,7 @@
         coords (getopt :key-clusters :derived :by-cluster cluster :coordinates-by-row row)
         pairs (into [] (for [coord coords corner [NNW NNE]] [coord corner]))
         getpos (fn [[coord corner]]
-                 (place/cluster-position getopt cluster coord
+                 (place/cluster-place getopt cluster coord
                    (place/mount-corner-offset getopt corner)))
         y-max (apply max (map #(second (getpos %)) pairs))
         getoffset (partial getopt :case :rear-housing :position :offsets)
@@ -271,7 +271,7 @@
   [getopt]
   (let [cluster (getopt :case :rear-housing :position :cluster)
         pos-corner (fn [coord corner]
-                     (place/cluster-position getopt cluster coord
+                     (place/cluster-place getopt cluster coord
                        (place/mount-corner-offset getopt corner)))
         sw (getopt :case :rear-housing :derived :sw)
         se (getopt :case :rear-housing :derived :se)
