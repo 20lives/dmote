@@ -5,8 +5,12 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 
 ## [Unreleased]
 ### Developer
-- Outsourced file authoring to `scad-app` for improved CPU thread scaling and
-  rendering feedback.
+- Took advantage of new developments in general-purpose libraries:
+    - Outsourced file authoring to `scad-app` for improved CPU thread scaling
+      and rendering feedback.
+    - `scad-tarmi` lofting replaced `pairwise-hulls` and `triangle-hulls`.
+    - `scad-tarmi` flex functions obviated separate functions for object
+      placement and reasoning about that placement.
 
 ## [Version 0.3.0] - 2019-02-18
 ### Changed

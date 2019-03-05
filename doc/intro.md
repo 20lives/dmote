@@ -1,21 +1,31 @@
 # Introduction to the DMOTE
 
 Here’s how to use this code repository to build a keyboard case.
-The larger project is presented [here](http://viktor.eikman.se/article/the-dmote/).
+For a still-more general introduction to the larger project, see
+[this](http://viktor.eikman.se/article/the-dmote/).
 
-## From code to printable STL
+## From code to print
 
-This repository is source code for a Clojure application. Clojure can be
-packaged like Java to run on the JVM, on any platform. The application produces
-an OpenSCAD program which, in turn, can be rendered to a portable geometric
-description like STL. STL can be sliced to G-code and the G-code can steer a
-3D printer.
+This repository is source code for a Clojure application. Clojure runs on
+[the JVM](https://en.wikipedia.org/wiki/Java_(software_platform)). The
+application produces an [OpenSCAD](http://www.openscad.org/) program which,
+in turn, can be rendered to a portable geometric description like
+[STL](https://en.wikipedia.org/wiki/STL_(file_format)). STL can be
+[sliced](https://en.wikipedia.org/wiki/Slicer_(3D_printing)) to
+[G-code](https://en.wikipedia.org/wiki/G-code) and the G-code can
+steer a 3D printer.
 
 OpenSCAD can represent the model visually, but there is no step in this process
 where you point and click with a mouse to change the design. The shape of the
 keyboard is determined by your written parameters to the Clojure application.
 
-> parameters → this app → JVM → OpenSCAD → STL → G-code → printer → tangible keyboard
+Roughly, the build chain looks like this:
+
+> parameters through this app (compiled) → preview → rendering → slicing → printing
+
+Equivalently, in terms of typical file name endings:
+
+> .yaml through .clj (→ .jar) → .scad → .stl → .gcode → tangible keyboard
 
 If this repository includes STL files you will find them in the
 [`things/stl`](../things/) directory. They should be ready to print. Otherwise,
@@ -87,8 +97,12 @@ south to north, and the z axis from earth to sky.
 
 ### Deeper changes
 
-Advanced changes require editing the source code. Consider starting in
-`src/dactyl_keyboard/sandbox.clj` if you are not familiar with `scad-clj`.
+If you find that you cannot get what you want just by changing the parameters,
+you need to edit the source code. If you are not familiar with OpenSCAD at all,
+start by experimenting with its native format, writing .scad files manually,
+from scratch.
+Then consider starting in `src/dactyl_keyboard/sandbox.clj` to get familiar
+with `scad-clj`. It writes OpenSCAD code for you with helpful abstractions.
 
 If you want your changes to the source code to be merged upstream, please do
 not remove or break existing features. There are already several `include` and
