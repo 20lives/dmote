@@ -308,7 +308,7 @@ The expected value here is an arbitrarily nested structure starting with a list.
 
 Each leaf node identifies a particular set of key mount corner posts. These are identical to the posts used to build the walls, but this section gives you greater freedom in how to combine them. A leaf node must contain:
 
-- A key alias defined under `key-clusters`.
+- The name of a feature, such as a key alias.
 - A key corner ID, such as `NNE` for north by north-east.
 - A wall segment ID, which is an integer from 0 to 4.
 

@@ -113,7 +113,7 @@
             extent (most-specific getopt key cluster coord)]
         (when (= extent :full)
           (take 2
-            (place/wall-corner-position getopt cluster coord
+            (place/wall-corner-place getopt cluster coord
               {:directions [direction (turning-fn direction)] :vertex true})))))
     edges))
 

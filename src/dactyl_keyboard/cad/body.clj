@@ -13,8 +13,7 @@
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.place :as place]
             [dactyl-keyboard.cad.key :as key]
-            [dactyl-keyboard.param.access :refer [most-specific
-                                                  get-key-alias]]))
+            [dactyl-keyboard.param.access :refer [most-specific]]))
 
 
 ;;;;;;;;;;;;;
@@ -347,13 +346,11 @@
 
 (defn- tweak-posts
   "(The hull of) one or more corner posts from a single key mount."
-  [getopt key-alias directions first-segment last-segment]
+  [getopt alias directions first-segment last-segment]
   (if (= first-segment last-segment)
-    (let [{:keys [cluster coordinates]} (get-key-alias getopt key-alias)
-          poster (place/cluster-segment-placer key/web-post)
-          placer (poster getopt cluster coordinates directions)]
-      (placer first-segment))
-    (apply hull (map #(tweak-posts getopt key-alias directions %1 %1)
+    (place/reckon-from-anchor getopt alias
+      {:subject (key/web-post getopt), :corner directions, :segment first-segment})
+    (apply hull (map #(tweak-posts getopt alias directions %1 %1)
                      (range first-segment (inc last-segment))))))
 
 (declare tweak-plating)

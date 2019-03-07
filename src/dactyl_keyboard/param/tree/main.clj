@@ -349,7 +349,7 @@
     "but this section gives you greater freedom in how to combine them. "
     "A leaf node must contain:\n"
     "\n"
-    "- A key alias defined under `key-clusters`.\n"
+    "- The name of a feature, such as a key alias.\n"
     "- A key corner ID, such as `NNE` for north by north-east.\n"
     "- A wall segment ID, which is an integer from 0 to 4.\n"
     "\n"

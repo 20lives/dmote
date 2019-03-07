@@ -4,6 +4,10 @@ This log follows the conventions of
 version 0.2.0, thus covering only a fraction of the project’s history.
 
 ## [Unreleased]
+### Added
+- `tweaks` is no longer restricted to key aliases. Any named feature can be
+  used.
+
 ### Developer
 - Took advantage of new developments in general-purpose libraries:
     - Outsourced file authoring to `scad-app` for improved CPU thread scaling

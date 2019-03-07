@@ -312,7 +312,7 @@
         by-cluster (partial (getopt :key-clusters :derived :by-cluster))]
     (for [row ((by-cluster cluster :row-indices-by-column) 0)
           corner [generics/WSW generics/WNW]]
-     (let [[x y _] (place/wall-corner-position
+     (let [[x y _] (place/wall-corner-place
                      getopt cluster [0 row] {:directions corner})]
       [(+ x (getopt :by-key :parameters :wall :thickness)) y]))))
 
@@ -330,7 +330,7 @@
         by-col (getopt :key-clusters :derived :by-cluster cluster
                  :row-indices-by-column)
         row (first (by-col 0))
-        [x0 y0 _] (place/wall-corner-position
+        [x0 y0 _] (place/wall-corner-place
                     getopt cluster [0 row] {:directions generics/WNW})
         h (+ 5 (/ (getopt :case :leds :housing-size) 2))]
    [x0 (+ y0 (* (getopt :case :leds :interval) ordinal)) h]))

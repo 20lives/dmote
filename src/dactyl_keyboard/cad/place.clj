@@ -189,15 +189,17 @@
       (wall-vertex-offset getopt directions keyopts)
       [0 0 0])))
 
-(defn wall-corner-position
+(defn wall-corner-place
   "Absolute position of the lower wall around a key mount."
   ([getopt cluster coordinates]
-   (wall-corner-position getopt cluster coordinates {}))
+   (wall-corner-place getopt cluster coordinates {}))
   ([getopt cluster coordinates keyopts]
-   {:post [(vector? %)
-           (spec/valid? ::schema/point-3d %)]}
+   (wall-corner-place getopt cluster coordinates {} [0 0 0]))
+  ([getopt cluster coordinates keyopts subject]
    (cluster-place getopt cluster coordinates
-     (wall-corner-offset getopt cluster coordinates keyopts))))
+     (flex/translate
+       (wall-corner-offset getopt cluster coordinates keyopts)
+       subject))))
 
 (defn wall-slab-center-offset
   "Combined [x y z] offset to the center of a vertical wall.
@@ -384,7 +386,7 @@
 (defn- reckon-feature
   "A convenience for placing stuff in relation to other features.
   Differents parts of a feature can be targeted with keyword parameters.
-  Return a vector of three numbers.
+  Return a scad-clj node or, by default, a vector of three numbers.
   Generally, the vector refers to what would be the middle of the outer wall
   of a feature. For keys, rear housing and wrist-rest mount blocks, this
   is the middle of a wall post. For the perimeter of the wrist rest, it’s a
@@ -396,26 +398,33 @@
                   mount-index side-key  ; Wrist-rest mounts only.
                   coordinates  ; Keys and wrist-rest perimeter.
                   outline-key  ; Wrist-rest perimeter only.
-                  corner segment offset]
-           :or {segment 3, offset [0 0 0]}}]
+                  corner segment offset subject]
+           :or {segment 3, offset [0 0 0], subject [0 0 0]}}]
   {:pre [(keyword? type)
          (integer? segment)
          (vector? offset)
-         (spec/valid? ::schema/point-3d offset)]
-   :post [(vector? %)
-          (spec/valid? ::schema/point-3d %)]}
-  (case type
-    :origin offset
-    :rear-housing (housing-place getopt corner segment offset)
-    :wr-perimeter (wrist-segment-naive getopt coordinates outline-key segment)
-    :wr-block (wrist-block-place getopt mount-index side-key corner segment offset)
-    :key
-      (if (some? corner)
-        ;; Corner named. By default, the target feature is the outermost wall.
-        (wall-corner-position getopt cluster coordinates
-          {:directions corner :segment segment})
-        ;; No corner named. The target feature is the middle of the key mounting plate.
-        (cluster-place getopt cluster coordinates offset))))
+         (spec/valid? ::schema/point-3d offset)]}
+  (let [init (flex/translate offset subject)]
+    (case type
+      :origin init
+      :rear-housing (housing-place getopt corner segment init)
+      :wr-perimeter
+        (flex/translate
+          (wrist-segment-naive getopt coordinates outline-key segment)
+          init)
+      :wr-block
+        (wrist-block-place getopt mount-index side-key corner segment init)
+      :key
+        (cluster-place getopt cluster coordinates
+          (if (some? corner)
+            ;; Corner named. By default, the target feature is the outermost wall.
+            (flex/translate
+              (wall-corner-offset getopt cluster coordinates
+                {:directions corner :segment segment})
+              init)
+            ;; Else no corner named.
+            ;; The target feature is the middle of the key mounting plate.
+            init)))))
 
 (defn reckon-from-anchor
   "Find a position corresponding to a named point."
