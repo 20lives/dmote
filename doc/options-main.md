@@ -175,8 +175,7 @@ The name of a feature where the block will attach.
 
 ##### Parameter `offset`
 
-An offset in mm from the named feature to the middle of the base of the
-    back plate block.
+An offset in mm from the named feature to the middle of the base of the back-plate block.
 
 ### Section `bottom-plate`
 
@@ -302,17 +301,16 @@ Additional shapes. This is usually needed to bridge gaps between the walls of th
 
 The expected value here is an arbitrarily nested structure starting with a list. Each item in the list can follow one of the following patterns:
 
-- A leaf node. This is a 3- or 4-tuple with contents specified below.
+- A leaf node. This is a tuple of 1 to 4 elements specified below.
 - A map, representing an instruction to combine nested items in a specific way.
 - A list of any combination of the other two types. This type exists at the top level and as the immediate child of each map node.
 
-Each leaf node identifies a particular set of key mount corner posts. These are identical to the posts used to build the walls, but this section gives you greater freedom in how to combine them. A leaf node must contain:
+Each leaf node identifies a particular named feature of the keyboard. It’s usually a set of corner posts on a named (aliased) key mount. These are identical to the posts used to build the walls, but this section gives you greater freedom in how to combine them. The elements of a leaf are, in order:
 
-- The name of a feature, such as a key alias.
-- A key corner ID, such as `NNE` for north by north-east.
-- A wall segment ID, which is an integer from 0 to 4.
-
-Together, these identify a starting segment. Optionally, a leaf node may contain a second segment ID trailing the first. In that case, the leaf will represent the convex hull of the indicated segments plus all segments between them.
+1. Mandatory: The name of a feature, such as a key alias.
+2. Optional: A corner ID, such as `NNE` for north by north-east. If this is omitted, i.e. if only the mandatory element is given, the tweak will use the middle of the named feature.
+3. Optional: A starting wall segment ID, which is an integer from 0 to 4 inclusive. If this is omitted, but a corner is named, the default value is 0.
+4. Optional: A second wall segment ID. If this is provided, the leaf will represent the convex hull of the two indicated segments plus all segments between them. If this is omitted, only one wall post will be placed.
 
 By default, a map node will create a convex hull around its child nodes. However, this behaviour can be modified. The following keys are recognized:
 
@@ -321,14 +319,14 @@ By default, a map node will create a convex hull around its child nodes. However
 - `highlight`: If `true`, render the node in OpenSCAD’s highlighting style. This is convenient while you work.
 - `hull-around`: The list of child nodes. Required.
 
-In the following example, `A` and `B` are aliases that would be defined elsewhere. The example is interpreted to mean that a plate should be created stretching from the south-by-southeast corner of `A` to the north-by-northeast corner of `B`. Due to `chunk-size` 2, that first plate will be joined, not hulled, with a second plate from `B` back to a different corner of `A`, with a longer stretch of wall segments down the corner of `A`.
+In the following example, `A` and `B` are key aliases that would be defined elsewhere. The example is interpreted to mean that a plate should be created stretching from the south-by-southeast corner of `A` to the north-by-northeast corner of `B`. Due to `chunk-size` 2, that first plate will be joined, not hulled, with a second plate from `B` back to a different corner of `A`, with a longer stretch of (all) wall segments down the corner of `A`.
 
 ```case:
   tweaks:
     - chunk-size: 2
       hull-around:
-      - [A, SSE, 0]
-      - [B, NNE, 0]
+      - [A, SSE]
+      - [B, NNE]
       - [A, SSW, 0, 4]
 ```
 

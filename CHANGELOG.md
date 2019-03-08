@@ -5,8 +5,9 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 
 ## [Unreleased]
 ### Added
-- `tweaks` is no longer restricted to key aliases. Any named feature can be
-  used.
+- `tweaks` is no longer restricted to key aliases.
+    - Any named feature can be used in a leaf node.
+    - It is no longer necessary to specify a corner or segment.
 
 ### Developer
 - Took advantage of new developments in general-purpose libraries:

@@ -53,19 +53,25 @@
         (catch java.lang.NumberFormatException _
           (keyword candidate))))))           ; Input like “:first” or “"first"”.
 
-(defn case-tweak-corner
-  "Parse notation for a range of wall segments off a specific key corner."
-  ([alias corner s0]
-   (case-tweak-corner alias corner s0 s0))
+(defn case-tweak-position
+  "Parse notation for a tweak position.
+  This is normally a range of wall segments off a specific key corner, but
+  anything down to a single alias without further specification is allowed."
+  ([alias]
+   [(keyword alias) nil 0 0])
+  ([alias corner]
+   (case-tweak-position alias corner 0 0))  ; Default to segment 0.
+  ([alias corner segment]
+   (case-tweak-position alias corner segment segment))
   ([alias corner s0 s1]
    [(keyword alias) (string-corner corner) (int s0) (int s1)]))
 
 (defn case-tweaks [candidate]
   "Parse a tweak. This can be a lazy sequence describing a single
-  corner, a lazy sequence of such sequences, or a map. If it is a
+  point, a lazy sequence of such sequences, or a map. If it is a
   map, it may contain a similar nested structure."
   (if (string? (first candidate))
-    (apply case-tweak-corner candidate)
+    (apply case-tweak-position candidate)
     (if (map? candidate)
       ((map-like {:chunk-size int
                   :to-ground boolean
@@ -145,8 +151,7 @@
 (spec/def ::wall-segment (spec/int-in 0 5))
 (spec/def ::wall-extent (spec/or :partial ::wall-segment :full #{:full}))
 (spec/def ::tweak-plate-leaf
-  (spec/or :short (spec/tuple keyword? ::corner ::wall-segment)
-           :long (spec/tuple keyword? ::corner ::wall-segment ::wall-segment)))
+  (spec/tuple keyword? (spec/nilable ::corner) ::wall-segment ::wall-segment))
 (spec/def ::foot-plate-polygons (spec/coll-of ::foot-plate))
 
 (spec/def ::descriptor  ; Parameter metadata descriptor.
