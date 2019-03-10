@@ -80,6 +80,15 @@
        candidate)
       (map case-tweaks candidate))))
 
+(def named-secondary-positions
+  (tuple-of
+    (map-like
+      {:alias keyword
+       :anchor keyword
+       :corner string-corner
+       :segment int
+       :offset vec})))
+
 (def anchored-2d-positions
   (tuple-of
     (map-like
@@ -108,6 +117,7 @@
 (spec/def ::alias (spec/and keyword?
                             #(not (= :origin %))
                             #(not (= :rear-housing %))))
+(spec/def ::segment (spec/int-in 0 5))
 (spec/def ::highlight boolean?)
 (spec/def ::to-ground boolean?)
 (spec/def ::chunk-size (spec/and int? #(> % 1)))
@@ -121,6 +131,9 @@
 (spec/def ::foot-plate (spec/keys :req-un [::points]))
 (spec/def ::anchored-2d-position
   (spec/keys :opt-un [::anchor ::corner ::offset]))
+(spec/def ::named-secondary-position
+  (spec/keys :req-un [::alias ::anchor]
+             :opt-un [::corner ::segment ::offset]))
 (spec/def ::anchored-2d-list (spec/coll-of ::anchored-2d-position))
 (spec/def ::points ::anchored-2d-list)
 (spec/def ::tweak-plate-map
@@ -148,7 +161,7 @@
 (spec/def ::point-3d (spec/coll-of number? :count 3))
 (spec/def ::corner (set (vals generics/keyword-to-directions)))
 (spec/def ::direction (set (map first (vals generics/keyword-to-directions))))
-(spec/def ::wall-segment (spec/int-in 0 5))
+(spec/def ::wall-segment ::segment)
 (spec/def ::wall-extent (spec/or :partial ::wall-segment :full #{:full}))
 (spec/def ::tweak-plate-leaf
   (spec/tuple keyword? (spec/nilable ::corner) ::wall-segment ::wall-segment))

@@ -394,12 +394,14 @@
   Any offset passed to this function will be interpreted in the native context
   of each feature placement function, with varying results."
   [getopt {:keys [type  ; Mandatory in all cases.
+                  anchor  ; Secondaries only.
                   cluster  ; Keys only.
                   mount-index side-key  ; Wrist-rest mounts only.
                   coordinates  ; Keys and wrist-rest perimeter.
                   outline-key  ; Wrist-rest perimeter only.
                   corner segment offset subject]
-           :or {segment 3, offset [0 0 0], subject [0 0 0]}}]
+           :or {segment 3, offset [0 0 0], subject [0 0 0]}
+           :as opts}]
   {:pre [(keyword? type)
          (integer? segment)
          (vector? offset)
@@ -424,13 +426,19 @@
               init)
             ;; Else no corner named.
             ;; The target feature is the middle of the key mounting plate.
-            init)))))
+            init))
+      :secondary
+        (let [primary (resolve-anchor getopt anchor)
+              clean (dissoc opts :type :anchor :alias :offset)]
+          (flex/translate
+            (mapv + (get primary :offset [0 0 0]) offset)
+            (reckon-feature getopt (merge clean (dissoc primary :offset))))))))
 
 (defn reckon-from-anchor
   "Find a position corresponding to a named point."
   [getopt anchor extras]
   {:pre [(keyword? anchor) (map? extras)]}
-  (reckon-feature getopt (merge (resolve-anchor getopt anchor) extras)))
+  (reckon-feature getopt (merge extras (resolve-anchor getopt anchor))))
 
 (defn reckon-with-anchor
   "Produce coordinates for a specific feature using a single map that names
@@ -446,6 +454,7 @@
   reckon-with-anchor, being simple addition at a late stage.
   This function also supports explicit 2-dimensional inputs and outputs."
   [getopt opts dimensions]
+  {:pre [(integer? dimensions)]}
   (let [base-3d (reckon-with-anchor getopt (dissoc opts :offset))
         base-nd (subvec base-3d 0 dimensions)
         offset-nd (get opts :offset (take dimensions (repeat 0)))]

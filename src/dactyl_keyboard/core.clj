@@ -172,6 +172,11 @@
         (wrist/rubber-insert-positive getopt))
       (bottom/wrist-anchors-positive getopt))))
 
+(defn- package-secondary
+  "Package the properties of a secondary named feature."
+  [{:keys [alias] :as item}]
+  [alias (merge item {:type :secondary})])
+
 (defn- collect-anchors
   "Gather names and properties for the placement of keyboard features relative
   to one another."
@@ -180,7 +185,9 @@
                     :rear-housing {:type :rear-housing}}
                    (key/collect-key-aliases getopt)
                    (wrist/collect-point-aliases getopt)
-                   (wrist/collect-block-aliases getopt))})
+                   (wrist/collect-block-aliases getopt)
+                   (wrist/collect-block-aliases getopt)
+                   (into {} (map package-secondary (getopt :secondaries))))})
 
 (def derivers-static
   "A vector of configuration locations and functions for expanding them."

@@ -98,6 +98,29 @@
        :validate [(spec/map-of ::schema/key-cluster ::overrides)]})
     "Starting here, you gradually descend from the global level "
     "toward the key level."]
+   [:parameter [:secondaries]
+    {:default []
+     :parse-fn schema/named-secondary-positions,
+     :validate [(spec/coll-of ::schema/named-secondary-position)]}
+    "A list where each item provides a name for a position in space. "
+    "Such positions exist in relation to other named features of the keyboard "
+    "and can themselves be used as named features: Typically as supplementary "
+    "targets for `tweaks`, which are defined below.\n"
+    "\n"
+    "An example:\n\n"
+    "```secondaries:\n"
+    "  - alias: N\n"
+    "    anchor: K\n"
+    "    corner: NNE\n"
+    "    segment: 3\n"
+    "    offset: [0, 0, 10]\n```"
+    "\n"
+    "This example gives the name `N` to a point 10 mm above a key or "
+    "some other feature named `K`, which must be defined elsewhere.\n"
+    "\n"
+    "A `corner` and `segment` are useful mainly with key aliases. "
+    "An `offset` is applied late, i.e. in the overall coordinate system, "
+    "following any transformations inherent to the anchor."]
    [:section [:case]
     "Much of the keyboard case is generated from the `wall` parameters "
     "described [here](options-nested.md). "

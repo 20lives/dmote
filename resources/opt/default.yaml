@@ -104,9 +104,10 @@ by-key:
               roll:
                 intrinsic: 0.3
             wall:
+              north:
+                extent: 0
               south:
-                extent: 3
-                perpendicular: 1
+                extent: 0
           rows:
             first:
               parameters:
@@ -119,22 +120,15 @@ by-key:
                       -0.15
                   translation:
                     mid: [0, -1, 4]
-            last:
-              parameters:
-                wall:
-                  north:
-                    extent: 0
         "1":
           parameters:
             wall:
+              north:
+                extent: 0
               south:
-                extent: 3
-                parallel: 3
-                perpendicular: 4
+                extent: 0
               west:
-                extent: 3
-                parallel: 2
-                perpendicular: 2
+                extent: 0
           rows:
             first:
               parameters:
@@ -152,11 +146,6 @@ by-key:
                 layout:
                   translation:
                     early: [0, 0, 2]
-            last:
-              parameters:
-                wall:
-                  north:
-                    extent: 0
         "2":
           parameters:
             layout:
@@ -376,6 +365,17 @@ by-key:
             extent: 0
           west:
             extent: 0
+secondaries:
+  - alias: mt-0a  # Main-to-thumb cluster bridge point 0a.
+    anchor: m0
+    corner: SSW
+    segment: 0
+    offset: [0, -3, 5]
+  - alias: mt-0b
+    anchor: m0
+    corner: SSE
+    segment: 0
+    offset: [0, -7, 10]
 case:
   key-mount-thickness: 2.5
   web-thickness: 2.5
@@ -468,48 +468,57 @@ case:
     - hull-around:
       - [t4, ESE, 1, 4]
       - [t4, SSE, 0, 4]
-  # Cosmetic detail owing to m0’s south wall being elevated.
-  - hull-around:
-    - [m0, WSW, 1]
-    - [m0, WSW, 3]
-    - [t1, NNW, 2, 3]
-    - [t1, NNE, 2, 3]
   # Plating over the cluster gap:
   - chunk-size: 2
     hull-around:
     - [t1, NNE, 0, 4]
     - [t2, NNE, 0, 4]
     - [t2, ENE, 0, 4]
+  # Cluster gap, west side:
   - chunk-size: 3
     hull-around:
     - [t1, NNW, 3, 4]
-    - [m0, SSW, 0, 3]
+    - [m0, WSW, 2, 3]
+    - [t1, NNE, 3, 4]
+    - [m0, WSW, 0, 1]
+    - [mt-0a]
     - [t1, NNE, 3, 4]
     - [t2, NNE, 3, 4]
+  # Cluster gap between m0 and t2:
   - chunk-size: 3
     hull-around:
-    - [m0, SSW, 0, 3]
+    - [m0, SSW]
+    - [m0, SSE]
+    - [mt-0a]
+    - [mt-0b]
     - hull-around:
       - [t2, NNE, 3, 4]
       - [t2, ENE, 3, 4]
-    - hull-around:
-      - [m0, SSE, 2, 3]
-      - [m1, WNW, 2, 3]
     - [t2, ESE, 4]
-    - [m1, WSW, 2, 3]
-    - [m1, SSW, 2, 3]
+  # More cluster gap:
+  - chunk-size: 3
+    hull-around:
+    - [m0, SSE]
+    - [mt-0b]
+    - [m1, WSW]
+    - [t2, ESE, 4]
+  # Webbing between m0 and m1:
+  - hull-around:
+    - [m0, SSE]
+    - [m1, WNW]
+    - [m1, WSW]
   # The middle topside plate:
   - chunk-size: 3
     hull-around:
-    - [m1, SSW, 2, 3]
+    - [m1, SSW]
     - [t2, ESE, 4]
-    - [m1, SSE, 2, 3]
-    - [m2, WSW, 0]
+    - [m1, SSE]
+    - [m2, WSW]
     - [t2, ESE, 4]
     - [t3, ENE, 4]
   # The west side of m2:
   - hull-around:
-    - [m1, SSE, 0, 3]
+    - [m1, SSE]
     - [m2, WNW, 0]
     - [m2, WSW, 0]
   # The eastern topside plate:

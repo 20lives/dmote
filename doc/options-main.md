@@ -41,6 +41,23 @@ Default values at the global level.
 
 Starting here, you gradually descend from the global level toward the key level.
 
+## Parameter `secondaries`
+
+A list where each item provides a name for a position in space. Such positions exist in relation to other named features of the keyboard and can themselves be used as named features: Typically as supplementary targets for `tweaks`, which are defined below.
+
+An example:
+
+```secondaries:
+  - alias: N
+    anchor: K
+    corner: NNE
+    segment: 3
+    offset: [0, 0, 10]
+```
+This example gives the name `N` to a point 10 mm above a key or some other feature named `K`, which must be defined elsewhere.
+
+A `corner` and `segment` are useful mainly with key aliases. An `offset` is applied late, i.e. in the overall coordinate system, following any transformations inherent to the anchor.
+
 ## Section `case`
 
 Much of the keyboard case is generated from the `wall` parameters described [here](options-nested.md). This section deals with lesser features of the case.
