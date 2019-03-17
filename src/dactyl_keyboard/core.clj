@@ -124,7 +124,7 @@
                  (getopt :wrist-rest :bottom-plate :include))
         (bottom/wrist-negative getopt)))
     ;; The remaining elements are visualizations for use in development.
-    (when (getopt :keycaps :preview)
+    (when (getopt :keys :preview)
       (key/metacluster key/cluster-keycaps getopt))
     (when (getopt :mcu :preview)
       (aux/mcu-visualization getopt))
@@ -192,10 +192,10 @@
 (def derivers-static
   "A vector of configuration locations and functions for expanding them."
   ;; Mind the order. One of these may depend upon earlier steps.
-  [[[:dfm] (fn [getopt] {:compensator (error-fn (getopt :dfm :error))})]
+  [[[:dfm] (fn [getopt] {:compensator (error-fn (getopt :dfm :error-general))})]
+   [[:keys] key/derive-style-properties]
    [[:key-clusters] key/derive-cluster-properties]
    [[] collect-anchors]
-   [[:switches] key/derive-switch-properties]
    [[:case :rear-housing] body/housing-properties]
    [[:mcu] aux/derive-mcu-properties]
    [[:wrist-rest] wrist/derive-properties]])

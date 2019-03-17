@@ -133,29 +133,9 @@ This happens after columns are styled but before base pitch and roll. As such it
 
 “Late” translation is the last step in key placement and therefore interacts very little with other steps.
 
-## Section `keycap`
+## Parameter `key-style`
 
-There are general keycap settings in the main section. Settings here control only the shape of each cap. This will help determine the spacing between key mounts if the keyboard is curved. Negative space is also reserved for the cap.
-
-Horizontal cap size is specified in u, a unit that equates to 19.05 mm (0.75”) per key mount. A 1 u cap is smaller at about 18.25 mm, to allow for space between caps. Note that plates for key mounts are all 1 u, not currently configurable.
-
-### Parameter `width`
-
-The width of the cap in u. On a traditional ISO keyboard, this varies from 1 for most keys to about 6 for a space bar.
-
-### Parameter `depth`
-
-The depth of the cap in u. On a traditional ISO keyboard, this is 2 for the Enter key and 1 for all other keys.
-
-### Parameter `body-height`
-
-The height in mm of each keycap, measured from top to bottom of the entire cap by itself.
-
-An SA cap would be about 11.6 mm, DSA 7.3 mm.
-
-### Parameter `resting-clearance`
-
-The height in mm of the air gap between keycap and switch mount, in the switch’s resting state.
+The name of a key style defined in the [global](options-main.md) `keys` section. The default value for this setting is the name `default`, which is in turn undefined by default and therefore invalid.
 
 ## Section `channel`
 

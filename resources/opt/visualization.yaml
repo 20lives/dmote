@@ -1,7 +1,7 @@
 # Configuration fragment for visualization of an assembled keyboard.
 # You probably don’t want to print with these settings.
 
-keycaps:
+keys:
   preview: true
 case:
   bottom-plate:

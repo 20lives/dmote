@@ -7,15 +7,24 @@
   (:require [scad-clj.model :exclude [use import] :refer :all]
             [scad-tarmi.core :refer [abs π]]
             [scad-tarmi.util :refer [loft]]
+            [dmote-keycap.models :refer [keycap]]
+            [dmote-keycap.data :as capdata]
             [dactyl-keyboard.generics :as generics]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.place :as place]
-            [dactyl-keyboard.param.access :refer [most-specific]]))
+            [dactyl-keyboard.param.access :refer [most-specific
+                                                  key-properties]]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Core Definitions — All Switches ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def switch-properties
+  {:alps {:hole {:x 15.5,  :y 12.6}
+          :foot {:x 17.25, :y 14.25}}
+   :mx   {:hole {:x 14,    :y 14}
+          :foot {:x 15.5,  :y 15.5}}})
 
 (defn all-clusters
   "The identifiers of all defined key clusters."
@@ -87,6 +96,21 @@
     :column-indices-by-row column-indices-by-row
     :coordinates-by-row coordinates-by-row}))
 
+(defn derive-style-properties
+  "Derive basic properties for each key style."
+  [getopt]
+  (reduce
+    (fn [coll [style-name explicit]]
+      (assoc coll style-name
+        (merge capdata/option-defaults
+               {:max-skirt-length  ; Needed for computing curvature.
+                  (capdata/default-skirt-length
+                    (get explicit :switch-type
+                      (:switch-type capdata/option-defaults)))}
+               explicit)))
+    {}
+    (getopt :keys :styles)))
+
 (defn derive-cluster-properties
   "Derive basic properties for each key cluster."
   [getopt]
@@ -109,17 +133,6 @@
           (getopt :key-clusters cluster :aliases)))
       (all-clusters getopt))))
 
-(defn derive-switch-properties [getopt]
-  "Store switch properties needed outside of switch cutout models."
-  (case (getopt :switches :style)
-    :alps
-      {:hole-x 15.5
-       :hole-y 12.6}
-    :mx
-      (let [hole 13.9954]
-        {:hole-x hole
-         :hole-y hole})))
-
 (defn print-matrix
   "Print a schematic picture of a key cluster. For your REPL."
   [cluster getopt]
@@ -133,50 +146,36 @@
 ;; Keycap Models ;;
 ;;;;;;;;;;;;;;;;;;;
 
-(defn- cap-clearance
-  "Compute keycap clearance from key mounting plate."
-  [getopt cluster coord
-   & {:keys [from state] :or {from :plate-top, state :resting}}]
-  (case from
-    :plate-top
-      (case state
-        :resting
-          (most-specific getopt [:keycap :resting-clearance] cluster coord)
-        :pressed (- (cap-clearance getopt cluster coord)
-                    (getopt :switches :travel)))
-    :plate-bottom
-      (+ (cap-clearance getopt cluster coord :from :plate-top :state state)
-         (getopt :case :key-mount-thickness))))
-
 (defn cap-channel-negative
   "The shape of a channel for a keycap to move in."
   [getopt cluster coord {h3 :height wd3 :top-width m :margin}]
-  (let [step (fn [w d h] (translate [0 0 h] (cube w d 1)))
-        wk (+ (getopt :switches :derived :hole-x) m)
-        dk (+ (getopt :switches :derived :hole-y) m)
-        most #(most-specific getopt % cluster coord)
-        waist #(+ (place/key-length (most [:keycap %])) m)
-        w1 (waist :width)
-        d1 (waist :depth)
-        h1 (cap-clearance getopt cluster coord :state :pressed)
-        h2 (cap-clearance getopt cluster coord :from :plate-top :state :pressed)]
-   (color (:cap-negative generics/colours)
-     (translate [0 0 (getopt :case :key-mount-thickness)]
-       (loft
-         [(step wk dk 0.5) ; A bottom plate for ease of mounting a switch.
-          (step w1 d1 h1) ; Space for the keycap’s edges in travel.
-          (step w1 d1 h2)
-          (step wd3 wd3 h3)]))))) ; Space for the upper body of a keycap at rest.
+  (let [cmp (getopt :dfm :derived :compensator)
+        step (fn [x y h] (translate [0 0 h] (cube (cmp x) (cmp y) 1)))
+        prop (key-properties getopt cluster coord)
+        {:keys [switch-type max-skirt-length unit-size]} prop
+        {sx :x, sy :y} (get-in switch-properties [switch-type :foot])
+        [wx wy] (map capdata/key-length unit-size)
+        h1 (capdata/pressed-clearance switch-type max-skirt-length)
+        h2 (capdata/resting-clearance switch-type max-skirt-length)]
+    (color (:cap-negative generics/colours)
+      (translate [0 0 (getopt :case :key-mount-thickness)]
+        (loft
+          [(step (+ sx m) (+ sy m) 0.5) ; A bottom plate for ease of mounting a switch.
+           (step wx wy h1) ; Space for the keycap’s edges in travel.
+           (step wx wy h2)
+           (step wd3 wd3 h3)]))))) ; Space for the upper body of a keycap at rest.
 
 (defn cap-positive
-  "The shape of one keycap. Rectangular base, at rest, size measured in units."
+  "The shape of one keycap at rest on its switch."
   [getopt cluster coord]
-  (let [most #(most-specific getopt [:keycap %] cluster coord)]
+  (let [prop (key-properties getopt cluster coord)]
    (->>
-     (apply square (map place/key-length [(most :width) (most :depth)]))
-     (extrude-linear  ; Scale based on DSA incline.
-       {:height (most :body-height), :center false, :scale 0.73})
-     (translate [0 0 (cap-clearance getopt cluster coord)])
+     (keycap
+       (merge {:error-stem-positive (getopt :dfm :keycaps :error-stem-positive)
+               :error-stem-negative (getopt :dfm :keycaps :error-stem-negative)
+               :error-body-positive (getopt :dfm :error-general)}
+              prop))
+     (translate [0 0 (capdata/plate-to-stem-end (:switch-type prop))])
      (color (:cap-body generics/colours)))))
 
 
@@ -195,16 +194,14 @@
   "One ALPS-compatible cutout model."
   [getopt]
   (let [thickness (getopt :case :key-mount-thickness)
-        hole-x (getopt :switches :derived :hole-x)
-        hole-y (getopt :switches :derived :hole-y)
-        overhang-x 17.25  ; Width of notches.
-        overhang-y 14.25]
+        {hole-x :x, hole-y :y} (get-in switch-properties [:alps :hole])
+        {foot-x :x, foot-y :y} (get-in switch-properties [:alps :foot])]
     (translate [0 0 (/ (getopt :case :key-mount-thickness) 2)]
       (union
         ;; Space for the part of a switch above the mounting hole.
-        ;; The actual height of the notches is 1 mm, and it’s not a full cuboid.
+        ;; The actual height of the notches is 1 mm and it’s not a full cuboid.
         (translate [0 0 thickness]
-          (cube overhang-x overhang-y thickness))
+          (cube foot-x foot-y thickness))
         ;; The hole through the plate.
         (cube hole-x hole-y (plate-cutout-height getopt 4.5))
         ;; ALPS-specific space for wings to flare out.
@@ -212,36 +209,37 @@
           (cube (inc hole-x) hole-y thickness))))))
 
 (defn mx-switch
-  "One MX Cherry-compatible cutout model."
+  "One MX Cherry-compatible cutout model. Square."
   [getopt]
   (let [thickness (getopt :case :key-mount-thickness)
-        hole (getopt :switches :derived :hole-x)  ; MX holes are square.
-        overhang 15.494
+        hole-xy (get-in switch-properties [:mx :hole :x])
+        foot-xy (get-in switch-properties [:mx :foot :x])
         nub (->> (cylinder 1 2.75)
                  (with-fn 20)
                  (rotate [(/ π 2) 0 0])
-                 (translate [(+ (/ hole 2)) 0 1])
+                 (translate [(+ (/ hole-xy 2)) 0 1])
                  (hull
-                   (translate [(+ 3/4 (/ hole 2)) 0 (/ thickness 2)]
+                   (translate [(+ 3/4 (/ hole-xy 2)) 0 (/ thickness 2)]
                      (cube 1.5 2.75 thickness))))]
     (difference
       (translate [0 0 (/ (getopt :case :key-mount-thickness) 2)]
         (union
           ;; Space for the part of a switch above the mounting hole.
           (translate [0 0 thickness]
-            (cube overhang overhang thickness))
+            (cube foot-xy foot-xy thickness))
           ;; The hole through the plate.
-          (cube hole hole (plate-cutout-height getopt 5.004))))
+          (cube hole-xy hole-xy (plate-cutout-height getopt 5.004))))
       ;; MX-specific nubs that hold the keyswitch in place.
       nub
       (mirror [0 1 0] (mirror [1 0 0] nub)))))
 
 (defn single-switch
   "Negative space for the insertion of a key switch through a mounting plate."
-  [getopt]
-  (case (getopt :switches :style)
-    :alps (alps-switch getopt)
-    :mx (mx-switch getopt)))
+  [getopt cluster coord]
+  (let [{:keys [switch-type]} (key-properties getopt cluster coord)]
+    (case switch-type
+      :alps (alps-switch getopt)
+      :mx (mx-switch getopt))))
 
 
 ;;;;;;;;;;;;;;;;;;
@@ -276,8 +274,8 @@
                     (derived getopt cluster :key-coordinates))))
 
 (defn cluster-cutouts [getopt cluster]
-  (apply union (map #(place/cluster-place getopt cluster %
-                       (single-switch getopt))
+  (apply union (map #(place/cluster-place getopt cluster %1
+                       (single-switch getopt cluster %1))
                     (derived getopt cluster :key-coordinates))))
 
 (defn cluster-channels [getopt cluster]

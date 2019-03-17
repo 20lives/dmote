@@ -4,10 +4,19 @@ This log follows the conventions of
 version 0.2.0, thus covering only a fraction of the project’s history.
 
 ## [Unreleased]
+### Changed
+- Moved and replaced some options:
+    - Both the `keycaps` and `switches` sections have been replaced. There is
+      now a `keys` section that defines one or more `styles`, as well as a
+      `key-style` parameter in the nesting `by-key` section of options.
+    - The general `error` setting for DFM has been renamed `error-general`.
+
 ### Added
+- Support for multiple, named styles of keycaps, including some with enough
+  detail to print.
 - `tweaks` is no longer restricted to key aliases.
     - Any named feature can be used in a leaf node.
-    - It is no longer necessary to specify a corner or segment.
+    - It is no longer necessary to specify a corner or segment for a tweak.
 - Added a `secondaries` setting for named features that are just points in
   space, placed in relation to other named features. Used in `tweaks`, these
   secondaries give greater freedom in shaping the case.
@@ -19,6 +28,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
     - `scad-tarmi` lofting replaced `pairwise-hulls` and `triangle-hulls`.
     - `scad-tarmi` flex functions obviated separate functions for object
       placement and reasoning about that placement.
+    - Featureful `dmote-keycap` models replaced internal maquettes.
 - Changed the merge order in the `reckon-from-anchor` function to make
   secondaries useful in tweaks.
 

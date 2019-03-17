@@ -2,28 +2,21 @@
 
 Each heading in this document represents a recognized configuration key in the main body of a YAML file for a DMOTE variant. Other documents cover special sections of this one in more detail.
 
-## Section `keycaps`
+## Section `keys`
 
-Keycaps are the plastic covers placed over the switches. Their shape is determined [here](options-nested.md), not in this section.
+Keys, that is keycaps and electrical switches, are not the main focus of this application, but they influence the shape of the case.
 
 ### Parameter `preview`
 
-If `true`, include models of the keycaps. This is intended for illustration in development. The models are not good enough for printing.
+If `true`, include models of the keycaps in place on the keyboard. This is intended for illustration as you work on a design, not for printing.
 
-## Section `switches`
+### Parameter `styles`
 
-Electrical switches close a circuit when pressed. They cannot be printed. This section specifies how much space they need to be mounted.
+Here you name all the types of keys on the keyboard, including their switches, keycaps, and other properties. These names are then used elsewhere, as described [here](options-nested.md).
 
-### Parameter `style`
+Key properties determine what kind of holes are cut out of the mounting plate, for the switches. If the keyboard is curved, these properties also help determine the spacing between key mounts. In addition, negative space is reserved for the movement of the keycap: A function of switch height, switch travel, and keycap shape.
 
-The switch type. One of:
-
-- `alps`: ALPS style switches, including Matias.
-- `mx`: Cherry MX style switches.
-
-### Parameter `travel`
-
-The distance in mm that a keycap can travel vertically when mounted on a switch.
+The properties correspond to the parameters of the [`dmote-keycap`](https://github.com/veikman/dmote-keycap) library and are documented in that project.
 
 ## Special section `key-clusters`
 
@@ -724,13 +717,27 @@ The thickness in mm of the walls and floor of the mould to be used for casting t
 
 Settings for design for manufacturability (DFM).
 
-### Parameter `error`
+### Parameter `error-general`
 
 A measurement in mm of errors introduced to negative space in the xy plane by slicer software and the printer you will use.
 
 The default value is zero. An appropriate value for a typical slicer and FDM printer with a 0.5 mm nozzle would be about -0.5 mm.
 
 This application will try to compensate for the error, though only for certain sensitive inserts, not for the case as a whole.
+
+### Section `keycaps`
+
+Measurements of error, in mm, for parts of keycap models. This is separate from `error-general` because it’s especially important to have a tight fit between switch sliders and cap stems, and the size of these details is usually comparable to an FDM printer nozzle.
+
+If you will not be printing caps, ignore this section.
+
+#### Parameter `error-stem-positive`
+
+Error on the positive components of stems on keycaps, such as the entire stem on an ALPS-compatible cap.
+
+#### Parameter `error-stem-negative`
+
+Error on the negative components of stems on keycaps, such as the cross on an MX-compatible cap.
 
 ## Section `mask`
 

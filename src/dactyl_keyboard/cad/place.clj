@@ -14,11 +14,13 @@
             [scad-tarmi.core :refer [abs π]]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.flex :as flex]
+            [dmote-keycap.data :as capdata]
             [dactyl-keyboard.generics :refer [directions-to-unordered-corner]]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.misc :as misc]
             [dactyl-keyboard.param.access :refer [most-specific
-                                                  resolve-anchor]]
+                                                  resolve-anchor
+                                                  key-properties]]
             [dactyl-keyboard.param.schema :as schema]))
 
 
@@ -26,15 +28,8 @@
 ;; Basic Dimensional Facts ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Mounts for neighbouring 1U keys are about 0.75” apart.
-(def mount-1u 19.05)
-
-;; Typical 1U keycap width and depth, approximate.
-(def key-width-1u 18.25)
-(def key-margin (/ (- mount-1u key-width-1u) 2))
-
 ;; Mount plates are a bit wider than typical keycaps.
-(def mount-width (+ key-width-1u 0.15))
+(def mount-width (+ capdata/key-width-1u 0.15))
 (def mount-depth mount-width)
 
 
@@ -43,8 +38,6 @@
 ;;;;;;;;;;;;;;;
 
 ;; Key mounts.
-
-(defn key-length [units] (- (* units mount-1u) (* 2 key-margin)))
 
 (defn mount-corner-offset
   "Produce a mm coordinate offset for a corner of a switch mount."
@@ -70,10 +63,12 @@
         delta-f (delta-fn index neutral)
         delta-r (delta-fn neutral index)
         angle-product (* angle-factor delta-f)
-        flat-distance (* mount-1u (- index neutral))
+        flat-distance (* capdata/mount-1u (- index neutral))
+        key-prop (key-properties getopt cluster coord)
+        {:keys [switch-type max-skirt-length]} key-prop
         radius (+ (getopt :case :key-mount-thickness)
-                  (most [:keycap :resting-clearance])
-                  (/ (/ (+ mount-1u separation) 2)
+                  (capdata/resting-clearance switch-type max-skirt-length)
+                  (/ (/ (+ capdata/mount-1u separation) 2)
                      (Math/sin (/ angle-factor 2))))
         ortho-x (- (* delta-r (+ -1 (- (* radius (Math/sin angle-factor))))))
         ortho-z (* radius (- 1 (Math/cos angle-product)))]
@@ -131,7 +126,7 @@
          (flex/rotate [(most [:pitch :base])
                        (most [:roll :base])
                        (most [:yaw :base])])
-         (flex/translate [0 (* mount-1u center) 0])
+         (flex/translate [0 (* capdata/mount-1u center) 0])
          (flex/translate (most [:translation :late]))
          (bridge))))
 

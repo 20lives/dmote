@@ -7,6 +7,7 @@
   (:require [clojure.spec.alpha :as spec]
             [clojure.java.io :refer [file]]
             [scad-tarmi.threaded :as threaded]
+            [dmote-keycap.data :as capdata]
             [dactyl-keyboard.param.base :as base]
             [dactyl-keyboard.param.schema :as schema]
             [dactyl-keyboard.param.tree.cluster :as cluster]
@@ -32,29 +33,29 @@
     "Each heading in this document represents a recognized configuration key "
     "in the main body of a YAML file for a DMOTE variant. Other documents "
     "cover special sections of this one in more detail."]
-   [:section [:keycaps]
-    "Keycaps are the plastic covers placed over the switches. Their shape is "
-    "determined [here](options-nested.md), not in this section."]
-   [:parameter [:keycaps :preview]
+   [:section [:keys]
+    "Keys, that is keycaps and electrical switches, are not the main focus of "
+    "this application, but they influence the shape of the case."]
+   [:parameter [:keys :preview]
     {:default false :parse-fn boolean}
-    "If `true`, include models of the keycaps. This is intended for "
-    "illustration in development. The models are not good enough for "
-    "printing."]
-   [:section [:switches]
-    "Electrical switches close a circuit when pressed. They cannot be "
-    "printed. This section specifies how much space they need to be "
-    "mounted."]
-   [:parameter [:switches :style]
-    {:default :alps
-     :parse-fn keyword
-     :validate [::schema/switch-style]}
-    "The switch type. One of:\n\n"
-    "- `alps`: ALPS style switches, including Matias.\n"
-    "- `mx`: Cherry MX style switches."]
-   [:parameter [:switches :travel]
-    {:default 1 :parse-fn num}
-    "The distance in mm that a keycap can travel vertically when "
-    "mounted on a switch."]
+    "If `true`, include models of the keycaps in place on the keyboard. This "
+    "is intended for illustration as you work on a design, not for printing."]
+   [:parameter [:keys :styles]
+    {:default [] :parse-fn schema/keycap-map
+     :validate [(spec/map-of keyword? ::capdata/keycap-parameters)]}
+    "Here you name all the types of keys on the keyboard, including their "
+    "switches, keycaps, and other properties. These names are then used "
+    "elsewhere, as described [here](options-nested.md).\n"
+    "\n"
+    "Key properties determine what kind of holes are cut out of the "
+    "mounting plate, for the switches. If the keyboard is curved, these "
+    "properties also help determine the spacing between key mounts. In "
+    "addition, negative space is reserved for the movement of the keycap: "
+    "A function of switch height, switch travel, and keycap shape.\n"
+    "\n"
+    "The properties correspond to the parameters of the "
+    "[`dmote-keycap`](https://github.com/veikman/dmote-keycap) library "
+    "and are documented in that project."]
    [:parameter [:key-clusters]
     {:heading-template "Special section `%s`"
      :default {:main {:matrix-columns [{:rows-below-home 0}]
@@ -768,7 +769,7 @@
     "casting the rubber pad."]
    [:section [:dfm]
     "Settings for design for manufacturability (DFM)."]
-   [:parameter [:dfm :error]
+   [:parameter [:dfm :error-general]
     {:default 0 :parse-fn num}
     "A measurement in mm of errors introduced to negative space in the xy "
     "plane by slicer software and the printer you will use.\n"
@@ -778,6 +779,21 @@
     "\n"
     "This application will try to compensate for the error, though only for "
     "certain sensitive inserts, not for the case as a whole."]
+   [:section [:dfm :keycaps]
+    "Measurements of error, in mm, for parts of keycap models. "
+    "This is separate from `error-general` because it’s especially important "
+    "to have a tight fit between switch sliders and cap stems, and the "
+    "size of these details is usually comparable to an FDM printer nozzle.\n"
+    "\n"
+    "If you will not be printing caps, ignore this section."]
+   [:parameter [:dfm :keycaps :error-stem-positive]
+    {:default (:error-stem-positive capdata/option-defaults) :parse-fn num}
+    "Error on the positive components of stems on keycaps, such as the "
+    "entire stem on an ALPS-compatible cap."]
+   [:parameter [:dfm :keycaps :error-stem-negative]
+    {:default (:error-stem-negative capdata/option-defaults) :parse-fn num}
+    "Error on the negative components of stems on keycaps, such as the "
+    "cross on an MX-compatible cap."]
    [:section [:mask]
     "A box limits the entire shape, cutting off any projecting by-products of "
     "the algorithms. By resizing and moving this box, you can select a "

@@ -80,6 +80,21 @@
        candidate)
       (map case-tweaks candidate))))
 
+(def keycap-map
+  "A parser for some of the options exposed by the dmote-keycap library."
+  (map-of
+    keyword
+    (map-like
+      {:style keyword
+       :switch-type keyword
+       :unit-size vec
+       :top-size vec
+       :top-rotation vec
+       :bowl-radii vec
+       :bowl-plate-offset num
+       :max-skirt-length num
+       :slope num})))
+
 (def named-secondary-positions
   (tuple-of
     (map-like

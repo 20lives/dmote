@@ -2,8 +2,12 @@
 # This is not the full set of available parameters.
 # Read the project documentation.
 
-switches:
-  travel: 3.5
+keys:
+  styles:
+    maquette-dsa:  # A non-printable preview of a DSA profile key.
+      style: maquette
+    minimal:  # A printable minimal key.
+      style: minimal
 key-clusters:
   main:
     position:
@@ -55,9 +59,7 @@ key-clusters:
       a0: [0, 0]
 by-key:
   parameters:
-    keycap:
-      body-height: 7.3        # DSA profile.
-      resting-clearance: 6.5  # DSA on Matias switches.
+    key-style: maquette-dsa
     channel:
       height: 20
       top-width: 10
@@ -95,6 +97,7 @@ by-key:
       columns:
         "0":
           parameters:
+            key-style: minimal
             layout:
               matrix:
                 separation:
@@ -681,4 +684,4 @@ wrist-rest:
       offset: [0, 4]
     - anchor: plinth-right
 dfm:
-  error: -0.5
+  error-general: -0.5
