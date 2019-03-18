@@ -149,12 +149,11 @@
 (defn- tweak-floor-vertex
   "A corner vertex on a tweak wall, extending from a key mount."
   [getopt segment-picker bottom
-   [key-alias directions first-segment last-segment]]
+   [alias directions first-segment last-segment]]
   {:post [(spec/valid? ::point-2d %)]}
-  (let [{:keys [cluster coordinates]} (get-key-alias getopt key-alias)
-        segment (segment-picker (range first-segment (inc last-segment)))]
-    (take 2 (place/cluster-segment-reckon
-              getopt cluster coordinates directions segment bottom))))
+  (let [segment (segment-picker (range first-segment (inc last-segment)))]
+    (take 2 (place/reckon-from-anchor getopt alias
+              {:corner directions, :segment segment, :bottom bottom}))))
 
 (defn- dig-to-seq [node]
   (if (map? node) (dig-to-seq (:hull-around node)) node))

@@ -237,13 +237,13 @@
   (partial wall-edge (cluster-segment-placer shape-fn)))
 
 (defn- cluster-reckoner
-  "A function for finding wall edge vertices."
-  ([getopt cluster coord directions & {:as keyopts}]
-   (fn [segment]
-     (cluster-place getopt cluster coord
-       (wall-corner-offset getopt cluster coord
-         (merge {:directions directions, :segment segment, :vertex true}
-                keyopts))))))
+  "Return a function for finding wall edge vertices."
+  [getopt cluster coord directions & {:as keyopts}]
+  (fn [segment]
+    (cluster-place getopt cluster coord
+      (wall-corner-offset getopt cluster coord
+        (merge {:directions directions, :segment segment, :vertex true}
+               keyopts)))))
 
 (defn cluster-segment-reckon
   [getopt cluster coord directions segment bottom]
@@ -417,7 +417,7 @@
             ;; Corner named. By default, the target feature is the outermost wall.
             (flex/translate
               (wall-corner-offset getopt cluster coordinates
-                {:directions corner :segment segment})
+                (merge opts {:directions corner :segment segment}))
               init)
             ;; Else no corner named.
             ;; The target feature is the middle of the key mounting plate.

@@ -167,7 +167,8 @@
      (if (predicate properties)
        properties
        (throw (ex-info "Named anchor cannot be used for subject feature"
-                       {:name name, :properties properties}))))))
+                       {:name name, :properties properties,
+                        :predicate predicate}))))))
 
 (defn get-key-alias [getopt alias]
   (resolve-anchor getopt alias #(= (:type %) :key)))
