@@ -25,17 +25,19 @@ key-clusters:
     - rows-below-home: 2
     - rows-below-home: 2
     aliases:
-      m0: [0, first]
-      m1: [1, first]
-      m2: [2, first]
-      m3: [3, first]
+      m00: [0, first]
+      m01: [1, first]
+      m02: [2, first]
+      m03: [3, first]
       back: [1, last]
-      far-right: [last, last]
+      m10: [3, last]
+      m11: [4, last]
+      m12: [last, last]
       near-right: [last, first]
   thumb:
     position:
-      anchor: m1
-      offset: [-8, -20, 06]
+      anchor: m01
+      offset: [-8, -21, 6]
     matrix-columns:
     - rows-above-home: 1
     - rows-above-home: 1
@@ -51,12 +53,14 @@ key-clusters:
       t5: [0, first]
   aux0:
     position:
-      anchor: t5
-      offset: [13, -17, 2]
+      anchor: m11
+      offset: [1, 15, -6]
     matrix-columns:
+    - rows-above-home: 0
     - rows-above-home: 0
     aliases:
       a0: [0, 0]
+      a1: [1, 0]
 by-key:
   parameters:
     key-style: maquette-dsa
@@ -101,30 +105,31 @@ by-key:
             layout:
               matrix:
                 separation:
-                  row: 1.8
-              translation:
-                early: [-4, -4, 5]
+                  row: -1.8
+              pitch:
+                base: 0.34
+                progressive: 0.65
               roll:
                 intrinsic: 0.3
+              yaw:
+                base: 0
+              translation:
+                mid: [1, -9, 4]
             wall:
               north:
                 extent: 0
               south:
                 extent: 0
-          rows:
-            first:
-              parameters:
-                layout:
-                  pitch:
-                    intrinsic:
-                      -0.2
-                  yaw:
-                    intrinsic:
-                      -0.15
-                  translation:
-                    mid: [0, -1, 4]
         "1":
           parameters:
+            key-style: minimal
+            layout:
+              matrix:
+                separation:
+                  row: -0.9
+              pitch:
+                base: 0.6
+                progressive: 0.4
             wall:
               north:
                 extent: 0
@@ -135,6 +140,7 @@ by-key:
           rows:
             first:
               parameters:
+                key-style: maquette-dsa  # Match the rest of the arrow cluster.
                 layout:
                   pitch:
                     intrinsic: -0.3
@@ -146,9 +152,15 @@ by-key:
                   top-width: 15
             "-1":
               parameters:
+                key-style: maquette-dsa  # Match the rest of the arrow cluster.
                 layout:
                   translation:
                     early: [0, 0, 2]
+            last:
+              parameters:
+                layout:
+                  translation:
+                    early: [0, -1, 0]
         "2":
           parameters:
             layout:
@@ -220,6 +232,8 @@ by-key:
                 wall:
                   north:
                     extent: 0
+                  east:
+                    extent: 1
         "4":
           parameters:
             layout:
@@ -233,6 +247,9 @@ by-key:
                 base: 0.08
               translation:
                 mid: [-0.6, -3, 5.5]
+            wall:
+              north:
+                extent: 1
         "5":
           parameters:
             layout:
@@ -246,6 +263,9 @@ by-key:
                 base: 0.1
               translation:
                 mid: [-0.6, -4, 5.5]
+            wall:
+              north:
+                extent: 1
     thumb:
       parameters:
         layout:
@@ -255,10 +275,10 @@ by-key:
             separation:
               column: 0
           roll:
-            base: -1.3
+            base: -1.2
             progressive: 0.45
           pitch:
-            base: -0.2
+            base: -0.4
             progressive: 0.25
           yaw:
             base: 1
@@ -319,10 +339,9 @@ by-key:
                 wall:
                   east:
                     extent: 0
-                    perpendicular: -14
                   south:
                     extent: 1
-                    perpendicular: -14
+                    parallel: -2
             "1":
               parameters:
                 layout:
@@ -352,33 +371,37 @@ by-key:
                     intrinsic: -0.1
     aux0:
       parameters:
+        key-style: minimal
         layout:
-          roll:
-            base: 0
           pitch:
-            base: 1.55
-          yaw:
-            base: 0
+            base: -1.3
         wall:
           north:
-            extent: 0
+            perpendicular: -1
           east:
-            extent: 0
+            perpendicular: -1
           south:
-            extent: 0
+            extent: 1
           west:
             extent: 0
+            perpendicular: 1
+      columns:
+        "0":
+          parameters:
+            layout:
+              translation:
+                early: [1, 0, 0]
 secondaries:
-  - alias: mt-0a  # Main-to-thumb cluster bridge point 0a.
-    anchor: m0
-    corner: SSW
-    segment: 0
-    offset: [0, -3, 5]
-  - alias: mt-0b
-    anchor: m0
-    corner: SSE
-    segment: 0
-    offset: [0, -7, 10]
+- alias: mt-0a  # Main-to-thumb cluster bridge point 0a.
+  anchor: m00
+  corner: SSW
+  segment: 0
+  offset: [0, 0, 3]
+- alias: mt-0b
+  anchor: m00
+  corner: SSE
+  segment: 0
+  offset: [-2, -4, 10]
 case:
   key-mount-thickness: 2.5
   web-thickness: 2.5
@@ -390,7 +413,7 @@ case:
         east: -1.5
         south: 3
         west: 2
-    height: 53.5
+    height: 51.5
     fasteners:
       diameter: 6
       bosses: true
@@ -423,15 +446,15 @@ case:
         - anchor: rear-housing
           corner: NNE
           offset: [-2, -12]
-        - anchor: far-right
+        - anchor: m12
           corner: ENE
-          offset: [-3, -2]
+          offset: [-3, -5]
         - anchor: near-right
           corner: ESE
           offset: [-3, 2]
-        - anchor: a0
-          corner: WSW
-          offset: [-1, 0]
+        - anchor: t4
+          corner: SSW
+          offset: [0, 2]
         - anchor: t1
           corner: NNW
           offset: [2, -4]
@@ -456,21 +479,31 @@ case:
     - [tc, SSE, 0]
     - [t3, WSW, 0]
     - [t4, ENE, 0]
+  # Near upper corner:
   - chunk-size: 3
     hull-around:
     - [t4, ENE, 0]
     - [t4, SSE, 0]
     - [t3, WSW, 0]
     - hull-around:
-      - [t3, SSE, 0, 1]
+      - [t3, SSE, 0, 3]
+      - [t3, ESE, 0, 3]
+  # A shield down the whole near wall of the thumb cluster:
+  - chunk-size: 3
+    hull-around:
+    - hull-around:
       - [t3, ESE, 0, 1]
-  - hull-around:
+      - [t3, SSE, 0, 1]
+    - [t3, SSE, 3, 4]
     - hull-around:
-      - [t3, SSE, 1, 4]
-      - [t3, ESE, 1, 4]
+      - [t4, ESE, 0, 1]
+      - [t4, SSE, 0, 1]
+    - [t4, SSE, 3, 4]
     - hull-around:
-      - [t4, ESE, 1, 4]
-      - [t4, SSE, 0, 4]
+      - [t4, WSW, 0, 1]
+      - [t4, SSW, 0, 1]
+    - [t4, SSW, 3, 4]
+    - [t5, SSW, 0, 4]
   # Plating over the cluster gap:
   - chunk-size: 2
     hull-around:
@@ -481,17 +514,17 @@ case:
   - chunk-size: 3
     hull-around:
     - [t1, NNW, 3, 4]
-    - [m0, WSW, 2, 3]
+    - [m00, WSW, 2, 3]
     - [t1, NNE, 3, 4]
-    - [m0, WSW, 0, 1]
+    - [m00, WSW, 0, 1]
     - [mt-0a]
     - [t1, NNE, 3, 4]
     - [t2, NNE, 3, 4]
-  # Cluster gap between m0 and t2:
+  # Cluster gap between m00 and t2:
   - chunk-size: 3
     hull-around:
-    - [m0, SSW]
-    - [m0, SSE]
+    - [m00, SSW]
+    - [m00, SSE]
     - [mt-0a]
     - [mt-0b]
     - hull-around:
@@ -501,81 +534,70 @@ case:
   # More cluster gap:
   - chunk-size: 3
     hull-around:
-    - [m0, SSE]
+    - [m00, SSE]
     - [mt-0b]
-    - [m1, WSW]
+    - [m01, WSW]
     - [t2, ESE, 4]
-  # Webbing between m0 and m1:
+  # Webbing between m00 and m01:
   - hull-around:
-    - [m0, SSE]
-    - [m1, WNW]
-    - [m1, WSW]
+    - [m00, SSE]
+    - [m01, WNW]
+    - [m01, WSW]
   # The middle topside plate:
   - chunk-size: 3
     hull-around:
-    - [m1, SSW]
+    - [m01, SSW]
     - [t2, ESE, 4]
-    - [m1, SSE]
-    - [m2, WSW]
+    - [m01, SSE]
+    - [m02, WSW]
     - [t2, ESE, 4]
     - [t3, ENE, 4]
-  # The west side of m2:
+  # The west side of m02:
   - hull-around:
-    - [m1, SSE]
-    - [m2, WNW, 0]
-    - [m2, WSW, 0]
+    - [m01, SSE]
+    - [m02, WNW, 0]
+    - [m02, WSW, 0]
   # The eastern topside plate:
   - chunk-size: 3
     hull-around:
-    - [m2, WSW, 0, 1]
+    - [m02, WSW, 0, 1]
     - [t3, NNE, 4]
-    - [m2, SSW, 0, 1]
+    - [m02, SSW, 0, 1]
     - hull-around:
-      - [t3, ESE, 4]
-      - [t3, SSE, 4]
+      - [t3, ESE, 3, 4]
+      - [t3, SSE, 3, 4]
     - hull-around:
-      - [m2, ESE, 3, 4]
-      - [m2, SSE, 3, 4]
-    - [t4, ESE, 4]
-    - [m2, ESE, 3, 4]
+      - [m02, ESE, 3, 4]
+      - [m02, SSE, 3, 4]
+    - [t4, SSE, 3, 4]
+    - hull-around:
+      - [m02, ENE, 3, 4]
+      - [m02, NNE, 3, 4]
+    - [t4, SSW, 3, 4]
   # The low eastern plate:
   - chunk-size: 3
     hull-around:
-    - [t4, SSE, 0, 1]
-    - [t4, SSW, 0, 1]
-    - [t4, SSE, 3, 4]
     - hull-around:
-      - [a0, NNE, 0, 1]
-      - [a0, ENE, 0, 1]
-    - hull-around:
-      - [m2, ESE, 3, 4]
-      - [m2, SSE, 3, 4]
-    - [m2, ENE, 3, 4]
-    - [a0, ENE, 0, 1]
-    - [a0, ESE, 0, 1]
-  # A triangular southern wall of m2:
+      - [m02, ESE, 3, 4]
+      - [m02, SSE, 3, 4]
+    - [m02, ENE, 3, 4]
+  # A triangular southern wall of m02:
   - hull-around:
-    - [m2, SSW, 0, 1]
-    - [m2, SSE, 0, 3]
-    - [m2, ESE, 0, 3]
+    - [m02, SSW, 0, 1]
+    - [m02, SSE, 0, 3]
+    - [m02, ESE, 0, 3]
   # Webbing at the lower near corner of the thumb cluster:
   - chunk-size: 3
     hull-around:
     - [t4, WNW, 0]
     - [t4, WSW, 0]
     - [t5, SSE, 0]
-    - [a0, NNW, 0]
     - [t5, SSW, 0]
-  # Webbing between the thumb and aux0 clusters:
-  - hull-around:
-    - [t4, SSW, 0, 1]
-    - [a0, WNW, 0]
-    - [a0, ENE, 0]
   # A plate to ground beneath the entire thumb cluster:
   - to-ground: true
     chunk-size: 2
     hull-around:
-    - [m0, WSW, 2, 3]
+    - [m00, WSW, 2, 3]
     - [t1, NNW, 2, 3]
     - [t1, NNW, 0, 1]
     - [t0, WNW, 0, 1]
@@ -583,15 +605,34 @@ case:
     - [t5, WNW, 0, 1]
     - [t5, WSW, 0, 1]
     - [t5, SSW, 0, 1]
+    - [t5, SSW, 3, 4]
+    - [t4, SSW, 3, 4]
+    - [m02, ENE, 3, 4]
+    - [m03, WSW, 3, 4]
+    - [m03, SSW, 3, 4]
+  # Plating over the main-aux cluster gap.
+  - chunk-size: 3
+    hull-around:
+    - [a0, WNW, 0, 1]
+    - [m10, ENE, 0, 1]
     - hull-around:
-      - [a0, WNW, 0]
-      - [a0, WSW, 0]
-    - [a0, SSW, 0]
-    - [a0, ESE, 0, 1]
-    - [m2, ENE, 3, 4]
-    - [m2, NNE, 3, 4]
-    - [m3, WSW, 3, 4]
-    - [m3, SSW, 3, 4]
+      - [a0, WSW, 0, 1]
+      - [m10, ESE, 0, 1]
+    - [m11, NNW, 0, 1]
+    - [a0, SSE, 1]
+    - [m11, NNE, 0, 1]
+    - [a1, SSW, 1]
+    - [m12, NNW, 0, 1]
+    - [a1, SSE, 1]
+    - [m12, NNE, 0, 1]
+    - [a1, ESE, 0, 1]
+    - [m12, ENE, 0, 3]
+  # A plate to ground at the main-aux gap.
+  - to-ground: true
+    hull-around:
+    - [rear-housing, ESE]
+    - [m10, ENE, 0, 1]
+    - [a0, WNW, 0, 1]
 mcu:
   type: promicro
   margin: 0.25
