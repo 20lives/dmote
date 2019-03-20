@@ -189,7 +189,7 @@
   ([getopt cluster coordinates]
    (wall-corner-place getopt cluster coordinates {}))
   ([getopt cluster coordinates keyopts]
-   (wall-corner-place getopt cluster coordinates {} [0 0 0]))
+   (wall-corner-place getopt cluster coordinates keyopts [0 0 0]))
   ([getopt cluster coordinates keyopts subject]
    (cluster-place getopt cluster coordinates
      (flex/translate

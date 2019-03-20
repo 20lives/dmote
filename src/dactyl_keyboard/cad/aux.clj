@@ -309,14 +309,15 @@
 
 (defn- west-wall-west-points [getopt]
   (let [cluster (getopt :case :leds :position :cluster)
-        by-cluster (partial (getopt :key-clusters :derived :by-cluster))]
-    (for [row ((by-cluster cluster :row-indices-by-column) 0)
-          corner [generics/WSW generics/WNW]]
+        column 0
+        rows (getopt :key-clusters :derived :by-cluster cluster
+               :row-indices-by-column column)]
+    (for [row rows, corner [generics/WSW generics/WNW]]
      (let [[x y _] (place/wall-corner-place
-                     getopt cluster [0 row] {:directions corner})]
+                     getopt cluster [column row] {:directions corner})]
       [(+ x (getopt :by-key :parameters :wall :thickness)) y]))))
 
-(defn west-wall-east-points [getopt]
+(defn- west-wall-east-points [getopt]
   (map (fn [[x y]] [(+ x 10) y]) (west-wall-west-points getopt)))
 
 (defn west-wall-led-channel [getopt]
@@ -327,11 +328,12 @@
 
 (defn led-hole-position [getopt ordinal]
   (let [cluster (getopt :case :leds :position :cluster)
-        by-col (getopt :key-clusters :derived :by-cluster cluster
-                 :row-indices-by-column)
-        row (first (by-col 0))
+        column 0
+        rows (getopt :key-clusters :derived :by-cluster cluster
+                 :row-indices-by-column column)
+        row (first rows)
         [x0 y0 _] (place/wall-corner-place
-                    getopt cluster [0 row] {:directions generics/WNW})
+                    getopt cluster [column row] {:directions generics/WNW})
         h (+ 5 (/ (getopt :case :leds :housing-size) 2))]
    [x0 (+ y0 (* (getopt :case :leds :interval) ordinal)) h]))
 

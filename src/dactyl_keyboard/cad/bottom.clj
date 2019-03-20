@@ -6,7 +6,7 @@
 (ns dactyl-keyboard.cad.bottom
   (:require [clojure.spec.alpha :as spec]
             [scad-clj.model :as model]
-            [scad-tarmi.core :refer [π]]
+            [scad-tarmi.core :refer [π] :as tarmi-core]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.threaded :as threaded]
             [dactyl-keyboard.generics :refer [colours]]
@@ -143,14 +143,11 @@
       []
       (body/housing-pillar-functions getopt))))
 
-(spec/def ::point-2d (spec/coll-of number? :count 2))
-(spec/def ::point-coll-2d (spec/coll-of ::point-2d))
-
 (defn- tweak-floor-vertex
   "A corner vertex on a tweak wall, extending from a key mount."
   [getopt segment-picker bottom
    [alias directions first-segment last-segment]]
-  {:post [(spec/valid? ::point-2d %)]}
+  {:post [(spec/valid? ::tarmi-core/point-2d %)]}
   (let [segment (segment-picker (range first-segment (inc last-segment)))]
     (take 2 (place/reckon-from-anchor getopt alias
               {:corner directions, :segment segment, :bottom bottom}))))
@@ -161,7 +158,7 @@
 (defn- tweak-floor-pairs
   "Produce coordinate pairs for a polygon. A reducer."
   [getopt [post-picker segment-picker bottom] coll node]
-  {:post [(spec/valid? ::point-coll-2d %)]}
+  {:post [(spec/valid? ::tarmi-core/point-coll-2d %)]}
   (let [vertex-fn (partial tweak-floor-vertex getopt segment-picker bottom)]
     (conj coll
       (if (map? node)
