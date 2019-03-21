@@ -12,8 +12,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
     - The general `error` setting for DFM has been renamed `error-general`.
 
 ### Added
-- Support for multiple, named styles of keycaps, including some with enough
-  detail to print.
+- Support for multiple, named styles of keys, including some with enough
+  detail on the keycaps to permit printing.
 - `tweaks` is no longer restricted to key aliases.
     - Any named feature can be used in a leaf node.
     - It is no longer necessary to specify a corner or segment for a tweak.
@@ -26,8 +26,9 @@ version 0.2.0, thus covering only a fraction of the project’s history.
     - Outsourced file authoring to `scad-app` for improved CPU thread scaling
       and rendering feedback.
     - `scad-tarmi` lofting replaced `pairwise-hulls` and `triangle-hulls`.
-    - `scad-tarmi` flex functions obviated separate functions for object
-      placement and reasoning about that placement.
+    - `scad-tarmi` flex functions obviated several separate functions for
+      object placement and reasoning about that placement.
+    - `scad-tarmi` coordinate specs replaced locals.
     - Featureful `dmote-keycap` models replaced internal maquettes.
 - Changed the merge order in the `reckon-from-anchor` function to make
   secondaries useful in tweaks.

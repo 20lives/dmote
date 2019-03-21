@@ -11,7 +11,7 @@
 (ns dactyl-keyboard.cad.place
   (:require [clojure.spec.alpha :as spec]
             [scad-clj.model :as model]
-            [scad-tarmi.core :refer [abs π]]
+            [scad-tarmi.core :refer [abs π] :as tarmi-core]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.flex :as flex]
             [dmote-keycap.data :as capdata]
@@ -205,51 +205,35 @@
               {:directions [direction (turning-fn direction)]}))]
     (vec (map / (vec (map + (c matrix/left) (c matrix/right))) [2 2 2]))))
 
-(defn- wall-edge
-  "Produce a sequence of corner posts for the upper or lower part of the edge
-  of one wall slab."
-  [post-fn getopt cluster upper [coord direction turning-fn]]
-  (let [extent (most-specific getopt [:wall direction :extent]
-                 cluster coord)
-        last-upper-segment (case extent :full 4, :none 0, extent)
-        place-post (post-fn getopt cluster coord
-                     [direction (turning-fn direction)])]
-   (if-not (zero? last-upper-segment)
-     (if upper
-       (map place-post (range (inc last-upper-segment)))
-       (when (= extent :full)
-         (map place-post [2 3 4]))))))
-
-(defn cluster-segment-placer
-  "Two-level closure for wall edge object placement."
-  [shape-fn]
-  (fn [getopt cluster coord directions]
-    (fn [segment]
-      (->>
-        (shape-fn getopt)
-        (maybe/translate
-          (wall-corner-offset getopt cluster coord
-            {:directions directions, :segment segment, :vertex false}))
-        (cluster-place getopt cluster coord)))))
-
-(defn wall-edge-placer
-  [shape-fn]
-  (partial wall-edge (cluster-segment-placer shape-fn)))
-
-(defn- cluster-reckoner
-  "Return a function for finding wall edge vertices."
-  [getopt cluster coord directions & {:as keyopts}]
-  (fn [segment]
-    (cluster-place getopt cluster coord
-      (wall-corner-offset getopt cluster coord
-        (merge {:directions directions, :segment segment, :vertex true}
-               keyopts)))))
-
-(defn cluster-segment-reckon
-  [getopt cluster coord directions segment bottom]
-  ((cluster-reckoner getopt cluster coord directions :bottom bottom) segment))
-
-(def wall-edge-reckon (partial wall-edge cluster-reckoner))
+(defn wall-edge-sequence
+  "Corner posts for the upper or lower part of the edge of one case wall slab.
+  Return a sequence of transformations on the subject, or nil.
+  Return nil when no wall is requested (extent zero) and when the lower portion of the wall is requested _and_ the wall in question is not full (i.e. should
+  not reach the floor) _and_ the subject is not a coordinate."
+  [getopt cluster upper [coord direction turning-fn] subject]
+  (let [extent (most-specific getopt [:wall direction :extent] cluster coord)
+        last-upper-segment (case extent :full 4, extent)
+        place-segment
+          (fn [segment]
+            (->>
+              subject
+              (flex/translate
+                (wall-corner-offset getopt cluster coord
+                  {:directions [direction (turning-fn direction)],
+                   :vertex (spec/valid? ::tarmi-core/point-2-3d subject)
+                   :segment segment}))
+              (cluster-place getopt cluster coord)))]
+    (if-not (zero? last-upper-segment)
+      (if upper
+        ;; The part of the wall above the vertical drop to z = 0.
+        (map place-segment (range (inc last-upper-segment)))
+        ;; The image from which the vertical drop to z = 0 should be made.
+        (cond
+          ;; Use all the lower (post-perpendicular) segments for a full wall.
+          (= extent :full) (map place-segment [2 3 4])
+          ;; Make an exception for coordinate reckoning. This exception is
+          ;; useful for drawing the bottom plate beneath the cluster.
+          (spec/valid? ::tarmi-core/point-2-3d subject) (map place-segment [last-upper-segment]))))))
 
 
 ;; Rear housing.
@@ -265,38 +249,17 @@
      :east (wall (key :east-end-coord) cardinal-direction segment)
      :north (if (= segment 0) [0 0 0] [0 1 -1]))))
 
-(defn- housing-vertex-offset [getopt directions]
+(defn housing-vertex-offset [getopt directions]
   (let [t (/ (getopt :case :web-thickness) 2)]
     (matrix/cube-vertex-offset directions [t t t] {})))
-
-(defn- housing-corner-coordinates
-  "Convert an ordered corner tuple to a 3-tuple of coordinates."
-  [getopt corner]
-  (getopt :case :rear-housing :derived (directions-to-unordered-corner corner)))
 
 (defn housing-place
   "Place passed shape in relation to a corner of the rear housing’s roof."
   [getopt corner segment subject]
-  (->> subject
-       (flex/translate (housing-corner-coordinates getopt corner))
-       (flex/translate (housing-segment-offset getopt (first corner) segment))))
-
-(defn housing-vertex-reckon
-  "Find the exact position of a vertex on a housing cube."
-  [getopt corner segment]
-  (housing-place getopt corner segment (housing-vertex-offset getopt corner)))
-
-(defn housing-opposite-reckon
-  "Like housing-vertex-reckon but for the other end of the indicated facing."
-  ;; This is just a workaround for fitting the bottom plate.
-  ;; It would not be needed if there were an edge walking function like that
-  ;; of the cluster walls but for the rear housing: A function that returned
-  ;; pairs of vertices on the outside wall.
-  [getopt corner segment]
-  (let [[dir0 dir1] corner
-        other-corner [dir0 (matrix/left (matrix/left dir1))]]
-    (housing-place getopt corner segment
-      (housing-vertex-offset getopt other-corner))))
+  (let [offset0 (getopt :case :rear-housing :derived
+                  (directions-to-unordered-corner corner))
+        offset1 (housing-segment-offset getopt (first corner) segment)]
+    (flex/translate (mapv + offset0 offset1) subject)))
 
 
 ;; Wrist rests.
@@ -329,7 +292,7 @@
 
 (defn- wrist-lip-coord
   [getopt xy outline-key]
-  {:post [(spec/valid? ::schema/point-3d %)]}
+  {:post [(spec/valid? ::tarmi-core/point-3d %)]}
   (let [nxy (remap-outline getopt xy outline-key)]
     (wrist-place getopt (conj nxy (getopt :wrist-rest :derived :z1)))))
 
@@ -344,7 +307,7 @@
   ensure that they fall below segment 1 even on a low and tilted rest."
   [getopt xy segment]
   {:pre [(vector? xy), (integer? segment)]
-   :post [(spec/valid? ::schema/point-3d %)]}
+   :post [(spec/valid? ::tarmi-core/point-3d %)]}
   (case segment
     0 (wrist-place getopt (conj xy (getopt :wrist-rest :derived :z2)))
     1 (wrist-lip-coord getopt xy :lip)
@@ -400,7 +363,7 @@
   {:pre [(keyword? type)
          (integer? segment)
          (vector? offset)
-         (spec/valid? ::schema/point-3d offset)]}
+         (spec/valid? ::tarmi-core/point-3d offset)]}
   (let [init (flex/translate offset subject)]
     (case type
       :origin init

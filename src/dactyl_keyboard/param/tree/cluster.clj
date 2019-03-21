@@ -5,6 +5,7 @@
 
 (ns dactyl-keyboard.param.tree.cluster
   (:require [clojure.spec.alpha :as spec]
+            [scad-tarmi.core :as tarmi-core]
             [dactyl-keyboard.param.schema :as schema]))
 
 (def raws
@@ -77,7 +78,7 @@
     "sections described above.\n\n"
     "Take care not to create circular dependencies between clusters."]
    [:parameter [:position :offset]
-    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
+    {:default [0 0 0] :parse-fn vec :validate [::tarmi-core/point-3d]}
     "A 3-dimensional offset in mm from the indicated key or else from the "
     "origin of the coordinate system.\n"
     "\n"

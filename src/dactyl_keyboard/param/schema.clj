@@ -172,8 +172,6 @@
 (spec/def ::flexcoord (spec/or :absolute int? :extreme #{:first :last}))
 (spec/def ::flexcoord-2d (spec/coll-of ::flexcoord :count 2))
 (spec/def ::key-coordinates ::flexcoord-2d)  ; Exposed for unit testing.
-(spec/def ::point-2d (spec/coll-of number? :count 2))
-(spec/def ::point-3d (spec/coll-of number? :count 3))
 (spec/def ::corner (set (vals generics/keyword-to-directions)))
 (spec/def ::direction (set (map first (vals generics/keyword-to-directions))))
 (spec/def ::wall-segment ::segment)

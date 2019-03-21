@@ -5,6 +5,7 @@
 
 (ns dactyl-keyboard.param.tree.nested
   (:require [clojure.spec.alpha :as spec]
+            [scad-tarmi.core :as tarmi-core]
             [dactyl-keyboard.param.schema :as schema]))
 
 (def raws
@@ -146,16 +147,16 @@
     "a cascading effect on other aspects of key placement. All measurements "
     "are three-dimensional vectors in mm."]
    [:parameter [:layout :translation :early]
-    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
+    {:default [0 0 0] :parse-fn vec :validate [::tarmi-core/point-3d]}
     "”Early” translation happens before other operations in key placement and "
     "therefore has the biggest knock-on effects."]
    [:parameter [:layout :translation :mid]
-    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
+    {:default [0 0 0] :parse-fn vec :validate [::tarmi-core/point-3d]}
     "This happens after columns are styled but before base pitch and roll. "
     "As such it is a good place to adjust whole columns for relative finger "
     "length."]
    [:parameter [:layout :translation :late]
-    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
+    {:default [0 0 0] :parse-fn vec :validate [::tarmi-core/point-3d]}
     "“Late” translation is the last step in key placement and therefore "
     "interacts very little with other steps."]
    [:parameter [:key-style]
@@ -212,7 +213,8 @@
     "This section describes the shape of the wall on the north side of the "
     "keyboard. There are identical sections for the other cardinal directions."]
    [:parameter [:wall :north :extent]
-    {:default :full :parse-fn schema/keyword-or-integer :validate [::schema/wall-extent]}
+    {:default :full :parse-fn schema/keyword-or-integer
+     :validate [::schema/wall-extent]}
     "Two types of values are permitted here:\n\n"
     "- The keyword `full`. This means a complete wall extending from the key "
     "mount all the way down to the ground via segments numbered 0 through 4 "
@@ -230,21 +232,24 @@
     "corners of their key mount, away from its plane."]
    [:section [:wall :east] "See `north`."]
    [:parameter [:wall :east :extent]
-    {:default :full :parse-fn schema/keyword-or-integer :validate [::schema/wall-extent]}]
+    {:default :full :parse-fn schema/keyword-or-integer
+     :validate [::schema/wall-extent]}]
    [:parameter [:wall :east :parallel]
     {:default 0 :parse-fn num}]
    [:parameter [:wall :east :perpendicular]
     {:default 0 :parse-fn num}]
    [:section [:wall :south] "See `north`."]
    [:parameter [:wall :south :extent]
-    {:default :full :parse-fn schema/keyword-or-integer :validate [::schema/wall-extent]}]
+    {:default :full :parse-fn schema/keyword-or-integer
+     :validate [::schema/wall-extent]}]
    [:parameter [:wall :south :parallel]
     {:default 0 :parse-fn num}]
    [:parameter [:wall :south :perpendicular]
     {:default 0 :parse-fn num}]
    [:section [:wall :west] "See `north`."]
    [:parameter [:wall :west :extent]
-    {:default :full :parse-fn schema/keyword-or-integer :validate [::schema/wall-extent]}]
+    {:default :full :parse-fn schema/keyword-or-integer
+     :validate [::schema/wall-extent]}]
    [:parameter [:wall :west :parallel]
     {:default 0 :parse-fn num}]
    [:parameter [:wall :west :perpendicular]

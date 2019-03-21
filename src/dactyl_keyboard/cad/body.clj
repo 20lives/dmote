@@ -5,6 +5,7 @@
 
 (ns dactyl-keyboard.cad.body
   (:require [scad-clj.model :exclude [use import] :refer :all]
+            [scad-tarmi.core :refer [mean]]
             [scad-tarmi.maybe :as maybe]
             [scad-tarmi.threaded :as threaded]
             [scad-tarmi.util :refer [loft]]
@@ -137,7 +138,10 @@
 
 ;; Edge walking.
 
-(def wall-edge-post (place/wall-edge-placer key/web-post))
+(defn wall-edge-post
+  "Run wall-edge-sequence with a web post as its subject."
+  [getopt cluster upper edge]
+  (place/wall-edge-sequence getopt cluster upper edge (key/web-post getopt)))
 
 (defn wall-slab
   "Produce a single shape joining some (two) edges."
@@ -217,34 +221,39 @@
         cluster-pillar
           (fn [coord-key direction housing-turning-fn cluster-turning-fn]
             ;; Make a function for a part of the cluster wall.
-            ;; For reckoning, return a 3D coordinate vector.
-            ;; For building, return a sequence of web posts.
             (fn [reckon upper]
               (let [coord (getopt :case :rear-housing :derived coord-key)
-                    function (if reckon place/wall-edge-reckon wall-edge-post)
+                    subject (if reckon [0 0 0] (key/web-post getopt))
+                    ;; For reckoning, return a 3D coordinate vector.
+                    ;; For building, return a sequence of web posts.
                     picker (if reckon #(first (take-last 2 %)) identity)]
                 (picker
-                  (function getopt cluster upper
-                    [coord direction housing-turning-fn])))))
+                  (place/wall-edge-sequence getopt cluster upper
+                    [coord direction housing-turning-fn] subject)))))
         housing-pillar
-          (fn [reckon-fn directions]
+          (fn [opposite directions]
             ;; Make a function for a part of the rear housing.
             ;; For reckoning, return a 3D coordinate vector.
             ;; For building, return a hull of housing cubes.
             (fn [reckon upper]
-              (let [segments (if upper [0 1] [1])]
-                (if reckon
-                  (reckon-fn getopt directions (first segments))
-                  (apply hull
-                    (map #(place/housing-place getopt directions % (housing-cube getopt))
-                         segments))))))]
+              (let [subject
+                      (if reckon
+                        (place/housing-vertex-offset getopt
+                          (if opposite
+                            [(first directions)
+                             (matrix/left (matrix/left (second directions)))]
+                            directions))
+                        (housing-cube getopt))]
+                (apply (if reckon mean hull)
+                  (map #(place/housing-place getopt directions % subject)
+                       (if upper [0 1] [1]))))))]
     [(cluster-pillar :west-end-coord :west matrix/right matrix/left)
-     (housing-pillar place/housing-opposite-reckon WSW)
-     (housing-pillar place/housing-vertex-reckon WNW)
-     (housing-pillar place/housing-vertex-reckon NNW)
-     (housing-pillar place/housing-vertex-reckon NNE)
-     (housing-pillar place/housing-vertex-reckon ENE)
-     (housing-pillar place/housing-opposite-reckon ESE)
+     (housing-pillar true WSW)
+     (housing-pillar false WNW)
+     (housing-pillar false NNW)
+     (housing-pillar false NNE)
+     (housing-pillar false ENE)
+     (housing-pillar true ESE)
      (cluster-pillar :east-end-coord :east matrix/left matrix/right)]))
 
 (defn- housing-wall-shape-level

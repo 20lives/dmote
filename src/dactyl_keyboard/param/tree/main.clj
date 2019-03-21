@@ -6,6 +6,7 @@
 (ns dactyl-keyboard.param.tree.main
   (:require [clojure.spec.alpha :as spec]
             [clojure.java.io :refer [file]]
+            [scad-tarmi.core :as tarmi-core]
             [scad-tarmi.threaded :as threaded]
             [dmote-keycap.data :as capdata]
             [dactyl-keyboard.param.base :as base]
@@ -236,7 +237,7 @@
     {:default :origin :parse-fn keyword :validate [::schema/anchor]}
     "The name of a feature where the block will attach."]
    [:parameter [:case :back-plate :position :offset]
-    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
+    {:default [0 0 0] :parse-fn vec :validate [::tarmi-core/point-3d]}
     "An offset in mm from the named feature to the middle of the base of the "
     "back-plate block."]
    [:section [:case :bottom-plate]
@@ -464,10 +465,10 @@
     "A code for a corner of the `anchor` feature. "
     "This determines both the location and facing of the MCU."]
    [:parameter [:mcu :position :offset]
-    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
+    {:default [0 0 0] :parse-fn vec :validate [::tarmi-core/point-3d]}
     "A 3D offset in mm, measuring from the `corner`."]
    [:parameter [:mcu :position :rotation]
-    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}
+    {:default [0 0 0] :parse-fn vec :validate [::tarmi-core/point-3d]}
     "A vector of 3 angles in radians. This parameter governs the rotation of "
     "the MCU around its anchor point in the front. You would not normally "
     "need this for the MCU."]
@@ -567,7 +568,7 @@
     "between its two halves. This section adds a socket for that purpose. "
     "For example, this might be a type 616E female for a 4P4C “RJ9” plug."]
    [:parameter [:connection :socket-size]
-    {:default [1 1 1] :parse-fn vec :validate [::schema/point-3d]}
+    {:default [1 1 1] :parse-fn vec :validate [::tarmi-core/point-3d]}
     "The size of a hole in the case, for the female to fit into."]
    [:section [:connection :position]
     "Where to place the socket. Equivalent to `connection` → `mcu`."]
@@ -583,9 +584,9 @@
     "housing, put it directly under the ceiling, instead of directly over "
     "the floor."]
    [:parameter [:connection :position :offset]
-    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}]
+    {:default [0 0 0] :parse-fn vec :validate [::tarmi-core/point-3d]}]
    [:parameter [:connection :position :rotation]
-    {:default [0 0 0] :parse-fn vec :validate [::schema/point-3d]}]
+    {:default [0 0 0] :parse-fn vec :validate [::tarmi-core/point-3d]}]
    [:section [:wrist-rest]
     "An optional extension to support the user’s wrist."]
    [:parameter [:wrist-rest :include]
@@ -612,7 +613,7 @@
     {:default "ENE" :parse-fn schema/string-corner :validate [::schema/corner]}
     "A corner of the feature named in `anchor`."]
    [:parameter [:wrist-rest :position :offset]
-    {:default [0 0] :parse-fn vec :validate [::schema/point-2d]}
+    {:default [0 0] :parse-fn vec :validate [::tarmi-core/point-2d]}
     "An offset in mm from the feature named in `anchor`."]
    [:parameter [:wrist-rest :plinth-height]
     {:default 1 :parse-fn num}
@@ -800,10 +801,10 @@
     "subsection for printing. You might want this while you are printing "
     "prototypes for a new style of switch, MCU support etc."]
    [:parameter [:mask :size]
-    {:default [1000 1000 1000] :parse-fn vec :validate [::schema/point-3d]}
+    {:default [1000 1000 1000] :parse-fn vec :validate [::tarmi-core/point-3d]}
     "The size of the mask in mm. By default, `[1000, 1000, 1000]`."]
    [:parameter [:mask :center]
-    {:default [0 0 500] :parse-fn vec :validate [::schema/point-3d]}
+    {:default [0 0 500] :parse-fn vec :validate [::tarmi-core/point-3d]}
     "The position of the center point of the mask. By default, `[0, 0, 500]`, "
     "which is supposed to mask out everything below ground level. If you "
     "include bottom plates, their thickness will automatically affect the "
