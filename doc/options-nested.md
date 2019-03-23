@@ -151,7 +151,7 @@ The width in mm of the negative space at its top. Its width at the bottom is def
 
 ### Parameter `margin`
 
-The width in mm of extra negative space around the edges of a keycap, on all sides.
+The width in mm of extra negative space around the edges of a keycap, on all sides. This is applied before the `error-general` DFM compensator.
 
 ## Section `wall`
 

@@ -92,7 +92,7 @@
        :top-rotation vec
        :bowl-radii vec
        :bowl-plate-offset num
-       :max-skirt-length num
+       :skirt-length num
        :slope num})))
 
 (def named-secondary-positions

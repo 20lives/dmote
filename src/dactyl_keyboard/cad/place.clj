@@ -65,9 +65,9 @@
         angle-product (* angle-factor delta-f)
         flat-distance (* capdata/mount-1u (- index neutral))
         key-prop (key-properties getopt cluster coord)
-        {:keys [switch-type max-skirt-length]} key-prop
+        {:keys [switch-type skirt-length]} key-prop
         radius (+ (getopt :case :key-mount-thickness)
-                  (capdata/resting-clearance switch-type max-skirt-length)
+                  (capdata/resting-clearance switch-type skirt-length)
                   (/ (/ (+ capdata/mount-1u separation) 2)
                      (Math/sin (/ angle-factor 2))))
         ortho-x (- (* delta-r (+ -1 (- (* radius (Math/sin angle-factor))))))

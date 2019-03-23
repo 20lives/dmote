@@ -6,6 +6,8 @@ keys:
   styles:
     maquette-dsa:  # A non-printable preview of a DSA profile key.
       style: maquette
+      skirt-length: 4.6
+      top-size: [12.7, 12.7, 3.3]
     minimal:  # A printable minimal key.
       style: minimal
 key-clusters:
@@ -67,7 +69,6 @@ by-key:
     channel:
       height: 20
       top-width: 10
-      margin: 0.5
     wall:
       thickness: 1
       bevel: 1

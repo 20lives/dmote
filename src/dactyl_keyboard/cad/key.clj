@@ -103,7 +103,7 @@
     (fn [coll [style-name explicit]]
       (assoc coll style-name
         (merge capdata/option-defaults
-               {:max-skirt-length  ; Needed for computing curvature.
+               {:skirt-length  ; Needed for computing curvature.
                   (capdata/default-skirt-length
                     (get explicit :switch-type
                       (:switch-type capdata/option-defaults)))}
@@ -150,17 +150,21 @@
   "The shape of a channel for a keycap to move in."
   [getopt cluster coord {h3 :height wd3 :top-width m :margin}]
   (let [cmp (getopt :dfm :derived :compensator)
-        step (fn [x y h] (translate [0 0 h] (cube (cmp x) (cmp y) 1)))
+        t 1
+        step (fn [x y h] (translate [0 0 h] (cube (cmp x) (cmp y) t)))
         prop (key-properties getopt cluster coord)
-        {:keys [switch-type max-skirt-length unit-size]} prop
+        {:keys [style switch-type skirt-length unit-size]} prop
+        ;; The size of the switch with overhangs is not to be confused with
+        ;; capdata/switch-footprint.
         {sx :x, sy :y} (get-in switch-properties [switch-type :foot])
-        [wx wy] (map capdata/key-length unit-size)
-        h1 (capdata/pressed-clearance switch-type max-skirt-length)
-        h2 (capdata/resting-clearance switch-type max-skirt-length)]
+        [wx wy] (capdata/skirt-footprint prop)
+        h1 (capdata/pressed-clearance switch-type skirt-length)
+        h2 (capdata/resting-clearance switch-type skirt-length)]
     (color (:cap-negative generics/colours)
       (translate [0 0 (getopt :case :key-mount-thickness)]
         (loft
-          [(step (+ sx m) (+ sy m) 0.5) ; A bottom plate for ease of mounting a switch.
+          [(step (+ sx m) (+ sy m) (/ t 2)) ; A bottom plate for ease of mounting a switch.
+           (step (+ sx m) (+ sy m) 1) ; Roughly the height of the foot of the switch.
            (step wx wy h1) ; Space for the keycap’s edges in travel.
            (step wx wy h2)
            (step wd3 wd3 h3)]))))) ; Space for the upper body of a keycap at rest.
@@ -175,7 +179,8 @@
                :error-stem-negative (getopt :dfm :keycaps :error-stem-negative)
                :error-body-positive (getopt :dfm :error-general)}
               prop))
-     (translate [0 0 (capdata/plate-to-stem-end (:switch-type prop))])
+     (translate [0 0 (+ (getopt :case :key-mount-thickness)
+                        (capdata/plate-to-stem-end (:switch-type prop)))])
      (color (:cap-body generics/colours)))))
 
 
