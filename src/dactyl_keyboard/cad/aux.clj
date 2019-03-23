@@ -405,14 +405,19 @@
 
 (defn connection-socket
   "Negative space for a port, with a hole for wires leading out of the port and
-  into the interior of the keyboard."
+  into the interior of the keyboard. The hole is in the negative-y-side wall,
+  based on the assumption that the socket is pointing “north” and the wires
+  come out to the “south”. The hole is slightly thicker than the wall for
+  cleaner rendering."
   [getopt]
   (let [socket-size (getopt :connection :socket-size)
         thickness (getopt :case :web-thickness)]
    (union
      (apply cube socket-size)
-     (translate [0 (* -2 thickness) 0]
-       (apply cube (map dec socket-size))))))
+     (translate [0 (/ (+ (second socket-size) thickness) -2) 0]
+       (cube (dec (first socket-size))
+             (inc thickness)
+             (dec (last socket-size)))))))
 
 (defn connection-positive [getopt]
   (connection-position getopt (connection-metasocket getopt)))

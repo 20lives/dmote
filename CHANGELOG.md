@@ -21,6 +21,11 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   space, placed in relation to other named features. Used in `tweaks`, these
   secondaries give greater freedom in shaping the case.
 
+### Fixed
+- Reduced risk and impact of collision between nut bosses built into the
+  rear housing and the interior negative of the socket for connecting the
+  two halves, by reducing the thickness of one part of the negative.
+
 ### Developer
 - Took advantage of new developments in general-purpose libraries:
     - Outsourced file authoring to `scad-app` for improved CPU thread scaling
