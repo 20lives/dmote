@@ -19,14 +19,14 @@ case:
         corner: NNW
         offset: [0, -10]
     - points:
-      - anchor: far-right
+      - anchor: a1
         corner: WNW
         offset: [7, 0]
-      - anchor: far-right
+      - anchor: a1
         corner: NNE
-      - anchor: far-right
+      - anchor: a1
         corner: ESE
-        offset: [0, -2]
+        offset: [0, -6]
     - points:
       - anchor: near-right
         corner: SSW

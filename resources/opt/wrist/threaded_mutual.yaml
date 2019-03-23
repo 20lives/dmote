@@ -15,9 +15,9 @@ wrist-rest:
       width: 15
       case-side:
         position:
-          anchor: a0
-          offset: [8, 10]
-        depth: 15
+          anchor: m02
+          offset: [-8, 10]
+        depth: 12
       plinth-side:
         position:
           anchor: plinth-left
