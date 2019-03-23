@@ -233,7 +233,9 @@ One of:
 - `threads`: Threaded holes in the case.
 - `inserts`: Unthreaded holes for threaded heat-set inserts.
 
-In any case you may want to use `foot-plates` to provide additional support for the anchor points configured in this section.
+##### Parameter `thickness`
+
+The thickness in mm of each wall of the anchor points.
 
 ##### Section `inserts`
 

@@ -116,6 +116,27 @@ For printing prototypes and any printing with PLA-like materials that stiffen
 quickly, build support from the base plate only. This simplifies the process
 of removing the supports.
 
+For accuracy problems, especially with threaded fasteners, consider tweaking
+the DFM settings [documented here](options-main.md), particularly the
+`error-general` parameter.
+
+### Bottom plates
+
+If you are using threaded fasteners to connect bottom plates directly to the
+case (the `threads` style), please note that common FDM printers usually won’t
+print threaded holes smaller than M3 with useful accuracy. M4 is a safer bet.
+
+If you are having trouble with the fit and neither DFM settings nor larger
+fasteners are helping, consider a greater `thickness` for the anchor points,
+along with slicer settings that give you thinner walls and less infill. This
+should give you a more yielding threaded hole, decreasing the risk of a
+delaminating crack, but increasing the risk of threads deforming over time.
+
+In any case you may want to use `foot-plates` to provide additional support for
+the anchor points.
+
+### Wrist rests
+
 If you are including wrist rests, consider printing the plinths without a
 bottom plate and with sparse or gradual infill. This makes it easy to pour
 plaster or some other dense material into the plinths to add mass.

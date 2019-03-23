@@ -292,9 +292,10 @@
     "in how these fasteners attach to the case.\n\n"
     "One of:\n\n"
     "- `threads`: Threaded holes in the case.\n"
-    "- `inserts`: Unthreaded holes for threaded heat-set inserts.\n\n"
-    "In any case you may want to use `foot-plates` to provide additional "
-    "support for the anchor points configured in this section."]
+    "- `inserts`: Unthreaded holes for threaded heat-set inserts."]
+   [:parameter [:case :bottom-plate :installation :thickness]
+    {:default 1 :parse-fn num}
+    "The thickness in mm of each wall of the anchor points."]
    [:section [:case :bottom-plate :installation :inserts]
     "Properties of heat-set inserts for the `inserts` style."]
    [:parameter [:case :bottom-plate :installation :inserts :length]

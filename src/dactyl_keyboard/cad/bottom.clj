@@ -30,9 +30,9 @@
   [getopt]
   (let [prop (partial getopt :case :bottom-plate :installation)
         style (prop :style)
+        thickness (* 2 (prop :thickness))
         iso-size (prop :fasteners :diameter)
         head-height (threaded/head-height iso-size :countersunk)
-        thickness (getopt :case :web-thickness)
         inserts (= style :inserts)
         base-top-diameter (if inserts (prop :inserts :diameter :top) iso-size)
         walled-top-diameter (+ base-top-diameter thickness)

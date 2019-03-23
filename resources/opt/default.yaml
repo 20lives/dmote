@@ -437,6 +437,7 @@ case:
     include: true
     thickness: 0.8
     installation:
+      thickness: 2
       fasteners:
         diameter: 3
         length: 6.5
@@ -449,13 +450,13 @@ case:
           offset: [-2, -12]
         - anchor: m12
           corner: ENE
-          offset: [-3, -5]
+          offset: [-3.5, -5]
         - anchor: near-right
           corner: ESE
-          offset: [-3, 2]
+          offset: [-3.5, 2]
         - anchor: t4
           corner: SSW
-          offset: [0, 2]
+          offset: [0, 4]
         - anchor: t1
           corner: NNW
           offset: [2, -4]

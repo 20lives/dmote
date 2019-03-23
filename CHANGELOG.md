@@ -20,6 +20,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Added a `secondaries` setting for named features that are just points in
   space, placed in relation to other named features. Used in `tweaks`, these
   secondaries give greater freedom in shaping the case.
+- Added a `thickness` setting specific to the threaded anchors for bottom-plate
+  screws.
 
 ### Fixed
 - Reduced risk and impact of collision between nut bosses built into the
