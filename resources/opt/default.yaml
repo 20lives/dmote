@@ -31,7 +31,8 @@ key-clusters:
       m01: [1, first]
       m02: [2, first]
       m03: [3, first]
-      back: [1, last]
+      back0: [0, last]
+      back1: [1, last]
       m10: [3, last]
       m11: [4, last]
       m12: [last, last]
@@ -431,7 +432,7 @@ case:
       diameter: 6
       distance: 30
     position:
-      anchor: back
+      anchor: back1
       offset: [0, 0, 0]
   bottom-plate:
     include: true
@@ -596,7 +597,7 @@ case:
     - [t5, SSE, 0]
     - [t5, SSW, 0]
   # A plate to ground beneath the entire thumb cluster:
-  - to-ground: true
+  - at-ground: true
     chunk-size: 2
     hull-around:
     - [m00, WSW, 2, 3]
@@ -630,17 +631,31 @@ case:
     - [a1, ESE, 0, 1]
     - [m12, ENE, 0, 3]
   # A plate to ground at the main-aux gap.
-  - to-ground: true
+  - at-ground: true
     hull-around:
     - [rear-housing, ESE]
     - [m10, ENE, 0, 1]
     - [a0, WNW, 0, 1]
+  # Bottom-only plating to compensate for the aux cluster breaking up the
+  # ground-level profile of the main cluster:
+  - at-ground: true
+    above-ground: false
+    hull-around:
+    - [m12, ENE, 3]
+    - [a1, ENE, 0]
+    - [a1, NNE, 0]
+    - [a0, NNW, 0]
+    - [m10, ENE, 3]
+    - [rear-housing, ESE]
+    - [rear-housing, WSW]
+    - [back0, WNW, 3]
+    - [back0, WSW, 3]
 mcu:
   type: promicro
   margin: 0.25
   position:
     prefer-rear-housing: true
-    anchor: back
+    anchor: back1
     corner: ENE
     offset: [-1, 0, 2]
   support:
@@ -658,7 +673,7 @@ mcu:
         mount-length: 10
         mount-thickness: 6
     stop:
-      anchor: back
+      anchor: back1
       direction: east
       gripper:
         notch-depth: 0.4
@@ -668,7 +683,7 @@ connection:
   socket-size: [10, 11, 17.7]  # 616E minus the vertical bar is 10 mm wide.
   position:
     prefer-rear-housing: true
-    anchor: back
+    anchor: back1
     corner: ENE
     raise: true
 wrist-rest:

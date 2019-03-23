@@ -74,7 +74,8 @@
     (apply case-tweak-position candidate)
     (if (map? candidate)
       ((map-like {:chunk-size int
-                  :to-ground boolean
+                  :at-ground boolean
+                  :above-ground boolean
                   :highlight boolean
                   :hull-around case-tweaks})
        candidate)
@@ -134,7 +135,8 @@
                             #(not (= :rear-housing %))))
 (spec/def ::segment (spec/int-in 0 5))
 (spec/def ::highlight boolean?)
-(spec/def ::to-ground boolean?)
+(spec/def ::at-ground boolean?)
+(spec/def ::above-ground boolean?)
 (spec/def ::chunk-size (spec/and int? #(> % 1)))
 (spec/def ::hull-around (spec/coll-of (spec/or :leaf ::tweak-plate-leaf
                                                :map ::tweak-plate-map)))
@@ -153,7 +155,7 @@
 (spec/def ::points ::anchored-2d-list)
 (spec/def ::tweak-plate-map
   (spec/keys :req-un [::hull-around]
-             :opt-un [::highlight ::chunk-size ::to-ground]))
+             :opt-un [::highlight ::chunk-size ::at-ground ::above-ground]))
 (spec/def ::nameable-spline (spec/coll-of ::spline-point))
 
 ;; Other:

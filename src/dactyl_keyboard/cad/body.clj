@@ -368,15 +368,16 @@
   "Treat a map-type node in the configuration."
   [getopt node]
   (let [parts (get node :chunk-size)
-        to-ground (get node :to-ground false)
+        at-ground (get node :at-ground false)
         prefix (if (get node :highlight) -# identity)
         shapes (reduce (partial tweak-plating getopt) [] (:hull-around node))]
-   (prefix
-     (apply (if parts union (if to-ground misc/bottom-hull hull))
-       (if parts
-         (map (partial apply (if to-ground misc/bottom-hull hull))
-              (partition parts 1 shapes))
-         shapes)))))
+    (when (get node :above-ground true)
+      (prefix
+        (apply (if parts union (if at-ground misc/bottom-hull hull))
+          (if parts
+            (map (partial apply (if at-ground misc/bottom-hull hull))
+                 (partition parts 1 shapes))
+            shapes))))))
 
 (defn- tweak-plating
   "A reducer."

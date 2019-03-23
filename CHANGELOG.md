@@ -9,14 +9,20 @@ version 0.2.0, thus covering only a fraction of the project’s history.
     - Both the `keycaps` and `switches` sections have been replaced. There is
       now a `keys` section that defines one or more `styles`, as well as a
       `key-style` parameter in the nesting `by-key` section of options.
+    - The `to-ground` key for case tweaks has been renamed to `at-ground` for
+      clarity with respect to a new `above-ground` key.
     - The general `error` setting for DFM has been renamed `error-general`.
 
 ### Added
 - Support for multiple, named styles of keys, including some with enough
   detail on the keycaps to permit printing.
-- `tweaks` is no longer restricted to key aliases.
-    - Any named feature can be used in a leaf node.
-    - It is no longer necessary to specify a corner or segment for a tweak.
+- Improved `tweaks`.
+    - Tweaks are no longer restricted to key aliases.
+        - Any named feature can be used in a leaf node.
+        - It is no longer necessary to specify a corner or segment for a tweak.
+    - Tweaks can now target bottom plates without impacting case walls.
+      There is a new configuration key for this (`above-ground`, which must be
+      turned off to see the new behaviour).
 - Added a `secondaries` setting for named features that are just points in
   space, placed in relation to other named features. Used in `tweaks`, these
   secondaries give greater freedom in shaping the case.

@@ -195,7 +195,7 @@ A bottom plate can be added to close the case. This is useful mainly to simplify
 
 The bottom plate is largely two-dimensional. The application builds it from a set of polygons, trying to match the perimeter of the case at the ground level (i.e. z = 0).
 
-Specifically, there is one polygon per key cluster, limited to `full` wall edges, one polygon for the rear housing, and one set of polygons for each of the first-level case `tweaks` that use `to-ground`, ignoring chunk size and almost ignoring nested tweaks.
+Specifically, there is one polygon per key cluster, limited to `full` wall edges, one polygon for the rear housing, and one set of polygons for each of the first-level case `tweaks` that use `at-ground`, ignoring chunk size and almost ignoring nested tweaks.
 
 This methodology is mentioned here because its results are not perfect. Pending future features in OpenSCAD, a future version may be based on a more exact projection of the case, but as of 2018, such a projection is hollow and cannot be convex-hulled without escaping the case, unless your case is convex to start with.
 
@@ -326,7 +326,8 @@ Each leaf node identifies a particular named feature of the keyboard. It’s usu
 
 By default, a map node will create a convex hull around its child nodes. However, this behaviour can be modified. The following keys are recognized:
 
-- `to-ground`: If `true`, child nodes will be extended vertically down to the ground plane, as with a `full` wall. See also: `bottom-plate`.
+- `at-ground`: If `true`, child nodes will be extended vertically down to the ground plane, as with a `full` wall. The default value for this key is `false`. See also: `bottom-plate`.
+- `above-ground`: If `true`, child nodes will be visible as part of the case. The default value for this key is `true`.
 - `chunk-size`: Any integer greater than 1. If this is set, child nodes will not share a single convex hull. Instead, there will be a sequence of smaller hulls, each encompassing this many items.
 - `highlight`: If `true`, render the node in OpenSCAD’s highlighting style. This is convenient while you work.
 - `hull-around`: The list of child nodes. Required.

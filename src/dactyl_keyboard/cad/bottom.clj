@@ -187,7 +187,7 @@
   "The footprint of all user-requested additional shapes that go to the floor."
   [getopt]
   (apply maybe/union (map #(tweak-plate-shadows getopt (:hull-around %))
-                          (filter :to-ground (getopt :case :tweaks)))))
+                          (filter :at-ground (getopt :case :tweaks)))))
 
 (defn case-anchors-positive
   "The parts of the case body that receive bottom-plate fasteners."
