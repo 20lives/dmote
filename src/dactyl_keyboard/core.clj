@@ -395,13 +395,15 @@
    {:keys [model-precursor rotation modules]
     :or {rotation [0 0 0], modules []}
     :as proto-asset}]
-  (let [asset (select-keys proto-asset [:name :chiral])
-        module-names (remove nil? modules)
-        model-main (maybe/rotate rotation (model-precursor getopt))]
-    (refine-asset {:original-fn #(str "right-hand-" %),
-                   :mirrored-fn #(str "left-hand-" %)}
-                  (assoc asset :model-main model-main)
-                  (map (partial get module-map) module-names))))
+  (refine-asset
+    {:original-fn #(str "right-hand-" %),
+     :mirrored-fn #(str "left-hand-" %)}
+    (conj
+      (select-keys proto-asset [:name :chiral])  ; Simplified base.
+      [:model-main (maybe/rotate rotation (model-precursor getopt))]
+      (when (getopt :resolution :include)
+        [:minimum-face-size (getopt :resolution :minimum-face-size)]))
+    (map (partial get module-map) (remove nil? modules))))
 
 (defn- finalize-all
   [{:keys [debug] :as cli-options}]

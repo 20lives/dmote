@@ -739,5 +739,7 @@ wrist-rest:
     - anchor: plinth-near
       offset: [0, 4]
     - anchor: plinth-right
+resolution:
+  include: true
 dfm:
   error-general: -0.5

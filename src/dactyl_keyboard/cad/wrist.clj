@@ -32,12 +32,19 @@
   (let [outline (getopt :wrist-rest :derived :outline :base)]
     (polygon2 (inset-polygon outline inset))))
 
+(defn- get-resolution
+  "Get the effective spline resolution. Default to 1, i.e. no interpolation."
+  [getopt & keys]
+  (if (getopt :resolution :include)
+    (apply (partial getopt :wrist-rest :shape) keys)
+    1))
+
 (defn- edge-angles
   "Find all angles needed to compute pad surface edge characteristics.
   Note that, due to rounding errors and floating-point shenanigans, the last of
   these angles will be approximately but not exactly π/2."
   [getopt]
-  (let [res (getopt :wrist-rest :shape :pad :surface :edge :resolution)]
+  (let [res (get-resolution getopt :pad :surface :edge :resolution)]
     (mapv #(* (/ % res) (/ π 2)) (range (inc res)))))
 
 (defn- edge-inset
@@ -90,8 +97,7 @@
 (defn- pad-walls
   "Points in a stepped polyhedron and faces that constitute its walls."
   [getopt]
-  (let [outline (getopt :wrist-rest :derived :outline :base)
-        resolution (getopt :wrist-rest :shape :pad :surface :edge :resolution)]
+  (let [outline (getopt :wrist-rest :derived :outline :base)]
     (reduce
       (fn [[points faces] index]
         (let [θ (nth (edge-angles getopt) index)
@@ -100,7 +106,7 @@
           [(concat points (map #(conj % elevation) (:points poly)))
            (concat faces (polygon-faces (count points) (count outline) index))]))
       [(map #(conj % first-elevation) outline) []]
-      (map inc (range resolution)))))
+      (map inc (range (get-resolution getopt :pad :surface :edge :resolution))))))
 
 (defn- transition-triangles
   "thi.ng triangles at the plinth-to-pad transition."
@@ -250,7 +256,7 @@
 (defn- splined
   "The 2D coordinates along a closed spline through passed points."
   [getopt points]
-  (let [res (getopt :wrist-rest :shape :spline :resolution)]
+  (let [res (get-resolution getopt :spline :resolution)]
     (butlast (vertices (auto-spline2 (mapv vec2 points) true) res))))
 
 

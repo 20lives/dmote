@@ -583,14 +583,16 @@ The horizontal outline of the wrist rest is a closed spline.
 
 A list of nameable points, in clockwise order. The spline will pass through all of these and then return to the first one. Each point can have two properties:
 
-- `position`: A pair of coordinates, in mm, relative to other points in the list. This property is required.
-- `alias`: A name given to the specific point, for the purpose of placing yet more things in relation to it. This is optional.
+- Mandatory: `position`. A pair of coordinates, in mm, relative to other points in the list.
+- Optional: `alias`. A name given to the specific point, for the purpose of placing yet more things in relation to it.
 
 ##### Parameter `resolution`
 
 The amount of vertices per main point. The default is 1. If 1, only the main points themselves will be used, giving you full control. A higher number gives you smoother curves.
 
 If you want the closing part of the curve to look smooth in high resolution, position your main points carefully.
+
+Resolution parameters, including this one, can be disabled in the main `resolution` section.
 
 #### Section `lip`
 
@@ -627,6 +629,8 @@ The horizontal extent of softening. This cannot be more than half the width of t
 ###### Parameter `resolution` at level 7
 
 The number of faces on the edge between horizontal points.
+
+Resolution parameters, including this one, can be disabled in the main `resolution` section.
 
 ###### Section `heightmap`
 
@@ -715,6 +719,18 @@ Other properties of these fasteners are determined by settings for the case.
 ### Parameter `mould-thickness`
 
 The thickness in mm of the walls and floor of the mould to be used for casting the rubber pad.
+
+## Section `resolution`
+
+Settings for the amount of detail on curved surfaces. More specific resolution parameters are available in other sections.
+
+### Parameter `include`
+
+If `true`, apply resolution parameters found throughout the configuration. Otherwise, use defaults built into this application, its libraries and OpenSCAD. The defaults are generally conservative, providing quick renders for previews.
+
+### Parameter `minimum-face-size`
+
+File-wide OpenSCAD minimum face size in mm.
 
 ## Section `dfm`
 

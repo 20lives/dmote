@@ -46,12 +46,11 @@
     "- `case-side`: The `angle` parameter in this section determines the angle "
     "of the blocks and threaded fasteners in the mount. In effect, the "
     "plinth-side block is placed by `angle` and `distance`, while its own "
-    "explicit `position` section of parameters is ignored."
-    "- `mutual`: The `angle` and `distance` parameters are ignored. Each block "
-    "is anchored to a separate and independent feature. "
-    "The angle and distance between "
-    "these two features determines the angle of the fasteners and the distance "
-    "between the blocks."]
+    "explicit `position` section of parameters is ignored.\n"
+    "- `mutual`: The `angle` and `distance` parameters are ignored. Each "
+    "block is anchored to a separate and independent feature. The angle and "
+    "distance between these two features determines the angle of the "
+    "fasteners and the distance between the blocks."]
    [:parameter [:angle]
     {:default 0 :parse-fn num}
     "The angle in radians of the mount, on the xy plane, counter-clockwise "

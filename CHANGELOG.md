@@ -30,6 +30,12 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Added a `secondaries` setting for named features that are just points in
   space, placed in relation to other named features. Used in `tweaks`, these
   secondaries give greater freedom in shaping the case.
+- Added a `resolution` section to the parameters.
+    - By default, already-existing resolution parameters (both of them are for
+      wrist-rest pads) will be disabled by an `include` parameter in the new
+      section.
+    - The new section also provides a means of rendering curved surfaces
+      elsewhere in more detail.
 - Added a `thickness` setting specific to the threaded anchors for bottom-plate
   screws.
 
@@ -40,8 +46,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 
 ### Developer
 - Took advantage of new developments in general-purpose libraries:
-    - Outsourced file authoring to `scad-app` for improved CPU thread scaling
-      and rendering feedback.
+    - Outsourced file authoring to `scad-app` for improved CPU thread scaling,
+      rendering feedback and face-size constraints.
     - `scad-tarmi` lofting replaced `pairwise-hulls` and `triangle-hulls`.
     - `scad-tarmi` flex functions obviated several separate functions for
       object placement and reasoning about that placement.

@@ -8,6 +8,7 @@
             [clojure.java.io :refer [file]]
             [scad-tarmi.core :as tarmi-core]
             [scad-tarmi.threaded :as threaded]
+            [scad-app.core :as appdata]
             [dmote-keycap.data :as capdata]
             [dactyl-keyboard.param.base :as base]
             [dactyl-keyboard.param.schema :as schema]
@@ -633,17 +634,19 @@
     "A list of nameable points, in clockwise order. The spline will pass "
     "through all of these and then return to the first one. Each point can "
     "have two properties:\n\n"
-    "- `position`: A pair of coordinates, in mm, relative to other points in "
-    "the list. This property is required.\n"
-    "- `alias`: A name given to the specific point, for the purpose of "
-    "placing yet more things in relation to it. This is optional."]
+    "- Mandatory: `position`. A pair of coordinates, in mm, relative to other "
+    "points in the list.\n"
+    "- Optional: `alias`. A name given to the specific point, for the purpose "
+    "of placing yet more things in relation to it."]
    [:parameter [:wrist-rest :shape :spline :resolution]
     {:default 1 :parse-fn num}
     "The amount of vertices per main point. The default is 1. If 1, only the "
     "main points themselves will be used, giving you full control. A higher "
     "number gives you smoother curves.\n\n"
     "If you want the closing part of the curve to look smooth in high "
-    "resolution, position your main points carefully."]
+    "resolution, position your main points carefully.\n\n"
+    "Resolution parameters, including this one, can be disabled in the main "
+    "`resolution` section."]
    [:section [:wrist-rest :shape :lip]
     "The lip is the uppermost part of the plinth, lining and supporting the "
     "edge of the pad. Its dimensions are described here in mm away from the "
@@ -689,7 +692,9 @@
     "part."]
    [:parameter [:wrist-rest :shape :pad :surface :edge :resolution]
     {:default 1 :parse-fn num}
-    "The number of faces on the edge between horizontal points."]
+    "The number of faces on the edge between horizontal points.\n\n"
+    "Resolution parameters, including this one, can be disabled in the main "
+    "`resolution` section."]
    [:section [:wrist-rest :shape :pad :surface :heightmap]
     "The surface can optionally be modified by the [`surface()` function]"
     "(https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/"
@@ -772,6 +777,18 @@
     {:default 1 :parse-fn num}
     "The thickness in mm of the walls and floor of the mould to be used for "
     "casting the rubber pad."]
+   [:section [:resolution]
+    "Settings for the amount of detail on curved surfaces. More specific "
+    "resolution parameters are available in other sections."]
+   [:parameter [:resolution :include]
+    {:default false :parse-fn boolean}
+    "If `true`, apply resolution parameters found throughout the "
+    "configuration. Otherwise, use defaults built into this application, "
+    "its libraries and OpenSCAD. The defaults are generally conservative, "
+    "providing quick renders for previews."]
+   [:parameter [:resolution :minimum-face-size]
+    {:default 1, :parse-fn num, :validate [::appdata/minimum-face-size]}
+    "File-wide OpenSCAD minimum face size in mm."]
    [:section [:dfm]
     "Settings for design for manufacturability (DFM)."]
    [:parameter [:dfm :error-general]

@@ -36,7 +36,8 @@ The vertical distance in mm from the center of each fastener to the center of th
 
 One of:
 
-- `case-side`: The `angle` parameter in this section determines the angle of the blocks and threaded fasteners in the mount. In effect, the plinth-side block is placed by `angle` and `distance`, while its own explicit `position` section of parameters is ignored.- `mutual`: The `angle` and `distance` parameters are ignored. Each block is anchored to a separate and independent feature. The angle and distance between these two features determines the angle of the fasteners and the distance between the blocks.
+- `case-side`: The `angle` parameter in this section determines the angle of the blocks and threaded fasteners in the mount. In effect, the plinth-side block is placed by `angle` and `distance`, while its own explicit `position` section of parameters is ignored.
+- `mutual`: The `angle` and `distance` parameters are ignored. Each block is anchored to a separate and independent feature. The angle and distance between these two features determines the angle of the fasteners and the distance between the blocks.
 
 ## Parameter `angle`
 
