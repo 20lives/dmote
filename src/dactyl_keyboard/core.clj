@@ -282,14 +282,14 @@
       {}
       (keys (getopt :keys :styles)))))
 
-(defn get-precursors
+(defn get-static-precursors
   "Make the central roster of files and the models that go into each.
   The schema used to describe them is a superset of the scad-app
   asset schema, adding dependencies on special configuration values and
   rotation for ease of printing. The models themselves are described with
   unary precursors that take a completed “getopt” function."
   [getopt]
-  [{:name "preview-keycap"
+  [{:name "preview-keycap-clusters"
     :model-precursor (partial key/metacluster key/cluster-keycaps)}
    {:name "case-main"
     :modules
@@ -364,6 +364,30 @@
       :rotation [0 π 0]
       :chiral true})])
 
+(defn get-all-precursors
+  "Add dynamic elements to static precursors.
+  This is currently all about keycaps, ignoring maquette-style caps as
+  disinteresting to print."
+  ;; Keycaps are presented both with and without rotation.
+  ;; This is because users are expected to have different preferences on which
+  ;; orientation makes them easier to clean, given that some styles will have a
+  ;; stem longer than the skirt, and that printer inaccuracies inside the cap
+  ;; will be harder to remove than but also less visible than inaccuracies on
+  ;; the outside.
+  [getopt]
+  (reduce
+    (fn [coll key-style]
+      (let [precursor #(key/single-cap % key-style)]
+        (concat coll
+          (if-not (= (getopt :keys :derived key-style :style) :maquette)
+            [{:name (str "keycap-" (name key-style))
+              :model-precursor precursor}
+             {:name (str "keycap-" (name key-style) "-rotated")
+              :model-precursor precursor
+              :rotation [0 π 0]}]))))
+    (get-static-precursors getopt)
+    (keys (getopt :keys :styles))))
+
 (defn- finalize-asset
   "Define scad-app asset(s) from a single proto-asset.
   Return a vector of one or two assets."
@@ -382,7 +406,7 @@
 (defn- finalize-all
   [{:keys [debug] :as cli-options}]
   (let [getopt (parse-build-opts cli-options)
-        precursors (get-precursors getopt)
+        precursors (get-all-precursors getopt)
         module-map (module-asset-map getopt)
         requested (remove nil? precursors)]
     (if debug (pprint-settings "Enriched settings:" (getopt)))

@@ -17,8 +17,9 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   and facing away from the user.
 
 ### Added
-- Support for multiple, named styles of keys, including some with enough
-  detail on the keycaps to permit printing.
+- Support for multiple, named styles of keys.
+    - This includes some with enough detail on the keycaps to permit printing.
+    - Added printable to the outputs of the application.
 - Improved `tweaks`.
     - Tweaks are no longer restricted to key aliases.
         - Any named feature can be used in a leaf node.
@@ -46,7 +47,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       object placement and reasoning about that placement.
     - `scad-tarmi` coordinate specs replaced locals.
     - Featureful `dmote-keycap` models replaced internal maquettes.
-- Made the roster of module definitions reactive to the configuration.
+- Made the rosters of models and module definitions reactive to the
+  configuration.
     - Converted keycaps and switches to OpenSCAD modules.
 - Changed the merge order in the `reckon-from-anchor` function to make
   secondaries useful in tweaks.
