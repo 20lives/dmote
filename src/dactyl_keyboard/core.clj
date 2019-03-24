@@ -257,32 +257,56 @@
     :model-precursor bottom/anchor-negative,
     :chiral true}])
 
-(defn module-asset-map [getopt]
-  "Convert module-asset-list to a hash map with fully resolved models."
-  (reduce
-    (fn [coll {:keys [name model-precursor] :as asset}]
-      (assoc coll name
-        (assoc asset :model-main (model-precursor getopt))))
-    {}
-    module-asset-list))
+(defn module-asset-map
+  "Convert module-asset-list to a hash map with fully resolved models.
+  Add a variable number of additional modules based on key styles."
+  [getopt]
+  (merge
+    (reduce  ; Static.
+      (fn [coll {:keys [name model-precursor] :as asset}]
+        (assoc coll name
+          (assoc asset :model-main (model-precursor getopt))))
+      {}
+      module-asset-list)
+    (reduce  ; Dynamic.
+      (fn [coll key-style]
+        (let [prop (getopt :keys :derived key-style)
+              {:keys [switch-type module-keycap module-switch]} prop]
+          (assoc coll
+            module-keycap
+            {:name module-keycap
+             :model-main (key/single-cap getopt key-style)}
+            module-switch  ;; Uniqueness of input not guaranteed.
+            {:name module-switch
+             :model-main (key/single-switch getopt switch-type)})))
+      {}
+      (keys (getopt :keys :styles)))))
 
 (defn get-precursors
   "Make the central roster of files and the models that go into each.
   The schema used to describe them is a superset of the scad-app
   asset schema, adding dependencies on special configuration values and
   rotation for ease of printing. The models themselves are described with
-  unary precursors and their module dependencies with 2-tuples of conditions
-  and names."
+  unary precursors that take a completed “getopt” function."
   [getopt]
   [{:name "preview-keycap"
     :model-precursor (partial key/metacluster key/cluster-keycaps)}
    {:name "case-main"
-    :modules [(when (getopt :case :bottom-plate :include)
-                "bottom_plate_anchor_positive")
-              (when (getopt :case :bottom-plate :include)
-                "bottom_plate_anchor_negative")
-              (when (getopt :wrist-rest :sprues :include)
-                "sprue_negative")]
+    :modules
+      (concat
+        [(when (getopt :case :bottom-plate :include)
+           "bottom_plate_anchor_positive")
+         (when (getopt :case :bottom-plate :include)
+           "bottom_plate_anchor_negative")
+         (when (getopt :wrist-rest :sprues :include)
+           "sprue_negative")]
+        (sort  ; A sorted list of unique, dynamically defined modules.
+          (into []
+            (reduce
+              (fn [coll {:keys [module-keycap module-switch]}]
+                (conj coll module-keycap module-switch))
+              #{}
+              (vals (getopt :keys :derived))))))
     :model-precursor build-keyboard-right
     :chiral true}
    (when (= (getopt :mcu :support :style) :lock)

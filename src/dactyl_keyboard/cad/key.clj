@@ -7,8 +7,8 @@
   (:require [scad-clj.model :exclude [use import] :refer :all]
             [scad-tarmi.core :refer [abs π]]
             [scad-tarmi.util :refer [loft]]
-            [dmote-keycap.models :refer [keycap]]
             [dmote-keycap.data :as capdata]
+            [dmote-keycap.models :refer [keycap]]
             [dactyl-keyboard.generics :as generics]
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.place :as place]
@@ -97,17 +97,26 @@
     :coordinates-by-row coordinates-by-row}))
 
 (defn derive-style-properties
-  "Derive basic properties for each key style."
+  "Derive properties for each key style.
+  These properties include DFM settings from other sections of the
+  configuration, used here with their dmote-keycap names, and strings for
+  OpenSCAD module names."
   [getopt]
   (reduce
-    (fn [coll [style-name explicit]]
-      (assoc coll style-name
-        (merge capdata/option-defaults
-               {:skirt-length  ; Needed for computing curvature.
-                  (capdata/default-skirt-length
-                    (get explicit :switch-type
-                      (:switch-type capdata/option-defaults)))}
-               explicit)))
+    (fn [coll [style-key explicit]]
+      (let [safe-get #(get explicit %1 (%1 capdata/option-defaults))
+            switch-type (safe-get :switch-type)]
+        (assoc coll style-key
+          (merge
+            capdata/option-defaults
+            {:module-keycap (str "keycap_" (generics/key-to-scadstr style-key))
+             :module-switch (str "switch_" (generics/key-to-scadstr switch-type))
+             :skirt-length (capdata/default-skirt-length switch-type)
+             :vertical-offset (capdata/plate-to-stem-end switch-type)
+             :error-stem-positive (getopt :dfm :keycaps :error-stem-positive)
+             :error-stem-negative (getopt :dfm :keycaps :error-stem-negative)
+             :error-body-positive (getopt :dfm :error-general)}
+            explicit))))
     {}
     (getopt :keys :styles)))
 
@@ -169,19 +178,20 @@
            (step wx wy h2)
            (step wd3 wd3 h3)]))))) ; Space for the upper body of a keycap at rest.
 
+(defn single-cap
+  "The shape of one keycap at rest on its switch. This is intended for use in
+  definining an OpenSCAD module that needs no further input."
+  [getopt key-style]
+  (->>
+    (keycap (getopt :keys :derived key-style))
+    (translate [0 0 (+ (getopt :case :key-mount-thickness)
+                       (getopt :keys :derived key-style :vertical-offset))])
+    (color (:cap-body generics/colours))))
+
 (defn cap-positive
-  "The shape of one keycap at rest on its switch."
+  "Recall of the results of single-cap for a particular coordinate."
   [getopt cluster coord]
-  (let [prop (key-properties getopt cluster coord)]
-   (->>
-     (keycap
-       (merge {:error-stem-positive (getopt :dfm :keycaps :error-stem-positive)
-               :error-stem-negative (getopt :dfm :keycaps :error-stem-negative)
-               :error-body-positive (getopt :dfm :error-general)}
-              prop))
-     (translate [0 0 (+ (getopt :case :key-mount-thickness)
-                        (capdata/plate-to-stem-end (:switch-type prop)))])
-     (color (:cap-body generics/colours)))))
+  (call-module (:module-keycap (key-properties getopt cluster coord))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -240,11 +250,10 @@
 
 (defn single-switch
   "Negative space for the insertion of a key switch through a mounting plate."
-  [getopt cluster coord]
-  (let [{:keys [switch-type]} (key-properties getopt cluster coord)]
-    (case switch-type
-      :alps (alps-switch getopt)
-      :mx (mx-switch getopt))))
+  [getopt switch-type]
+  (case switch-type
+    :alps (alps-switch getopt)
+    :mx (mx-switch getopt)))
 
 
 ;;;;;;;;;;;;;;;;;;
@@ -280,7 +289,8 @@
 
 (defn cluster-cutouts [getopt cluster]
   (apply union (map #(place/cluster-place getopt cluster %1
-                       (single-switch getopt cluster %1))
+                       (call-module
+                         (:module-switch (key-properties getopt cluster %1))))
                     (derived getopt cluster :key-coordinates))))
 
 (defn cluster-channels [getopt cluster]

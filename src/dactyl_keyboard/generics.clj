@@ -6,7 +6,9 @@
 ;;; These are potentially useful in parameters and have very little to do
 ;;; with CAD or the keyboard.
 
-(ns dactyl-keyboard.generics)
+(ns dactyl-keyboard.generics
+  (:require [clojure.string :as string]))
+
 (def colours
   "OpenSCAD preview colours."
   {:cap-body [220/255 163/255 163/255 1]
@@ -57,3 +59,5 @@
   (apply (partial merge-with
            (fn [old new] (if (map? old) (soft-merge old new) new)))
          maps))
+
+(defn key-to-scadstr [k] (string/replace (name k) "-" "_"))

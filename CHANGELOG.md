@@ -12,6 +12,9 @@ version 0.2.0, thus covering only a fraction of the project’s history.
     - The `to-ground` key for case tweaks has been renamed to `at-ground` for
       clarity with respect to a new `above-ground` key.
     - The general `error` setting for DFM has been renamed `error-general`.
+- Changed default.yaml from a 60-key layout with a user-facing 1-key `aux0`
+  cluster to a 61-key layout with a 2-key `aux0` cluster at the opposite corner
+  and facing away from the user.
 
 ### Added
 - Support for multiple, named styles of keys, including some with enough
@@ -43,6 +46,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       object placement and reasoning about that placement.
     - `scad-tarmi` coordinate specs replaced locals.
     - Featureful `dmote-keycap` models replaced internal maquettes.
+- Made the roster of module definitions reactive to the configuration.
+    - Converted keycaps and switches to OpenSCAD modules.
 - Changed the merge order in the `reckon-from-anchor` function to make
   secondaries useful in tweaks.
 
