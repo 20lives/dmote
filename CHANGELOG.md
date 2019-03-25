@@ -5,39 +5,39 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 
 ## [Unreleased]
 ### Changed
-- Moved and replaced some options:
+- Moved and replaced some parameters:
     - Both the `keycaps` and `switches` sections have been replaced. There is
       now a `keys` section that defines one or more `styles`, as well as a
-      `key-style` parameter in the nesting `by-key` section of options.
+      `key-style` parameter in the nesting `by-key` section of parameters.
     - The `to-ground` key for case tweaks has been renamed to `at-ground` for
       clarity with respect to a new `above-ground` key.
-    - The general `error` setting for DFM has been renamed `error-general`.
+    - The general `error` parameter for DFM has been renamed `error-general`.
 - Changed default.yaml from a 60-key layout with a user-facing 1-key `aux0`
-  cluster to a 61-key layout with a 2-key `aux0` cluster at the opposite corner
-  and facing away from the user.
+  cluster to a 62-key layout (31 on each half) with a 2-key `aux0` cluster at
+  the opposite corner and facing away from the user.
 
 ### Added
 - Support for multiple, named styles of keys.
     - This includes some with enough detail on the keycaps to permit printing.
-    - Added printable to the outputs of the application.
-- Improved `tweaks`.
+      These printable models are now among the outputs of the application.
+- Improved case `tweaks`.
     - Tweaks are no longer restricted to key aliases.
         - Any named feature can be used in a leaf node.
         - It is no longer necessary to specify a corner or segment for a tweak.
     - Tweaks can now target bottom plates without impacting case walls.
       There is a new configuration key for this (`above-ground`, which must be
       turned off to see the new behaviour).
-- Added a `secondaries` setting for named features that are just points in
-  space, placed in relation to other named features. Used in `tweaks`, these
-  secondaries give greater freedom in shaping the case.
+    - Added a `secondaries` parameter for named features that are just points
+      in space, placed in relation to other named features. Used in `tweaks`,
+      these secondaries give greater freedom in shaping the case.
 - Added a `resolution` section to the parameters.
     - By default, already-existing resolution parameters (both of them are for
-      wrist-rest pads) will be disabled by an `include` parameter in the new
-      section.
+      wrist-rest pads) will be disabled by a default-negative new `include`
+      parameter in the new section.
     - The new section also provides a means of rendering curved surfaces
       elsewhere in more detail.
-- Added a `thickness` setting specific to the threaded anchors for bottom-plate
-  screws.
+- Added a `thickness` parameter specific to the threaded anchors for
+  bottom-plate screws.
 
 ### Fixed
 - Reduced risk and impact of collision between nut bosses built into the

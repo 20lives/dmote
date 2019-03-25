@@ -282,6 +282,16 @@
       {}
       (keys (getopt :keys :styles)))))
 
+(defn- get-key-modules
+  "Produce a sorted vector of module name strings for user-defined key styles."
+  [getopt & property-keys]
+  (sort
+    (into []
+      (reduce
+        (fn [coll data] (apply (partial conj coll) (map data property-keys)))
+        #{}
+        (vals (getopt :keys :derived))))))
+
 (defn get-static-precursors
   "Make the central roster of files and the models that go into each.
   The schema used to describe them is a superset of the scad-app
@@ -290,23 +300,17 @@
   unary precursors that take a completed “getopt” function."
   [getopt]
   [{:name "preview-keycap-clusters"
+    :modules (get-key-modules getopt :module-keycap)
     :model-precursor (partial key/metacluster key/cluster-keycaps)}
    {:name "case-main"
-    :modules
-      (concat
-        [(when (getopt :case :bottom-plate :include)
-           "bottom_plate_anchor_positive")
-         (when (getopt :case :bottom-plate :include)
-           "bottom_plate_anchor_negative")
-         (when (getopt :wrist-rest :sprues :include)
-           "sprue_negative")]
-        (sort  ; A sorted list of unique, dynamically defined modules.
-          (into []
-            (reduce
-              (fn [coll {:keys [module-keycap module-switch]}]
-                (conj coll module-keycap module-switch))
-              #{}
-              (vals (getopt :keys :derived))))))
+    :modules (concat
+               [(when (getopt :case :bottom-plate :include)
+                  "bottom_plate_anchor_positive")
+                (when (getopt :case :bottom-plate :include)
+                  "bottom_plate_anchor_negative")
+                (when (getopt :wrist-rest :sprues :include)
+                  "sprue_negative")]
+               (get-key-modules getopt :module-keycap :module-switch))
     :model-precursor build-keyboard-right
     :chiral true}
    (when (= (getopt :mcu :support :style) :lock)
