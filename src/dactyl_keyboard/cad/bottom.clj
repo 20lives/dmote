@@ -94,15 +94,31 @@
 (defn- to-3d
   "Build a 3D bottom plate from a 2D block."
   [getopt block]
-  (model/color (:bottom-plate colours)
-    (model/extrude-linear
-      {:height (getopt :case :bottom-plate :thickness), :center false}
-      block)))
+  (model/extrude-linear
+    {:height (getopt :case :bottom-plate :thickness), :center false}
+    block))
 
 
 ;;;;;;;;;;
 ;; Case ;;
 ;;;;;;;;;;
+
+(defn- mask
+  "A shape akin to the body mask but restricted to bottom-plate height."
+  [getopt]
+  (let [[x y _] (getopt :mask :size)
+        z (getopt :case :bottom-plate :thickness)]
+    (maybe/translate [0 0 (/ z 2)]
+      (model/cube x y z))))
+
+(defn- wall-base-3d
+  "A sliver cut from the case wall."
+  [getopt]
+  (model/intersection
+    (mask getopt)
+    (maybe/union
+      (key/metacluster body/cluster-wall getopt)
+      (body/wall-tweaks getopt))))
 
 (defn- floor-finder
   "Return a sequence of xy-coordinate pairs for exterior wall vertices."
@@ -178,12 +194,12 @@
   This is a semi-brute-force-approach to the problem that we cannot easily
   identify which vertices shape the outside of the case at z = 0."
   [getopt node-list]
-  (apply model/union
+  (apply maybe/union
     (for
       [post [first last], segment [first last], bottom [false true]]
       (tweak-plate-polygon getopt [post segment bottom] node-list))))
 
-(defn- tweak-plate-flooring
+(defn- all-tweak-shadows
   "The footprint of all user-requested additional shapes that go to the floor."
   [getopt]
   (apply maybe/union (map #(tweak-plate-shadows getopt (:hull-around %))
@@ -195,12 +211,26 @@
   (fastener-positions getopt :case "bottom_plate_anchor_positive"))
 
 (defn- case-positive-2d
+  "A union of polygons representing the interior of the case."
   [getopt]
-  (model/union
+  (maybe/union
     (key/metacluster cluster-floor-polygon getopt)
-    (tweak-plate-flooring getopt)
+    (all-tweak-shadows getopt)
+    ;; With a rear housing that connects to a regular key cluster wall, there
+    ;; is a distinct possibility that two polygons (one for the housing, one
+    ;; for the cluster wall) will overlap at one vertex, forming a union where
+    ;; that particular intersection has no thickness.
+    ;; As of 2019-04-9, OpenSCAD’s development snapshots will render a linear
+    ;; extrusion from such a shape perfectly and it will produce a valid STL
+    ;; that a slicer can handle.
+    ;; However, if you then order some Boolean interaction between the
+    ;; extrusion and any other 3D shape, while OpenSCAD will still render it,
+    ;; it will not slice correctly: The mesh will be broken at the
+    ;; intersection.
     (when (getopt :case :rear-housing :include)
-      (housing-floor-polygon getopt))
+      ;; To work around the problem, the housing-floor-polygon is moved a
+      ;; tiny bit toward the origin, preventing the vertex overlap.
+      (model/translate [0 -0.000001] (housing-floor-polygon getopt)))
     (when (and (getopt :wrist-rest :include)
                (= (getopt :wrist-rest :style) :threaded))
       (model/cut (wrist/all-case-blocks getopt)))))
@@ -209,12 +239,9 @@
   "A model of a bottom plate for the entire case but not the wrist rests.
   Screw holes not included."
   [getopt]
-  (to-3d getopt
-    (model/union
-      (case-positive-2d getopt)
-      (when (and (getopt :wrist-rest :include)
-                 (= (getopt :wrist-rest :style) :threaded))
-        (model/cut (wrist/all-case-blocks getopt))))))
+  (model/union
+    (wall-base-3d getopt)
+    (to-3d getopt (case-positive-2d getopt))))
 
 (defn case-negative
   "Just the holes that go into both the case bottom plate and the case body."
@@ -224,9 +251,10 @@
 (defn case-complete
   "A printable model of a case bottom plate in one piece."
   [getopt]
-  (maybe/difference
-    (case-positive getopt)
-    (case-negative getopt)))
+  (model/color (:bottom-plate colours)
+    (maybe/difference
+      (case-positive getopt)
+      (case-negative getopt))))
 
 
 ;;;;;;;;;;;;;;;;;
@@ -254,9 +282,10 @@
 (defn wrist-complete
   "A printable model of a wrist-rest bottom plate in one piece."
   [getopt]
-  (maybe/difference
-    (wrist-positive getopt)
-    (wrist-negative getopt)))
+  (model/color (:bottom-plate colours)
+    (maybe/difference
+      (wrist-positive getopt)
+      (wrist-negative getopt))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -270,16 +299,18 @@
   This is therefore recommended only where there is no space available between
   case and wrist rest."
   [getopt]
-  (to-3d getopt
-    (model/union
-      (case-positive-2d getopt)
-      (apply model/union
-        (reduce
-          (fn [coll pair]
-            (conj coll (apply model/hull (map model/cut pair))))
-          []
-          (wrist/block-pairs getopt)))
-      (wrist-positive-2d getopt))))
+  (model/union
+    (wall-base-3d getopt)
+    (to-3d getopt
+      (model/union
+        (case-positive-2d getopt)
+        (apply maybe/union
+          (reduce
+            (fn [coll pair]
+              (conj coll (apply model/hull (map model/cut pair))))
+            []
+            (wrist/block-pairs getopt)))
+        (wrist-positive-2d getopt)))))
 
 (defn combined-negative
   [getopt]
@@ -289,6 +320,7 @@
 
 (defn combined-complete
   [getopt]
-  (maybe/difference
-    (combined-positive getopt)
-    (combined-negative getopt)))
+  (model/color (:bottom-plate colours)
+    (maybe/difference
+      (combined-positive getopt)
+      (combined-negative getopt))))

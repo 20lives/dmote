@@ -40,6 +40,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   bottom-plate screws.
 
 ### Fixed
+- Improved the fit of a bottom plate for the case, at the cost of
+  greater rendering complexity.
 - Reduced risk and impact of collision between nut bosses built into the
   rear housing and the interior negative of the socket for connecting the
   two halves, by reducing the thickness of one part of the negative.

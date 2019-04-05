@@ -6,6 +6,7 @@
 (ns dactyl-keyboard.cad.key
   (:require [scad-clj.model :exclude [use import] :refer :all]
             [scad-tarmi.core :refer [abs π]]
+            [scad-tarmi.maybe :as maybe]
             [scad-tarmi.util :refer [loft]]
             [dmote-keycap.data :as capdata]
             [dmote-keycap.models :refer [keycap]]
@@ -312,4 +313,4 @@
 (defn metacluster
   "Apply passed modelling function to all key clusters."
   [function getopt]
-  (apply union (map #(function getopt %) (all-clusters getopt))))
+  (apply maybe/union (map #(function getopt %) (all-clusters getopt))))

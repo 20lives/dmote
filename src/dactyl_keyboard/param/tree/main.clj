@@ -247,9 +247,9 @@
     "\n"
     "#### Overview\n"
     "\n"
-    "The bottom plate is largely two-dimensional. The application builds it "
-    "from a set of polygons, trying to match the perimeter of the case at the "
-    "ground level (i.e. z = 0).\n"
+    "The bottom plate is largely two-dimensional. The application builds most "
+    "of it from a set of polygons, trying to match the perimeter of the case "
+    "at the ground level (i.e. z = 0).\n"
     "\n"
     "Specifically, there is one polygon per key cluster, limited to `full` "
     "wall edges, one polygon for the rear housing, and one set of polygons "
@@ -262,8 +262,12 @@
     "hollow and cannot be convex-hulled without escaping the case, unless "
     "your case is convex to start with.\n"
     "\n"
-    "If you require an exact match for the case, do the projection, save it "
-    "as DXF/SVG etc. and post-process that file to fill the interior gap.\n"]
+    "For this reason, while the polygons fill the interior, the perimeter of "
+    "the bottom plate is extended by key walls and case `tweaks` as they "
+    "would appear at the height of the bottom plate. Even this brutality may "
+    "be inadequate. If you require a more exact match, do a projection of the "
+    "case without a bottom plate, save it as DXF/SVG etc. and post-process "
+    "that file to fill the interior gap.\n"]
    [:parameter [:case :bottom-plate :include]
     {:default false :parse-fn boolean}
     "If `true`, include a bottom plate for the case."]
