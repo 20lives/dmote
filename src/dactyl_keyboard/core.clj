@@ -52,6 +52,53 @@
   (println)
   (println "This document was generated from the application CLI."))
 
+(defn- masked-inner-positive
+  "Parts of the keyboard that are subject to a mask and all negatives."
+  [getopt]
+  (body/mask getopt (getopt :case :bottom-plate :include)
+    ;; The innermost positives, subject to the mask and all negatives:
+    (key/metacluster key/cluster-plates getopt)
+    (key/metacluster body/cluster-web getopt)
+    (key/metacluster body/cluster-wall getopt)
+    (when (and (getopt :wrist-rest :include)
+               (= (getopt :wrist-rest :style) :threaded))
+      (wrist/all-case-blocks getopt))
+    (when (= (getopt :mcu :support :style) :stop)
+      (aux/mcu-stop getopt))
+    (aux/connection-positive getopt)
+    (when (getopt :case :back-plate :include)
+      (aux/backplate-block getopt))
+    (when (getopt :case :rear-housing :include)
+      (body/rear-housing getopt))
+    (body/wall-tweaks getopt)
+    (when (getopt :case :bottom-plate :include)
+      (bottom/case-anchors-positive getopt))
+    (aux/foot-plates getopt)))
+
+(defn- midlevel-positive
+  "Parts of the keyboard that go outside the mask but should still be subject
+  to all negatives."
+  [getopt]
+  (maybe/union
+    (masked-inner-positive getopt)
+    (when (and (getopt :wrist-rest :include)
+               (getopt :wrist-rest :preview))
+      (body/mask getopt (getopt :wrist-rest :include)
+        (wrist/unified-preview getopt)))
+    (when (and (getopt :case :bottom-plate :include)
+               (getopt :case :bottom-plate :preview))
+      (if (and (getopt :wrist-rest :include)
+               (getopt :wrist-rest :bottom-plate :include)
+               (getopt :case :bottom-plate :combine))
+        (bottom/combined-positive getopt)
+        (maybe/union
+          (bottom/case-positive getopt)
+          (when (and (getopt :wrist-rest :include)
+                     (getopt :wrist-rest :preview)
+                     (getopt :wrist-rest :bottom-plate :include))
+            (bottom/wrist-positive getopt)))))
+    (sandbox/positive getopt)))
+
 (defn build-keyboard-right
   "Right-hand-side keyboard model."
   [getopt]
@@ -59,45 +106,7 @@
     (maybe/difference
       (maybe/union
         (maybe/difference
-          (maybe/union
-            (body/mask getopt (getopt :case :bottom-plate :include)
-              ;; The innermost positives, subject to the mask and all negatives:
-              (key/metacluster key/cluster-plates getopt)
-              (key/metacluster body/cluster-web getopt)
-              (key/metacluster body/cluster-wall getopt)
-              (when (and (getopt :wrist-rest :include)
-                         (= (getopt :wrist-rest :style) :threaded))
-                (wrist/all-case-blocks getopt))
-              (when (= (getopt :mcu :support :style) :stop)
-                (aux/mcu-stop getopt))
-              (aux/connection-positive getopt)
-              (when (getopt :case :back-plate :include)
-                (aux/backplate-block getopt))
-              (when (getopt :case :rear-housing :include)
-                (body/rear-housing getopt))
-              (body/wall-tweaks getopt)
-              (when (getopt :case :bottom-plate :include)
-                (bottom/case-anchors-positive getopt))
-              (aux/foot-plates getopt))
-            ;; Stuff that goes outside the mask but
-            ;; should be subject to all negatives:
-            (when (and (getopt :wrist-rest :include)
-                       (getopt :wrist-rest :preview))
-              (body/mask getopt (getopt :wrist-rest :include)
-                (wrist/unified-preview getopt)))
-            (when (and (getopt :case :bottom-plate :include)
-                       (getopt :case :bottom-plate :preview))
-              (if (and (getopt :wrist-rest :include)
-                       (getopt :wrist-rest :bottom-plate :include)
-                       (getopt :case :bottom-plate :combine))
-                (bottom/combined-positive getopt)
-                (maybe/union
-                  (bottom/case-positive getopt)
-                  (when (and (getopt :wrist-rest :include)
-                             (getopt :wrist-rest :preview)
-                             (getopt :wrist-rest :bottom-plate :include))
-                    (bottom/wrist-positive getopt)))))
-            (sandbox/positive getopt))
+          (midlevel-positive getopt)
           ;; First-level negatives:
           (key/metacluster key/cluster-cutouts getopt)
           (key/metacluster key/cluster-channels getopt)
@@ -150,16 +159,15 @@
   "A thin shell that fits on top of the right-hand-side wrist-rest model.
   This is for casting silicone into, “in place”. If the wrist rest has
   180° rotational symmetry around the z axis, one mould should
-  be enough for both halves’ wrist rests. It’s printed upside down."
+  be enough for both halves’ wrist rests. To be printed upside down."
   ;; WARNING: This will not render correctly in OpenSCAD 2015. It will in
   ;; a nightly build as of 2018-12-17.
   [getopt]
-  (maybe/rotate [π 0 0]
-    (place/wrist-undo getopt
-      (model/difference
-        (wrist/mould-polyhedron getopt)
-        (wrist/unified-preview getopt)
-        (bottom/wrist-anchors-positive getopt)))))
+  (place/wrist-undo getopt
+    (model/difference
+      (wrist/mould-polyhedron getopt)
+      (wrist/unified-preview getopt)
+      (bottom/wrist-anchors-positive getopt))))
 
 (defn build-rubber-pad-right
   "Right-hand-side wrist-rest pad model. Useful in visualization and
@@ -323,7 +331,8 @@
       :modules [(when (getopt :case :bottom-plate :include)
                   "bottom_plate_anchor_positive")]
       :model-precursor build-rubber-casting-mould-right
-      :chiral true})
+      :rotation [π 0 0]
+      :chiral true})  ; Chirality is not mandatory.
    (when (getopt :wrist-rest :include)
      {:name "pad-shape"
       :modules [(when (getopt :case :bottom-plate :include)
