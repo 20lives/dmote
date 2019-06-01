@@ -8,9 +8,14 @@ keys:
       style: maquette
       skirt-length: 4.6
       top-size: [12.7, 12.7, 3.3]
-    minimal:  # A printable minimal key.
+    minimal-short:  # A printable minimal key with a thin top.
+      style: minimal
+      top-size: [9, 9, 1.6]
+      skirt-thickness: 2.4
+    minimal-tall:  # Similar but with a thicker plate above the stem.
       style: minimal
       top-size: [9, 9, 3]
+      skirt-thickness: 2.4
 key-clusters:
   main:
     position:
@@ -111,7 +116,7 @@ by-key:
       columns:
         "0":
           parameters:
-            key-style: minimal
+            key-style: minimal-tall
             layout:
               matrix:
                 separation:
@@ -134,12 +139,13 @@ by-key:
           rows:
             "0":
               parameters:
+                key-style: minimal-short
                 layout:
                   translation:
                     early: [0, 0, -1]
         "1":
           parameters:
-            key-style: minimal
+            key-style: maquette-dsa
             layout:
               matrix:
                 separation:
@@ -159,7 +165,6 @@ by-key:
           rows:
             first:
               parameters:
-                key-style: maquette-dsa
                 layout:
                   pitch:
                     intrinsic: -0.3
@@ -171,7 +176,6 @@ by-key:
                   top-width: 15
             "-1":
               parameters:
-                key-style: maquette-dsa  # Match the rest of the arrow cluster.
                 layout:
                   pitch:
                     intrinsic: -0.2
@@ -179,11 +183,13 @@ by-key:
                     early: [0, -0.6, 2]
             "0":
               parameters:
+                key-style: minimal-short
                 layout:
                   translation:
                     early: [1, 0, 0]
             "1":
               parameters:
+                key-style: minimal-tall
                 layout:
                   translation:
                     early: [1, -1, 0]
@@ -223,7 +229,7 @@ by-key:
                     early: [0, -3, 2.5]
             last:
               parameters:
-                key-style: minimal
+                key-style: minimal-tall
                 layout:
                   translation:
                     early: [0, -1, 0]
@@ -429,7 +435,7 @@ by-key:
                     intrinsic: 0
     aux0:
       parameters:
-        key-style: minimal
+        key-style: minimal-tall
         layout:
           pitch:
             base: 0
@@ -479,7 +485,7 @@ case:
         east: -0.2
         south: -1.8
         west: 2
-    height: 51
+    height: 50.95
     fasteners:
       diameter: 6
       bosses: true
