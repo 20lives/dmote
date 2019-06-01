@@ -181,10 +181,14 @@
 
 (defn single-cap
   "The shape of one keycap at rest on its switch. This is intended for use in
-  definining an OpenSCAD module that needs no further input."
-  [getopt key-style]
+  defining an OpenSCAD module that needs no further input.
+  The ‘supported’ argument acts as a fallback in case the user has not
+  specified the dmote-keycap parameter by that name. Supports are generally
+  appropriate for printable STLs but not for cluster previews."
+  [getopt key-style supported]
   (->>
-    (keycap (getopt :keys :derived key-style))
+    (merge {:supported supported} (getopt :keys :derived key-style))
+    keycap
     (translate [0 0 (+ (getopt :case :key-mount-thickness)
                        (getopt :keys :derived key-style :vertical-offset))])
     (color (:cap-body generics/colours))))
