@@ -94,6 +94,7 @@
        :bowl-radii vec
        :bowl-plate-offset num
        :skirt-length num
+       :skirt-thickness num
        :slope num})))
 
 (def named-secondary-positions
