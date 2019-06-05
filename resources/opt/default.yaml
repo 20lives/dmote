@@ -838,7 +838,7 @@ wrist-rest:
       height: 1.5
     pad:
       height:
-        surface-range: 5
+        surface-range: 8
         lip-to-surface: 3
         below-lip: 2
       surface:
@@ -862,9 +862,11 @@ wrist-rest:
     inset: 2
     fastener-positions:
     - anchor: plinth-left
+      offset: [2, 0]
     - anchor: plinth-near
-      offset: [0, 4]
+      offset: [0, 3]
     - anchor: plinth-right
+      offset: [-2, -3]
 resolution:
   include: true
 dfm:

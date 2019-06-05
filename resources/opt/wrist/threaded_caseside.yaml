@@ -13,13 +13,13 @@ wrist-rest:
         first: 3
     angle: -1.2
     blocks:
-      distance: 33
+      distance: 37
       width: 10
       case-side:
         position:
-          anchor: m02
-          offset: [-12, -5]
-        depth: 13
+          anchor: t4
+          offset: [5, 8.5]
+        depth: 10
       plinth-side:
         depth: 7
         pocket-height: -100
@@ -33,7 +33,7 @@ wrist-rest:
         first: 3
     angle: -1.2
     blocks:
-      distance: 28
+      distance: 30
       width: 10
       case-side:
         position:

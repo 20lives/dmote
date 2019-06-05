@@ -6,7 +6,7 @@ wrist-rest:
   mounts:
   - fasteners:
       diameter: 6
-      length: 50
+      length: 55
       height:
         first: 4
         increment: 16
@@ -15,9 +15,9 @@ wrist-rest:
       width: 15
       case-side:
         position:
-          anchor: m02
-          offset: [-8, 10]
-        depth: 12
+          anchor: t4
+          offset: [2, 4]
+        depth: 9
       plinth-side:
         position:
           anchor: plinth-left
