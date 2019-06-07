@@ -144,7 +144,11 @@ plaster or some other dense material into the plinths to add mass.
 ## After printing
 
 Instructions specific to the DMOTE have yet to be written for hand-wiring the
-switches with diodes and building firmware to run on embedded microcontrollers.
-To get started with that stuff, please refer to the original instructions for
-the Dactyl-ManuForm or the Dactyl, or contact the maintainer of the fork you
+switches with diodes and installing embedded microcontrollers. To get started
+with that stuff, please refer to the original instructions for the
+Dactyl-ManuForm or the Dactyl, or contact the maintainer of the fork you
 are printing.
+
+As for microcontroller firmware, QMK works great. In that project, the DMOTE
+is filed as a version of the Dactyl-ManuForm
+[here](https://github.com/qmk/qmk_firmware/tree/master/keyboards/handwired/dactyl_manuform/dmote).
