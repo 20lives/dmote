@@ -820,6 +820,15 @@
     {:default (:error-stem-negative capdata/option-defaults) :parse-fn num}
     "Error on the negative components of stems on keycaps, such as the "
     "cross on an MX-compatible cap."]
+   [:section [:dfm :bottom-plate]
+    "DFM for bottom plates."]
+   [:parameter [:dfm :bottom-plate :fastener-plate-offset]
+    {:default 0 :parse-fn num}
+    "A vertical offset in mm for the placement of screw holes in bottom "
+    "plates. Without a slight negative offset, slicers will tend to make the "
+    "holes too wide for screw heads to grip the plate securely.\n"
+    "\n"
+    "Notice this will not affect how screw holes are cut into the case."]
    [:section [:mask]
     "A box limits the entire shape, cutting off any projecting by-products of "
     "the algorithms. By resizing and moving this box, you can select a "

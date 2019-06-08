@@ -67,6 +67,7 @@
         (threaded/bolt
           :iso-size iso-size,
           :head-type :countersunk,
+          :point-type :cone,
           :total-length (prop :fasteners :length),
           :unthreaded-length (when (= style :threads) 0),
           :threaded-length (when (not= style :threads) 0),
@@ -254,7 +255,8 @@
   (model/color (:bottom-plate colours)
     (maybe/difference
       (case-positive getopt)
-      (case-negative getopt))))
+      (maybe/translate [0 0 (getopt :dfm :bottom-plate :fastener-plate-offset)]
+        (case-negative getopt)))))
 
 
 ;;;;;;;;;;;;;;;;;
@@ -264,7 +266,10 @@
 (defn wrist-anchors-positive
   "The parts of the wrist-rest plinth that receive bottom-plate fasteners."
   [getopt]
-  (fastener-positions getopt :wrist-rest "bottom_plate_anchor_positive"))
+  (let [with-plate (getopt :wrist-rest :bottom-plate :include)
+        thickness (if with-plate (getopt :case :bottom-plate :thickness) 0)]
+    (maybe/translate [0 0 thickness]
+      (fastener-positions getopt :wrist-rest "bottom_plate_anchor_positive"))))
 
 (defn- wrist-positive-2d [getopt]
   (model/cut (wrist/unified-preview getopt)))
@@ -285,7 +290,8 @@
   (model/color (:bottom-plate colours)
     (maybe/difference
       (wrist-positive getopt)
-      (wrist-negative getopt))))
+      (maybe/translate [0 0 (getopt :dfm :bottom-plate :fastener-plate-offset)]
+        (wrist-negative getopt)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

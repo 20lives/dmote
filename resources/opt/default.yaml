@@ -510,7 +510,7 @@ case:
     installation:
       thickness: 2.5
       fasteners:
-        diameter: 3
+        diameter: 4
         length: 8.5
         positions:
         - anchor: rear-housing
@@ -521,16 +521,16 @@ case:
           offset: [-2.5, -11]
         - anchor: a1
           corner: ENE
-          offset: [-4, -3]
+          offset: [-4.5, -3.5]
         - anchor: near-right
           corner: ESE
-          offset: [-4, 3]
+          offset: [-5, 3]
         - anchor: t4
           corner: SSW
-          offset: [-1, 3.5]
+          offset: [-1, 4]
         - anchor: t1
           corner: NNW
-          offset: [2, -4]
+          offset: [3.5, -3]
   leds:
     include: true
     amount: 3
@@ -821,6 +821,7 @@ wrist-rest:
       - position: [0, 32]
         alias: plinth-left
       - position: [20, 40]
+        alias: plinth-middle
       - position: [35, 38]
       - position: [41, 50]
       - position: [50, 63]
@@ -830,8 +831,8 @@ wrist-rest:
       - position: [63, 20]
       - position: [50, 5]
       - position: [30, 0]
-        alias: plinth-near
       - position: [3, 2]
+        alias: plinth-near
       resolution: 2
     lip:
       inset: -0.6
@@ -853,21 +854,23 @@ wrist-rest:
     inset: 10
     diameter: 12
     positions:
-    - anchor: plinth-left
-      offset: [17, -3]
+    - anchor: plinth-middle
+      offset: [0, -10]
     - anchor: plinth-right
-      offset: [-8, -16]
+      offset: [-5, -10]
   bottom-plate:
     include: true
     inset: 2
     fastener-positions:
-    - anchor: plinth-left
-      offset: [2, 0]
+    - anchor: plinth-middle
+      offset: [0, -3]
     - anchor: plinth-near
-      offset: [0, 3]
+      offset: [3, 3]
     - anchor: plinth-right
       offset: [-2, -3]
 resolution:
   include: true
 dfm:
   error-general: -0.5
+  bottom-plate:
+    fastener-plate-offset: -0.5
