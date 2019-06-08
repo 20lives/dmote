@@ -181,7 +181,9 @@
          (translate [socket-x-offset 0 0]
            (cube 1 1 (+ socket-z 6))))))))
 
-(defn mcu-lock-fasteners-model [getopt]
+(defn mcu-lock-fasteners-model
+  "Negative space for fasteners (both bolt and nut) in an MCU lock."
+  [getopt]
   (let [head-type (getopt :mcu :support :lock :fastener :style)
         d (getopt :mcu :support :lock :fastener :diameter)
         l0 (getopt :mcu :support :lock :bolt :mount-thickness)
@@ -198,8 +200,11 @@
            :unthreaded-length (+ l0 l1 l2)
            :threaded-length 0
            :negative true)
-         (translate [0 0 (- (+ l0 l1 l2 -1))]
-           (threaded/nut :iso-size d :height 6 :negative true)))))))
+         (translate [0 0 (- (+ (/ l0 2) l1 l2))]
+           (threaded/nut
+             :iso-size d
+             :height l0
+             :negative true)))))))
 
 (defn mcu-lock-sink [getopt]
   (mcu-position getopt

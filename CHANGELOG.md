@@ -6,9 +6,9 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 ## [Unreleased]
 ### Changed
 - Changes in bundled 62-key configuration:
-    - Switched from M3 to M4 screws for attaching the bottom plate.
-      This makes for quicker previews, easier printing and easier sourcing
-      of components.
+    - Switched from M3 to M4 screws for attaching the bottom plate and for
+      locking the MCU PCB in place.
+      This makes for quicker previews and easier printing.
     - Switched from flat to conical points for bottom-plate fasteners, just
       so the holes are easier to slice without getting interior supports.
     - Minor tweaks.
