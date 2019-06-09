@@ -43,7 +43,7 @@
     "If `true`, include models of the keycaps in place on the keyboard. This "
     "is intended for illustration as you work on a design, not for printing."]
    [:parameter [:keys :styles]
-    {:default [] :parse-fn schema/keycap-map
+    {:default {:default {}} :parse-fn schema/keycap-map
      :validate [(spec/map-of keyword? ::capdata/keycap-parameters)]}
     "Here you name all the types of keys on the keyboard, including their "
     "switches, keycaps, and other properties. These names are then used "
@@ -632,7 +632,7 @@
    [:section [:wrist-rest :shape :spline]
     "The horizontal outline of the wrist rest is a closed spline."]
    [:parameter [:wrist-rest :shape :spline :main-points]
-    {:default []
+    {:default [{:position [0 0]} {:position [1 0]} {:position [1 1]}]
      :parse-fn schema/nameable-spline
      :validate [::schema/nameable-spline]}
     "A list of nameable points, in clockwise order. The spline will pass "

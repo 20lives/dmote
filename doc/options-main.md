@@ -758,6 +758,16 @@ Error on the positive components of stems on keycaps, such as the entire stem on
 
 Error on the negative components of stems on keycaps, such as the cross on an MX-compatible cap.
 
+### Section `bottom-plate`
+
+DFM for bottom plates.
+
+#### Parameter `fastener-plate-offset`
+
+A vertical offset in mm for the placement of screw holes in bottom plates. Without a slight negative offset, slicers will tend to make the holes too wide for screw heads to grip the plate securely.
+
+Notice this will not affect how screw holes are cut into the case.
+
 ## Section `mask`
 
 A box limits the entire shape, cutting off any projecting by-products of the algorithms. By resizing and moving this box, you can select a subsection for printing. You might want this while you are printing prototypes for a new style of switch, MCU support etc.

@@ -246,14 +246,14 @@
 
 (defn- parse-build-opts
   "Parse model parameters. Return an accessor for them."
-  [{:keys [debug] :as options}]
+  [{:keys [debug configuration-file] :as options}]
   (let [raws (apply generics/soft-merge
-               (map from-file (:configuration-file options)))]
+               (conj (map from-file configuration-file) {}))]
    (if debug
      (pprint-settings "Received settings without built-in defaults:" raws))
    (let [validated (access/checked-configuration raws)]
-    (if debug (pprint-settings "Resolved and validated settings:" validated))
-    (access/option-accessor (enrich-option-metadata validated)))))
+     (if debug (pprint-settings "Resolved and validated settings:" validated))
+     (access/option-accessor (enrich-option-metadata validated)))))
 
 (def module-asset-list
   "OpenSCAD modules and the functions that make them."
@@ -332,7 +332,7 @@
                   "bottom_plate_anchor_positive")]
       :model-precursor build-rubber-casting-mould-right
       :rotation [π 0 0]
-      :chiral true})  ; Chirality is not mandatory.
+      :chiral true})  ; Chirality is possible but not guaranteed.
    (when (getopt :wrist-rest :include)
      {:name "pad-shape"
       :modules [(when (getopt :case :bottom-plate :include)
@@ -421,7 +421,7 @@
 (def cli-options
   "Define command-line interface."
   [["-c" "--configuration-file PATH" "Path to parameter file in YAML format"
-    :default [(io/file "resources" "opt" "default.yaml")]
+    :default []
     :assoc-fn (fn [m k new] (update-in m [k] (fn [old] (conj old new))))]
    [nil "--describe-parameters SECTION"
     "Print a Markdown document specifying what a configuration file may contain"

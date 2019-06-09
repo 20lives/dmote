@@ -1,5 +1,5 @@
 # Configuration fragment for an open case.
-# Key aliases used herein refer to default.yaml.
+# Key aliases used herein refer to dmote/base.yaml.
 
 case:
   bottom-plate:

@@ -1,31 +1,51 @@
-# GNU makefile. This compiles to Java at need and combines bundled
-# YAML configuration files into demonstration models of the DMOTE.
-# https://www.gnu.org/software/make/manual/make.html
+# GNU makefile. https://www.gnu.org/software/make/manual/make.html
 
-.PHONY: default visualization orthographic flat threaded threaded-visualization solid all docs test clean
+# By default, OPTDIR is the bundled configuration file directory.
+OPTDIR ?= resources/opt/
 
-OBJECTS = $(shell find src/)
+# Real prior artefacts are charted as this makefile is parsed.
+YAML := $(shell find $(OPTDIR) -name '*.yaml')
+SOURCECODE := $(shell find src -type f)
 
-default: target/dmote.jar
-	java -jar target/dmote.jar
+# YAML files are not made from here but are treated as targets anyway.
+# This is a means of activating them by naming them as CLI arguments.
+.PHONY: dmote_62key vis mutual caseside all docs test clean $(YAML)
 
-visualization: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/visualization.yaml
+# CONFIG is a space-separated array of relative paths to selected YAML files,
+# starting with a near-neutral base.
+CONFIG := $(OPTDIR)base.yaml
 
-orthographic: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/orthographic_layout.yaml
+# The append_config function is what adds (more) YAML filepaths to CONFIG.
+# If not already present in the path, OPTDIR will be prepended to each path.
+# This will break if OPTDIR is duplicated in the argument.
+define append_config
+	$(eval CONFIG += $(OPTDIR)$(subst $(OPTDIR),,$$1))
+endef
 
-flat: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/flat_layout.yaml
+# Targets and their recipes follow.
 
-threaded-mutual: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/wrist/threaded_mutual.yaml
+# The %.yaml pattern target ensures that each YAML file named as a target,
+# including each prerequisite named below, is appended to CONFIG.
+%.yaml:
+	$(call append_config,$@)
 
-threaded-caseside: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/wrist/threaded_caseside.yaml
+# The dmote_62key target, acting as the default, builds SCAD files.
+# When resolved, its recipe constructs a Java command where each
+# selected configuration file gets its own -c parameter.
+dmote_62key: target/dmote.jar dmote/base.yaml
+	java -jar target/dmote.jar $(foreach CONFFILE,$(CONFIG),-c $(CONFFILE))
 
-threaded-visualization: target/dmote.jar
-	java -jar target/dmote.jar -c resources/opt/wrist/threaded_caseside.yaml -c resources/opt/visualization.yaml
+# Curated shorthand for configuration fragments. These run no shell commands.
+vis: visualization.yaml
+mutual: dmote/wrist/threaded_mutual.yaml
+caseside: dmote/wrist/threaded_caseside.yaml
+
+# The remainder of this file describes more typical Make work, starting with
+# the compilation of the Clojure application into a Java .jar and specific
+# pieces of documentation.
+
+target/dmote.jar: $(SOURCECODE)
+	lein uberjar
 
 doc/options-main.md: target/dmote.jar
 	java -jar target/dmote.jar --describe-parameters main > doc/options-main.md
@@ -39,19 +59,17 @@ doc/options-nested.md: target/dmote.jar
 doc/options-wrist-rest-mounts.md: target/dmote.jar
 	java -jar target/dmote.jar --describe-parameters wrist-rest-mounts > doc/options-wrist-rest-mounts.md
 
-target/dmote.jar: $(OBJECTS)
-	lein uberjar
-
 docs: doc/options-main.md doc/options-clusters.md doc/options-nested.md doc/options-wrist-rest-mounts.md
 
 test:
 	lein test
 
-# “all” will overwrite its own outputs.
-# Intended for code sanity checking before pushing a commit.
-all: test docs default threaded-visualization orthographic flat threaded solid
+# The “all” target is intended for code sanity checking before pushing a commit.
+all: test docs visualization mutual dmote_62key
 
 clean:
-	-rm things/scad/*.scad && rmdir things/scad/
-	-rm things/stl/*.stl && rmdir things/stl/
+	-rm things/scad/*.scad
+	-rmdir things/scad/
+	-rm things/stl/*.stl
+	-rmdir things/stl/
 	lein clean

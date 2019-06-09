@@ -25,7 +25,7 @@ Roughly, the build chain looks like this:
 
 Equivalently, in terms of typical file name endings:
 
-> .yaml through .clj (→ .jar) → .scad → .stl → .gcode → tangible keyboard
+> .yaml through .clj (or .jar) → .scad → .stl → .gcode → tangible keyboard
 
 If this repository includes STL files you will find them in the
 [`things/stl`](../things/) directory. They should be ready to print. Otherwise,
@@ -41,18 +41,41 @@ here’s how to make your own.
 On Debian GNU+Linux, the first three are accomplished with
 `apt install clojure leiningen make`.
 
-Other dependencies will be pulled in by a `lein run`.
+The necessary Clojure libraries will be pulled in by a `lein run`.
+
+### Finding bundled configurations
+
+The Clojure application combines configuration details from zero or more
+[YAML](https://en.wikipedia.org/wiki/YAML) files. There are examples in
+[`resources/opt`](resources/opt/). These files have a nested structure
+[documented here](options-main.md).
+
+The files are used when you pass them to the application, not automatically.
+The ones you name are gently combined into a single master configuration. In
+this process, files named later take precedence over those names earlier, in
+case of direct conflicts.
 
 ### Producing OpenSCAD and STL files
 
 * To produce OpenSCAD files for the default configuration, run `make`.
-  * If you do not have `make`, run `lein run`.
-  * To build a non-default, bundled configuration, run `make threaded` or name
-    some other variant defined in the makefile.
+  * If you do not have Make, or if you want more control, run `lein run` with
+    the arguments you see prepared in the makefile. For example,
+    `lein run -c resources/opt/base.yaml -c resources/opt/dmote/base.yaml` will
+    build the basic (62-key) DMOTE, with the same results as `make`, just
+    without an optional compilation step.
 * In OpenSCAD, open one of the `things/scad/*.scad` files for a preview.
   * To render a complex model in OpenSCAD you may need to go to Edit >>
-    Preferences >> Advanced and raise the ceiling for when to “Turn off rendering”.
-* When satisfied, call `lein run --render` to render everything to STL.
+    Preferences >> Advanced and raise the ceiling for when to “Turn off
+    rendering”.
+* When satisfied, render to STL by calling the DMOTE application with the
+  `--render` flag in addition to previous flags, i.e. those you typed yourself
+  or got through Make. You can also render directly from OpenSCAD.
+
+If you do have Make and you want to weave in more configuration files, you can
+put more YAML paths on the command line or name an intermediate Make target, or
+do both. However, this is not what Make is for, so you will need to finish with
+a named target that actually calls the application, as in `make vis
+dmote_62key`, where `dmote_62key` is the (otherwise implicit) default target.
 
 There are [other ways to evaluate](http://stackoverflow.com/a/28213489) the
 Clojure code, including the bundled `transpile.sh` shell script, which will
@@ -63,18 +86,11 @@ tail your changes with `inotify` if you have that.
 You probably want to customize the design for your own hands. You won’t need
 to do any coding if all you want is a personal fit or additional keys.
 
-### Parameters in YAML
-
-If you want to change what the default configuration looks like, edit
-`resources/opt/default.yaml`. It contains a nested structure of parameters
-[documented here](options-main.md).
-
-You do not have to make all of your changes in `default.yaml`. As you can see
-in the makefile, you can call the generating program with one or more `-c`
-flags, each identifying a YAML configuration file. You can add your own,
-maintaining it separately from the DMOTE repository. Each file will extend or,
-as necessary, override the one before, so put your own file last in your list
-of CLI flags to get the most power.
+You can change the bundled YAML files if you like. However, it is generally
+easier to add your own files, maintaining them separately from the DMOTE
+repository. That way, they will be safe if you upgrade the application with a
+`git pull`. Remember to put your own file(s) last in your list of arguments to
+the application, to get the most power.
 
 #### Nomenclature: Finding north
 
@@ -98,9 +114,8 @@ south to north, and the z axis from earth to sky.
 ### Deeper changes
 
 If you find that you cannot get what you want just by changing the parameters,
-you need to edit the source code. If you are not familiar with OpenSCAD at all,
-start by experimenting with its native format, writing .scad files manually,
-from scratch.
+you need to edit the source code. If you are not familiar with OpenSCAD, start
+by experimenting with its native format, writing `.scad` files from scratch.
 Then consider starting in `src/dactyl_keyboard/sandbox.clj` to get familiar
 with `scad-clj`. It writes OpenSCAD code for you with helpful abstractions.
 

@@ -1,0 +1,36 @@
+# Bundled non-neutral basic model build parameters.
+# These should be pretty safe to use with any variant and are easy to override.
+
+keys:
+  styles:
+    # A non-printable preview of a DSA profile key:
+    maquette-dsa:
+      style: maquette
+      skirt-length: 4.6
+      top-size: [12.7, 12.7, 3.3]
+by-key:
+  parameters:
+    key-style: maquette-dsa
+    channel:
+      height: 20
+      top-width: 10
+    wall:
+      thickness: 1
+      bevel: 1
+      north:
+        perpendicular: -8
+      east:
+        perpendicular: -8
+      south:
+        perpendicular: -8
+      west:
+        perpendicular: -8
+case:
+  key-mount-thickness: 2.5
+  web-thickness: 2.5
+resolution:
+  include: true
+dfm:
+  error-general: -0.5
+  bottom-plate:
+    fastener-plate-offset: -0.5

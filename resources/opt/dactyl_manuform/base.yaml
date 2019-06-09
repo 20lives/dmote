@@ -3,13 +3,12 @@
 # The long-term goal with this file is to have it produce Short’s design
 # through the DMOTE application for upstream compatibility.
 
-# As of DMOTE v0.3.0, that is not yet possible, because:
-# - There is no support for keys larger than 1u.
+# As of DMOTE v0.4.0, that is not yet possible, because:
 # - No internal shelf for the MCU.
 # - No USB A.
 # - No wire hooks.
 
-# This is nowhere near complete even for the DMOTE v0.3.0 feature set.
+# This is nowhere near complete even for the DMOTE v0.4.0 feature set.
 
 case:
   bottom-plate:

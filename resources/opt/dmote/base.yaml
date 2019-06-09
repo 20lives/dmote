@@ -1,10 +1,8 @@
-# Bundled default model build parameters for a DMOTE.
-# This is not the full set of available parameters.
-# Read the project documentation.
+# Configuration fragment for the base of a 62-key DMOTE.
 
 keys:
   styles:
-    maquette-dsa:  # A non-printable preview of a DSA profile key.
+    maquette-dsa:  # Repeated from opt/base.yaml.
       style: maquette
       skirt-length: 4.6
       top-size: [12.7, 12.7, 3.3]
@@ -78,22 +76,6 @@ key-clusters:
       a0: [0, 0]
       a1: [1, 0]
 by-key:
-  parameters:
-    key-style: maquette-dsa
-    channel:
-      height: 20
-      top-width: 10
-    wall:
-      thickness: 1
-      bevel: 1
-      north:
-        perpendicular: -8
-      east:
-        perpendicular: -8
-      south:
-        perpendicular: -8
-      west:
-        perpendicular: -8
   clusters:
     main:
       parameters:
@@ -475,8 +457,6 @@ secondaries:
   anchor: rh-0
   offset: [0, 0, -20]
 case:
-  key-mount-thickness: 2.5
-  web-thickness: 2.5
   rear-housing:
     include: true
     position:
@@ -496,7 +476,6 @@ case:
         include: true
         offset: -13
   back-plate:
-    include: false
     beam-height: 20
     fasteners:
       diameter: 6
@@ -811,7 +790,6 @@ connection:
     corner: ENE
     raise: true
 wrist-rest:
-  include: false
   position:
     offset: [83, -90]
   plinth-height: 2
@@ -868,9 +846,3 @@ wrist-rest:
       offset: [3, 3]
     - anchor: plinth-right
       offset: [-2, -3]
-resolution:
-  include: true
-dfm:
-  error-general: -0.5
-  bottom-plate:
-    fastener-plate-offset: -0.5
