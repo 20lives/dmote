@@ -512,7 +512,7 @@
    [:section [:mcu :support :lock]
     "Parameters relevant only with a `lock`-style support."]
    [:section [:mcu :support :lock :fastener]
-    "Threaded fasteners—a nut and a bolt—connect the lock to the case."]
+    "A threaded bolt connects the lock to the case."]
    [:parameter [:mcu :support :lock :fastener :style]
     {:default :countersunk :parse-fn keyword :validate [::threaded/head-type]}
     "A style of bolt head (cap) supported by `scad-tarmi`."]
@@ -525,9 +525,9 @@
     {:default 1 :parse-fn num}
     "The wall thickness of the socket."]
    [:section [:mcu :support :lock :bolt]
-    "The part of a `lock`-style support that does not print as part of the "
+    "The part of a `lock`-style support that does not print with the "
     "keyboard case. This bolt, named by analogy with a lock, is not to be "
-    "confused with the threaded fasteners holding it in place."]
+    "confused with the threaded fastener (also a bolt) holding it in place."]
    [:parameter [:mcu :support :lock :bolt :clearance]
     {:default 1 :parse-fn num}
     "The distance of the bolt from the populated side of the PCB. "
@@ -539,13 +539,13 @@
     "Take care that this distance is free of components on the PCB."]
    [:parameter [:mcu :support :lock :bolt :mount-length]
     {:default 1 :parse-fn num}
-    "The length of the base that contains the threaded fasteners used to "
-    "secure the bolt over the MCU. This is in addition to `overshoot` and "
+    "The length of the base containing a threaded channel used to secure the "
+    "bolt over the MCU. This is in addition to `overshoot` and "
     "goes in the opposite direction, away from the PCB."]
    [:parameter [:mcu :support :lock :bolt :mount-thickness]
     {:default 1 :parse-fn num}
-    "The thickness of the mount. You will need a threaded fastener slightly "
-    "longer than this."]
+    "The thickness of the mount. This should have some rough correspondence "
+    "to the threaded portion of your fastener, which should not have a shank."]
    [:section [:mcu :support :stop]
     "Parameters relevant only with a `stop`-style support."]
    [:parameter [:mcu :support :stop :anchor]

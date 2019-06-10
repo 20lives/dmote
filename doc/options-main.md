@@ -428,7 +428,7 @@ Parameters relevant only with a `lock`-style support.
 
 ##### Section `fastener`
 
-Threaded fasteners—a nut and a bolt—connect the lock to the case.
+A threaded bolt connects the lock to the case.
 
 ###### Parameter `style`
 
@@ -448,7 +448,7 @@ The wall thickness of the socket.
 
 ##### Section `bolt`
 
-The part of a `lock`-style support that does not print as part of the keyboard case. This bolt, named by analogy with a lock, is not to be confused with the threaded fasteners holding it in place.
+The part of a `lock`-style support that does not print with the keyboard case. This bolt, named by analogy with a lock, is not to be confused with the threaded fastener (also a bolt) holding it in place.
 
 ###### Parameter `clearance`
 
@@ -460,11 +460,11 @@ The distance across which the bolt will touch the PCB at the mount end. Take car
 
 ###### Parameter `mount-length`
 
-The length of the base that contains the threaded fasteners used to secure the bolt over the MCU. This is in addition to `overshoot` and goes in the opposite direction, away from the PCB.
+The length of the base containing a threaded channel used to secure the bolt over the MCU. This is in addition to `overshoot` and goes in the opposite direction, away from the PCB.
 
 ###### Parameter `mount-thickness`
 
-The thickness of the mount. You will need a threaded fastener slightly longer than this.
+The thickness of the mount. This should have some rough correspondence to the threaded portion of your fastener, which should not have a shank.
 
 #### Section `stop`
 

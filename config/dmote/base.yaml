@@ -763,7 +763,7 @@ mcu:
     offset: [-1, 0, 2]
   support:
     style: lock
-    height-factor: 0.6
+    height-factor: 0.45
     lateral-spacing: 2.5
     lock:
       fastener:
@@ -773,7 +773,7 @@ mcu:
       bolt:
         clearance: 2.5
         overshoot: 1
-        mount-length: 11
+        mount-length: 7
         mount-thickness: 6
     stop:
       anchor: back1
