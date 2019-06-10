@@ -47,7 +47,7 @@ The necessary Clojure libraries will be pulled in by a `lein run`.
 
 The Clojure application combines configuration details from zero or more
 [YAML](https://en.wikipedia.org/wiki/YAML) files. There are examples in
-[`resources/opt`](resources/opt/). These files have a nested structure
+[`config`](config/). These files have a nested structure
 [documented here](options-main.md).
 
 The files are used when you pass them to the application, not automatically.
@@ -60,14 +60,14 @@ case of direct conflicts.
 * To produce OpenSCAD files for the default configuration, run `make`.
   * If you do not have Make, or if you want more control, run `lein run` with
     the arguments you see prepared in the makefile. For example,
-    `lein run -c resources/opt/base.yaml -c resources/opt/dmote/base.yaml` will
-    build the basic (62-key) DMOTE, with the same results as `make`, just
-    without an optional compilation step.
+    `lein run -c config/base.yaml -c config/dmote/base.yaml` will
+    build a basic DMOTE, with the same results as `make`, just
+    without an optional compilation step that speeds up each iteration.
 * In OpenSCAD, open one of the `things/scad/*.scad` files for a preview.
   * To render a complex model in OpenSCAD you may need to go to Edit >>
     Preferences >> Advanced and raise the ceiling for when to “Turn off
     rendering”.
-* When satisfied, render to STL by calling the DMOTE application with the
+* When satisfied, render to STL by calling the Clojure application with the
   `--render` flag in addition to previous flags, i.e. those you typed yourself
   or got through Make. You can also render directly from OpenSCAD.
 

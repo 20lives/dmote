@@ -5,11 +5,13 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 
 ## [Unreleased]
 ### Changed
-- Bundled YAML files have moved around a bit.
+- Moved bundled YAML.
+    - The entire `resources/opt` folder is now at `config`.
     - Most of `resources/opt/default.yaml` has been renamed (to
-      `resources/opt/dmote/base.yaml`) and is now less privileged.
-    - A simple `make` still does what it used to, but without arguments, the
-      application now describes a useless single-button keyboard.
+      `config/dmote/base.yaml`) and is now less privileged.
+    - A simple `make` has the same effect as before but passes more
+      arguments to achieve it. Without arguments, the Clojure
+      application now describes an unusable single-button keyboard.
 - Changes to the bundled 62-key DMOTE configuration:
     - Switched from M3 to M4 screws for attaching the bottom plate and for
       locking the MCU PCB in place.
@@ -30,7 +32,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 ### Developer
 - In the interest of versatility, the Clojure code no longer refers to any YAML
   files. Instead, the default configuration values that are built into the code
-  itself are slightly richer, to permit running without YAML files.
+  itself are slightly richer, to prevent crashing without YAML files.
 - Restructured the makefile, renaming some of the phony targets and removing
   others for the present. `make all` no longer exercises as much of the code.
 
