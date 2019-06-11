@@ -518,241 +518,249 @@ case:
     emitter-diameter: 4
     interval: 16.8
   tweaks:
-  # First, a bunch of extra webbing at the four corners of the thumb0 cluster:
-  - hull-around:
-    - [t0, NNW]
-    - [t0, NNE]
-    - [t1, NNW]
-  - hull-around:
-    - [t2, NNW, 0, 1]
-    - [t2, NNE, 0, 1]
-    - [t1, NNE, 0, 1]
-  - hull-around:
-    - [tc, SSE]
-    - [t3, WSW]
-    - [t4, ENE]
-  # Near upper corner:
-  - chunk-size: 3
-    hull-around:
-    - [t4, ENE]
-    - [t4, SSE]
-    - [t3, WSW]
-    - hull-around:
-      - [t3, SSE, 0, 3]
-      - [t3, ESE, 0, 3]
-  # Webbing at the outer m00–m01 triangle at the edge of the cluster gap:
-  - chunk-size: 3
-    hull-around:
-    - [m00, SSW]
-    - [m00, SSE]
-    - [mt0a]
-    - hull-around:
-      - [m00, NNE]
-      - [m01, NNW]
-    - [m01, SSW]
-  # A shield down the whole near wall of the thumb0 cluster:
-  - chunk-size: 3
-    hull-around:
-    - hull-around:
-      - [t3, ESE, 0, 1]
-      - [t3, SSE, 0, 1]
-    - [t3, SSE, 3, 4]
-    - hull-around:
-      - [t4, ESE, 0, 1]
-      - [t4, SSE, 0, 1]
-    - [t4, SSE, 3, 4]
-    - hull-around:
-      - [t4, WSW, 0, 1]
-      - [t4, SSW, 0, 1]
-    - [t4, SSW, 3, 4]
-  # Plating over the cluster gap:
-  - chunk-size: 2
-    hull-around:
-    - [t1, NNE, 0, 4]
-    - [t2, NNE, 0, 4]
-    - [t2, ENE, 0, 4]
-  # Cluster gap, west side:
-  - chunk-size: 3
-    hull-around:
-    - [t1, NNW, 3, 4]
-    - [m00, WSW, 2, 3]
-    - [t1, NNE, 3, 4]
-    - [m00, WSW, 0, 1]
-    - [t2, NNE, 3, 4]
-  # Cluster gap between m00–m02 and t2, taking a low road under the secondaries:
-  - chunk-size: 3
-    hull-around:
-    - [m00, SSW]
-    - hull-around:
-      - [t2, NNE, 4]
-      - [t2, ENE, 4]
-    - [mt0a]
-    - [mt0b]
-    - [m01, SSW]
-    - [mt0c]
-    - [m01, SSE]
-    - hull-around:
-      - [m02, NNW]
-      - [m02, SSW]
-  # More cluster gap, taking a high road over the secondaries:
-  - chunk-size: 3
-    hull-around:
-    - [t2, ENE, 4]
-    - [mt0b]
-    - [t2, ESE, 4]
-    - [mt0c]
-    - [t3, ENE, 4]
-    - [m02, SSW]
-  # The west side of m02:
-  - hull-around:
-    - [m01, SSE]
-    - [m02, WNW]
-    - [m02, WSW]
-  # The eastern topside plate, ending in a wedge between m02 and m03:
-  - chunk-size: 3
-    hull-around:
-    - [m02, WSW]
-    - [t3, NNE, 4]
-    - [m02, SSW]
-    - hull-around:
-      - [t3, ESE, 3, 4]
-      - [t3, SSE, 3, 4]
-    - hull-around:
-      - [m02, ESE, 3, 4]
-      - [m02, SSE, 3, 4]
-    - [t4, SSE, 3, 4]
-    - [m02, ENE, 3, 4]
-    - [t4, SSW, 3, 4]
-    - [m03, SSW, 3, 4]
-  # The low eastern plate:
-  - chunk-size: 3
-    hull-around:
-    - hull-around:
-      - [m02, ESE, 3, 4]
-      - [m02, SSE, 3, 4]
-    - [m02, ENE, 3, 4]
-  # A triangular southern wall of m02:
-  - hull-around:
-    - [m02, SSW, 0, 1]
-    - [m02, SSE, 0, 3]
-    - [m02, ESE, 0, 3]
-  # Webbing between thumb0 and thumb1:
-  - chunk-size: 2
-    hull-around:
-    - hull-around:
-      - [t1, NNW]
-      - [t0, NNE]
-    - hull-around:
-      - [t1, SSW]
-      - [t0, SSE]
-    - hull-around:
-      - [tc, NNW]
-      - [t0, SSE]
-    - hull-around:
-      - [tc, SSW]
-      - [t5, NNE]
-    - [t4, NNW]
-  # Lower near corner:
-  - chunk-size: 3
-    hull-around:
-    - [t5, NNE]
-    - [t4, NNW]
-    - [t5, SSE]
-    - [t4, SSW]
-    - [t5, SSW]
-  # A plate to ground beneath the thumb clusters:
-  - at-ground: true
-    chunk-size: 2
-    hull-around:
-    - [m00, WSW, 2, 3]
-    - [t1, NNW, 3, 4]
-    - [t1, NNW, 0, 1]
-    - [t0, WNW, 0, 1]
-    - [t0, WSW, 0, 1]
-    - [t5, WNW, 0, 1]
-    - [t5, WSW, 0, 1]
-    - [t5, SSW, 0, 1]
-    - [t4, SSW, 0, 1]
-    - [t4, SSW, 3, 4]
-    - [m03, SSW, 3, 4]
-  # Strengthening the wall between m11 and m12.
-  - hull-around:
-    - [a0, SSW]
-    - [m10, ESE]
-    - [m11, ENE]
-    - [m11, ESE]
-    - [m12, WNW]
-    - [m12, WSW]
-  # Plating over the main-aux cluster gap.
-  - chunk-size: 3
-    hull-around:
-    - [m10, ENE, 1]
-    - [a0, WNW, 0, 1]
-    - [a0, WSW, 0, 1]
-    - [m10, ESE]
-    - [m12, NNW, 0, 1]
-  # More plating over the main-aux cluster gap, starting with a bulkhead to
-  # strengthen the transition to the rear housing.
-  - chunk-size: 3
-    hull-around:
-    - [rh-0]
-    - [rh-1]
-    - [m10, ENE, 1]
-    - [a0, WNW]
-    - [m10, ESE, 0, 1]
-    - [a0, WSW]
-    - [m12, NNW, 0, 1]
-    - [a0, SSE, 0, 1]
-    - [m12, NNE, 0, 1]
-    - [a1, SSW, 0, 1]
-    - [m13, NNW, 0, 1]
-    - [a1, SSE, 0, 1]
-    - [m13, NNE, 0, 1]
-    - [a1, ESE, 0, 1]
-    - [m13, ENE, 0, 1]
-  # A prettier outer corner:
-  - hull-around:
-    - [a1, ENE, 0, 1]
-    - [m13, ENE, 2, 4]
-    - [a1, ESE, 0, 1]
-  # A plate to ground at the south-east corner of the rear housing.
-  - at-ground: true
-    chunk-size: 2
-    hull-around:
-    - [rear-housing, ESE, 1]
-    - [rh-1]  # A shim to align the plate with the housing wall.
-    - [a0, WNW, 0, 1]
-    - [a0, NNW, 0, 1]
-    - [a1, NNE, 0, 1]
-    - [a1, ENE, 0, 1]
-  - at-ground: true
-    chunk-size: 2
-    hull-around:
-    - [a1, ENE, 0, 1]
-    - [m13, ENE, 2, 4]
-  # Bottom-only plating at the main-aux cluster gap:
-  - at-ground: true
-    above-ground: false
-    hull-around:
-    - [m13, ESE, 3]
-    - [m13, ENE, 3]
-    - [a1, ESE, 1]
-    - [a1, ENE, 1]
-    - [a1, NNE, 1]
-    - [a0, NNW]
-    - [m11, SSW]
-  # Bottom-only plating to compensate for the aux cluster breaking up the
-  # ground-level profile of the main cluster:
-  - at-ground: true
-    above-ground: false
-    hull-around:
-    - [m11, SSW]
-    - [a0, NNW]
-    - [m10, ENE, 3]
-    - [rear-housing, ESE]
-    - [rear-housing, WSW]
-    - [back0, WNW, 3]
-    - [back0, WSW, 3]
+    thumb-to-finger-gap:
+      # This large tweak covers the gap between the thumb clusters and the main
+      # cluster of keys.
+      # Webbing at the outer m00–m01 triangle at the edge of the cluster gap:
+      - chunk-size: 3
+        hull-around:
+        - [m00, SSW]
+        - [m00, SSE]
+        - [mt0a]
+        - hull-around:
+          - [m00, NNE]
+          - [m01, NNW]
+        - [m01, SSW]
+      # The near (user-facing) wall of the thumb0 cluster:
+      - chunk-size: 3
+        hull-around:
+        - hull-around:
+          - [t3, ESE, 0, 1]
+          - [t3, SSE, 0, 1]
+        - [t3, SSE, 3, 4]
+        - hull-around:
+          - [t4, ESE, 0, 1]
+          - [t4, SSE, 0, 1]
+        - [t4, SSE, 3, 4]
+        - hull-around:
+          - [t4, WSW, 0, 1]
+          - [t4, SSW, 0, 1]
+        - [t4, SSW, 3, 4]
+      # Wide plating over the gap:
+      - chunk-size: 2
+        hull-around:
+        - [t1, NNE, 0, 4]
+        - [t2, NNE, 0, 4]
+        - [t2, ENE, 0, 4]
+      # West side:
+      - chunk-size: 3
+        hull-around:
+        - [t1, NNW, 3, 4]
+        - [m00, WSW, 2, 3]
+        - [t1, NNE, 3, 4]
+        - [m00, WSW, 0, 1]
+        - [t2, NNE, 3, 4]
+      # Between m00–m02 and t2, taking a low road under the secondaries:
+      - chunk-size: 3
+        hull-around:
+        - [m00, SSW]
+        - hull-around:
+          - [t2, NNE, 4]
+          - [t2, ENE, 4]
+        - [mt0a]
+        - [mt0b]
+        - [m01, SSW]
+        - [mt0c]
+        - [m01, SSE]
+        - hull-around:
+          - [m02, NNW]
+          - [m02, SSW]
+      # More cluster gap, taking a high road over the secondaries:
+      - chunk-size: 3
+        hull-around:
+        - [t2, ENE, 4]
+        - [mt0b]
+        - [t2, ESE, 4]
+        - [mt0c]
+        - [t3, ENE, 4]
+        - [m02, SSW]
+      # The west side of m02:
+      - hull-around:
+        - [m01, SSE]
+        - [m02, WNW]
+        - [m02, WSW]
+      # The eastern topside plate, ending in a wedge between m02 and m03:
+      - chunk-size: 3
+        hull-around:
+        - [m02, WSW]
+        - [t3, NNE, 4]
+        - [m02, SSW]
+        - hull-around:
+          - [t3, ESE, 3, 4]
+          - [t3, SSE, 3, 4]
+        - hull-around:
+          - [m02, ESE, 3, 4]
+          - [m02, SSE, 3, 4]
+        - [t4, SSE, 3, 4]
+        - [m02, ENE, 3, 4]
+        - [t4, SSW, 3, 4]
+        - [m03, SSW, 3, 4]
+      # The low eastern plate:
+      - chunk-size: 3
+        hull-around:
+        - hull-around:
+          - [m02, ESE, 3, 4]
+          - [m02, SSE, 3, 4]
+        - [m02, ENE, 3, 4]
+      # A triangular southern wall of m02:
+      - hull-around:
+        - [m02, SSW, 0, 1]
+        - [m02, SSE, 0, 3]
+        - [m02, ESE, 0, 3]
+    thumb-corner-webbing:
+      # Extra webbing at the four corners of the thumb0 and thumb1 clusters:
+      - hull-around:
+        - [t0, NNW]
+        - [t0, NNE]
+        - [t1, NNW]
+      - hull-around:
+        - [t2, NNW, 0, 1]
+        - [t2, NNE, 0, 1]
+        - [t1, NNE, 0, 1]
+      - hull-around:
+        - [tc, SSE]
+        - [t3, WSW]
+        - [t4, ENE]
+      # The near upper corner:
+      - chunk-size: 3
+        hull-around:
+        - [t4, ENE]
+        - [t4, SSE]
+        - [t3, WSW]
+        - hull-around:
+          - [t3, SSE, 0, 3]
+          - [t3, ESE, 0, 3]
+    thumb0-to-thumb1-gap:
+      # Webbing between the two thumb clusters:
+      - chunk-size: 2
+        hull-around:
+        - hull-around:
+          - [t1, NNW]
+          - [t0, NNE]
+        - hull-around:
+          - [t1, SSW]
+          - [t0, SSE]
+        - hull-around:
+          - [tc, NNW]
+          - [t0, SSE]
+        - hull-around:
+          - [tc, SSW]
+          - [t5, NNE]
+        - [t4, NNW]
+      # Lower near corner:
+      - chunk-size: 3
+        hull-around:
+        - [t5, NNE]
+        - [t4, NNW]
+        - [t5, SSE]
+        - [t4, SSW]
+        - [t5, SSW]
+    thumb-to-main-to-ground:
+      # A plate to ground beneath the thumb clusters, stretching between two
+      # keys in the main cluster:
+      - at-ground: true
+        chunk-size: 2
+        hull-around:
+        - [m00, WSW, 2, 3]
+        - [t1, NNW, 3, 4]
+        - [t1, NNW, 0, 1]
+        - [t0, WNW, 0, 1]
+        - [t0, WSW, 0, 1]
+        - [t5, WNW, 0, 1]
+        - [t5, WSW, 0, 1]
+        - [t5, SSW, 0, 1]
+        - [t4, SSW, 0, 1]
+        - [t4, SSW, 3, 4]
+        - [m03, SSW, 3, 4]
+    aux0-to-main-gap:
+      # Strengthening the wall between m11 and m12.
+      - hull-around:
+        - [a0, SSW]
+        - [m10, ESE]
+        - [m11, ENE]
+        - [m11, ESE]
+        - [m12, WNW]
+        - [m12, WSW]
+      # Plating over the main-aux cluster gap.
+      - chunk-size: 3
+        hull-around:
+        - [m10, ENE, 1]
+        - [a0, WNW, 0, 1]
+        - [a0, WSW, 0, 1]
+        - [m10, ESE]
+        - [m12, NNW, 0, 1]
+      # More plating over the main-aux cluster gap, starting with a bulkhead to
+      # strengthen the transition to the rear housing.
+      - chunk-size: 3
+        hull-around:
+        - [rh-0]
+        - [rh-1]
+        - [m10, ENE, 1]
+        - [a0, WNW]
+        - [m10, ESE, 0, 1]
+        - [a0, WSW]
+        - [m12, NNW, 0, 1]
+        - [a0, SSE, 0, 1]
+        - [m12, NNE, 0, 1]
+        - [a1, SSW, 0, 1]
+        - [m13, NNW, 0, 1]
+        - [a1, SSE, 0, 1]
+        - [m13, NNE, 0, 1]
+        - [a1, ESE, 0, 1]
+        - [m13, ENE, 0, 1]
+      # A prettier outer corner:
+      - hull-around:
+        - [a1, ENE, 0, 1]
+        - [m13, ENE, 2, 4]
+        - [a1, ESE, 0, 1]
+      # A plate to ground at the south-east corner of the rear housing.
+      - at-ground: true
+        chunk-size: 2
+        hull-around:
+        - [rear-housing, ESE, 1]
+        - [rh-1]  # A shim to align the plate with the housing wall.
+        - [a0, WNW, 0, 1]
+        - [a0, NNW, 0, 1]
+        - [a1, NNE, 0, 1]
+        - [a1, ENE, 0, 1]
+      - at-ground: true
+        chunk-size: 2
+        hull-around:
+        - [a1, ENE, 0, 1]
+        - [m13, ENE, 2, 4]
+      # Bottom-only plating at the main-aux cluster gap:
+      - at-ground: true
+        above-ground: false
+        hull-around:
+        - [m13, ESE, 3]
+        - [m13, ENE, 3]
+        - [a1, ESE, 1]
+        - [a1, ENE, 1]
+        - [a1, NNE, 1]
+        - [a0, NNW]
+        - [m11, SSW]
+      # Bottom-only plating to compensate for the aux cluster breaking up the
+      # ground-level profile of the main cluster:
+      - at-ground: true
+        above-ground: false
+        hull-around:
+        - [m11, SSW]
+        - [a0, NNW]
+        - [m10, ENE, 3]
+        - [rear-housing, ESE]
+        - [rear-housing, WSW]
+        - [back0, WNW, 3]
+        - [back0, WSW, 3]
 mcu:
   type: promicro
   margin: 0.25

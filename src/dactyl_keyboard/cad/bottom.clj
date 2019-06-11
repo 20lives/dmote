@@ -17,7 +17,8 @@
             [dactyl-keyboard.cad.body :as body]
             [dactyl-keyboard.cad.wrist :as wrist]
             [dactyl-keyboard.param.access :refer [most-specific
-                                                  get-key-alias]]))
+                                                  get-key-alias
+                                                  tweak-data]]))
 
 
 ;;;;;;;;;;;
@@ -204,7 +205,7 @@
   "The footprint of all user-requested additional shapes that go to the floor."
   [getopt]
   (apply maybe/union (map #(tweak-plate-shadows getopt (:hull-around %))
-                          (filter :at-ground (getopt :case :tweaks)))))
+                          (filter :at-ground (tweak-data getopt)))))
 
 (defn case-anchors-positive
   "The parts of the case body that receive bottom-plate fasteners."

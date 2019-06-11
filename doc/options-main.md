@@ -195,7 +195,7 @@ A bottom plate can be added to close the case. This is useful mainly to simplify
 
 The bottom plate is largely two-dimensional. The application builds most of it from a set of polygons, trying to match the perimeter of the case at the ground level (i.e. z = 0).
 
-Specifically, there is one polygon per key cluster, limited to `full` wall edges, one polygon for the rear housing, and one set of polygons for each of the first-level case `tweaks` that use `at-ground`, ignoring chunk size and almost ignoring nested tweaks.
+Specifically, there is one polygon per key cluster, limited to `full` wall edges, one polygon for the rear housing, and one set of polygons for each of the first-level case `tweaks` that use `at-ground`, ignoring chunk size and almost ignoring tweaks nested within lists of tweaks.
 
 This methodology is mentioned here because its results are not perfect. Pending future features in OpenSCAD, a future version may be based on a more exact projection of the case, but as of 2018, such a projection is hollow and cannot be convex-hulled without escaping the case, unless your case is convex to start with.
 
@@ -309,13 +309,15 @@ The distance between LEDs on the strip. You may want to apply a setting slightly
 
 ### Parameter `tweaks`
 
-Additional shapes. This is usually needed to bridge gaps between the walls of the key clusters.
+Additional shapes. This is usually needed to bridge gaps between the walls of the key clusters. The expected value here is an arbitrarily nested structure starting with a map of names to lists.
 
-The expected value here is an arbitrarily nested structure starting with a list. Each item in the list can follow one of the following patterns:
+The names at the top level are arbitrary but should be distinct and descriptive. Their only technical significance lies in the fact that when you combine multiple configuration files, a later tweak will override a previous tweak if and only if they share the same name.
+
+Below the names, each item in each list can follow one of the following patterns:
 
 - A leaf node. This is a tuple of 1 to 4 elements specified below.
 - A map, representing an instruction to combine nested items in a specific way.
-- A list of any combination of the other two types. This type exists at the top level and as the immediate child of each map node.
+- A list of any combination of the other two types. This type exists at the second level from the top and as the immediate child of each map node.
 
 Each leaf node identifies a particular named feature of the keyboard. It’s usually a set of corner posts on a named (aliased) key mount. These are identical to the posts used to build the walls, but this section gives you greater freedom in how to combine them. The elements of a leaf are, in order:
 
@@ -336,11 +338,12 @@ In the following example, `A` and `B` are key aliases that would be defined else
 
 ```case:
   tweaks:
-    - chunk-size: 2
-      hull-around:
-      - [A, SSE]
-      - [B, NNE]
-      - [A, SSW, 0, 4]
+    bridge-between-A-and-B:
+      - chunk-size: 2
+        hull-around:
+        - [A, SSE]
+        - [B, NNE]
+        - [A, SSW, 0, 4]
 ```
 
 ### Section `foot-plates`

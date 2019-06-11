@@ -14,7 +14,7 @@
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.place :as place]
             [dactyl-keyboard.cad.key :as key]
-            [dactyl-keyboard.param.access :refer [most-specific]]))
+            [dactyl-keyboard.param.access :refer [most-specific tweak-data]]))
 
 
 ;;;;;;;;;;;;;
@@ -391,4 +391,4 @@
   "User-requested additional shapes."
   [getopt]
   (apply union
-    (reduce (partial tweak-plating getopt) [] (getopt :case :tweaks))))
+    (reduce (partial tweak-plating getopt) [] (tweak-data getopt))))

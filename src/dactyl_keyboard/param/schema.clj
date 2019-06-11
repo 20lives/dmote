@@ -81,6 +81,10 @@
        candidate)
       (map case-tweaks candidate))))
 
+(def case-tweak-map
+  "A parser of a map of names to tweaks."
+  (map-of keyword case-tweaks))
+
 (def keycap-map
   "A parser for some of the options exposed by the dmote-keycap library."
   (map-of
@@ -154,6 +158,7 @@
              :opt-un [::corner ::segment ::offset]))
 (spec/def ::anchored-2d-list (spec/coll-of ::anchored-2d-position))
 (spec/def ::points ::anchored-2d-list)
+(spec/def ::tweak-name-map (spec/map-of keyword? ::hull-around))
 (spec/def ::tweak-plate-map
   (spec/keys :req-un [::hull-around]
              :opt-un [::highlight ::chunk-size ::at-ground ::above-ground]))

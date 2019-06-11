@@ -177,3 +177,8 @@
   "The properties of a specific key, including derived data."
   [getopt cluster coord]
   (getopt :keys :derived (most-specific getopt [:key-style] cluster coord)))
+
+(defn tweak-data
+  "Retrieve payload data for case tweaks without their names."
+  [getopt]
+  (apply concat (vals (getopt :case :tweaks))))

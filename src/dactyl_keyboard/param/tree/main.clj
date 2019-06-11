@@ -254,7 +254,7 @@
     "Specifically, there is one polygon per key cluster, limited to `full` "
     "wall edges, one polygon for the rear housing, and one set of polygons "
     "for each of the first-level case `tweaks` that use `at-ground`, ignoring "
-    "chunk size and almost ignoring nested tweaks.\n"
+    "chunk size and almost ignoring tweaks nested within lists of tweaks.\n"
     "\n"
     "This methodology is mentioned here because its results are not perfect. "
     "Pending future features in OpenSCAD, a future version may be based on a "
@@ -363,18 +363,26 @@
     "slightly shorter than the real distance, since the algorithm carving the "
     "holes does not account for wall curvature."]
    [:parameter [:case :tweaks]
-    {:default [] :parse-fn schema/case-tweaks :validate [::schema/hull-around]}
+    {:default [] :parse-fn schema/case-tweak-map
+     :validate [::schema/tweak-name-map]}
     "Additional shapes. This is usually needed to bridge gaps between the "
-    "walls of the key clusters.\n"
+    "walls of the key clusters. The expected value here is an arbitrarily "
+    "nested structure starting with a map of names to lists.\n"
     "\n"
-    "The expected value here is an arbitrarily nested structure starting with "
-    "a list. Each item in the list can follow one of the following patterns:\n"
+    "The names at the top level are arbitrary but should be distinct and "
+    "descriptive. Their only technical significance lies in the fact that "
+    "when you combine multiple configuration files, a later tweak will "
+    "override a previous tweak if and only if they share the same name.\n"
+    "\n"
+    "Below the names, each item in each list can follow one of the following "
+    "patterns:\n"
     "\n"
     "- A leaf node. This is a tuple of 1 to 4 elements specified below.\n"
     "- A map, representing an instruction to combine nested items in a "
     "specific way.\n"
     "- A list of any combination of the other two types. This type exists at "
-    "the top level and as the immediate child of each map node.\n"
+    "the second level from the top and as the immediate child of each map "
+    "node.\n"
     "\n"
     "Each leaf node identifies a particular named feature of the keyboard. "
     "It’s usually a set of corner posts on a named (aliased) key mount. "
@@ -421,11 +429,12 @@
     "\n"
     "```case:\n"
     "  tweaks:\n"
-    "    - chunk-size: 2\n"
-    "      hull-around:\n"
-    "      - [A, SSE]\n"
-    "      - [B, NNE]\n"
-    "      - [A, SSW, 0, 4]\n```"]
+    "    bridge-between-A-and-B:\n"
+    "      - chunk-size: 2\n"
+    "        hull-around:\n"
+    "        - [A, SSE]\n"
+    "        - [B, NNE]\n"
+    "        - [A, SSW, 0, 4]\n```"]
    [:section [:case :foot-plates]
     "Optional flat surfaces at ground level for adding silicone rubber feet "
     "or cork strips etc. to the bottom of the keyboard to increase friction "
