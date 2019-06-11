@@ -468,7 +468,8 @@
     "The name of a key at which to place the MCU if `prefer-rear-housing` "
     "is `false` or rear housing is not included."]
     ;; NOTE: The default value here, :origin, is intentionally invalid.
-    ;; A key alias is required but none are defined by default.
+    ;; The origin of the coordinate system cannot be used as an anchor for an
+    ;; MCU stop. A key alias is required but none are defined by default.
    [:parameter [:mcu :position :corner]
     {:default "ENE" :parse-fn schema/string-corner :validate [::schema/corner]}
     "A code for a corner of the `anchor` feature. "

@@ -65,7 +65,7 @@ test:
 	lein test
 
 # The “all” target is intended for code sanity checking before pushing a commit.
-all: test docs visualization mutual dmote_62key
+all: test docs vis mutual dmote_62key
 
 clean:
 	-rm things/scad/*.scad

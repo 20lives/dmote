@@ -29,13 +29,15 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 ### Fixed
 - Corrected placement of wrist-rest fastener anchors for the thickness of the
   bottom plate.
+- Fixed a bad function call for `stop`-style MCU support.
 
 ### Developer
 - In the interest of versatility, the Clojure code no longer refers to any YAML
   files. Instead, the default configuration values that are built into the code
   itself are slightly richer, to prevent crashing without YAML files.
-- Restructured the makefile, renaming some of the phony targets and removing
-  others for the present. `make all` no longer exercises as much of the code.
+- Restructured the makefile, renaming some of the phony targets (e.g.
+  `visualization` to `vis`) and removing others for the present. `make all` no
+  longer exercises as much of the code.
 
 ## [Version 0.4.0] - 2019-06-06
 ### Changed

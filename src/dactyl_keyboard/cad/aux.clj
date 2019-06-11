@@ -132,7 +132,7 @@
   (let [prop (partial getopt :mcu :derived)
         {pcb-x :thickness pcb-y :length pcb-z :width} (prop :pcb)
         alias (getopt :mcu :support :stop :anchor)
-        keyinfo (access/get-key-alias alias)
+        keyinfo (access/get-key-alias getopt alias)
         {cluster :cluster coordinates0 :coordinates} keyinfo
         direction (getopt :mcu :support :stop :direction)
         opposite (matrix/left (matrix/left direction))
