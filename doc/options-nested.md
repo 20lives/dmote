@@ -135,7 +135,7 @@ This happens after columns are styled but before base pitch and roll. As such it
 
 ## Parameter `key-style`
 
-The name of a key style defined in the [global](options-main.md) `keys` section. The default value for this setting is the name `default`, which is in turn undefined by default and therefore invalid.
+The name of a key style defined in the [global](options-main.md) `keys` section. The default value for this setting is the name `default`.
 
 ## Section `channel`
 

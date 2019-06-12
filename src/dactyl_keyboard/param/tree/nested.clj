@@ -162,8 +162,7 @@
    [:parameter [:key-style]
     {:default :default :parse-fn keyword}
     "The name of a key style defined in the [global](options-main.md) `keys` "
-    "section. The default value for this setting is the name `default`, which "
-    "is in turn undefined by default and therefore invalid."]
+    "section. The default value for this setting is the name `default`."]
    [:section [:channel]
     "Above each switch mount, there is a channel of negative space for the "
     "user’s finger and the keycap to move inside. This is only useful in those "

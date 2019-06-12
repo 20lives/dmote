@@ -22,7 +22,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       This makes for quicker previews and easier printing.
     - Switched from flat to conical points for bottom-plate fasteners, just
       so the holes are easier to slice without getting interior supports.
-    - Minor tweaks.
+    - Minor tweaks, like renaming the `maquette-dsa` style to `default`.
 - Replaced the nut boss in an MCU lock bolt with printed threading of the hole.
 
 ### Added

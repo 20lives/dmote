@@ -4,13 +4,12 @@
 keys:
   styles:
     # A non-printable preview of a DSA profile key:
-    maquette-dsa:
+    default:
       style: maquette
       skirt-length: 4.6
       top-size: [12.7, 12.7, 3.3]
 by-key:
   parameters:
-    key-style: maquette-dsa
     channel:
       height: 20
       top-width: 10
