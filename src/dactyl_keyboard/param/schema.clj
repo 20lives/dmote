@@ -102,10 +102,10 @@
        :slope num})))
 
 (def named-secondary-positions
-  (tuple-of
+  (map-of
+    keyword
     (map-like
-      {:alias keyword
-       :anchor keyword
+      {:anchor keyword
        :corner string-corner
        :segment int
        :offset vec})))
@@ -153,9 +153,10 @@
 (spec/def ::foot-plate (spec/keys :req-un [::points]))
 (spec/def ::anchored-2d-position
   (spec/keys :opt-un [::anchor ::corner ::offset]))
-(spec/def ::named-secondary-position
-  (spec/keys :req-un [::alias ::anchor]
-             :opt-un [::corner ::segment ::offset]))
+(spec/def ::named-secondary-positions
+  (spec/map-of ::alias
+               (spec/keys :req-un [::anchor]
+                          :opt-un [::corner ::segment ::offset])))
 (spec/def ::anchored-2d-list (spec/coll-of ::anchored-2d-position))
 (spec/def ::points ::anchored-2d-list)
 (spec/def ::tweak-name-map (spec/map-of keyword? ::hull-around))

@@ -5,10 +5,9 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 
 ## [Unreleased]
 ### Changed
-- Altered the structure of some parameters:
-    - Case `tweaks` are now nested underneath a layer of names. This change
-      was made to allow the combination of tweaks from multiple configuration
-      files, with the ability to nullify or override specific features.
+- Secondary aliases (`secondaries`) are now a map and case `tweaks` are
+  likewise nested underneath a layer of names. Both of these changes add power
+  to the configuration layer, reducing the need for duplication of data.
 - Moved bundled YAML.
     - The entire `resources/opt` folder is now at `config`.
     - Most of `resources/opt/default.yaml` has been renamed (to

@@ -2,10 +2,6 @@
 
 keys:
   styles:
-    maquette-dsa:  # Repeated from opt/base.yaml.
-      style: maquette
-      skirt-length: 4.6
-      top-size: [12.7, 12.7, 3.3]
     minimal-short:  # A printable minimal key with a thin top.
       style: minimal
       top-size: [9, 9, 1.6]
@@ -127,7 +123,6 @@ by-key:
                     early: [0, 0, -1]
         "1":
           parameters:
-            key-style: maquette-dsa
             layout:
               matrix:
                 separation:
@@ -437,25 +432,27 @@ by-key:
               translation:
                 early: [-0.5, 0, 0]
 secondaries:
-- alias: mt0a  # Main-to-thumb0 cluster bridge point 0a.
-  anchor: m00
-  corner: SSE
-  segment: 0
-  offset: [0, -2, 2]
-- alias: mt0b
-  anchor: mt0a
-  offset: [4, -3, 16]
-- alias: mt0c
-  anchor: mt0b
-  offset: [6, -2, 1]
-- alias: rh-0  # A shim for wall posts being thinner than rear housing posts.
-  anchor: rear-housing
-  corner: ESE
-  segment: 1
-  offset: [0.75, -0.75, 0]
-- alias: rh-1
-  anchor: rh-0
-  offset: [0, 0, -20]
+  # Main-to-thumb0 cluster bridge points:
+  mt0a:
+    anchor: m00
+    corner: SSE
+    segment: 0
+    offset: [0, -2, 2]
+  mt0b:
+    anchor: mt0a
+    offset: [4, -3, 16]
+  mt0c:
+    anchor: mt0b
+    offset: [6, -2, 1]
+  # Shims for wall posts being thinner than rear housing posts:
+  rh-0:
+    anchor: rear-housing
+    corner: ESE
+    segment: 1
+    offset: [0.75, -0.75, 0]
+  rh-1:
+    anchor: rh-0
+    offset: [0, 0, -20]
 case:
   rear-housing:
     include: true
