@@ -804,8 +804,9 @@ wrist-rest:
       - position: [0, 32]
         alias: plinth-left
       - position: [20, 40]
-        alias: plinth-middle
+        alias: plinth-mid0
       - position: [35, 38]
+        alias: plinth-mid1
       - position: [41, 50]
       - position: [50, 63]
       - position: [68, 62]
@@ -837,7 +838,7 @@ wrist-rest:
     inset: 10
     diameter: 12
     positions:
-    - anchor: plinth-middle
+    - anchor: plinth-mid0
       offset: [0, -10]
     - anchor: plinth-right
       offset: [-5, -10]
@@ -845,7 +846,7 @@ wrist-rest:
     include: true
     inset: 2
     fastener-positions:
-    - anchor: plinth-middle
+    - anchor: plinth-mid0
       offset: [0, -3]
     - anchor: plinth-near
       offset: [3, 3]

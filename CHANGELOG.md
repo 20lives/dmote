@@ -6,8 +6,9 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 ## [Unreleased]
 ### Changed
 - Secondary aliases (`secondaries`) are now a map and case `tweaks` are
-  likewise nested underneath a layer of names. Both of these changes add power
-  to the configuration layer, reducing the need for duplication of data.
+  likewise nested underneath a layer of names. Both of these structural
+  changes add power to the configuration layer, reducing the need for
+  duplication of data.
 - Moved bundled YAML.
     - The entire `resources/opt` folder is now at `config`.
     - Most of `resources/opt/default.yaml` has been renamed (to
@@ -25,6 +26,12 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Replaced the nut boss in an MCU lock bolt with printed threading of the hole.
 
 ### Added
+- A new implementation of the `solid` style of wrist rest attachment,
+  with a bundled example configuration powered by the new structure of
+  `secondaries` and case `tweaks`. In the example, the case and wrist rest
+  are one piece of plastic. In a previous implementation, removed in version
+  0.3.0, the two were separate pieces that snapped together, which put more
+  requirements on the shape of the case and was not useful enough.
 - A new DFM parameter, `fastener-plate-offset`, for tighter holes through
   bottom plates.
 - A primitive means of combining YAML files by passing them as targets to Make.
@@ -128,7 +135,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       to `wrist-rest` → `shape` → `pad` → `surface` → `heightmap` → `filepath`.
     - Substantial changes to `wrist-rest` → `fasteners`, which has been castled
       to `wrist-rest` → `mounts` and is now a list.
-- Removed the `solid` style of wrist rest attachment.
+- Removed the implementation of the `solid` style of wrist rest attachment.
+  This was reimplemented in version 0.5.0.
 - Removed the option `wrist-rest` → `fasteners` → `mounts` → `plinth-side` →
   `pocket-scale`, obviated by a new generic `dfm` feature.
 - Renamed the ‘finger’ key cluster to ‘main‘.

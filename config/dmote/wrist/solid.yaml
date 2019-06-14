@@ -1,0 +1,117 @@
+# Configuration fragment for a solid bridge between case and wrist rest.
+
+secondaries:
+  wrb-case:
+    anchor: m03
+    corner: SSE
+    segment: 3
+    offset: [-16, 0, -10]
+  wrb-rest:
+    anchor: plinth-left
+    offset: [0, 0, -3]
+  wrb1a:
+    anchor: wrb-case
+  wrb1b:
+    anchor: wrb1a
+    offset: [10, 0, 8]
+  wrb1c:
+    anchor: wrb1a
+    offset: [20, 0, 8]
+  wrb1d:
+    anchor: wrb1a
+    offset: [30, 0, 0]
+  wrb2a:
+    anchor: wrb1a
+    offset: [5, -15, 0]
+  wrb2b:
+    anchor: wrb1b
+    offset: [2, -15, -5]
+  wrb2c:
+    anchor: wrb1c
+    offset: [-2, -15, -5]
+  wrb2d:
+    anchor: wrb1d
+    offset: [-5, -15, 0]
+  wrb3a:
+    anchor: wrb2a
+    offset: [0, -25, 0]
+  wrb3b:
+    anchor: wrb2b
+    offset: [0, -25, 0]
+  wrb3c:
+    anchor: wrb2c
+    offset: [0, -25, 0]
+  wrb3d:
+    anchor: wrb2d
+    offset: [0, -25, 0]
+  wrb4a:
+    anchor: wrb1a
+    offset: [0, -55, 0]
+  wrb4b:
+    anchor: wrb1b
+    offset: [0, -55, 0]
+  wrb4c:
+    anchor: wrb1c
+    offset: [0, -55, 0]
+  wrb4d:
+    anchor: wrb1d
+    offset: [0, -55, 0]
+  wrb5b:
+    anchor: wrb4b
+    offset: [0, -10, 0]
+  wrb5c:
+    anchor: wrb4c
+    offset: [0, -10, 0]
+case:
+  tweaks:
+    wrist-rest-bridge-case:
+      - chunk-size: 2
+        at-ground: true
+        hull-around:
+        - hull-around:
+          - [wrb1a]
+          - [wrb1b]
+          - [wrb1c]
+          - [wrb1d]
+        - hull-around:
+          - [wrb2a]
+          - [wrb2b]
+          - [wrb2c]
+          - [wrb2d]
+    wrist-rest-bridge-middle:
+      - chunk-size: 2
+        at-ground: true
+        hull-around:
+        - hull-around:
+          - [wrb2a]
+          - [wrb2b]
+          - [wrb2c]
+          - [wrb2d]
+        - hull-around:
+          - [wrb3a]
+          - [wrb3b]
+          - [wrb3c]
+          - [wrb3d]
+    wrist-rest-bridge-rest:
+      - chunk-size: 2
+        at-ground: true
+        hull-around:
+        - hull-around:
+          - [wrb3a]
+          - [wrb3b]
+          - [wrb3c]
+          - [wrb3d]
+        - hull-around:
+          - [wrb4a]
+          - [wrb4b]
+          - [wrb4c]
+          - [wrb4d]
+        - hull-around:
+          - [wrb-rest]
+          - [plinth-mid0]
+          - [plinth-mid1]
+          - [wrb5b]
+          - [wrb5c]
+wrist-rest:
+  include: true
+  style: solid

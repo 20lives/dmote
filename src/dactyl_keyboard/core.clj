@@ -52,11 +52,24 @@
   (println)
   (println "This document was generated from the application CLI."))
 
+(defn build-plinth-right
+  "Right-hand-side non-preview wrist-rest plinth model."
+  [getopt]
+  (maybe/difference
+    (maybe/union
+      (body/mask getopt (getopt :wrist-rest :bottom-plate :include)
+        (wrist/plinth-plastic getopt))
+      (bottom/wrist-anchors-positive getopt)
+      (when (and (getopt :wrist-rest :preview)
+                 (getopt :wrist-rest :bottom-plate :include))
+        (bottom/wrist-positive getopt)))
+    (when (getopt :wrist-rest :bottom-plate :include)
+      (bottom/wrist-negative getopt))))
+
 (defn- masked-inner-positive
   "Parts of the keyboard that are subject to a mask and all negatives."
   [getopt]
   (body/mask getopt (getopt :case :bottom-plate :include)
-    ;; The innermost positives, subject to the mask and all negatives:
     (key/metacluster key/cluster-plates getopt)
     (key/metacluster body/cluster-web getopt)
     (key/metacluster body/cluster-wall getopt)
@@ -85,6 +98,11 @@
                (getopt :wrist-rest :preview))
       (body/mask getopt (getopt :wrist-rest :include)
         (wrist/unified-preview getopt)))
+    (when (and (getopt :wrist-rest :include)
+               (not (getopt :wrist-rest :preview))
+               (= (getopt :wrist-rest :style) :solid))
+      (body/mask getopt (getopt :wrist-rest :include)
+        (build-plinth-right getopt)))
     (when (and (getopt :case :bottom-plate :include)
                (getopt :case :bottom-plate :preview))
       (if (and (getopt :wrist-rest :include)
@@ -141,20 +159,6 @@
                (getopt :mcu :support :preview))
       (aux/mcu-lock-bolt getopt))))
 
-(defn build-plinth-right
-  "Right-hand-side non-preview wrist-rest plinth model."
-  [getopt]
-  (maybe/difference
-    (maybe/union
-      (body/mask getopt (getopt :wrist-rest :bottom-plate :include)
-        (wrist/plinth-plastic getopt))
-      (bottom/wrist-anchors-positive getopt)
-      (when (and (getopt :wrist-rest :preview)
-                 (getopt :wrist-rest :bottom-plate :include))
-        (bottom/wrist-positive getopt)))
-    (when (getopt :wrist-rest :bottom-plate :include)
-      (bottom/wrist-negative getopt))))
-
 (defn build-rubber-casting-mould-right
   "A thin shell that fits on top of the right-hand-side wrist-rest model.
   This is for casting silicone into, “in place”. If the wrist rest has
@@ -167,7 +171,9 @@
     (model/difference
       (wrist/mould-polyhedron getopt)
       (wrist/unified-preview getopt)
-      (bottom/wrist-anchors-positive getopt))))
+      (bottom/wrist-anchors-positive getopt)
+      (when (= (getopt :wrist-rest :style) :solid)
+        (body/wall-tweaks getopt)))))
 
 (defn build-rubber-pad-right
   "Right-hand-side wrist-rest pad model. Useful in visualization and
@@ -178,7 +184,9 @@
     (maybe/difference
       (body/mask getopt (getopt :wrist-rest :bottom-plate :include)
         (wrist/rubber-insert-positive getopt))
-      (bottom/wrist-anchors-positive getopt))))
+      (bottom/wrist-anchors-positive getopt)
+      (when (= (getopt :wrist-rest :style) :solid)
+        (body/wall-tweaks getopt)))))
 
 (defn- collect-anchors
   "Gather names and properties for the placement of keyboard features relative
@@ -335,7 +343,8 @@
                   "bottom_plate_anchor_positive")]
       :model-precursor build-rubber-pad-right
       :chiral true})
-   (when (getopt :wrist-rest :include)
+   (when (and (getopt :wrist-rest :include)
+              (not (= (getopt :wrist-rest :style) :solid)))
      {:name "wrist-rest-main"
       :modules [(when (getopt :case :bottom-plate :include)
                   "bottom_plate_anchor_positive")

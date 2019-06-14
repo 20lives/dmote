@@ -278,7 +278,8 @@
    [:parameter [:case :bottom-plate :combine]
     {:default false :parse-fn boolean}
     "If `true`, combine wrist rests for the case and the bottom plate into a "
-    "single model, when both are enabled."]
+    "single model, when both are enabled. This is typically used with the "
+    "`solid` style of wrest rest."]
    [:parameter [:case :bottom-plate :thickness]
     {:default 1 :parse-fn num}
     "The thickness (i.e. height) in mm of all bottom plates you choose to "
@@ -615,8 +616,8 @@
     {:default :threaded :parse-fn keyword :validate [::schema/wrist-rest-style]}
     "The style of the wrist rest. Available styles are:\n\n"
     "- `threaded`: threaded fasteners connect the case and wrist rest.\n"
-    "- `solid`: the case and wrist rest are one piece. This option is a work "
-    "in progress."]
+    "- `solid`: the case and wrist rest are joined together by `tweaks` "
+    "as a single piece of plastic."]
    [:parameter [:wrist-rest :preview]
     {:default false :parse-fn boolean}
     "Preview mode. If `true`, this puts a model of the wrist rest in the same "

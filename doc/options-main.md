@@ -212,7 +212,7 @@ Preview mode. If `true`, put a model of the plate in the same file as the case i
 
 #### Parameter `combine`
 
-If `true`, combine wrist rests for the case and the bottom plate into a single model, when both are enabled.
+If `true`, combine wrist rests for the case and the bottom plate into a single model, when both are enabled. This is typically used with the `solid` style of wrest rest.
 
 #### Parameter `thickness`
 
@@ -548,7 +548,7 @@ If `true`, include a wrist rest with the keyboard.
 The style of the wrist rest. Available styles are:
 
 - `threaded`: threaded fasteners connect the case and wrist rest.
-- `solid`: the case and wrist rest are one piece. This option is a work in progress.
+- `solid`: the case and wrist rest are joined together by `tweaks` as a single piece of plastic.
 
 ### Parameter `preview`
 
