@@ -34,7 +34,10 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   requirements on the shape of the case and was not useful enough.
 - A new DFM parameter, `fastener-plate-offset`, for tighter holes through
   bottom plates.
+- A new bundled configuration fragment, `config/dmote/mx.yaml`, imposing
+  MX-style switches on the DMOTE.
 - A primitive means of combining YAML files by passing them as targets to Make.
+  This does not work as intended and may be removed in future.
 
 ### Fixed
 - Corrected placement of wrist-rest fastener anchors for the thickness of the
