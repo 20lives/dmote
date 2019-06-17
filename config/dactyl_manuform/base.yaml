@@ -7,16 +7,337 @@
 # - No internal shelf for the MCU.
 # - No USB A.
 # - No wire hooks.
+# - Incomplete support for switch mounting plates other than 1 u.
+# - Bottom plating does not project from screw anchors.
+# - Connection socket walls are too thick because they’re not configurable
+#   independently of web thickness.
 
-# This is nowhere near complete even for the DMOTE v0.4.0 feature set.
-
+keys:
+  styles:
+    default:  # Rough approximation of SA family.
+      style: maquette
+      switch-type: mx
+      skirt-length: 5.75
+      top-size: [12.7, 12.7, 6]
+    big:
+      style: maquette
+      switch-type: mx
+      skirt-length: 5.75
+      top-size: [12.7, 20, 6]
+      unit-size: [1, 1.5]
+key-clusters:
+  main:
+    position:
+      anchor: origin
+      # Drop z to 8.5 to match upstream STL; it doesn’t rise for bottom plating.
+      offset: [0, 0, 9.7]
+    matrix-columns:
+    - rows-above-home: 1
+      rows-below-home: 1
+    - rows-above-home: 1
+      rows-below-home: 1
+    - rows-above-home: 1
+      rows-below-home: 2
+    - rows-above-home: 1
+      rows-below-home: 2
+    - rows-above-home: 1
+      rows-below-home: 1
+    aliases:
+      m00: [0, first]
+      m01: [1, first]
+      m02: [2, first]
+      m03: [3, first]
+      back0: [0, last]
+      back1: [1, last]
+      back2: [2, last]
+      right0: [last, 0]
+  thumb0:
+    position:
+      anchor: m00
+      offset: [1, -27, -6.5]
+    matrix-columns:
+    - rows-above-home: 0
+    - rows-above-home: 0
+    aliases:
+      thumb-tr: [1, 0]  # Top right.
+      thumb-tl: [0, 0]
+  thumb1:
+    position:
+      anchor: thumb-tl
+      offset: [3.5, -25, -14]
+    matrix-columns:
+    - rows-above-home: 1
+    - rows-above-home: 1
+    aliases:
+      thumb-mr: [1, 0]
+      thumb-ml: [1, 1]
+      thumb-br: [0, 0]
+      thumb-bl: [0, 1]
+by-key:
+  parameters:
+    layout:
+      matrix:
+        separation:
+          column: 2.5
+          row: 1
+    wall:
+      thickness: 2
+      north:
+        parallel: 5
+        perpendicular: -15
+      east:
+        parallel: 5
+        perpendicular: -15
+      south:
+        parallel: 5
+        perpendicular: -15
+      west:
+        parallel: 5
+        perpendicular: -15
+  clusters:
+    main:
+      parameters:
+        layout:
+          matrix:
+            neutral:
+              column: 3
+          pitch:
+            base: 0
+            progressive: 0.28
+          roll:
+            base: 0.2618
+            progressive: 0.09
+      columns:
+        first:
+          parameters:
+            layout:
+              matrix:
+                separation:
+                  column: 1.5
+            wall:
+              south:
+                extent: 0
+              west:
+                parallel: 8
+                perpendicular: -9
+        "1":
+          parameters:
+            layout:
+              matrix:
+                separation:
+                  column: 1.5
+            wall:
+              south:
+                extent: 0
+        "2":
+          parameters:
+            layout:
+              translation:
+                mid: [0, 2.82, -4.5]
+            wall:
+              west:
+                extent: 0
+              south:
+                extent: 0
+        "4":
+          parameters:
+            layout:
+              translation:
+                late: [0, -12, 5.64]
+    thumb0:
+      parameters:
+        key-style: big
+        layout:
+          pitch:
+            base: 0.1745
+          roll:
+            base: -0.4014
+          yaw:
+            base: 0.1745
+        wall:
+          north:
+            extent: 0
+          east:
+            extent: 0
+          south:
+            extent: 0
+          west:
+            extent: 0
+      columns:
+        first:
+          parameters:
+            layout:
+              roll:
+                intrinsic: 0
+              yaw:
+                intrinsic: 0
+        last:
+          parameters:
+            layout:
+              translation:
+                late: [3, -4, -2.2]
+    thumb1:
+      parameters:
+        layout:
+          matrix:
+            neutral:
+              column: 1
+            separation:
+              column: 1
+          pitch:
+            base: -0.02
+          roll:
+            base: -0.59
+          yaw:
+            base: 0.94
+        wall:
+          east:
+            extent: 0
+      columns:
+        first:
+          rows:
+            first:
+              parameters:
+                layout:
+                  pitch:
+                    intrinsic: -0.26
+                  translation:
+                    early: [0, -2, 1.7]
+            last:
+              parameters:
+                layout:
+                  pitch:
+                    intrinsic: -0.05
+                  translation:
+                    early: [-1, 1, 5.2]
+        last:
+          rows:
+            first:
+              parameters:
+                layout:
+                  pitch:
+                    intrinsic: -0.1
+                  yaw:
+                    intrinsic: -0.06
+                  translation:
+                    early: [1.5, 0, 2.7]
+            last:
+              parameters:
+                layout:
+                  yaw:
+                    intrinsic: -0.2
+                  translation:
+                    early: [0.6, 8, 4.5]
 case:
+  key-mount-thickness: 4
+  key-mount-corner-margin: 1.5
+  web-thickness: 3.5
   bottom-plate:
     include: true
     installation:
       style: inserts
+      thickness: 1.2
       inserts:
         diameter:
           top: 5.1
           bottom: 5.31
         length: 3.8
+      fasteners:
+        diameter: 3  # Speculation; Dactyl-ManuForm may have used non-metric.
+        length: 6
+        positions:
+        - anchor: m00
+          corner: WSW
+          offset: [-3, -7]
+        - anchor: back0
+          corner: WSW
+          offset: [0, 6]
+        - anchor: back2
+          corner: NNE
+          offset: [13.5, -3]
+        - anchor: m02
+          corner: SSE
+          offset: [-6, -2]
+        - anchor: right0
+          corner: ESE
+          offset: [-1, 10]
+  tweaks:
+    webbing:
+      - chunk-size: 3
+        hull-around:  # Between the two thumb clusters.
+        - [thumb-tl, WNW]
+        - [thumb-ml, ENE]
+        - [thumb-tl, WSW]
+        - [thumb-ml, ESE]
+        - [thumb-tl, SSE]
+        - [thumb-mr, ENE]
+        - [thumb-tr, SSW]
+        - [thumb-mr, SSE]
+        - [thumb-tr, SSE]
+      - chunk-size: 3
+        hull-around:  # Between thumb0 and the main cluster.
+        - [thumb-tl, NNW]
+        - [m00, SSW]
+        - [thumb-tl, NNE]
+        - [m00, SSE]
+        - [thumb-tr, NNW]
+        - [m01, SSW]
+        - [thumb-tr, NNE]
+        - hull-around:
+          - [m01, SSE]
+          - [m02, WNW]
+        - [thumb-tr, ENE]
+        - hull-around:
+          - [m02, WNW]
+          - [m02, WSW]
+        - [thumb-tr, ESE]
+        - [m02, SSW]
+        - hull-around:
+          - [m02, SSE]
+          - [m03, WSW]
+    to-floor:
+      - at-ground: true
+        hull-around:
+        - [m00, WSW, 3, 4]
+        - [thumb-ml, NNE, 3, 4]
+      - at-ground: true
+        chunk-size: 2
+        hull-around:
+        - [thumb-mr, SSE, 3, 4]
+        - [thumb-tr, SSE, 3, 4]
+        - [m03, SSW, 3, 4]
+    thumb-to-finger-gap:
+      - hull-around:
+        - [m00, WSW, 0, 4]
+        - [thumb-tl, WNW]
+        - [thumb-ml, NNE, 0, 4]
+      - chunk-size: 2
+        hull-around:
+        - [thumb-mr, SSE, 0, 4]
+        - [thumb-tr, SSE, 0, 4]
+        - [m03, SSW, 0, 4]
+mcu:
+  type: promicro
+  margin: 0.25
+  position:
+    prefer-rear-housing: true
+    anchor: back0
+    corner: NNE
+    offset: [1, 0, 2]
+  support:
+    style: stop
+    height-factor: 0.45
+    lateral-spacing: 2.5
+    stop:
+      anchor: m00
+      direction: north
+      gripper:
+        notch-depth: 0.4
+        total-depth: 5
+        grip-width: 0.6
+connection:
+  socket-size: [10.78, 9, 18.38]
+  position:
+    anchor: back0
+    corner: NNE
+    offset: [-9, 2, 0]

@@ -36,6 +36,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   bottom plates.
 - A new bundled configuration fragment, `config/dmote/mx.yaml`, imposing
   MX-style switches on the DMOTE.
+- More features added to `config/dactyl_manuform/base.yaml`,
+  reconstructing part of the classic upstream shape as a configuration.
 - A primitive means of combining YAML files by passing them as targets to Make.
   This does not work as intended and may be removed in future.
 
