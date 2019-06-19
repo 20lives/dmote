@@ -3,7 +3,7 @@
 ;; Auxiliary Features                                                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(ns dactyl-keyboard.cad.aux
+(ns dactyl-keyboard.cad.auxf
   (:require [scad-clj.model :exclude [use import] :refer :all]
             [scad-tarmi.core :refer [π]]
             [scad-tarmi.maybe :as maybe]

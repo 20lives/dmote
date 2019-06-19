@@ -42,6 +42,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   This does not work as intended and may be removed in future.
 
 ### Fixed
+- Renamed a file (from `aux` to `auxf`) to work around file system
+  restrictions inherited from MS DOS into current versions of Windows.
 - Corrected placement of wrist-rest fastener anchors for the thickness of the
   bottom plate.
 - Fixed a bad function call for `stop`-style MCU support.

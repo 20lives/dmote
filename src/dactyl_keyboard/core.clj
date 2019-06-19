@@ -21,7 +21,7 @@
             [dactyl-keyboard.param.tree.cluster]
             [dactyl-keyboard.param.tree.nested]
             [dactyl-keyboard.param.tree.main]
-            [dactyl-keyboard.cad.aux :as aux]
+            [dactyl-keyboard.cad.auxf :as auxf]
             [dactyl-keyboard.cad.body :as body]
             [dactyl-keyboard.cad.bottom :as bottom]
             [dactyl-keyboard.cad.key :as key]
@@ -77,16 +77,16 @@
                (= (getopt :wrist-rest :style) :threaded))
       (wrist/all-case-blocks getopt))
     (when (= (getopt :mcu :support :style) :stop)
-      (aux/mcu-stop getopt))
-    (aux/connection-positive getopt)
+      (auxf/mcu-stop getopt))
+    (auxf/connection-positive getopt)
     (when (getopt :case :back-plate :include)
-      (aux/backplate-block getopt))
+      (auxf/backplate-block getopt))
     (when (getopt :case :rear-housing :include)
       (body/rear-housing getopt))
     (body/wall-tweaks getopt)
     (when (getopt :case :bottom-plate :include)
       (bottom/case-anchors-positive getopt))
-    (aux/foot-plates getopt)))
+    (auxf/foot-plates getopt)))
 
 (defn- midlevel-positive
   "Parts of the keyboard that go outside the mask but should still be subject
@@ -128,21 +128,21 @@
           ;; First-level negatives:
           (key/metacluster key/cluster-cutouts getopt)
           (key/metacluster key/cluster-channels getopt)
-          (aux/connection-negative getopt)
-          (aux/mcu-negative getopt)
-          (aux/mcu-alcove getopt)
+          (auxf/connection-negative getopt)
+          (auxf/mcu-negative getopt)
+          (auxf/mcu-alcove getopt)
           (when (= (getopt :mcu :support :style) :lock)
-            (aux/mcu-lock-sink getopt))
-          (when (getopt :case :leds :include) (aux/led-holes getopt))
+            (auxf/mcu-lock-sink getopt))
+          (when (getopt :case :leds :include) (auxf/led-holes getopt))
           (when (getopt :case :back-plate :include)
-            (aux/backplate-fastener-holes getopt))
+            (auxf/backplate-fastener-holes getopt))
           (when (and (getopt :wrist-rest :include)
                      (= (getopt :wrist-rest :style) :threaded))
             (wrist/all-fasteners getopt))
           (sandbox/negative getopt))
         ;; Outer positives, subject only to outer negatives:
         (when (= (getopt :mcu :support :style) :lock) ; Outside the alcove.
-          (aux/mcu-lock-fixture-composite getopt)))
+          (auxf/mcu-lock-fixture-composite getopt)))
       ;; Outer negatives:
       (when (getopt :case :bottom-plate :include)
         (bottom/case-negative getopt))
@@ -154,10 +154,10 @@
     (when (getopt :keys :preview)
       (key/metacluster key/cluster-keycaps getopt))
     (when (getopt :mcu :preview)
-      (aux/mcu-visualization getopt))
+      (auxf/mcu-visualization getopt))
     (when (and (= (getopt :mcu :support :style) :lock)
                (getopt :mcu :support :preview))
-      (aux/mcu-lock-bolt getopt))))
+      (auxf/mcu-lock-bolt getopt))))
 
 (defn build-rubber-casting-mould-right
   "A thin shell that fits on top of the right-hand-side wrist-rest model.
@@ -209,7 +209,7 @@
    [[:key-clusters] key/derive-cluster-properties]
    [[] collect-anchors]
    [[:case :rear-housing] body/housing-properties]
-   [[:mcu] aux/derive-mcu-properties]
+   [[:mcu] auxf/derive-mcu-properties]
    [[:wrist-rest] wrist/derive-properties]])
 
 (defn derivers-dynamic
@@ -327,7 +327,7 @@
     :chiral true}
    (when (= (getopt :mcu :support :style) :lock)
      {:name "mcu-lock-bolt"
-      :model-precursor aux/mcu-lock-bolt
+      :model-precursor auxf/mcu-lock-bolt
       :rotation [(/ π 2) 0 0]})
    ;; Wrist rest:
    (when (getopt :wrist-rest :include)
