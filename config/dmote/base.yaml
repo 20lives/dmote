@@ -449,9 +449,6 @@ secondaries:
     anchor: rear-housing
     corner: ESE
     segment: 1
-    offset: [0.75, -0.75, 0]
-  rh-1:
-    anchor: rh-0
     offset: [0, 0, -20]
 case:
   rear-housing:
@@ -700,11 +697,10 @@ case:
       # strengthen the transition to the rear housing.
       - chunk-size: 3
         hull-around:
-        - [rh-0]
-        - [rh-1]
+        - [rear-housing, ESE, 1]
         - [m10, ENE, 1]
         - [a0, WNW]
-        - [m10, ESE, 0, 1]
+        - [m10, ESE]
         - [a0, WSW]
         - [m12, NNW, 0, 1]
         - [a0, SSE, 0, 1]
@@ -725,7 +721,7 @@ case:
         chunk-size: 2
         hull-around:
         - [rear-housing, ESE, 1]
-        - [rh-1]  # A shim to align the plate with the housing wall.
+        - [m10, ENE, 1]
         - [a0, WNW, 0, 1]
         - [a0, NNW, 0, 1]
         - [a1, NNE, 0, 1]
@@ -765,11 +761,11 @@ mcu:
     prefer-rear-housing: true
     anchor: back1
     corner: ENE
-    offset: [-1, 0, 2]
+    offset: [0, 0, 2]
   support:
     style: lock
     height-factor: 0.45
-    lateral-spacing: 2.5
+    lateral-spacing: 0.9
     lock:
       fastener:
         diameter: 4
@@ -794,6 +790,7 @@ connection:
     anchor: back1
     corner: ENE
     raise: true
+    offset: [0, 0, -1]
 wrist-rest:
   position:
     offset: [83, -90]

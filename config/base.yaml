@@ -27,6 +27,8 @@ by-key:
 case:
   key-mount-thickness: 2.5
   web-thickness: 2.5
+  rear-housing:
+    wall-thickness: 2.5
 resolution:
   include: true
 dfm:

@@ -77,6 +77,14 @@ The furthest row of a key cluster can be extended into a rear housing for the MC
 
 If `true`, add a rear housing. Please arrange case walls so as not to interfere, by removing them along the far side of the last row of key mounts in the indicated cluster.
 
+#### Parameter `wall-thickness`
+
+The horizontal thickness in mm of the walls.
+
+#### Parameter `roof-thickness`
+
+The vertical thickness in mm of the flat top.
+
 #### Section `position`
 
 Where to put the rear housing. By default, it sits all along the far side of the `main` cluster but has no depth.
@@ -501,15 +509,19 @@ The width of a protrusion on each side of the notch.
 
 ## Section `connection`
 
-Because the DMOTE is split, there must be a signalling connection between its two halves. This section adds a socket for that purpose. For example, this might be a type 616E female for a 4P4C “RJ9” plug.
+There must be a signalling connection between the two halves of a split keyboard. This section adds a “metasocket” (i.e. room for a socket) for that purpose. For example, the socket might be a type 616E female for a 4P4C “RJ9” plug, in which case the metasocket has to fit around the 616E.
 
 ### Parameter `socket-size`
 
-The size of a hole in the case, for the female to fit into.
+The size of a hole in the case, for the female to fit into. This assumes a cuboid socket. For a socket of a different shape, design an adapter separately.
+
+### Parameter `socket-thickness`
+
+The thickness in mm of the roof, walls and floor of the metasocket, i.e. around the hole in the case.
 
 ### Section `position`
 
-Where to place the socket. Equivalent to `connection` → `mcu`.
+Where to place the socket. Equivalent to `mcu` → `position`.
 
 #### Parameter `prefer-rear-housing`
 

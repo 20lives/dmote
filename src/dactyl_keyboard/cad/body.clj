@@ -170,9 +170,15 @@
 ;; Rear Housing ;;
 ;;;;;;;;;;;;;;;;;;
 
-(defn- housing-cube [getopt]
-  (let [t (getopt :case :web-thickness)]
-   (cube t t t)))
+(defn- housing-post [getopt]
+  (let [xy (getopt :case :rear-housing :wall-thickness)]
+    (cube xy xy (getopt :case :rear-housing :roof-thickness))))
+
+(defn- housing-height
+  "The precise height of (the center of) each top-level housing-post."
+  [getopt]
+  (- (getopt :case :rear-housing :height)
+     (/ (getopt :case :rear-housing :roof-thickness) 2)))
 
 (defn housing-properties
   "Derive characteristics from parameters for the rear housing."
@@ -188,7 +194,7 @@
         getoffset (partial getopt :case :rear-housing :position :offsets)
         y-roof-s (+ y-max (getoffset :south))
         y-roof-n (+ y-roof-s (getoffset :north))
-        z (getopt :case :rear-housing :height)
+        z (housing-height getopt)
         roof-sw [(- (first (getpos (first pairs))) (getoffset :west)) y-roof-s z]
         roof-se [(+ (first (getpos (last pairs))) (getoffset :east)) y-roof-s z]
         roof-nw [(first roof-sw) y-roof-n z]
@@ -207,7 +213,7 @@
   [getopt]
   (let [getcorner (partial getopt :case :rear-housing :derived)]
     (apply hull
-      (map #(maybe/translate (getcorner %) (housing-cube getopt))
+      (map #(maybe/translate (getcorner %) (housing-post getopt))
            [:nw :ne :se :sw]))))
 
 (defn housing-pillar-functions
@@ -243,7 +249,7 @@
                             [(first directions)
                              (matrix/left (matrix/left (second directions)))]
                             directions))
-                        (housing-cube getopt))]
+                        (housing-post getopt))]
                 (apply (if reckon mean hull)
                   (map #(place/housing-place getopt directions % subject)
                        (if upper [0 1] [1]))))))]
@@ -288,7 +294,7 @@
                  (min (first (pos-corner coord corner))
                       (first se))))
         y (second sw)
-        z (getopt :case :rear-housing :height)]
+        z (housing-height getopt)]
    (loft
      (reduce
        (fn [coll [coord corner]]
@@ -296,7 +302,7 @@
            (hull (place/cluster-place getopt cluster coord
                    (key/mount-corner-post getopt corner))
                  (translate [(x coord corner) y z]
-                   (housing-cube getopt)))))
+                   (housing-post getopt)))))
        []
        (getopt :case :rear-housing :derived :coordinate-corner-pairs)))))
 
@@ -304,7 +310,7 @@
   (let [d (getopt :case :rear-housing :fasteners :diameter)
         offset (getopt :case :rear-housing :fasteners side :offset)
         n (getopt :case :rear-housing :position :offsets :north)
-        t (getopt :case :web-thickness)
+        t (getopt :case :rear-housing :roof-thickness)
         h (threaded/datum d :hex-nut-height)
         [sign base] (case side
                       :west [+ (getopt :case :rear-housing :derived :sw)]
@@ -354,12 +360,18 @@
 ;;;;;;;;;;;;;;;;;;;
 
 (defn- tweak-posts
-  "(The hull of) one or more corner posts from a single key mount."
-  [getopt alias directions first-segment last-segment]
+  "(The hull of) one or more corner posts from a single key mount.
+  For a tweak anchored to the rear housing, use its dimensions for the post.
+  Otherwise use a web post."
+  [getopt anchor directions first-segment last-segment]
   (if (= first-segment last-segment)
-    (place/reckon-from-anchor getopt alias
-      {:subject (key/web-post getopt), :corner directions, :segment first-segment})
-    (apply hull (map #(tweak-posts getopt alias directions %1 %1)
+    (place/reckon-from-anchor getopt anchor
+      {:subject (if (= anchor :rear-housing)
+                  (housing-post getopt)
+                  (key/web-post getopt))
+       :corner directions
+       :segment first-segment})
+    (apply hull (map #(tweak-posts getopt anchor directions %1 %1)
                      (range first-segment (inc last-segment))))))
 
 (declare tweak-plating)

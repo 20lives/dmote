@@ -150,6 +150,12 @@
     "If `true`, add a rear housing. Please arrange case walls so as not to "
     "interfere, by removing them along the far side of the last row of key "
     "mounts in the indicated cluster."]
+   [:parameter [:case :rear-housing :wall-thickness]
+    {:default 1 :parse-fn num}
+    "The horizontal thickness in mm of the walls."]
+   [:parameter [:case :rear-housing :roof-thickness]
+    {:default 1 :parse-fn num}
+    "The vertical thickness in mm of the flat top."]
    [:section [:case :rear-housing :position]
     "Where to put the rear housing. By default, it sits all along the far "
     "side of the `main` cluster but has no depth."]
@@ -584,14 +590,22 @@
     {:default 1 :parse-fn num}
     "The width of a protrusion on each side of the notch."]
    [:section [:connection]
-    "Because the DMOTE is split, there must be a signalling connection "
-    "between its two halves. This section adds a socket for that purpose. "
-    "For example, this might be a type 616E female for a 4P4C “RJ9” plug."]
+    "There must be a signalling connection between the two halves of a split "
+    "keyboard. This section adds a “metasocket” (i.e. room for a socket) "
+    "for that purpose. For example, the socket might be a type 616E female "
+    "for a 4P4C “RJ9” plug, in which case the metasocket has to fit around "
+    "the 616E."]
    [:parameter [:connection :socket-size]
     {:default [1 1 1] :parse-fn vec :validate [::tarmi-core/point-3d]}
-    "The size of a hole in the case, for the female to fit into."]
+    "The size of a hole in the case, for the female to fit into. "
+    "This assumes a cuboid socket. For a socket of a different shape, design "
+    "an adapter separately."]
+   [:parameter [:connection :socket-thickness]
+    {:default 1 :parse-fn num}
+    "The thickness in mm of the roof, walls and floor of the metasocket, "
+    "i.e. around the hole in the case."]
    [:section [:connection :position]
-    "Where to place the socket. Equivalent to `connection` → `mcu`."]
+    "Where to place the socket. Equivalent to `mcu` → `position`."]
    [:parameter [:connection :position :prefer-rear-housing]
     {:default true :parse-fn boolean}]
    [:parameter [:connection :position :anchor]

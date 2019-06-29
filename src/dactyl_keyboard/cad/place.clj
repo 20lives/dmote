@@ -418,11 +418,17 @@
         offset-nd (get opts :offset (take dimensions (repeat 0)))]
     (mapv + base-nd offset-nd)))
 
+(defn lateral-offset
+  "Produce a 3D vector for moving something laterally."
+  [getopt direction offset]
+  (let [{:keys [dx dy]} (matrix/compass-to-grid direction)]
+    [(* dx offset) (* dy offset) 0]))
+
 (defn into-nook
-  "Produce coordinates for translation into requested corner.
-  This has strict expectations but can place a feature in relation either
-  to the rear housing or a key, as requested by the user."
-  [getopt field lateral-shift]
+  "Produce coordinates for alignment with an anchor.
+  This has strict expectations and provides some special treatment for the
+  rear housing."
+  [getopt field]
   (let [corner (getopt field :position :corner)
         use-housing (and (getopt :case :rear-housing :include)
                          (getopt field :position :prefer-rear-housing))
@@ -432,12 +438,14 @@
             {:corner corner})
         to-nook
           (if use-housing
-            (let [{dxs :dx dys :dy} (matrix/compass-to-grid (second corner))]
-             [(* -1 dxs lateral-shift) (* -1 dys lateral-shift) 0])
+            ;; Pull the subject from the middle of the rear-housing wall
+            ;; to perfect alignment with the outside of that wall.
+            (lateral-offset getopt (first corner)
+              (/ (getopt :case :rear-housing :wall-thickness) 2))
             ;; Else don’t bother.
             [0 0 0])
         offset (getopt field :position :offset)]
-   (mapv + (misc/z0 general) to-nook offset)))
+    (mapv + (misc/z0 general) to-nook offset)))
 
 (defn wrist-module-placer
   "Produce a function that places a named module in relation to a named inset

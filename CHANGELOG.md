@@ -22,10 +22,16 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       This makes for quicker previews and easier printing.
     - Switched from flat to conical points for bottom-plate fasteners, just
       so the holes are easier to slice without getting interior supports.
-    - Minor tweaks, like renaming the `maquette-dsa` style to `default`.
+    - Minor tweaks, like renaming the `maquette-dsa` style to `default`
+      and removing a secondary anchor obviated by new controls for rear-housing
+      post thickness.
 - Replaced the nut boss in an MCU lock bolt with printed threading of the hole.
 
 ### Added
+- More finely grained control for dimensions previously governed by general
+  case webbing thickness.
+    - New parameters for rear-housing wall and roof thickness.
+    - A new parameter for connection socket wall thickness.
 - A new implementation of the `solid` style of wrist rest attachment,
   with a bundled example configuration powered by the new structure of
   `secondaries` and case `tweaks`. In the example, the case and wrist rest
@@ -47,6 +53,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Corrected placement of wrist-rest fastener anchors for the thickness of the
   bottom plate.
 - Fixed a bad function call for `stop`-style MCU support.
+- The configured height of the rear housing is now its actual height, not the
+  centre height of the cuboids that make up its corners.
 
 ### Developer
 - In the interest of versatility, the Clojure code no longer refers to any YAML

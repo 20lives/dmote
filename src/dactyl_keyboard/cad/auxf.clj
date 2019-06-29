@@ -48,25 +48,46 @@
 (defn mcu-position
   "Transform passed shape into the reference frame for an MCU holder."
   [getopt shape]
-  (let [corner (getopt :mcu :position :corner)
-        z (getopt :mcu :derived :pcb :width)]
+  (let [use-housing (and (getopt :case :rear-housing :include)
+                         (getopt :mcu :position :prefer-rear-housing))
+        corner (getopt :mcu :position :corner)
+        z (getopt :mcu :derived :pcb :width)
+        lateral-shim
+          (place/lateral-offset getopt (second corner)
+            (apply +
+              (remove nil?
+                [(when use-housing
+                   1)  ; Compensate for housing wall segment 1 displacement.
+                 (when use-housing
+                   (/ (getopt :case :rear-housing :wall-thickness) -2))
+                 (when use-housing
+                   (/ (getopt :mcu :derived :pcb :thickness) -2))
+                 (- (getopt :mcu :support :lateral-spacing))])))]
    (->>
      shape
-     ;; Arbitrary rotation. Not very useful for the MCU.
-     (maybe/rotate (getopt :mcu :position :rotation))
-     ;; Face the corner’s main direction.
-     (maybe/rotate [0 0 (- (matrix/compass-radians (first corner)))])
-     ;; Move to the requested corner.
-     (translate (place/into-nook getopt :mcu
-                  (getopt :mcu :support :lateral-spacing)))
-     (translate [0 0 (/ z 2)]))))
+     (translate
+       (place/lateral-offset getopt (second corner)
+         (- (getopt :mcu :derived :pcb :connector-overshoot))))
+     ;; Face the corner’s main direction, plus arbitrary rotation.
+     (maybe/rotate
+       (mapv +
+         (getopt :mcu :position :rotation)
+         [0 0 (- (matrix/compass-radians (first corner)))]))
+     (translate
+       (mapv +
+         ;; Move into the requested corner.
+         (place/into-nook getopt :mcu)
+         ;; Move away from a supporting wall, if any.
+         lateral-shim
+         ;; Raise above the floor.
+         [0 0 (/ z 2)])))))
 
 (defn mcu-model
   "A model of an MCU: PCB and integrated USB connector (if any).
   The orientation of the model is standing on the long edge, with the connector
-  side of the PCB facing “north” and centering at the origin of the local
-  cordinate system. The connector itself is placed on the “east” (positive x)
-  side."
+  side of the PCB facing “north” and the middle of the short edge of the PCB
+  centering at the origin of the local cordinate system. The connector itself
+  is placed on the “east” (positive x) side."
   [getopt include-margin connector-elongation]
   (let [data (partial getopt :mcu :derived)
         {pcb-x :thickness pcb-y :length pcb-z :width overshoot :connector-overshoot} (data :pcb)
@@ -184,21 +205,28 @@
 (defn mcu-lock-fasteners-model
   "Negative space for a bolt threading into an MCU lock."
   [getopt]
-  (let [head-type (getopt :mcu :support :lock :fastener :style)
+  (let [use-housing (and (getopt :case :rear-housing :include)
+                         (getopt :mcu :position :prefer-rear-housing))
+        head-type (getopt :mcu :support :lock :fastener :style)
         d (getopt :mcu :support :lock :fastener :diameter)
         l0 (threaded/head-height d head-type)
-        l1 (getopt :case :web-thickness)
+        l1 (if use-housing
+             (getopt :case :rear-housing :wall-thickness)
+             (getopt :case :web-thickness))
+        {pcb-x :thickness pcb-y :length} (getopt :mcu :derived :pcb)
         l2 (getopt :mcu :support :lateral-spacing)
-        y0 (getopt :mcu :derived :pcb :length)
         y1 (getopt :mcu :support :lock :bolt :mount-length)]
-   (rotate [0 (/ π -2) 0]
-     (translate [0 (- (+ y0 (/ y1 2))) (* 2 l2)]
-       (threaded/bolt
-         :iso-size d
-         :head-type head-type
-         :unthreaded-length (max 0 (- (+ l1 l2) l0))
-         :threaded-length (getopt :mcu :support :lock :bolt :mount-thickness)
-         :negative true)))))
+    (->>
+      (threaded/bolt
+        :iso-size d
+        :head-type head-type
+        :unthreaded-length (max 0 (- (+ l1 l2) l0))
+        :threaded-length (getopt :mcu :support :lock :bolt :mount-thickness)
+        :negative true)
+      (rotate [0 (/ π -2) 0])
+      (translate [(- (+ (/ pcb-x 2) l1 l2))
+                  (- (+ pcb-y (/ y1 2)))
+                  0]))))
 
 (defn mcu-lock-sink [getopt]
   (mcu-position getopt
@@ -361,33 +389,41 @@
 ;; Signalling ;;
 ;;;;;;;;;;;;;;;;
 
-(defn connection-position [getopt shape]
-  (let [use-housing (and (getopt :case :rear-housing :include)
+(defn connection-position
+  "Move the negative or positive of the connection metasocket into place."
+  [getopt shape]
+  (let [corner (getopt :connection :position :corner)
+        use-housing (and (getopt :case :rear-housing :include)
                          (getopt :connection :position :prefer-rear-housing))
         socket-size (getopt :connection :socket-size)
-        thickness (getopt :case :web-thickness)
-        alignment
-          ;; Line up with the (rear housing) wall and a metasocket base plate.
-          (case (getopt :connection :position :raise)
-            true
-              (mapv +
-                [0 (/ thickness 2) (- thickness)]
-                (mapv * [0 -0.5 -0.5] socket-size)
-                [0 0 (getopt :case :rear-housing :height)])
-            false
-              (mapv +
-                [0 (/ thickness 2) thickness]
-                (mapv * [0 -0.5 0.5] socket-size)))
-        corner (getopt :connection :position :corner)]
+        socket-depth-offset (/ (second socket-size) -2)
+        socket-height-offset (/ (nth socket-size 2) 2)
+        socket-thickness (getopt :connection :socket-thickness)
+        vertical-alignment
+          ;; Line up with a wall and a metasocket base plate.
+          (if (and use-housing (getopt :connection :position :raise))
+            ;; Raise socket to just below roof.
+            (- (getopt :case :rear-housing :height)
+               (max socket-thickness
+                    (getopt :case :rear-housing :roof-thickness))
+               socket-height-offset)
+            ;; Raise socket to just above floor.
+            (+ socket-thickness socket-height-offset))
+        shim
+          (if use-housing
+            (place/lateral-offset getopt (second corner)
+              (/ (first socket-size) -2))
+            [0 0 0])]
    (->> shape
-        (maybe/rotate (getopt :connection :position :rotation))
-        ;; Align with the wall (and perhaps the roof).
-        (translate alignment)
-        ;; Rotate to face the corner’s main direction.
-        (maybe/rotate [0 0 (- (matrix/compass-radians (first corner)))])
+        ;; Bring the face of the socket to the origin, at the right height.
+        (translate [0 socket-depth-offset vertical-alignment])
+        ;; Rotate as specified and to face out from the anchor.
+        (maybe/rotate
+          (mapv +
+            (getopt :connection :position :rotation)
+            [0 0 (- (matrix/compass-radians (first corner)))]))
         ;; Bring snugly to the requested corner.
-        (translate (place/into-nook getopt :connection
-                     (* 0.5 (+ thickness (first socket-size))))))))
+        (translate (mapv + shim (place/into-nook getopt :connection))))))
 
 (defn connection-metasocket
   "The shape of a holder in the case to receive a signalling socket component.
@@ -397,7 +433,7 @@
   ;; as a less fragile alternative or complement to a USB connector built into
   ;; the MCU.
   (let [socket-size (getopt :connection :socket-size)
-        thickness (getopt :case :web-thickness)
+        thickness (getopt :connection :socket-thickness)
         double (* thickness 2)]
    (translate [0 (/ thickness -2) 0]
      (apply cube (mapv + socket-size [double thickness double])))))
