@@ -374,33 +374,37 @@ A list describing the horizontal shape, size and position of each mounting plate
 
 This is short for ”micro-controller unit”. Each half has one.
 
+### Parameter `include`
+
+If `true`, build support for the MCU PCBA.
+
 ### Parameter `preview`
 
-If `true`, render a visualization of the MCU for use in development.
+If `true`, render a visualization of the MCU PCBA. For use in development.
 
 ### Parameter `type`
 
-A symbolic name for a commercial product. Currently, only `promicro` is supported, referring to any MCU with the dimensions of a SparkFun Pro Micro.
+A symbolic name for a commercial product. Currently, only `promicro` is supported, referring to any MCU PCBA with the dimensions of a SparkFun Pro Micro, including That-Canadian’s Elite-C.
 
 ### Parameter `margin`
 
-A general measurement in mm of extra space around each part of the MCU, including PCB and USB connector. This is applied to DMOTE components meant to hold the MCU in place, accounting for printing inaccuracy as well as inaccuracies in manufacturing the MCU.
+A general measurement in mm of extra space around each part of the PCBA, including PCB and USB connector. This is applied to DMOTE components meant to hold the PCBA in place, accounting for printing inaccuracy as well as inaccuracies in manufacturing the PCBA.
 
 ### Section `position`
 
-Where to place the MCU.
+Where to place the MCU PCBA.
 
 #### Parameter `prefer-rear-housing`
 
-If `true` and `rear-housing` is included, place the MCU in relation to the rear housing. Otherwise, place the MCU in relation to a named feature identified by `anchor`.
+If `true` and `rear-housing` is included, place the PCBA in relation to the rear housing. Otherwise, place the PCBA in relation to a named feature identified by `anchor`.
 
 #### Parameter `anchor`
 
-The name of a key at which to place the MCU if `prefer-rear-housing` is `false` or rear housing is not included.
+The name of a key at which to place the PCBA if `prefer-rear-housing` is `false` or rear housing is not included.
 
 #### Parameter `corner`
 
-A code for a corner of the `anchor` feature. This determines both the location and facing of the MCU.
+A code for a corner of the `anchor` feature. This determines both the location and facing of the PCBA.
 
 #### Parameter `offset`
 
@@ -408,7 +412,7 @@ A 3D offset in mm, measuring from the `corner`.
 
 #### Parameter `rotation`
 
-A vector of 3 angles in radians. This parameter governs the rotation of the MCU around its anchor point in the front. You would not normally need this for the MCU.
+A vector of 3 angles in radians. This parameter governs the rotation of the PCBA around its anchor point in the front. You would not normally need this for the PCBA.
 
 ### Section `support`
 
@@ -419,7 +423,7 @@ The support structure that holds the MCU PCBA in place.
 The style of the support. Available styles are:
 
 - `lock`: A separate physical object that is bolted in place over the MCU. This style is appropriate only with a rear housing, and then only when the PCB aligns with a long wall of that housing. It has the advantage that it can hug the connector on the PCB tightly, thus preventing a fragile surface-mounted connector from breaking off.
-- `stop`: A gripper that holds the MCU in place at its rear end. This gripper, in turn, is held up by key mount webbing and is thus integral to the keyboard, not printed separately like the lock. This style does not require rear housing.
+- `stop`: A gripper that holds the PCBA in place at its rear end. This gripper, in turn, is held up by key mount webbing and is thus integral to the keyboard, not printed separately like the lock. This style does not require rear housing.
 
 #### Parameter `preview`
 
@@ -451,7 +455,7 @@ The ISO metric diameter of the fastener.
 
 ##### Section `socket`
 
-A housing around the USB connector on the MCU.
+A housing around the USB connector on the MCU PCBA.
 
 ###### Parameter `thickness`
 

@@ -458,30 +458,34 @@
     "position of each mounting plate as a polygon."]
    [:section [:mcu]
     "This is short for ”micro-controller unit”. Each half has one."]
+   [:parameter [:mcu :include]
+    {:default false :parse-fn boolean}
+    "If `true`, build support for the MCU PCBA."]
    [:parameter [:mcu :preview]
     {:default false :parse-fn boolean}
-    "If `true`, render a visualization of the MCU for use in development."]
+    "If `true`, render a visualization of the MCU PCBA. "
+    "For use in development."]
    [:parameter [:mcu :type]
     {:default :promicro :parse-fn keyword :validate [::schema/mcu-type]}
-    "A symbolic name for a commercial product. Currently, only "
-    "`promicro` is supported, referring to any MCU with the dimensions of a "
-    "SparkFun Pro Micro."]
+    "A symbolic name for a commercial product. Currently, only `promicro` is "
+    "supported, referring to any MCU PCBA with the dimensions of a "
+    "SparkFun Pro Micro, including That-Canadian’s Elite-C."]
    [:parameter [:mcu :margin]
     {:default 0 :parse-fn num}
-    "A general measurement in mm of extra space around each part of the MCU, "
+    "A general measurement in mm of extra space around each part of the PCBA, "
     "including PCB and USB connector. This is applied to DMOTE components "
-    "meant to hold the MCU in place, accounting for printing inaccuracy as "
-    "well as inaccuracies in manufacturing the MCU."]
+    "meant to hold the PCBA in place, accounting for printing inaccuracy as "
+    "well as inaccuracies in manufacturing the PCBA."]
    [:section [:mcu :position]
-    "Where to place the MCU."]
+    "Where to place the MCU PCBA."]
    [:parameter [:mcu :position :prefer-rear-housing]
     {:default true :parse-fn boolean}
-    "If `true` and `rear-housing` is included, place the MCU in relation to "
-    "the rear housing. Otherwise, place the MCU in relation to a named feature "
+    "If `true` and `rear-housing` is included, place the PCBA in relation to "
+    "the rear housing. Otherwise, place the PCBA in relation to a named feature "
     "identified by `anchor`."]
    [:parameter [:mcu :position :anchor]
     {:default :origin :parse-fn keyword :validate [::schema/anchor]}
-    "The name of a key at which to place the MCU if `prefer-rear-housing` "
+    "The name of a key at which to place the PCBA if `prefer-rear-housing` "
     "is `false` or rear housing is not included."]
     ;; NOTE: The default value here, :origin, is intentionally invalid.
     ;; The origin of the coordinate system cannot be used as an anchor for an
@@ -489,15 +493,15 @@
    [:parameter [:mcu :position :corner]
     {:default "ENE" :parse-fn schema/string-corner :validate [::schema/corner]}
     "A code for a corner of the `anchor` feature. "
-    "This determines both the location and facing of the MCU."]
+    "This determines both the location and facing of the PCBA."]
    [:parameter [:mcu :position :offset]
     {:default [0 0 0] :parse-fn vec :validate [::tarmi-core/point-3d]}
     "A 3D offset in mm, measuring from the `corner`."]
    [:parameter [:mcu :position :rotation]
     {:default [0 0 0] :parse-fn vec :validate [::tarmi-core/point-3d]}
     "A vector of 3 angles in radians. This parameter governs the rotation of "
-    "the MCU around its anchor point in the front. You would not normally "
-    "need this for the MCU."]
+    "the PCBA around its anchor point in the front. You would not normally "
+    "need this for the PCBA."]
    [:section [:mcu :support]
     "The support structure that holds the MCU PCBA in place."]
    [:parameter [:mcu :support :style]
@@ -508,7 +512,7 @@
     "when the PCB aligns with a long wall of that housing. It has the "
     "advantage that it can hug the connector on the PCB tightly, thus "
     "preventing a fragile surface-mounted connector from breaking off.\n"
-    "- `stop`: A gripper that holds the MCU in place at its rear end. "
+    "- `stop`: A gripper that holds the PCBA in place at its rear end. "
     "This gripper, in turn, is held up by key mount webbing and is thus "
     "integral to the keyboard, not printed separately like the lock. "
     "This style does not require rear housing."]
@@ -537,7 +541,7 @@
     {:default 6 :parse-fn num :validate [::threaded/iso-nominal]}
     "The ISO metric diameter of the fastener."]
    [:section [:mcu :support :lock :socket]
-    "A housing around the USB connector on the MCU."]
+    "A housing around the USB connector on the MCU PCBA."]
    [:parameter [:mcu :support :lock :socket :thickness]
     {:default 1 :parse-fn num}
     "The wall thickness of the socket."]

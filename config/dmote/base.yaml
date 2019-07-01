@@ -755,6 +755,7 @@ case:
         - [back0, WNW, 3]
         - [back0, WSW, 3]
 mcu:
+  include: true
   position:
     prefer-rear-housing: true
     anchor: back1

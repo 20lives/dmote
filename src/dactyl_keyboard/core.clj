@@ -76,7 +76,8 @@
     (when (and (getopt :wrist-rest :include)
                (= (getopt :wrist-rest :style) :threaded))
       (wrist/all-case-blocks getopt))
-    (when (= (getopt :mcu :support :style) :stop)
+    (when (and (getopt :mcu :include)
+               (= (getopt :mcu :support :style) :stop))
       (auxf/mcu-stop getopt))
     (when (getopt :connection :include)
       (auxf/connection-positive getopt))
@@ -131,9 +132,12 @@
           (key/metacluster key/cluster-channels getopt)
           (when (getopt :connection :include)
             (auxf/connection-negative getopt))
-          (auxf/mcu-negative getopt)
-          (auxf/mcu-alcove getopt)
-          (when (= (getopt :mcu :support :style) :lock)
+          (when (getopt :mcu :include)
+            (auxf/mcu-negative getopt))
+          (when (getopt :mcu :include)
+            (auxf/mcu-alcove getopt))
+          (when (and (getopt :mcu :include)
+                     (= (getopt :mcu :support :style) :lock))
             (auxf/mcu-lock-sink getopt))
           (when (getopt :case :leds :include) (auxf/led-holes getopt))
           (when (getopt :case :back-plate :include)
@@ -143,7 +147,9 @@
             (wrist/all-fasteners getopt))
           (sandbox/negative getopt))
         ;; Outer positives, subject only to outer negatives:
-        (when (= (getopt :mcu :support :style) :lock) ; Outside the alcove.
+        (when (and (getopt :mcu :include)
+                   (= (getopt :mcu :support :style) :lock))
+          ;; MCU support features outside the alcove.
           (auxf/mcu-lock-fixture-composite getopt)))
       ;; Outer negatives:
       (when (getopt :case :bottom-plate :include)
@@ -155,10 +161,11 @@
     ;; The remaining elements are visualizations for use in development.
     (when (getopt :keys :preview)
       (key/metacluster key/cluster-keycaps getopt))
-    (when (getopt :mcu :preview)
+    (when (and (getopt :mcu :include) (getopt :mcu :preview))
       (auxf/mcu-visualization getopt))
-    (when (and (= (getopt :mcu :support :style) :lock)
-               (getopt :mcu :support :preview))
+    (when (and (getopt :mcu :include)
+               (getopt :mcu :support :preview)
+               (= (getopt :mcu :support :style) :lock))
       (auxf/mcu-lock-bolt getopt))))
 
 (defn build-rubber-casting-mould-right
@@ -327,7 +334,8 @@
                (get-key-modules getopt :module-keycap :module-switch))
     :model-precursor build-keyboard-right
     :chiral true}
-   (when (= (getopt :mcu :support :style) :lock)
+   (when (and (getopt :mcu :include)
+              (= (getopt :mcu :support :style) :lock))
      {:name "mcu-lock-bolt"
       :model-precursor auxf/mcu-lock-bolt
       :rotation [(/ π 2) 0 0]})

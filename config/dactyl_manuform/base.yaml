@@ -9,8 +9,6 @@
 # - No wire hooks.
 # - Incomplete support for switch mounting plates other than 1 u.
 # - Bottom plating does not project from screw anchors.
-# - Connection socket walls are too thick because they’re not configurable
-#   independently of web thickness.
 
 keys:
   styles:
@@ -317,13 +315,14 @@ case:
         - [thumb-tr, SSE, 0, 4]
         - [m03, SSW, 0, 4]
 mcu:
+  include: true
   type: promicro
   margin: 0.25
   position:
     prefer-rear-housing: true
     anchor: back0
     corner: NNE
-    offset: [1, 0, 2]
+    offset: [4, 0, 2]
   support:
     style: stop
     height-factor: 0.45
@@ -331,14 +330,10 @@ mcu:
     stop:
       anchor: m00
       direction: north
-      gripper:
-        notch-depth: 0.4
-        total-depth: 5
-        grip-width: 0.6
 connection:
   include: true
   socket-size: [10.78, 9, 18.38]
   position:
     anchor: back0
     corner: NNE
-    offset: [-9, 2, 0]
+    offset: [-9, 1.3, 1]
