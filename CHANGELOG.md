@@ -38,6 +38,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   are one piece of plastic. In a previous implementation, removed in version
   0.3.0, the two were separate pieces that snapped together, which put more
   requirements on the shape of the case and was not useful enough.
+- An `include` parameter for the connection metasocket. This is false by
+  default and true in `config/dmote/base.yaml`.
 - A new DFM parameter, `fastener-plate-offset`, for tighter holes through
   bottom plates.
 - A new bundled configuration fragment, `config/dmote/mx.yaml`, imposing

@@ -591,15 +591,20 @@
     "The width of a protrusion on each side of the notch."]
    [:section [:connection]
     "There must be a signalling connection between the two halves of a split "
-    "keyboard. This section adds a “metasocket” (i.e. room for a socket) "
-    "for that purpose. For example, the socket might be a type 616E female "
-    "for a 4P4C “RJ9” plug, in which case the metasocket has to fit around "
-    "the 616E."]
+    "keyboard."]
+   [:parameter [:connection :include]
+    {:default false :parse-fn boolean}
+    "If `true`, inclue a “metasocket”, i.e. physical support for a socket "
+    "where you plug in a cable that will, in turn, provide the signalling "
+    "connection between the two halves."]
    [:parameter [:connection :socket-size]
     {:default [1 1 1] :parse-fn vec :validate [::tarmi-core/point-3d]}
-    "The size of a hole in the case, for the female to fit into. "
-    "This assumes a cuboid socket. For a socket of a different shape, design "
-    "an adapter separately."]
+    "The size in mm of a hole in the case, for the female to fit into. For "
+    "example, the female might be a type 616E socket for a (male) 4P4C “RJ9” "
+    "plug, in which case the metasocket has to fit around the entire 616E.\n\n"
+    "This parameter assumes a cuboid socket. For a socket of a different "
+    "shape, get as close as possible, then make your own adapter and/or "
+    "widen the metasocket with a soldering iron or similar tools."]
    [:parameter [:connection :socket-thickness]
     {:default 1 :parse-fn num}
     "The thickness in mm of the roof, walls and floor of the metasocket, "

@@ -336,6 +336,7 @@ mcu:
         total-depth: 5
         grip-width: 0.6
 connection:
+  include: true
   socket-size: [10.78, 9, 18.38]
   position:
     anchor: back0

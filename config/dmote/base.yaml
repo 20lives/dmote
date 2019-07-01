@@ -766,6 +766,7 @@ mcu:
       anchor: back1
       direction: east
 connection:
+  include: true
   socket-size: [10, 11, 17.7]  # 616E minus the vertical bar is 10 mm wide.
   position:
     prefer-rear-housing: true
