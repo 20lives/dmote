@@ -29,6 +29,27 @@ case:
   web-thickness: 2.5
   rear-housing:
     wall-thickness: 2.5
+mcu:
+  type: promicro
+  margin: 0.25
+  support:
+    height-factor: 0.45
+    lateral-spacing: 0.9
+    lock:
+      fastener:
+        diameter: 4
+      socket:
+        thickness: 1.5
+      bolt:
+        clearance: 2.5
+        overshoot: 1
+        mount-length: 7
+        mount-thickness: 6
+    stop:
+      gripper:
+        notch-depth: 0.4
+        total-depth: 5
+        grip-width: 0.6
 resolution:
   include: true
 dfm:
