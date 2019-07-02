@@ -2,6 +2,10 @@
 
 Each heading in this document represents a recognized configuration key in the main body of a YAML file for a DMOTE variant. Other documents cover special sections of this one in more detail.
 
+## Parameter `split`
+
+If `true`, build two versions of the case: One for the right hand and a mirror image for the left hand. Threaded holes and other chiral components of the case are exempted from mirroring.
+
 ## Section `keys`
 
 Keys, that is keycaps and electrical switches, are not the main focus of this application, but they influence the shape of the case.
@@ -119,7 +123,7 @@ The height in mm of the roof, over the floor.
 
 #### Section `fasteners`
 
-Threaded bolts can run through the roof of the rear housing, making it a hardpoint for attachments like a stabilizer to connect the two halves of the keyboard.
+Threaded bolts can run through the roof of the rear housing, making it a hardpoint for attachments like a stabilizer to connect the two halves of a split keyboard.
 
 ##### Parameter `diameter`
 
@@ -155,13 +159,13 @@ A fastener on the outward-facing end of the rear housing. All parameters are ana
 
 ### Section `back-plate`
 
-Given that independent movement of each half of the keyboard is not useful, each half can include a mounting plate for a stabilizing ‘beam’. That is a straight piece of wood, aluminium, rigid plastic etc. to connect the two halves mechanically and possibly carry the wire that connects them electrically.
+Given that independent movement of each half of a split keyboard is not useful, each half can include a mounting plate for a stabilizing ‘beam’. That is a straight piece of wood, aluminium, rigid plastic etc. to connect the two halves mechanically and possibly carry the wire that connects them electrically.
 
 This option is similar to rear housing, but the back plate block provides no interior space for an MCU etc. It is solid, with holes for threaded fasteners including the option of nut bosses. Its footprint is not part of a `bottom-plate`.
 
 #### Parameter `include`
 
-If `true`, include a back plate block.
+If `true`, include a back plate block. This is not contingent upon `split`.
 
 #### Parameter `beam-height`
 

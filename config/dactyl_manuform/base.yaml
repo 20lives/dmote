@@ -10,6 +10,7 @@
 # - Incomplete support for switch mounting plates other than 1 u.
 # - Bottom plating does not project from screw anchors.
 
+split: true
 keys:
   styles:
     default:  # Rough approximation of SA family.

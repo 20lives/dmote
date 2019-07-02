@@ -35,6 +35,11 @@
     "Each heading in this document represents a recognized configuration key "
     "in the main body of a YAML file for a DMOTE variant. Other documents "
     "cover special sections of this one in more detail."]
+   [:parameter [:split]
+    {:default false :parse-fn boolean}
+    "If `true`, build two versions of the case: One for the right hand and a "
+    "mirror image for the left hand. Threaded holes and other chiral "
+    "components of the case are exempted from mirroring."]
    [:section [:keys]
     "Keys, that is keycaps and electrical switches, are not the main focus of "
     "this application, but they influence the shape of the case."]
@@ -183,7 +188,7 @@
    [:section [:case :rear-housing :fasteners]
     "Threaded bolts can run through the roof of the rear housing, making it a "
     "hardpoint for attachments like a stabilizer to connect the two halves of "
-    "the keyboard."]
+    "a split keyboard."]
    [:parameter [:case :rear-housing :fasteners :diameter]
     {:default 6 :parse-fn num :validate [::threaded/iso-nominal]}
     "The ISO metric diameter of each fastener."]
@@ -210,7 +215,7 @@
    [:parameter [:case :rear-housing :fasteners :east :offset]
     {:default 0 :parse-fn num}]
    [:section [:case :back-plate]
-    "Given that independent movement of each half of the keyboard is not "
+    "Given that independent movement of each half of a split keyboard is not "
     "useful, each half can include a mounting plate for a stabilizing ‘beam’. "
     "That is a straight piece of wood, aluminium, rigid plastic etc. to "
     "connect the two halves mechanically and possibly carry the wire that "
@@ -221,7 +226,8 @@
     "Its footprint is not part of a `bottom-plate`."]
    [:parameter [:case :back-plate :include]
     {:default false :parse-fn boolean}
-    "If `true`, include a back plate block."]
+    "If `true`, include a back plate block. This is not contingent upon "
+    "`split`."]
    [:parameter [:case :back-plate :beam-height]
     {:default 1 :parse-fn num}
     "The nominal vertical extent of the back plate in mm. "

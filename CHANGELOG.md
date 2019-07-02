@@ -28,6 +28,16 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Replaced the nut boss in an MCU lock bolt with printed threading of the hole.
 
 ### Added
+- A `split` parameter at the highest level. This is false by default and absent
+  in `config/base.yaml`, to enable macropads and relatively regular keyboards.
+  It’s true in `config/dmote/base.yaml`.
+    - An `include` parameter for the connection metasocket. This is false by
+      default and true in `config/dmote/base.yaml`. Its effect is contingent
+      upon the `split` parameter.
+- An `include` parameter for MCU PCBA support. This is false by
+  default and absent in `config/base.yaml`, mainly to enable tutorials where
+  the MCU support does not pose a distraction, and partly to allow custom
+  alternatives to the supported styles.
 - More finely grained control for dimensions previously governed by general
   case webbing thickness.
     - New parameters for rear-housing wall and roof thickness.
@@ -38,12 +48,6 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   are one piece of plastic. In a previous implementation, removed in version
   0.3.0, the two were separate pieces that snapped together, which put more
   requirements on the shape of the case and was not useful enough.
-- An `include` parameter for MCU PCBA support. This is false by
-  default and absent in `config/base.yaml`, mainly to enable tutorials where
-  the MCU support does not pose a distraction, and partly to allow custom
-  alternatives to the supported styles.
-- An `include` parameter for the connection metasocket. This is false by
-  default and true in `config/dmote/base.yaml`.
 - A new DFM parameter, `fastener-plate-offset`, for tighter holes through
   bottom plates.
 - A new bundled configuration fragment, `config/dmote/mx.yaml`, imposing

@@ -89,24 +89,30 @@ to do any coding if all you want is a personal fit or additional keys.
 You can change the bundled YAML files if you like. However, it is generally
 easier to add your own files, maintaining them separately from the DMOTE
 repository. That way, they will be safe if you upgrade the application with a
-`git pull`. Remember to put your own file(s) last in your list of arguments to
-the application, to get the most power.
+`git pull`.
+
+Remember to put your own file(s) last in your list of arguments to the
+application, to get the most power. For example, to override all the ALPS-style
+key mounts with MX-style mounts on a DMOTE, run `lein run -c config/base.yaml
+-c config/dmote/base.yaml -c config/dmote/mx.yaml`.
 
 #### Nomenclature: Finding north
 
 The parameter files and the code use the cardinal directions of the compass
 to describe directions in the space of the keyboard model. To understand these,
-imagine having the right-hand side of the keyboard in front of you, as you
+imagine having (the right-hand side of) the keyboard in front of you, as you
 would use it, while you face true north.
 
 “North” in configuration thus refers to the direction away from the user: the
 far side. “South” is the direction toward the user: the near side.
 
-“West” and “east” vary on each half of the keyboard because the left-hand side
-is purely a mirror image of the right-hand side. The right-hand side is primary
+“West” and “east” vary on each half of a split keyboard because the left-hand
+side is a mirror image of the right-hand side. The right-hand side is primary
 for the purposes of nomenclature. On either half, the west is inward, toward
 the space between the two halves of the keyboard. The east is outward, away
-from the other half of the keyboard.
+from the other half of the keyboard. If you are not building a split keyboard,
+think of your case as you would the right-hand side: The west is on your left
+and the east is on your right.
 
 In Euclidean space, the x axis goes from west to east, the y axis from
 south to north, and the z axis from earth to sky.

@@ -1,5 +1,6 @@
 # Configuration fragment for the base of a 62-key DMOTE.
 
+split: true
 keys:
   styles:
     minimal-short:  # A printable minimal key with a thin top.
