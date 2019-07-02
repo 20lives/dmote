@@ -28,6 +28,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Replaced the nut boss in an MCU lock bolt with printed threading of the hole.
 
 ### Added
+- A bundled 12-key macropad configuration, mainly as an object lesson.
 - A `split` parameter at the highest level. This is false by default and absent
   in `config/base.yaml`, to enable macropads and relatively regular keyboards.
   It’s true in `config/dmote/base.yaml`.

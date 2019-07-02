@@ -9,11 +9,14 @@ SOURCECODE := $(shell find src -type f)
 
 # YAML files are not made from here but are treated as targets anyway.
 # This is a means of activating them by naming them as CLI arguments.
-.PHONY: $(YAML) dmote_62key vis mutual caseside all docs test clean
+.PHONY: $(YAML) dmote_62key macropad_12key vis mutual caseside all docs test clean
 
 # CONFFILES is a space-separated array of relative paths to selected
 # YAML files, starting with a near-neutral base.
 CONFFILES := $(CONFDIR)base.yaml
+
+# TO_SCAD evaluates to a Java CLI call.
+TO_SCAD =	java -jar target/dmote.jar $(foreach FILE,$(CONFFILES),-c $(FILE))
 
 # The append_config function is what adds (more) YAML filepaths to CONFFILES.
 # If not already present in the path, CONFDIR will be prepended to each path.
@@ -33,7 +36,11 @@ endef
 # When resolved, its recipe constructs a Java command where each
 # selected configuration file gets its own -c parameter.
 dmote_62key: target/dmote.jar dmote/base.yaml
-	java -jar target/dmote.jar $(foreach FILE,$(CONFFILES),-c $(FILE))
+	$(TO_SCAD)
+
+# A corresponding target for a relatively simple 12-key macropad.
+macropad_12key: target/dmote.jar macropad/base.yaml
+	$(TO_SCAD)
 
 # Curated shorthand for configuration fragments. These run no shell commands.
 vis: visualization.yaml

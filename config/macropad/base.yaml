@@ -1,0 +1,67 @@
+# A configuration fragment for a simple 12-key macropad.
+# This might also serve as the core of a numpad and is easily extended.
+
+key-clusters:
+  main:
+    position:
+      anchor: origin
+      offset: [0, 0, 1]
+    matrix-columns:
+    - rows-above-home: 3
+    - rows-above-home: 3
+    - rows-above-home: 3
+    aliases:
+      lower-left: [first, first]
+      upper-left: [first, last]
+      lower-right: [last, first]
+      upper-right: [last, last]
+by-key:
+  parameters:
+    layout:
+      pitch:
+        intrinsic: -0.1
+        base: 0.3
+    wall:
+      bevel: 1
+      north:
+        extent: 0
+      east:
+        parallel: 10
+        perpendicular: -23
+      south:
+        parallel: 10
+        perpendicular: -23
+      west:
+        parallel: 10
+        perpendicular: -23
+case:
+  key-mount-thickness: 3
+  web-thickness: 3
+  rear-housing:
+    include: true
+    wall-thickness: 1.5
+    roof-thickness: 1
+    position:
+      offsets:
+        north: 11
+        south: 2
+    height: 24.5
+mcu:
+  include: true
+  position:
+    prefer-rear-housing: true
+    anchor: upper-left
+    corner: ENE
+    offset: [-10, 0, 4]
+  support:
+    style: lock
+    lock:
+      fastener:
+        diameter: 4
+      socket:
+        thickness: 1.5
+      bolt:
+        clearance: 2.5
+        overshoot: 1
+        mount-length: 7
+        mount-thickness: 6
