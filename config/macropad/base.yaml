@@ -5,7 +5,7 @@ key-clusters:
   main:
     position:
       anchor: origin
-      offset: [0, 0, 1]
+      offset: [0, 0, 4.5]
     matrix-columns:
     - rows-above-home: 3
     - rows-above-home: 3

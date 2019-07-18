@@ -215,18 +215,21 @@
   [getopt]
   (let [thickness (getopt :case :key-mount-thickness)
         {hole-x :x, hole-y :y} (get-in switch-properties [:alps :hole])
+        height-to-plate-top 4.5
         {foot-x :x, foot-y :y} (get-in switch-properties [:alps :foot])]
-    (translate [0 0 (/ (getopt :case :key-mount-thickness) 2)]
-      (union
-        ;; Space for the part of a switch above the mounting hole.
-        ;; The actual height of the notches is 1 mm and it’s not a full cuboid.
-        (translate [0 0 thickness]
-          (cube foot-x foot-y thickness))
-        ;; The hole through the plate.
-        (cube hole-x hole-y (plate-cutout-height getopt 4.5))
-        ;; ALPS-specific space for wings to flare out.
-        (translate [0 0 -1.5]
-          (cube (inc hole-x) hole-y thickness))))))
+    (union
+      ;; Space for the part of a switch above the mounting hole.
+      ;; The actual height of the notches is 1 mm and it’s not a full cuboid.
+      (translate [0 0 (/ thickness 2)]
+        (cube foot-x foot-y thickness))
+      ;; The hole through the plate.
+      (translate [0 0 (/ height-to-plate-top -2)]
+        (cube hole-x hole-y (plate-cutout-height getopt height-to-plate-top)))
+      ;; ALPS-specific space for wings to flare out inside the plate.
+      (translate [0 0 (- (/ height-to-plate-top -2) 0.6)]
+        (difference
+          (cube (inc hole-x) hole-y height-to-plate-top)
+          (cube (inc hole-x) 7.5 height-to-plate-top))))))
 
 (defn mx-switch
   "One MX Cherry-compatible cutout model. Square."
@@ -234,24 +237,29 @@
   (let [thickness (getopt :case :key-mount-thickness)
         hole-xy (get-in switch-properties [:mx :hole :x])
         foot-xy (get-in switch-properties [:mx :foot :x])
-        nub (->> (cylinder 1 2.75)
+        height-to-plate-top 5.004
+        nub-radius 1
+        nub-depth 4
+        nub (->> (cylinder nub-radius 2.75)
                  (with-fn 20)
                  (rotate [(/ π 2) 0 0])
-                 (translate [(+ (/ hole-xy 2)) 0 1])
+                 (translate [(/ hole-xy 2) 0 (- nub-radius nub-depth)])
                  (hull
-                   (translate [(+ 3/4 (/ hole-xy 2)) 0 (/ thickness 2)]
-                     (cube 1.5 2.75 thickness))))]
+                   (translate [(+ 3/4 (/ hole-xy 2)) 0 (/ nub-depth -2)]
+                     (cube 1.5 2.75 nub-depth))))]
     (difference
-      (translate [0 0 (/ (getopt :case :key-mount-thickness) 2)]
-        (union
-          ;; Space for the part of a switch above the mounting hole.
-          (translate [0 0 thickness]
-            (cube foot-xy foot-xy thickness))
-          ;; The hole through the plate.
-          (cube hole-xy hole-xy (plate-cutout-height getopt 5.004))))
+      (union
+        ;; Space for the part of a switch above the mounting hole.
+        (translate [0 0 (/ thickness 2)]
+          (cube foot-xy foot-xy thickness))
+        ;; The hole through the plate.
+        (translate [0 0 (/ height-to-plate-top -2)]
+          (cube hole-xy hole-xy
+            (plate-cutout-height getopt height-to-plate-top))))
       ;; MX-specific nubs that hold the keyswitch in place.
-      nub
-      (mirror [0 1 0] (mirror [1 0 0] nub)))))
+      (union
+        nub
+        (mirror [0 1 0] (mirror [1 0 0] nub))))))
 
 (defn single-switch
   "Negative space for the insertion of a key switch through a mounting plate."
@@ -265,10 +273,14 @@
 ;; Other Models ;;
 ;;;;;;;;;;;;;;;;;;
 
-(defn- single-plate [getopt]
-  (let [t (getopt :case :key-mount-thickness)]
-   (translate [0 0 (/ t 2)]
-     (cube place/mount-width place/mount-depth t))))
+(defn- single-plate
+  "The shape of a key mounting plate."
+  [getopt key-style]
+  (let [thickness (getopt :case :key-mount-thickness)
+        style-data (getopt :keys :derived key-style)
+        [x y] (map capdata/key-length (get style-data :unit-size [1 1]))]
+   (translate [0 0 (/ thickness -2)]
+     (cube x y thickness))))
 
 (defn web-post
   "A shape for attaching things to a corner of a switch mount."
@@ -279,8 +291,9 @@
 
 (defn mount-corner-post
   "A post shape that comes offset for one corner of a key mount."
-  [getopt directions]
-  (translate (place/mount-corner-offset getopt directions) (web-post getopt)))
+  [getopt key-style directions]
+  (->> (web-post getopt)
+       (translate (place/mount-corner-offset getopt key-style directions))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -289,7 +302,8 @@
 
 (defn cluster-plates [getopt cluster]
   (apply union (map #(place/cluster-place getopt cluster %
-                       (single-plate getopt))
+                       (single-plate getopt
+                         (most-specific getopt [:key-style] cluster %)))
                     (derived getopt cluster :key-coordinates))))
 
 (defn cluster-cutouts [getopt cluster]

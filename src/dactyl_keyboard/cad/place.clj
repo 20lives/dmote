@@ -24,15 +24,6 @@
             [dactyl-keyboard.param.schema :as schema]))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Basic Dimensional Facts ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Mount plates are a bit wider than typical keycaps.
-(def mount-width (+ capdata/key-width-1u 0.15))
-(def mount-depth mount-width)
-
-
 ;;;;;;;;;;;;;;;
 ;; Functions ;;
 ;;;;;;;;;;;;;;;
@@ -41,15 +32,14 @@
 
 (defn mount-corner-offset
   "Produce a mm coordinate offset for a corner of a switch mount."
-  [getopt directions]
-  (let [subject-x mount-width
-        subject-y mount-depth
-        neighbour-z (getopt :case :key-mount-thickness)
-        area-z (getopt :case :web-thickness)
+  [getopt key-style directions]
+  (let [style-data (getopt :keys :derived key-style)
+        [subject-x subject-y] (map capdata/key-length
+                                (get style-data :unit-size [1 1]))
         m (getopt :case :key-mount-corner-margin)]
     [(* (apply matrix/compass-dx directions) (- (/ subject-x 2) (/ m 2)))
      (* (apply matrix/compass-dy directions) (- (/ subject-y 2) (/ m 2)))
-     (+ (/ area-z -2) neighbour-z)]))
+     (/ (getopt :case :web-thickness) -2)]))
 
 (defn- curver
   "Given an angle for progressive curvature, apply it. Else lay keys out flat."
@@ -66,8 +56,7 @@
         flat-distance (* capdata/mount-1u (- index neutral))
         key-prop (key-properties getopt cluster coord)
         {:keys [switch-type skirt-length]} key-prop
-        radius (+ (getopt :case :key-mount-thickness)
-                  (capdata/resting-clearance switch-type skirt-length)
+        radius (+ (capdata/resting-clearance switch-type skirt-length)
                   (/ (/ (+ capdata/mount-1u separation) 2)
                      (Math/sin (/ angle-factor 2))))
         ortho-x (- (* delta-r (+ -1 (- (* radius (Math/sin angle-factor))))))
@@ -174,7 +163,9 @@
     :or {segment 3, vertex false} :as keyopts}]
   (mapv +
     (if directions
-      (mount-corner-offset getopt directions)
+      (mount-corner-offset getopt
+        (most-specific getopt [:key-style] cluster coordinates)
+        directions)
       [0 0 0])
     (if directions
       (wall-segment-offset

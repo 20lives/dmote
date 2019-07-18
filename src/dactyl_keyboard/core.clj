@@ -297,7 +297,7 @@
             module-keycap
             {:name module-keycap
              :model-main (key/single-cap getopt key-style false)}
-            module-switch  ;; Uniqueness of input not guaranteed.
+            module-switch  ; Uniqueness of input not guaranteed.
             {:name module-switch
              :model-main (key/single-switch getopt switch-type)})))
       {}

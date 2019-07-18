@@ -3,11 +3,10 @@
 # The long-term goal with this file is to have it produce Short’s design
 # through the DMOTE application for upstream compatibility.
 
-# As of DMOTE v0.4.0, that is not yet possible, because:
+# As of DMOTE v0.5.0, that is not yet possible, because:
 # - No internal shelf for the MCU.
 # - No USB A.
 # - No wire hooks.
-# - Incomplete support for switch mounting plates other than 1 u.
 # - Bottom plating does not project from screw anchors.
 
 split: true
@@ -18,6 +17,7 @@ keys:
       switch-type: mx
       skirt-length: 5.75
       top-size: [12.7, 12.7, 6]
+      unit-size: [1, 1]
     big:
       style: maquette
       switch-type: mx
@@ -28,8 +28,10 @@ key-clusters:
   main:
     position:
       anchor: origin
-      # Drop z to 8.5 to match upstream STL; it doesn’t rise for bottom plating.
-      offset: [0, 0, 9.7]
+      # To match upstream STL more exactly, raise by the thickness of the
+      # bottom plate. The Dactyl-ManuForm was not raised above the ground
+      # plane to compensate for a bottom plate, but the DMOTE is.
+      offset: [1, 0, 12.9]
     matrix-columns:
     - rows-above-home: 1
       rows-below-home: 1
@@ -53,7 +55,7 @@ key-clusters:
   thumb0:
     position:
       anchor: m00
-      offset: [1, -27, -6.5]
+      offset: [-2, -28, -6]
     matrix-columns:
     - rows-above-home: 0
     - rows-above-home: 0
@@ -63,7 +65,7 @@ key-clusters:
   thumb1:
     position:
       anchor: thumb-tl
-      offset: [3.5, -25, -14]
+      offset: [3.5, -26, -15]
     matrix-columns:
     - rows-above-home: 1
     - rows-above-home: 1
@@ -77,8 +79,8 @@ by-key:
     layout:
       matrix:
         separation:
-          column: 2.5
-          row: 1
+          column: 1.5
+          row: 1.2
     wall:
       thickness: 2
       north:
@@ -102,17 +104,13 @@ by-key:
               column: 3
           pitch:
             base: 0
-            progressive: 0.28
+            progressive: 0.25
           roll:
-            base: 0.2618
+            base: 0.26
             progressive: 0.09
       columns:
         first:
           parameters:
-            layout:
-              matrix:
-                separation:
-                  column: 1.5
             wall:
               south:
                 extent: 0
@@ -121,10 +119,6 @@ by-key:
                 perpendicular: -9
         "1":
           parameters:
-            layout:
-              matrix:
-                separation:
-                  column: 1.5
             wall:
               south:
                 extent: 0
@@ -142,7 +136,7 @@ by-key:
           parameters:
             layout:
               translation:
-                late: [0, -12, 5.64]
+                late: [1, -12, 5.64]
     thumb0:
       parameters:
         key-style: big
@@ -194,6 +188,15 @@ by-key:
             extent: 0
       columns:
         first:
+          parameters:
+            # Because of the long walls of the case, full-extent walls cause
+            # problems with OpenSCAD’s projections to the ground plane.
+            # Therefore, walls on the first column are restricted.
+            wall:
+              north:
+                extent: 4
+              south:
+                extent: 4
           rows:
             first:
               parameters:
@@ -201,14 +204,14 @@ by-key:
                   pitch:
                     intrinsic: -0.26
                   translation:
-                    early: [0, -2, 1.7]
+                    early: [0, -1, 1.7]
             last:
               parameters:
                 layout:
                   pitch:
                     intrinsic: -0.05
                   translation:
-                    early: [-1, 1, 5.2]
+                    early: [0, 1, 5.2]
         last:
           rows:
             first:
@@ -256,7 +259,7 @@ case:
           offset: [13.5, -3]
         - anchor: m02
           corner: SSE
-          offset: [-6, -2]
+          offset: [-6, -4]
         - anchor: right0
           corner: ESE
           offset: [-1, 10]
@@ -300,14 +303,39 @@ case:
         - [m00, WSW, 3, 4]
         - [thumb-ml, NNE, 3, 4]
       - at-ground: true
-        chunk-size: 2
         hull-around:
-        - [thumb-mr, SSE, 3, 4]
-        - [thumb-tr, SSE, 3, 4]
+        - [thumb-ml, NNW, 3, 4]
+        - [thumb-bl, NNE, 3, 4]
+      - at-ground: true
+        hull-around:
         - [m03, SSW, 3, 4]
+        - [thumb-tr, SSE, 3, 4]
+      - at-ground: true
+        hull-around:
+        - [thumb-tr, SSE, 3, 4]
+        - [thumb-mr, SSE, 3, 4]
+      - at-ground: true
+        hull-around:
+        - [thumb-mr, SSW, 3, 4]
+        - [thumb-br, SSE, 3, 4]
+      - at-ground: true
+        above-ground: false  # Extend the bottom plate only.
+        hull-around:
+        - [m03, SSW, 3]
+        - [thumb-tr, SSE, 3]
+        - [thumb-ml, NNE, 3]
+        - [m00, WSW, 3]
+      - at-ground: true
+        above-ground: false  # Extend the bottom plate only.
+        hull-around:
+        - [thumb-mr, SSE, 3]
+        - [thumb-ml, NNE, 3]
+        - [thumb-tr, SSE, 3]
     thumb-to-finger-gap:
-      - hull-around:
-        - [m00, WSW, 0, 4]
+      - chunk-size: 3
+        hull-around:
+        - [m00, WSW, 0, 2]
+        - [m00, WSW, 3, 4]
         - [thumb-tl, WNW]
         - [thumb-ml, NNE, 0, 4]
       - chunk-size: 2

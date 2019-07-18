@@ -16,11 +16,9 @@ If `true`, include models of the keycaps in place on the keyboard. This is inten
 
 ### Parameter `styles`
 
-Here you name all the types of keys on the keyboard, including their switches, keycaps, and other properties. These names are then used elsewhere, as described [here](options-nested.md).
+Here you name all the types of keys on the keyboard. For each type, describe the properties of the style using the parameters of the [`dmote-keycap`](https://github.com/veikman/dmote-keycap) library, documented in that project. The names of the styles are then used elsewhere, as described [here](options-nested.md).
 
-Key properties determine what kind of holes are cut out of the mounting plate, for the switches. If the keyboard is curved, these properties also help determine the spacing between key mounts. In addition, negative space is reserved for the movement of the keycap: A function of switch height, switch travel, and keycap shape.
-
-The properties correspond to the parameters of the [`dmote-keycap`](https://github.com/veikman/dmote-keycap) library and are documented in that project.
+Key styles determine the size of key mounting plates on the keyboard and what kind of holes are cut into those plates for the switches to fit into. Negative space is also reserved above the plate, for the movement of the keycap: A function of switch height, switch travel, and keycap shape. In addition, if the keyboard is curved, key styles help determine the spacing between key mounts.
 
 ## Special section `key-clusters`
 

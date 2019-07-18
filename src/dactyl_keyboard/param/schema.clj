@@ -167,9 +167,7 @@
 
 ;; Other:
 (spec/def ::key-cluster #(not (= :derived %)))
-(spec/def ::switch-style #{:alps :mx})
 (spec/def ::cluster-style #{:standard :orthographic})
-(spec/def ::cap-style #{:flat :socket :button})
 (spec/def ::plate-installation-style #{:threads :inserts})
 (spec/def ::mcu-type #{:promicro})
 (spec/def ::mcu-support-style #{:lock :stop})

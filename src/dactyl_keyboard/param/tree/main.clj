@@ -50,19 +50,18 @@
    [:parameter [:keys :styles]
     {:default {:default {}} :parse-fn schema/keycap-map
      :validate [(spec/map-of keyword? ::capdata/keycap-parameters)]}
-    "Here you name all the types of keys on the keyboard, including their "
-    "switches, keycaps, and other properties. These names are then used "
+    "Here you name all the types of keys on the keyboard. For each type, "
+    "describe the properties of the style using the parameters of the "
+    "[`dmote-keycap`](https://github.com/veikman/dmote-keycap) library, "
+    "documented in that project. The names of the styles are then used "
     "elsewhere, as described [here](options-nested.md).\n"
     "\n"
-    "Key properties determine what kind of holes are cut out of the "
-    "mounting plate, for the switches. If the keyboard is curved, these "
-    "properties also help determine the spacing between key mounts. In "
-    "addition, negative space is reserved for the movement of the keycap: "
-    "A function of switch height, switch travel, and keycap shape.\n"
-    "\n"
-    "The properties correspond to the parameters of the "
-    "[`dmote-keycap`](https://github.com/veikman/dmote-keycap) library "
-    "and are documented in that project."]
+    "Key styles determine the size of key mounting plates on the keyboard and "
+    "what kind of holes are cut into those plates for the switches to fit "
+    "into. Negative space is also reserved above the plate, for the movement "
+    "of the keycap: A function of switch height, switch travel, and keycap "
+    "shape. In addition, if the keyboard is curved, key styles help determine "
+    "the spacing between key mounts."]
    [:parameter [:key-clusters]
     {:heading-template "Special section `%s`"
      :default {:main {:matrix-columns [{:rows-below-home 0}]

@@ -14,7 +14,7 @@
             [dactyl-keyboard.cad.matrix :as matrix]
             [dactyl-keyboard.cad.key :as key]
             [dactyl-keyboard.cad.place :as place]
-            [dactyl-keyboard.param.access :as access]))
+            [dactyl-keyboard.param.access :refer [get-key-alias most-specific]]))
 
 
 ;;;;;;;;;;;;;;;;;;;
@@ -153,14 +153,15 @@
   (let [prop (partial getopt :mcu :derived)
         {pcb-x :thickness pcb-y :length pcb-z :width} (prop :pcb)
         alias (getopt :mcu :support :stop :anchor)
-        keyinfo (access/get-key-alias getopt alias)
+        keyinfo (get-key-alias getopt alias)
         {cluster :cluster coordinates0 :coordinates} keyinfo
         direction (getopt :mcu :support :stop :direction)
         opposite (matrix/left (matrix/left direction))
         coordinates1 (matrix/walk coordinates0 direction)
         post (fn [coord corner]
-               (place/cluster-place getopt cluster coord
-                 (key/mount-corner-post getopt corner)))]
+               (let [key-style (most-specific getopt [:key-style] cluster coord)]
+                 (place/cluster-place getopt cluster coord
+                   (key/mount-corner-post getopt key-style corner))))]
     (union
       (mcu-position getopt (mcu-gripper getopt 1))
       (hull

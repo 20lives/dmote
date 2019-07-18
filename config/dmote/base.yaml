@@ -15,7 +15,7 @@ key-clusters:
   main:
     position:
       anchor: origin
-      offset: [0, 0, 17]
+      offset: [0, 0, 19.5]
     matrix-columns:
     - rows-above-home: 1
       rows-below-home: 1
@@ -42,7 +42,7 @@ key-clusters:
   thumb0:
     position:
       anchor: m01
-      offset: [-6, -14, 27]
+      offset: [-8, -16, 29]
     matrix-columns:
     - rows-above-home: 1
       rows-below-home: 1
@@ -65,7 +65,7 @@ key-clusters:
   aux0:
     position:
       anchor: m12
-      offset: [1.5, 15, 5]
+      offset: [1.5, 17, 6]
     matrix-columns:
     - rows-above-home: 0
     - rows-above-home: 0
@@ -81,7 +81,7 @@ by-key:
             neutral:
               column: 2
             separation:
-              row: -0.5
+              row: 0
               column: 0
           pitch:
             base: 0.5
@@ -97,9 +97,6 @@ by-key:
           parameters:
             key-style: minimal-tall
             layout:
-              matrix:
-                separation:
-                  row: -1.2
               pitch:
                 base: 0.34
                 progressive: 0.6
@@ -125,9 +122,6 @@ by-key:
         "1":
           parameters:
             layout:
-              matrix:
-                separation:
-                  row: -0.9
               pitch:
                 base: 0.6
                 progressive: 0.4
@@ -247,9 +241,6 @@ by-key:
         "4":
           parameters:
             layout:
-              matrix:
-                separation:
-                  row: -0.8
               pitch:
                 base: 0.6
                 progressive: 0.5
@@ -271,9 +262,6 @@ by-key:
         "5":
           parameters:
             layout:
-              matrix:
-                separation:
-                  row: -0.8
               pitch:
                 base: 0.6
                 progressive: 0.5
@@ -299,7 +287,8 @@ by-key:
             neutral:
               column: 1
             separation:
-              column: 0.1
+              column: 0.5
+              row: 1
           roll:
             base: -1.45
             progressive: 0.3
@@ -347,7 +336,7 @@ by-key:
               parameters:
                 layout:
                   translation:
-                    early: [0, 0, 5]
+                    early: [0, 1, 5]
         last:
           parameters:
             layout:
@@ -401,16 +390,7 @@ by-key:
               parameters:
                 layout:
                   translation:
-                    early: [-0.3, 1, -2]
-                  roll:
-                    intrinsic: 0
-                  yaw:
-                    intrinsic: 0 #.1
-            last:
-              parameters:
-                layout:
-                  roll:
-                    intrinsic: 0
+                    early: [-0.3, -1, -2]
     aux0:
       parameters:
         key-style: minimal-tall
@@ -431,7 +411,7 @@ by-key:
           parameters:
             layout:
               translation:
-                early: [-0.5, 0, 0]
+                early: [-1, 0, 0]
 secondaries:
   # Main-to-thumb0 cluster bridge points:
   mt0a:
@@ -460,7 +440,7 @@ case:
         east: -0.2
         south: -1.8
         west: 2
-    height: 50.95
+    height: 53.5
     fasteners:
       diameter: 6
       bosses: true

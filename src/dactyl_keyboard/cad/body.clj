@@ -87,7 +87,9 @@
       (getopt :key-clusters :derived :by-cluster cluster :row-range)
       (getopt :key-clusters :derived :by-cluster cluster :key-requested?)
       (partial place/cluster-place getopt cluster)
-      (partial key/mount-corner-post getopt))))
+      (fn [coord]
+        (let [key-style (most-specific getopt [:key-style] cluster coord)]
+           (key/mount-corner-post getopt key-style coord))))))
 
 
 ;;;;;;;;;;;;;;;;;;;
@@ -184,12 +186,13 @@
   "Derive characteristics from parameters for the rear housing."
   [getopt]
   (let [cluster (getopt :case :rear-housing :position :cluster)
+        key-style (fn [coord] (most-specific getopt [:key-style] cluster coord))
         row (last (getopt :key-clusters :derived :by-cluster cluster :row-range))
         coords (getopt :key-clusters :derived :by-cluster cluster :coordinates-by-row row)
         pairs (into [] (for [coord coords corner [NNW NNE]] [coord corner]))
         getpos (fn [[coord corner]]
                  (place/cluster-place getopt cluster coord
-                   (place/mount-corner-offset getopt corner)))
+                   (place/mount-corner-offset getopt (key-style coord) corner)))
         y-max (apply max (map #(second (getpos %)) pairs))
         getoffset (partial getopt :case :rear-housing :position :offsets)
         y-roof-s (+ y-max (getoffset :south))
@@ -284,9 +287,10 @@
   "An extension of a key cluster’s webbing onto the roof of the rear housing."
   [getopt]
   (let [cluster (getopt :case :rear-housing :position :cluster)
+        key-style (fn [coord] (most-specific getopt [:key-style] cluster coord))
         pos-corner (fn [coord corner]
                      (place/cluster-place getopt cluster coord
-                       (place/mount-corner-offset getopt corner)))
+                       (place/mount-corner-offset getopt (key-style coord) corner)))
         sw (getopt :case :rear-housing :derived :sw)
         se (getopt :case :rear-housing :derived :se)
         x (fn [coord corner]
@@ -300,7 +304,7 @@
        (fn [coll [coord corner]]
          (conj coll
            (hull (place/cluster-place getopt cluster coord
-                   (key/mount-corner-post getopt corner))
+                   (key/mount-corner-post getopt (key-style coord) corner))
                  (translate [(x coord corner) y z]
                    (housing-post getopt)))))
        []

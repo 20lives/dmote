@@ -9,6 +9,25 @@ version 0.2.0, thus covering only a fraction of the project’s history.
   likewise nested underneath a layer of names. Both of these structural
   changes add power to the configuration layer, reducing the need for
   duplication of data.
+- Fixes that make the height of the case easier to manage constitute changes
+  to previous behaviour:
+    - Key mounting plates, which were previously located immediately on top of
+      the nominal position of each key, are now below the nominal. In other
+      words, key mounting plates have dropped down by the thickness of the
+      mounting plates. This means that, on a completely flat keyboard, the
+      configured height of each key mount is now the height of the case.
+        - When you change key mount thickness, the difference is now internal
+          to the keyboard and will no longer affect the relative positions of
+          the switches.
+        - To match this change, mount thickness is no longer a factor in
+          computing curvature. This in turn affects the nominal positions of
+          keys. It effectively recalibrates the scale of matrix separation,
+          correcting it so that the default value of value of zero is more
+          likely to create a good design.
+    - Webbing and case walls etc. are (still) governed by key mounts, so they
+      have also dropped down.
+    - Similarly, the configured height of the rear housing is now its actual
+      height, not the centre height of the cuboids that make up its corners.
 - Moved bundled YAML.
     - The entire `resources/opt` folder is now at `config`.
     - Most of `resources/opt/default.yaml` has been renamed (to
@@ -18,8 +37,8 @@ version 0.2.0, thus covering only a fraction of the project’s history.
       application now describes an unusable single-button keyboard.
 - Changes to the bundled 62-key DMOTE configuration:
     - Switched from M3 to M4 screws for attaching the bottom plate and for
-      locking the MCU PCB in place.
-      This makes for quicker previews and easier printing.
+      locking the MCU PCB in place. This makes for quicker previews and easier
+      printing.
     - Switched from flat to conical points for bottom-plate fasteners, just
       so the holes are easier to slice without getting interior supports.
     - Minor tweaks, like renaming the `maquette-dsa` style to `default`
@@ -28,6 +47,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Replaced the nut boss in an MCU lock bolt with printed threading of the hole.
 
 ### Added
+- Key mounting plates responsive to key `unit-size` for ease with oblong keys.
 - A bundled 12-key macropad configuration, mainly as an object lesson.
 - A `split` parameter at the highest level. This is false by default and absent
   in `config/base.yaml`, to enable macropads and relatively regular keyboards.
@@ -64,8 +84,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Corrected placement of wrist-rest fastener anchors for the thickness of the
   bottom plate.
 - Fixed a bad function call for `stop`-style MCU support.
-- The configured height of the rear housing is now its actual height, not the
-  centre height of the cuboids that make up its corners.
+- Slightly more accurate models of switches.
 
 ### Developer
 - In the interest of versatility, the Clojure code no longer refers to any YAML
