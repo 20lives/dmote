@@ -4,6 +4,9 @@ This log follows the conventions of
 version 0.2.0, thus covering only a fraction of the project’s history.
 
 ## [Unreleased]
+Nothing yet.
+
+## [Version 0.5.0] - 2019-07-21
 ### Changed
 - Secondary aliases (`secondaries`) are now a map and case `tweaks` are
   likewise nested underneath a layer of names. Both of these structural
@@ -245,6 +248,7 @@ version 0.2.0, thus covering only a fraction of the project’s history.
 - Removed a dependency on `unicode-math`. The requisite version of the library
   had not been deployed to Clojars and its use was cosmetic.
 
-[Unreleased]: https://github.com/veikman/dactyl-keyboard/compare/dmote-v0.4.0...HEAD
+[Unreleased]: https://github.com/veikman/dactyl-keyboard/compare/dmote-v0.5.0...HEAD
+[Version 0.5.0]: https://github.com/veikman/dactyl-keyboard/compare/dmote-v0.4.0...dmote-v0.5.0
 [Version 0.4.0]: https://github.com/veikman/dactyl-keyboard/compare/dmote-v0.3.0...dmote-v0.4.0
 [Version 0.3.0]: https://github.com/veikman/dactyl-keyboard/compare/dmote-v0.2.0...dmote-v0.3.0
