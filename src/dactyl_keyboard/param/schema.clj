@@ -99,7 +99,8 @@
        :bowl-plate-offset num
        :skirt-length num
        :skirt-thickness num
-       :slope num})))
+       :slope num
+       :supported boolean})))
 
 (def named-secondary-positions
   (map-of
