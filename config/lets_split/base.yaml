@@ -1,3 +1,5 @@
+split: true
+
 key-clusters:
   main:
     position:
@@ -40,3 +42,12 @@ mcu:
     anchor: top-right
     rotation: [0, -1.570796, 0]
     offset: [0, 0, -6]
+
+connection:
+  include: true
+  socket-size: [6.1, 4, 5]
+  position:
+    corner: SSW
+    prefer-rear-housing: true
+    anchor: top-left
+    offset: [0, -1, 3]
