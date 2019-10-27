@@ -2,7 +2,7 @@ key-clusters:
   main:
     position:
       anchor: origin
-      offset: [0, 0, 0]
+      offset: [0, 0, 16]
     matrix-columns:
     - rows-above-home: 1
       rows-below-home: 2
@@ -16,3 +16,16 @@ key-clusters:
       rows-below-home: 2
     - rows-above-home: 1
       rows-below-home: 2
+
+by-key:
+  parameters:
+    wall:
+      north:
+        parallel: 2
+      east:
+        parallel: 2
+      south:
+        parallel: 2
+      west:
+        parallel: 2
+
