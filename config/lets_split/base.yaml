@@ -16,6 +16,9 @@ key-clusters:
       rows-below-home: 2
     - rows-above-home: 1
       rows-below-home: 2
+    aliases:
+      top-left: [1, first]
+      top-right: [last, first]
 
 by-key:
   parameters:
@@ -29,3 +32,11 @@ by-key:
       west:
         parallel: 2
 
+mcu:
+  include: true
+  position:
+    corner: SSW
+    prefer-rear-housing: true
+    anchor: top-right
+    rotation: [0, -1.570796, 0]
+    offset: [0, 0, -6]
