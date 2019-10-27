@@ -1,0 +1,18 @@
+key-clusters:
+  main:
+    position:
+      anchor: origin
+      offset: [0, 0, 0]
+    matrix-columns:
+    - rows-above-home: 1
+      rows-below-home: 2
+    - rows-above-home: 1
+      rows-below-home: 2
+    - rows-above-home: 1
+      rows-below-home: 2
+    - rows-above-home: 1
+      rows-below-home: 2
+    - rows-above-home: 1
+      rows-below-home: 2
+    - rows-above-home: 1
+      rows-below-home: 2
