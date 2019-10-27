@@ -1,5 +1,13 @@
 split: true
 
+keys:
+  styles:
+    default:
+      style: maquette
+      switch-type: mx
+      skirt-length: 4.6
+      top-size: [12.7, 12.7, 3.3]
+
 key-clusters:
   main:
     position:
